@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Book an Appointment{% endblock %}
+
+{% block content %}
+  <section class="simple-panel">
+    <p class="eyebrow">Salon Scheduler</p>
+    <h1>Request an appointment</h1>
+    <p>
+      Choose a salon and send an appointment request. Requests stay pending
+      until the salon owner approves them.
+    </p>
+
+    {% if salons %}
+      <div class="list-group mt-4">
+        {% for salon in salons %}
+          <a class="list-group-item list-group-item-action" href="{% url 'booking:book_salon' salon.slug %}">
+            {{ salon.name }}
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-muted mt-4">No active salons are available yet.</p>
+    {% endif %}
+  </section>
+{% endblock %}
