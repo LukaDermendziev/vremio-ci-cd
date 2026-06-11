@@ -3,12 +3,107 @@
 {% block title %}Owner Dashboard{% endblock %}
 
 {% block content %}
-  <section class="simple-panel">
-    <p class="eyebrow">Owner</p>
-    <h1>Dashboard</h1>
-    <p>
-      This area will show pending requests, upcoming appointments, calendar/list
-      views, and settings modules for services and availability.
-    </p>
-  </section>
+  {% if not salon %}
+    <section class="simple-panel">
+      <p class="eyebrow">Owner</p>
+      <h1>Dashboard</h1>
+      <p class="text-muted">No active salon is assigned to your user yet.</p>
+    </section>
+  {% else %}
+    <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
+      <div>
+        <p class="eyebrow">Owner dashboard</p>
+        <h1>{{ salon.name }}</h1>
+      </div>
+      <div class="metric-card">
+        <span class="metric-number">{{ pending_count }}</span>
+        <span class="metric-label">Pending bookings</span>
+      </div>
+    </div>
+
+    <section class="simple-panel mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="section-title">Pending requests</h2>
+        <span class="badge text-bg-warning">{{ pending_count }}</span>
+      </div>
+
+      {% if pending_bookings %}
+        <div class="table-responsive">
+          <table class="table align-middle">
+            <thead>
+              <tr>
+                <th>Customer</th>
+                <th>Service</th>
+                <th>Date</th>
+                <th>Contact</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for booking in pending_bookings %}
+                <tr>
+                  <td>
+                    <strong>{{ booking.customer.full_name }}</strong><br>
+                    <span class="text-muted">{{ booking.customer.instagram_username }}</span>
+                  </td>
+                  <td>
+                    {% for item in booking.booking_services.all %}
+                      {{ item.service_name_snapshot }}{% if not forloop.last %}, {% endif %}
+                    {% empty %}
+                      <span class="text-muted">No service</span>
+                    {% endfor %}
+                  </td>
+                  <td>{{ booking.start_at|date:"M j, Y H:i" }}</td>
+                  <td>{{ booking.customer.phone_number }}</td>
+                  <td class="text-end">
+                    <form method="post" class="d-inline">
+                      {% csrf_token %}
+                      <input type="hidden" name="booking_id" value="{{ booking.id }}">
+                      <button class="btn btn-sm btn-success" type="submit" name="action" value="approve">Approve</button>
+                    </form>
+                    <form method="post" class="d-inline">
+                      {% csrf_token %}
+                      <input type="hidden" name="booking_id" value="{{ booking.id }}">
+                      <button class="btn btn-sm btn-outline-danger" type="submit" name="action" value="reject">Reject</button>
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="text-muted">No pending requests right now.</p>
+      {% endif %}
+    </section>
+
+    <section class="simple-panel">
+      <h2 class="section-title mb-3">Upcoming approved bookings</h2>
+
+      {% if upcoming_approved_bookings %}
+        <div class="list-group">
+          {% for booking in upcoming_approved_bookings %}
+            <div class="list-group-item">
+              <div class="d-flex justify-content-between gap-3">
+                <div>
+                  <strong>{{ booking.customer.full_name }}</strong>
+                  <div class="text-muted">
+                    {% for item in booking.booking_services.all %}
+                      {{ item.service_name_snapshot }}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                  </div>
+                </div>
+                <div class="text-end">
+                  <strong>{{ booking.start_at|date:"M j, Y" }}</strong>
+                  <div class="text-muted">{{ booking.start_at|date:"H:i" }} - {{ booking.end_at|date:"H:i" }}</div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-muted">No upcoming approved bookings yet.</p>
+      {% endif %}
+    </section>
+  {% endif %}
 {% endblock %}

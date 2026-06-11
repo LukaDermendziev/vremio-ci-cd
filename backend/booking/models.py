@@ -354,6 +354,10 @@ class Booking(TimeStampedModel):
         if errors:
             raise ValidationError(errors)
 
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
     def _find_conflicting_booking(self):
         if not self.salon_id or not self.start_at or not self.end_at:
             return None

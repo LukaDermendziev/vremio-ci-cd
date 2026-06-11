@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Request Sent{% endblock %}
+
+{% block content %}
+  <section class="simple-panel">
+    <p class="eyebrow">Request sent</p>
+    <h1>Your appointment request has been sent.</h1>
+    <p>
+      This is not a confirmed appointment yet. {{ booking.salon.name }} will
+      review your request and contact you.
+    </p>
+
+    <div class="summary-list mt-4">
+      <div>
+        <span>Customer</span>
+        <strong>{{ booking.customer.full_name }}</strong>
+      </div>
+      <div>
+        <span>Date and time</span>
+        <strong>{{ booking.start_at|date:"M j, Y H:i" }}</strong>
+      </div>
+      <div>
+        <span>Status</span>
+        <strong>{{ booking.get_status_display }}</strong>
+      </div>
+    </div>
+  </section>
+{% endblock %}

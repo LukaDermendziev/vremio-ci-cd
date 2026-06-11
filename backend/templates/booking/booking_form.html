@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Book {{ salon.name }}{% endblock %}
+
+{% block content %}
+  <section class="simple-panel">
+    <p class="eyebrow">Appointment request</p>
+    <h1>{{ salon.name }}</h1>
+    <p class="text-muted">
+      Choose a service and send a request. The appointment is not confirmed
+      until the salon owner approves it.
+    </p>
+
+    {% if services %}
+      <div class="service-list my-4">
+        {% for service in services %}
+          <div class="service-item">
+            <div>
+              <strong>{{ service.name }}</strong>
+              {% if service.description %}
+                <p class="text-muted small mb-0">{{ service.description }}</p>
+              {% endif %}
+            </div>
+            <span class="text-muted">{{ service.duration_minutes }} min</span>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" class="mt-4">
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <div class="row g-3">
+        {% for field in form %}
+          {% if field.name == "rules_accepted" %}
+            <div class="col-12">
+              <div class="form-check">
+                {{ field }}
+                <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+              </div>
+              {% for error in field.errors %}
+                <div class="text-danger small">{{ error }}</div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="col-md-6">
+              <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+              {% if field.help_text %}
+                <div class="form-text">{{ field.help_text }}</div>
+              {% endif %}
+              {% for error in field.errors %}
+                <div class="text-danger small">{{ error }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+      <div class="rules-box mt-4">
+        <strong>Salon rules</strong>
+        <ul class="mb-0 mt-2">
+          <li>Your appointment is only a request until approved.</li>
+          <li>Please request appointments in advance according to salon policy.</li>
+          <li>If you are more than 15 minutes late without notice, the appointment may be cancelled.</li>
+          <li>For certain services, a reference photo may be required.</li>
+        </ul>
+      </div>
+
+      <button class="btn btn-primary mt-4" type="submit">Send booking request</button>
+    </form>
+  </section>
+{% endblock %}
