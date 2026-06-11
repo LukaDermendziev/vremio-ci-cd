@@ -4,12 +4,16 @@ from django import forms
 from django.utils import timezone
 
 from .models import Booking, Customer, Service
+from .services import get_salon_timezone, is_slot_available
 
 
 class BookingRequestForm(forms.Form):
-    service = forms.ModelChoiceField(queryset=Service.objects.none())
+    service = forms.ModelChoiceField(
+        queryset=Service.objects.none(),
+        widget=forms.HiddenInput(),
+    )
     date = forms.DateField(widget=forms.DateInput(attrs={"type": "date"}))
-    time = forms.TimeField(widget=forms.TimeInput(attrs={"type": "time"}))
+    start_time = forms.CharField(widget=forms.HiddenInput())
     full_name = forms.CharField(max_length=160, label="Name and surname")
     phone_number = forms.CharField(max_length=30)
     instagram_username = forms.CharField(max_length=80, label="Instagram")
@@ -38,17 +42,28 @@ class BookingRequestForm(forms.Form):
         cleaned_data = super().clean()
         service = cleaned_data.get("service")
         date = cleaned_data.get("date")
-        time = cleaned_data.get("time")
+        start_time = cleaned_data.get("start_time")
 
         if service and service.salon_id != self.salon.id:
             self.add_error("service", "Choose a valid service for this salon.")
 
-        if date and time:
-            naive_start = datetime.combine(date, time)
+        if service and date and start_time:
+            slot = is_slot_available(self.salon, service, date, start_time)
+            if not slot:
+                self.add_error(
+                    "start_time",
+                    "This time is no longer available. Please choose another slot.",
+                )
+                return cleaned_data
+
+            parsed_time = datetime.strptime(start_time, "%H:%M").time()
+            naive_start = datetime.combine(date, parsed_time)
             cleaned_data["start_at"] = timezone.make_aware(
                 naive_start,
-                timezone.get_current_timezone(),
+                get_salon_timezone(self.salon),
             )
+        elif date or service:
+            self.add_error("start_time", "Please choose an available time.")
 
         return cleaned_data
 
@@ -81,7 +96,7 @@ class BookingRequestForm(forms.Form):
             end_at=end_at,
             total_duration_minutes=service.duration_minutes,
             source=Booking.Source.ONLINE,
-            reference_photo=self.cleaned_data.get("reference_photo"),
+            reference_photo=self.cleaned_data.get("reference_photo") or "",
             rules_accepted=self.cleaned_data["rules_accepted"],
         )
         booking.save()

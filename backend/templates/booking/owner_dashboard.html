@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}Owner Dashboard{% endblock %}
+{% block body_class %}owner-dashboard-page{% endblock %}
 
 {% block content %}
   {% if not salon %}
@@ -10,100 +11,278 @@
       <p class="text-muted">No active salon is assigned to your user yet.</p>
     </section>
   {% else %}
-    <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
-      <div>
-        <p class="eyebrow">Owner dashboard</p>
-        <h1>{{ salon.name }}</h1>
-      </div>
-      <div class="metric-card">
-        <span class="metric-number">{{ pending_count }}</span>
-        <span class="metric-label">Pending bookings</span>
-      </div>
-    </div>
+    <div class="owner-layout">
+      <aside class="owner-sidebar">
+        <div class="owner-brand">
+          <span class="owner-logo">{{ salon.name|first }}</span>
+          <div>
+            <strong>{{ salon.name }}</strong>
+            <small>Owner panel</small>
+          </div>
+        </div>
+        <nav class="owner-nav" aria-label="Owner navigation">
+          <a href="#dashboard" class="is-active">Dashboard</a>
+          <a href="#calendar">Calendar</a>
+          <a href="#bookings">Bookings</a>
+          <a href="#customers">Customers</a>
+          <a href="#services">Services</a>
+          <a href="#working-hours">Working Hours</a>
+          <a href="#policy">Booking Policy</a>
+          <a href="#settings">Settings</a>
+        </nav>
+      </aside>
 
-    <section class="simple-panel mb-4">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="section-title">Pending requests</h2>
-        <span class="badge text-bg-warning">{{ pending_count }}</span>
-      </div>
+      <div class="owner-main">
+        <header class="owner-header" id="dashboard">
+          <div>
+            <p class="eyebrow">Today</p>
+            <h1>{{ salon.name }}</h1>
+          </div>
+          <a class="btn btn-outline-primary" href="{% url 'booking:book_salon' salon.slug %}">
+            Open booking page
+          </a>
+        </header>
 
-      {% if pending_bookings %}
-        <div class="table-responsive">
-          <table class="table align-middle">
-            <thead>
-              <tr>
-                <th>Customer</th>
-                <th>Service</th>
-                <th>Date</th>
-                <th>Contact</th>
-                <th class="text-end">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+        <section class="dashboard-grid">
+          <article class="dashboard-card">
+            <span>Pending requests</span>
+            <strong>{{ pending_count }}</strong>
+          </article>
+          <article class="dashboard-card">
+            <span>Today appointments</span>
+            <strong>{{ today_count }}</strong>
+          </article>
+          <article class="dashboard-card">
+            <span>Active services</span>
+            <strong>{{ active_services_count }}</strong>
+          </article>
+          <article class="dashboard-card">
+            <span>Approval mode</span>
+            <strong>
+              {% if booking_policy and booking_policy.auto_approve_bookings %}
+                Auto
+              {% else %}
+                Manual
+              {% endif %}
+            </strong>
+          </article>
+        </section>
+
+        <section class="owner-panel" id="calendar">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Calendar</p>
+              <h2>Today appointments</h2>
+            </div>
+            <span class="panel-hint">List view for now</span>
+          </div>
+
+          {% if todays_appointments %}
+            <div class="appointment-stack">
+              {% for booking in todays_appointments %}
+                <article class="appointment-row">
+                  <div class="appointment-time">
+                    <strong>{{ booking.start_at|date:"H:i" }}</strong>
+                    <span>{{ booking.end_at|date:"H:i" }}</span>
+                  </div>
+                  <div>
+                    <strong>{{ booking.customer.full_name }}</strong>
+                    <p>
+                      {% for item in booking.booking_services.all %}
+                        {{ item.service_name_snapshot }}{% if not forloop.last %}, {% endif %}
+                      {% empty %}
+                        Service not set
+                      {% endfor %}
+                    </p>
+                  </div>
+                  <span class="status-badge status-approved">{{ booking.get_status_display }}</span>
+                </article>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="empty-state">No approved appointments for today.</p>
+          {% endif %}
+        </section>
+
+        <section class="owner-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Requests</p>
+              <h2>Pending booking requests</h2>
+            </div>
+            <span class="status-badge status-pending">{{ pending_count }} pending</span>
+          </div>
+
+          {% if pending_bookings %}
+            <div class="request-list">
               {% for booking in pending_bookings %}
-                <tr>
-                  <td>
-                    <strong>{{ booking.customer.full_name }}</strong><br>
-                    <span class="text-muted">{{ booking.customer.instagram_username }}</span>
-                  </td>
-                  <td>
-                    {% for item in booking.booking_services.all %}
-                      {{ item.service_name_snapshot }}{% if not forloop.last %}, {% endif %}
-                    {% empty %}
-                      <span class="text-muted">No service</span>
-                    {% endfor %}
-                  </td>
-                  <td>{{ booking.start_at|date:"M j, Y H:i" }}</td>
-                  <td>{{ booking.customer.phone_number }}</td>
-                  <td class="text-end">
-                    <form method="post" class="d-inline">
+                <article class="request-card">
+                  <div class="request-main">
+                    <div>
+                      <strong>{{ booking.customer.full_name }}</strong>
+                      <p>
+                        {% for item in booking.booking_services.all %}
+                          {{ item.service_name_snapshot }}{% if not forloop.last %}, {% endif %}
+                        {% empty %}
+                          Service not set
+                        {% endfor %}
+                      </p>
+                    </div>
+                    <div class="request-meta">
+                      <span>{{ booking.start_at|date:"M j, Y" }}</span>
+                      <strong>{{ booking.start_at|date:"H:i" }} - {{ booking.end_at|date:"H:i" }}</strong>
+                    </div>
+                  </div>
+
+                  <div class="customer-contact">
+                    <span>{{ booking.customer.phone_number }}</span>
+                    <span>{{ booking.customer.instagram_username }}</span>
+                    {% if booking.customer.email %}<span>{{ booking.customer.email }}</span>{% endif %}
+                  </div>
+
+                  <div class="request-actions">
+                    <a class="btn btn-sm btn-outline-secondary" href="tel:{{ booking.customer.phone_number }}">Call</a>
+                    <form method="post">
                       {% csrf_token %}
                       <input type="hidden" name="booking_id" value="{{ booking.id }}">
                       <button class="btn btn-sm btn-success" type="submit" name="action" value="approve">Approve</button>
                     </form>
-                    <form method="post" class="d-inline">
+                    <form method="post">
                       {% csrf_token %}
                       <input type="hidden" name="booking_id" value="{{ booking.id }}">
                       <button class="btn btn-sm btn-outline-danger" type="submit" name="action" value="reject">Reject</button>
                     </form>
-                  </td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      {% else %}
-        <p class="text-muted">No pending requests right now.</p>
-      {% endif %}
-    </section>
-
-    <section class="simple-panel">
-      <h2 class="section-title mb-3">Upcoming approved bookings</h2>
-
-      {% if upcoming_approved_bookings %}
-        <div class="list-group">
-          {% for booking in upcoming_approved_bookings %}
-            <div class="list-group-item">
-              <div class="d-flex justify-content-between gap-3">
-                <div>
-                  <strong>{{ booking.customer.full_name }}</strong>
-                  <div class="text-muted">
-                    {% for item in booking.booking_services.all %}
-                      {{ item.service_name_snapshot }}{% if not forloop.last %}, {% endif %}
-                    {% endfor %}
                   </div>
-                </div>
-                <div class="text-end">
-                  <strong>{{ booking.start_at|date:"M j, Y" }}</strong>
-                  <div class="text-muted">{{ booking.start_at|date:"H:i" }} - {{ booking.end_at|date:"H:i" }}</div>
-                </div>
-              </div>
+                </article>
+              {% endfor %}
             </div>
-          {% endfor %}
-        </div>
-      {% else %}
-        <p class="text-muted">No upcoming approved bookings yet.</p>
-      {% endif %}
-    </section>
+          {% else %}
+            <p class="empty-state">No pending requests right now.</p>
+          {% endif %}
+        </section>
+
+        <section class="owner-panel" id="bookings">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Management</p>
+              <h2>Bookings</h2>
+            </div>
+            <span class="panel-hint">Manual add and edit come next</span>
+          </div>
+
+          {% if booking_management_list %}
+            <div class="table-responsive">
+              <table class="table owner-table align-middle">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Customer</th>
+                    <th>Service</th>
+                    <th>Status</th>
+                    <th>Contact</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for booking in booking_management_list %}
+                    <tr>
+                      <td>
+                        <strong>{{ booking.start_at|date:"M j" }}</strong>
+                        <span>{{ booking.start_at|date:"H:i" }}</span>
+                      </td>
+                      <td>{{ booking.customer.full_name }}</td>
+                      <td>
+                        {% for item in booking.booking_services.all %}
+                          {{ item.service_name_snapshot }}{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                      </td>
+                      <td><span class="status-badge status-{{ booking.status }}">{{ booking.get_status_display }}</span></td>
+                      <td>{{ booking.customer.phone_number }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <p class="empty-state">No bookings yet.</p>
+          {% endif %}
+        </section>
+
+        <section class="owner-panel" id="services">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Services</p>
+              <h2>Services overview</h2>
+            </div>
+            <span class="panel-hint">Manage details in admin for now</span>
+          </div>
+
+          {% if services %}
+            <div class="settings-grid">
+              {% for service in services %}
+                <article class="settings-card">
+                  <strong>{{ service.name }}</strong>
+                  <span>{{ service.duration_minutes }} minutes</span>
+                  <span>
+                    {% if service.requires_photo %}
+                      Photo required
+                    {% elif service.photo_recommended %}
+                      Photo recommended
+                    {% else %}
+                      Photo optional
+                    {% endif %}
+                  </span>
+                  <span class="{% if service.is_active %}text-success{% else %}text-muted{% endif %}">
+                    {% if service.is_active %}Active{% else %}Inactive{% endif %}
+                  </span>
+                </article>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="empty-state">No services yet.</p>
+          {% endif %}
+        </section>
+
+        <section class="owner-panel" id="policy">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Settings</p>
+              <h2>Booking policy</h2>
+            </div>
+            <span class="panel-hint">Editable settings form comes later</span>
+          </div>
+
+          {% if booking_policy %}
+            <div class="settings-grid">
+              <article class="settings-card">
+                <span>Minimum notice</span>
+                <strong>{{ booking_policy.minimum_notice_days }} days</strong>
+              </article>
+              <article class="settings-card">
+                <span>Booking window</span>
+                <strong>{{ booking_policy.maximum_booking_window_days }} days</strong>
+              </article>
+              <article class="settings-card">
+                <span>Slot interval</span>
+                <strong>{{ booking_policy.slot_interval_minutes }} min</strong>
+              </article>
+              <article class="settings-card">
+                <span>Buffer</span>
+                <strong>{{ booking_policy.buffer_minutes_between_bookings }} min</strong>
+              </article>
+              <article class="settings-card">
+                <span>Pending holds slot</span>
+                <strong>{% if booking_policy.pending_holds_slot %}On{% else %}Off{% endif %}</strong>
+              </article>
+              <article class="settings-card">
+                <span>Automatic approval</span>
+                <strong>{% if booking_policy.auto_approve_bookings %}On{% else %}Off{% endif %}</strong>
+              </article>
+            </div>
+          {% else %}
+            <p class="empty-state">No booking policy exists yet. Add one in admin.</p>
+          {% endif %}
+        </section>
+      </div>
+    </div>
   {% endif %}
 {% endblock %}
