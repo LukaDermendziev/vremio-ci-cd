@@ -1,0 +1,130 @@
+from django.contrib import admin
+
+from .models import (
+    Booking,
+    BookingPolicy,
+    BookingService,
+    Customer,
+    CustomerBlocklist,
+    DateWorkingHoursOverride,
+    Salon,
+    Service,
+    UnavailableTimeBlock,
+    WorkingHours,
+)
+
+
+class BookingServiceInline(admin.TabularInline):
+    model = BookingService
+    extra = 1
+
+
+@admin.register(Salon)
+class SalonAdmin(admin.ModelAdmin):
+    list_display = ("name", "owner", "phone_number", "is_active", "created_at")
+    list_filter = ("is_active",)
+    search_fields = ("name", "phone_number", "instagram_username")
+    prepopulated_fields = {"slug": ("name",)}
+
+
+@admin.register(Service)
+class ServiceAdmin(admin.ModelAdmin):
+    list_display = (
+        "name",
+        "salon",
+        "duration_minutes",
+        "base_price",
+        "requires_photo",
+        "is_active",
+    )
+    list_filter = ("salon", "is_active", "requires_photo", "photo_recommended")
+    search_fields = ("name", "description")
+    list_editable = ("duration_minutes", "base_price", "is_active")
+
+
+@admin.register(Customer)
+class CustomerAdmin(admin.ModelAdmin):
+    list_display = (
+        "full_name",
+        "salon",
+        "phone_number",
+        "instagram_username",
+        "preferred_contact_method",
+        "email",
+    )
+    list_filter = ("salon", "preferred_contact_method")
+    search_fields = ("full_name", "phone_number", "instagram_username", "email")
+
+
+@admin.register(Booking)
+class BookingAdmin(admin.ModelAdmin):
+    list_display = (
+        "customer",
+        "salon",
+        "status",
+        "start_at",
+        "end_at",
+        "total_duration_minutes",
+        "source",
+    )
+    list_filter = ("salon", "status", "source", "start_at")
+    search_fields = (
+        "customer__full_name",
+        "customer__phone_number",
+        "customer__instagram_username",
+    )
+    date_hierarchy = "start_at"
+    inlines = [BookingServiceInline]
+
+
+@admin.register(BookingPolicy)
+class BookingPolicyAdmin(admin.ModelAdmin):
+    list_display = (
+        "salon",
+        "minimum_notice_days",
+        "maximum_booking_window_days",
+        "auto_approve_bookings",
+        "pending_holds_slot",
+        "slot_interval_minutes",
+        "buffer_minutes_between_bookings",
+    )
+    list_filter = (
+        "auto_approve_bookings",
+        "pending_holds_slot",
+        "allow_same_day_booking",
+        "allow_next_day_booking",
+    )
+
+
+@admin.register(WorkingHours)
+class WorkingHoursAdmin(admin.ModelAdmin):
+    list_display = ("salon", "weekday", "is_working_day", "start_time", "end_time")
+    list_filter = ("salon", "weekday", "is_working_day")
+
+
+@admin.register(DateWorkingHoursOverride)
+class DateWorkingHoursOverrideAdmin(admin.ModelAdmin):
+    list_display = (
+        "salon",
+        "date",
+        "mode",
+        "custom_start_time",
+        "custom_end_time",
+        "reason",
+    )
+    list_filter = ("salon", "mode", "date")
+    search_fields = ("reason",)
+
+
+@admin.register(UnavailableTimeBlock)
+class UnavailableTimeBlockAdmin(admin.ModelAdmin):
+    list_display = ("salon", "date", "start_time", "end_time", "reason")
+    list_filter = ("salon", "date")
+    search_fields = ("reason",)
+
+
+@admin.register(CustomerBlocklist)
+class CustomerBlocklistAdmin(admin.ModelAdmin):
+    list_display = ("phone_number", "salon", "instagram_username", "is_active", "created_at")
+    list_filter = ("salon", "is_active")
+    search_fields = ("phone_number", "instagram_username", "reason")
