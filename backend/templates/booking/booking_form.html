@@ -1,77 +1,359 @@
 {% extends "base.html" %}
 
 {% block title %}Book {{ salon.name }}{% endblock %}
+{% block body_class %}customer-booking-page{% endblock %}
 
 {% block content %}
-  <section class="simple-panel">
-    <p class="eyebrow">Appointment request</p>
-    <h1>{{ salon.name }}</h1>
-    <p class="text-muted">
-      Choose a service and send a request. The appointment is not confirmed
-      until the salon owner approves it.
-    </p>
+  <form
+    method="post"
+    enctype="multipart/form-data"
+    class="booking-app"
+    data-slots-url="{% url 'booking:available_slots' salon.slug %}"
+    novalidate
+  >
+    {% csrf_token %}
+    {{ form.service }}
+    {{ form.start_time }}
 
-    {% if services %}
-      <div class="service-list my-4">
-        {% for service in services %}
-          <div class="service-item">
-            <div>
-              <strong>{{ service.name }}</strong>
-              {% if service.description %}
-                <p class="text-muted small mb-0">{{ service.description }}</p>
-              {% endif %}
-            </div>
-            <span class="text-muted">{{ service.duration_minutes }} min</span>
-          </div>
-        {% endfor %}
+    {% if form.errors %}
+      <div class="alert alert-danger">
+        Please check the highlighted fields and choose an available time.
       </div>
     {% endif %}
 
-    <form method="post" enctype="multipart/form-data" class="mt-4">
-      {% csrf_token %}
+    <header class="booking-hero">
+      <p class="eyebrow">Online booking request</p>
+      <h1>{{ salon.name }}</h1>
+      <p>
+        Choose your service and preferred time. Your appointment is not confirmed
+        until the salon approves it.
+      </p>
+    </header>
 
-      {% if form.non_field_errors %}
-        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
-      {% endif %}
+    <div class="booking-progress" aria-label="Booking steps">
+      <span class="is-active" data-progress-step="1"></span>
+      <span data-progress-step="2"></span>
+      <span data-progress-step="3"></span>
+      <span data-progress-step="4"></span>
+      <span data-progress-step="5"></span>
+      <span data-progress-step="6"></span>
+      <span data-progress-step="7"></span>
+    </div>
 
-      <div class="row g-3">
-        {% for field in form %}
-          {% if field.name == "rules_accepted" %}
-            <div class="col-12">
-              <div class="form-check">
-                {{ field }}
-                <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-              </div>
-              {% for error in field.errors %}
-                <div class="text-danger small">{{ error }}</div>
-              {% endfor %}
-            </div>
-          {% else %}
-            <div class="col-md-6">
-              <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-              {{ field }}
-              {% if field.help_text %}
-                <div class="form-text">{{ field.help_text }}</div>
+    <section class="booking-step is-active" data-step="1">
+      <p class="step-kicker">Step 1</p>
+      <h2>Welcome</h2>
+      <p class="text-muted">
+        This short flow helps the salon receive all details before approving
+        your appointment request.
+      </p>
+      <div class="selected-summary mt-4">
+        <span>Booking mode</span>
+        <strong>Request first, confirmation after approval</strong>
+      </div>
+      <button class="btn btn-primary btn-lg w-100 mt-4" type="button" data-next>
+        Start booking
+      </button>
+    </section>
+
+    <section class="booking-step" data-step="2">
+      <p class="step-kicker">Step 2</p>
+      <h2>Choose service</h2>
+      <p class="text-muted">Pick one service for this request.</p>
+
+      <div class="service-card-grid mt-4">
+        {% for service in services %}
+          <button
+            class="service-choice"
+            type="button"
+            data-service-id="{{ service.id }}"
+            data-service-name="{{ service.name }}"
+            data-service-duration="{{ service.duration_minutes }}"
+            data-service-price="{{ service.base_price }}"
+          >
+            <span class="service-avatar">{{ service.name|first }}</span>
+            <span class="service-copy">
+              <strong>{{ service.name }}</strong>
+              {% if service.description %}
+                <small>{{ service.description }}</small>
               {% endif %}
-              {% for error in field.errors %}
-                <div class="text-danger small">{{ error }}</div>
-              {% endfor %}
-            </div>
-          {% endif %}
+              <span>{{ service.duration_minutes }} min</span>
+            </span>
+            <span class="service-price">
+              {% if service.base_price %}
+                {{ service.base_price }} MKD
+              {% else %}
+                Price by case
+              {% endif %}
+            </span>
+          </button>
+        {% empty %}
+          <p class="text-muted">No active services are available yet.</p>
         {% endfor %}
       </div>
+      {% for error in form.service.errors %}
+        <div class="text-danger small mt-2">{{ error }}</div>
+      {% endfor %}
+
+      <div class="step-actions">
+        <button class="btn btn-outline-secondary" type="button" data-prev>Back</button>
+        <button class="btn btn-primary" type="button" data-next data-requires="service">Next</button>
+      </div>
+    </section>
+
+    <section class="booking-step" data-step="3">
+      <p class="step-kicker">Step 3</p>
+      <h2>Choose date</h2>
+      <p class="text-muted">Only dates allowed by salon policy will show available times.</p>
+
+      <div class="mt-4">
+        <label class="form-label" for="{{ form.date.id_for_label }}">Preferred date</label>
+        {{ form.date }}
+        {% for error in form.date.errors %}
+          <div class="text-danger small">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="step-actions">
+        <button class="btn btn-outline-secondary" type="button" data-prev>Back</button>
+        <button class="btn btn-primary" type="button" data-next data-requires="date">Next</button>
+      </div>
+    </section>
+
+    <section class="booking-step" data-step="4">
+      <p class="step-kicker">Step 4</p>
+      <h2>Choose available time</h2>
+      <p class="text-muted">These slots are calculated from the salon schedule and existing bookings.</p>
+
+      <div class="slot-panel mt-4">
+        <div class="slot-grid" data-slot-grid>
+          <p class="text-muted mb-0">Choose a service and date first.</p>
+        </div>
+      </div>
+      {% for error in form.start_time.errors %}
+        <div class="text-danger small mt-2">{{ error }}</div>
+      {% endfor %}
+
+      <div class="step-actions">
+        <button class="btn btn-outline-secondary" type="button" data-prev>Back</button>
+        <button class="btn btn-primary" type="button" data-next data-requires="slot">Next</button>
+      </div>
+    </section>
+
+    <section class="booking-step" data-step="5">
+      <p class="step-kicker">Step 5</p>
+      <h2>Your details</h2>
+      <p class="text-muted">The salon uses this information to review and contact you.</p>
+
+      <div class="row g-3 mt-2">
+        <div class="col-12">
+          <label class="form-label" for="{{ form.full_name.id_for_label }}">{{ form.full_name.label }}</label>
+          {{ form.full_name }}
+          {% for error in form.full_name.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="col-12">
+          <label class="form-label" for="{{ form.phone_number.id_for_label }}">{{ form.phone_number.label }}</label>
+          {{ form.phone_number }}
+          {% for error in form.phone_number.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="col-12">
+          <label class="form-label" for="{{ form.instagram_username.id_for_label }}">{{ form.instagram_username.label }}</label>
+          {{ form.instagram_username }}
+          {% for error in form.instagram_username.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="col-12">
+          <label class="form-label" for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+          {{ form.email }}
+          {% for error in form.email.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="col-12">
+          <label class="form-label" for="{{ form.preferred_contact_method.id_for_label }}">{{ form.preferred_contact_method.label }}</label>
+          {{ form.preferred_contact_method }}
+          {% for error in form.preferred_contact_method.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        </div>
+      </div>
+
+      <div class="step-actions">
+        <button class="btn btn-outline-secondary" type="button" data-prev>Back</button>
+        <button class="btn btn-primary" type="button" data-next>Next</button>
+      </div>
+    </section>
+
+    <section class="booking-step" data-step="6">
+      <p class="step-kicker">Step 6</p>
+      <h2>Reference photo</h2>
+      <p class="text-muted">Upload a design or case photo if it helps the salon prepare.</p>
+
+      <label class="upload-zone mt-4" for="{{ form.reference_photo.id_for_label }}">
+        <span>Upload photo</span>
+        <strong>JPG, PNG, or similar image</strong>
+        {{ form.reference_photo }}
+      </label>
+      {% for error in form.reference_photo.errors %}
+        <div class="text-danger small">{{ error }}</div>
+      {% endfor %}
+
+      <div class="step-actions">
+        <button class="btn btn-outline-secondary" type="button" data-prev>Back</button>
+        <button class="btn btn-primary" type="button" data-next>Next</button>
+      </div>
+    </section>
+
+    <section class="booking-step" data-step="7">
+      <p class="step-kicker">Step 7</p>
+      <h2>Rules and review</h2>
+      <p class="text-muted">Review the request before sending it to the salon.</p>
 
       <div class="rules-box mt-4">
         <strong>Salon rules</strong>
         <ul class="mb-0 mt-2">
-          <li>Your appointment is only a request until approved.</li>
-          <li>Please request appointments in advance according to salon policy.</li>
+          <li>The appointment is not confirmed until the salon approves it.</li>
+          <li>Appointments must follow the salon booking policy.</li>
           <li>If you are more than 15 minutes late without notice, the appointment may be cancelled.</li>
           <li>For certain services, a reference photo may be required.</li>
         </ul>
       </div>
 
-      <button class="btn btn-primary mt-4" type="submit">Send booking request</button>
-    </form>
-  </section>
+      <div class="form-check mt-4">
+        {{ form.rules_accepted }}
+        <label class="form-check-label" for="{{ form.rules_accepted.id_for_label }}">
+          {{ form.rules_accepted.label }}
+        </label>
+      </div>
+      {% for error in form.rules_accepted.errors %}
+        <div class="text-danger small">{{ error }}</div>
+      {% endfor %}
+
+      <div class="review-card mt-4">
+        <h3>Review request</h3>
+        <dl>
+          <div>
+            <dt>Service</dt>
+            <dd data-review-service>Not selected</dd>
+          </div>
+          <div>
+            <dt>Date</dt>
+            <dd data-review-date>Not selected</dd>
+          </div>
+          <div>
+            <dt>Time</dt>
+            <dd data-review-time>Not selected</dd>
+          </div>
+          <div>
+            <dt>Name</dt>
+            <dd data-review-name>Not entered</dd>
+          </div>
+        </dl>
+      </div>
+
+      <div class="step-actions">
+        <button class="btn btn-outline-secondary" type="button" data-prev>Back</button>
+        <button class="btn btn-primary" type="submit">Send request</button>
+      </div>
+    </section>
+  </form>
+
+  <script>
+    (() => {
+      const app = document.querySelector(".booking-app");
+      if (!app) return;
+
+      const steps = [...app.querySelectorAll("[data-step]")];
+      const progress = [...app.querySelectorAll("[data-progress-step]")];
+      const serviceInput = document.getElementById("id_service");
+      const dateInput = document.getElementById("id_date");
+      const startTimeInput = document.getElementById("id_start_time");
+      const slotGrid = app.querySelector("[data-slot-grid]");
+      const slotsUrl = app.dataset.slotsUrl;
+      let currentStep = 1;
+      let selectedService = "";
+      let selectedSlotLabel = "";
+
+      function showStep(stepNumber) {
+        currentStep = Math.max(1, Math.min(steps.length, stepNumber));
+        steps.forEach((step) => step.classList.toggle("is-active", Number(step.dataset.step) === currentStep));
+        progress.forEach((item) => item.classList.toggle("is-active", Number(item.dataset.progressStep) <= currentStep));
+        if (currentStep === 7) updateReview();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      function canMove(requirement) {
+        if (requirement === "service") return Boolean(serviceInput.value);
+        if (requirement === "date") return Boolean(dateInput.value);
+        if (requirement === "slot") return Boolean(startTimeInput.value);
+        return true;
+      }
+
+      async function loadSlots() {
+        startTimeInput.value = "";
+        selectedSlotLabel = "";
+        slotGrid.innerHTML = '<p class="text-muted mb-0">Loading available times...</p>';
+
+        if (!serviceInput.value || !dateInput.value) {
+          slotGrid.innerHTML = '<p class="text-muted mb-0">Choose a service and date first.</p>';
+          return;
+        }
+
+        const url = `${slotsUrl}?service=${encodeURIComponent(serviceInput.value)}&date=${encodeURIComponent(dateInput.value)}`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (!data.slots.length) {
+          slotGrid.innerHTML = '<p class="text-muted mb-0">No available times for this date. Please choose another date.</p>';
+          return;
+        }
+
+        slotGrid.innerHTML = "";
+        data.slots.forEach((slot) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "slot-choice";
+          button.textContent = slot.label;
+          button.dataset.slotValue = slot.value;
+          button.dataset.slotLabel = slot.label;
+          slotGrid.appendChild(button);
+        });
+      }
+
+      function updateReview() {
+        app.querySelector("[data-review-service]").textContent = selectedService || "Not selected";
+        app.querySelector("[data-review-date]").textContent = dateInput.value || "Not selected";
+        app.querySelector("[data-review-time]").textContent = selectedSlotLabel || "Not selected";
+        app.querySelector("[data-review-name]").textContent = document.getElementById("id_full_name").value || "Not entered";
+      }
+
+      app.addEventListener("click", (event) => {
+        const serviceButton = event.target.closest(".service-choice");
+        if (serviceButton) {
+          app.querySelectorAll(".service-choice").forEach((button) => button.classList.remove("is-selected"));
+          serviceButton.classList.add("is-selected");
+          serviceInput.value = serviceButton.dataset.serviceId;
+          selectedService = serviceButton.dataset.serviceName;
+          loadSlots();
+          return;
+        }
+
+        const slotButton = event.target.closest(".slot-choice");
+        if (slotButton) {
+          app.querySelectorAll(".slot-choice").forEach((button) => button.classList.remove("is-selected"));
+          slotButton.classList.add("is-selected");
+          startTimeInput.value = slotButton.dataset.slotValue;
+          selectedSlotLabel = slotButton.dataset.slotLabel;
+          return;
+        }
+
+        const nextButton = event.target.closest("[data-next]");
+        if (nextButton) {
+          const requirement = nextButton.dataset.requires;
+          if (canMove(requirement)) showStep(currentStep + 1);
+          return;
+        }
+
+        if (event.target.closest("[data-prev]")) showStep(currentStep - 1);
+      });
+
+      dateInput.addEventListener("change", loadSlots);
+      showStep(1);
+    })();
+  </script>
 {% endblock %}
