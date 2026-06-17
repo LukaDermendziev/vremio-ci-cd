@@ -1,359 +1,561 @@
 {% extends "base.html" %}
-
 {% block title %}Book {{ salon.name }}{% endblock %}
-{% block body_class %}customer-booking-page{% endblock %}
+{% block body_class %}bk-page{% endblock %}
 
 {% block content %}
-  <form
-    method="post"
-    enctype="multipart/form-data"
-    class="booking-app"
-    data-slots-url="{% url 'booking:available_slots' salon.slug %}"
-    novalidate
-  >
-    {% csrf_token %}
-    {{ form.service }}
-    {{ form.start_time }}
+<form
+  class="bk-form"
+  method="post"
+  enctype="multipart/form-data"
+  data-slots-url="{% url 'booking:available_slots' salon.slug %}"
+  data-min-date="{{ min_date }}"
+  data-max-date="{{ max_date }}"
+  novalidate
+>
+  {% csrf_token %}
+  {{ form.service }}
+  {{ form.start_time }}
+  {{ form.date }}
+  {{ form.preferred_contact_method }}
 
-    {% if form.errors %}
-      <div class="alert alert-danger">
-        Please check the highlighted fields and choose an available time.
+  {% if form.errors %}
+    <div class="bk-error-banner">
+      Something went wrong. Please check your details and choose an available time.
+    </div>
+  {% endif %}
+
+  {# ── Step 1: Service selection ─────────────────────────────────────────── #}
+  <div class="bk-step active" data-step="1">
+    <div class="bk-brand-header">
+      <div class="bk-salon-name">{{ salon.name }}</div>
+      <div class="bk-salon-sub">Book Your Appointment</div>
+    </div>
+    <div class="bk-divider"></div>
+
+    <div class="bk-section-label">Choose service</div>
+
+    {% for service in services %}
+      <button
+        type="button"
+        class="bk-service-row"
+        data-service-id="{{ service.id }}"
+        data-service-name="{{ service.name }}"
+        data-service-duration="{{ service.duration_minutes }}"
+        data-service-price="{{ service.base_price }}"
+        data-requires-photo="{{ service.requires_photo|yesno:'true,false' }}"
+        data-photo-recommended="{{ service.photo_recommended|yesno:'true,false' }}"
+      >
+        <div class="bk-service-info">
+          <div class="bk-service-name">{{ service.name }}</div>
+          <div class="bk-service-meta">{{ service.duration_minutes }} min&nbsp;&nbsp;|&nbsp;&nbsp;{{ service.base_price }} ден</div>
+          {% if service.extra_duration_note %}
+            <div class="bk-service-meta" style="font-style:italic">{{ service.extra_duration_note }}</div>
+          {% endif %}
+          {% if service.requires_photo %}
+            <span class="bk-photo-tag">Photo required</span>
+          {% elif service.photo_recommended %}
+            <span class="bk-photo-tag">Photo recommended</span>
+          {% endif %}
+        </div>
+        <span class="bk-chevron">›</span>
+      </button>
+    {% empty %}
+      <p style="color:#888;font-size:14px;margin-top:12px">No active services available yet.</p>
+    {% endfor %}
+  </div>
+
+  {# ── Step 2: Date & time ───────────────────────────────────────────────── #}
+  <div class="bk-step" data-step="2">
+    <div class="bk-step-header">
+      <button type="button" class="bk-back-btn" data-prev>‹</button>
+      <span class="bk-step-title">Choose Date &amp; Time</span>
+      <span class="bk-step-count">Step 1 of 3</span>
+    </div>
+    <div class="bk-divider"></div>
+
+    <div class="bk-service-pill" id="bk-svc-pill" style="display:none"></div>
+
+    <div class="bk-cal">
+      <div class="bk-cal-nav">
+        <button type="button" class="bk-cal-nav-btn" id="bk-prev-month">‹</button>
+        <span class="bk-cal-month-label" id="bk-month-label"></span>
+        <button type="button" class="bk-cal-nav-btn" id="bk-next-month">›</button>
       </div>
-    {% endif %}
-
-    <header class="booking-hero">
-      <p class="eyebrow">Online booking request</p>
-      <h1>{{ salon.name }}</h1>
-      <p>
-        Choose your service and preferred time. Your appointment is not confirmed
-        until the salon approves it.
-      </p>
-    </header>
-
-    <div class="booking-progress" aria-label="Booking steps">
-      <span class="is-active" data-progress-step="1"></span>
-      <span data-progress-step="2"></span>
-      <span data-progress-step="3"></span>
-      <span data-progress-step="4"></span>
-      <span data-progress-step="5"></span>
-      <span data-progress-step="6"></span>
-      <span data-progress-step="7"></span>
+      <div class="bk-cal-dow">
+        <span>Mon</span>
+        <span>Tue</span>
+        <span>Wed</span>
+        <span>Thu</span>
+        <span>Fri</span>
+        <span>Sat</span>
+        <span class="sun">Sun</span>
+      </div>
+      <div class="bk-cal-grid" id="bk-cal-grid"></div>
     </div>
 
-    <section class="booking-step is-active" data-step="1">
-      <p class="step-kicker">Step 1</p>
-      <h2>Welcome</h2>
-      <p class="text-muted">
-        This short flow helps the salon receive all details before approving
-        your appointment request.
-      </p>
-      <div class="selected-summary mt-4">
-        <span>Booking mode</span>
-        <strong>Request first, confirmation after approval</strong>
-      </div>
-      <button class="btn btn-primary btn-lg w-100 mt-4" type="button" data-next>
-        Start booking
-      </button>
-    </section>
+    <div class="bk-section-label" style="margin-top:0">Available Times</div>
+    <div class="bk-slots-grid" id="bk-slots-grid">
+      <span class="bk-slots-hint">Choose a date to see available times.</span>
+    </div>
 
-    <section class="booking-step" data-step="2">
-      <p class="step-kicker">Step 2</p>
-      <h2>Choose service</h2>
-      <p class="text-muted">Pick one service for this request.</p>
+    <div class="bk-summary-card" id="bk-summary-card" style="display:none">
+      <div class="bk-summary-svc" id="bk-sum-svc"></div>
+      <div class="bk-summary-meta" id="bk-sum-meta"></div>
+      <div class="bk-summary-price" id="bk-sum-price"></div>
+    </div>
 
-      <div class="service-card-grid mt-4">
-        {% for service in services %}
+    <button type="button" class="bk-btn-primary" id="bk-step2-next" disabled>
+      Continue
+    </button>
+  </div>
+
+  {# ── Step 3: Customer details ──────────────────────────────────────────── #}
+  <div class="bk-step" data-step="3">
+    <div class="bk-step-header">
+      <button type="button" class="bk-back-btn" data-prev>‹</button>
+      <span class="bk-step-title">Your Details</span>
+      <span class="bk-step-count">Step 2 of 3</span>
+    </div>
+    <div class="bk-divider"></div>
+
+    <div class="bk-field" style="margin-top:16px">
+      <label class="bk-field-label" for="{{ form.full_name.id_for_label }}">Full Name *</label>
+      {{ form.full_name }}
+      {% for err in form.full_name.errors %}<span class="bk-field-error">{{ err }}</span>{% endfor %}
+    </div>
+
+    <div class="bk-field">
+      <label class="bk-field-label" for="{{ form.phone_number.id_for_label }}">Phone Number *</label>
+      {{ form.phone_number }}
+      {% for err in form.phone_number.errors %}<span class="bk-field-error">{{ err }}</span>{% endfor %}
+    </div>
+
+    <div class="bk-field">
+      <label class="bk-field-label" for="{{ form.instagram_username.id_for_label }}">Instagram Username</label>
+      {{ form.instagram_username }}
+      {% for err in form.instagram_username.errors %}<span class="bk-field-error">{{ err }}</span>{% endfor %}
+    </div>
+
+    <div class="bk-field">
+      <label class="bk-field-label" for="{{ form.email.id_for_label }}">Email (optional)</label>
+      {{ form.email }}
+      {% for err in form.email.errors %}<span class="bk-field-error">{{ err }}</span>{% endfor %}
+    </div>
+
+    <div class="bk-field">
+      <div class="bk-field-label">Preferred Contact Method *</div>
+      <div class="bk-contact-pills">
+        {% for value, label in form.preferred_contact_method.field.choices %}
           <button
-            class="service-choice"
             type="button"
-            data-service-id="{{ service.id }}"
-            data-service-name="{{ service.name }}"
-            data-service-duration="{{ service.duration_minutes }}"
-            data-service-price="{{ service.base_price }}"
-          >
-            <span class="service-avatar">{{ service.name|first }}</span>
-            <span class="service-copy">
-              <strong>{{ service.name }}</strong>
-              {% if service.description %}
-                <small>{{ service.description }}</small>
-              {% endif %}
-              <span>{{ service.duration_minutes }} min</span>
-            </span>
-            <span class="service-price">
-              {% if service.base_price %}
-                {{ service.base_price }} MKD
-              {% else %}
-                Price by case
-              {% endif %}
-            </span>
-          </button>
-        {% empty %}
-          <p class="text-muted">No active services are available yet.</p>
+            class="bk-contact-pill{% if value == form.preferred_contact_method.value %} selected{% endif %}"
+            data-contact="{{ value }}"
+          >{{ label }}</button>
         {% endfor %}
       </div>
-      {% for error in form.service.errors %}
-        <div class="text-danger small mt-2">{{ error }}</div>
-      {% endfor %}
+    </div>
 
-      <div class="step-actions">
-        <button class="btn btn-outline-secondary" type="button" data-prev>Back</button>
-        <button class="btn btn-primary" type="button" data-next data-requires="service">Next</button>
-      </div>
-    </section>
-
-    <section class="booking-step" data-step="3">
-      <p class="step-kicker">Step 3</p>
-      <h2>Choose date</h2>
-      <p class="text-muted">Only dates allowed by salon policy will show available times.</p>
-
-      <div class="mt-4">
-        <label class="form-label" for="{{ form.date.id_for_label }}">Preferred date</label>
-        {{ form.date }}
-        {% for error in form.date.errors %}
-          <div class="text-danger small">{{ error }}</div>
-        {% endfor %}
-      </div>
-
-      <div class="step-actions">
-        <button class="btn btn-outline-secondary" type="button" data-prev>Back</button>
-        <button class="btn btn-primary" type="button" data-next data-requires="date">Next</button>
-      </div>
-    </section>
-
-    <section class="booking-step" data-step="4">
-      <p class="step-kicker">Step 4</p>
-      <h2>Choose available time</h2>
-      <p class="text-muted">These slots are calculated from the salon schedule and existing bookings.</p>
-
-      <div class="slot-panel mt-4">
-        <div class="slot-grid" data-slot-grid>
-          <p class="text-muted mb-0">Choose a service and date first.</p>
-        </div>
-      </div>
-      {% for error in form.start_time.errors %}
-        <div class="text-danger small mt-2">{{ error }}</div>
-      {% endfor %}
-
-      <div class="step-actions">
-        <button class="btn btn-outline-secondary" type="button" data-prev>Back</button>
-        <button class="btn btn-primary" type="button" data-next data-requires="slot">Next</button>
-      </div>
-    </section>
-
-    <section class="booking-step" data-step="5">
-      <p class="step-kicker">Step 5</p>
-      <h2>Your details</h2>
-      <p class="text-muted">The salon uses this information to review and contact you.</p>
-
-      <div class="row g-3 mt-2">
-        <div class="col-12">
-          <label class="form-label" for="{{ form.full_name.id_for_label }}">{{ form.full_name.label }}</label>
-          {{ form.full_name }}
-          {% for error in form.full_name.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
-        </div>
-        <div class="col-12">
-          <label class="form-label" for="{{ form.phone_number.id_for_label }}">{{ form.phone_number.label }}</label>
-          {{ form.phone_number }}
-          {% for error in form.phone_number.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
-        </div>
-        <div class="col-12">
-          <label class="form-label" for="{{ form.instagram_username.id_for_label }}">{{ form.instagram_username.label }}</label>
-          {{ form.instagram_username }}
-          {% for error in form.instagram_username.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
-        </div>
-        <div class="col-12">
-          <label class="form-label" for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
-          {{ form.email }}
-          {% for error in form.email.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
-        </div>
-        <div class="col-12">
-          <label class="form-label" for="{{ form.preferred_contact_method.id_for_label }}">{{ form.preferred_contact_method.label }}</label>
-          {{ form.preferred_contact_method }}
-          {% for error in form.preferred_contact_method.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
-        </div>
-      </div>
-
-      <div class="step-actions">
-        <button class="btn btn-outline-secondary" type="button" data-prev>Back</button>
-        <button class="btn btn-primary" type="button" data-next>Next</button>
-      </div>
-    </section>
-
-    <section class="booking-step" data-step="6">
-      <p class="step-kicker">Step 6</p>
-      <h2>Reference photo</h2>
-      <p class="text-muted">Upload a design or case photo if it helps the salon prepare.</p>
-
-      <label class="upload-zone mt-4" for="{{ form.reference_photo.id_for_label }}">
-        <span>Upload photo</span>
-        <strong>JPG, PNG, or similar image</strong>
+    <div class="bk-field" id="bk-photo-section">
+      <div class="bk-field-label">Reference Photo <span id="bk-photo-hint">(optional)</span></div>
+      <label class="bk-upload-zone" for="{{ form.reference_photo.id_for_label }}">
+        <span id="bk-upload-label">Tap to upload a photo</span>
         {{ form.reference_photo }}
       </label>
-      {% for error in form.reference_photo.errors %}
-        <div class="text-danger small">{{ error }}</div>
-      {% endfor %}
+      {% for err in form.reference_photo.errors %}<span class="bk-field-error">{{ err }}</span>{% endfor %}
+    </div>
 
-      <div class="step-actions">
-        <button class="btn btn-outline-secondary" type="button" data-prev>Back</button>
-        <button class="btn btn-primary" type="button" data-next>Next</button>
-      </div>
-    </section>
+    <div class="bk-field">
+      <label class="bk-field-label" for="{{ form.customer_note.id_for_label }}">{{ form.customer_note.label }}</label>
+      {{ form.customer_note }}
+      {% for err in form.customer_note.errors %}<span class="bk-field-error">{{ err }}</span>{% endfor %}
+    </div>
 
-    <section class="booking-step" data-step="7">
-      <p class="step-kicker">Step 7</p>
-      <h2>Rules and review</h2>
-      <p class="text-muted">Review the request before sending it to the salon.</p>
+    <button type="button" class="bk-btn-primary" id="bk-step3-next">Continue</button>
+  </div>
 
-      <div class="rules-box mt-4">
-        <strong>Salon rules</strong>
-        <ul class="mb-0 mt-2">
-          <li>The appointment is not confirmed until the salon approves it.</li>
-          <li>Appointments must follow the salon booking policy.</li>
-          <li>If you are more than 15 minutes late without notice, the appointment may be cancelled.</li>
-          <li>For certain services, a reference photo may be required.</li>
-        </ul>
-      </div>
+  {# ── Step 4: Review & submit ───────────────────────────────────────────── #}
+  <div class="bk-step" data-step="4">
+    <div class="bk-step-header">
+      <button type="button" class="bk-back-btn" data-prev>‹</button>
+      <span class="bk-step-title">Review &amp; Submit</span>
+      <span class="bk-step-count">Step 3 of 3</span>
+    </div>
+    <div class="bk-divider"></div>
 
-      <div class="form-check mt-4">
-        {{ form.rules_accepted }}
-        <label class="form-check-label" for="{{ form.rules_accepted.id_for_label }}">
-          {{ form.rules_accepted.label }}
-        </label>
-      </div>
-      {% for error in form.rules_accepted.errors %}
-        <div class="text-danger small">{{ error }}</div>
-      {% endfor %}
+    <p class="bk-section-label" style="margin-top:16px">Review request</p>
 
-      <div class="review-card mt-4">
-        <h3>Review request</h3>
-        <dl>
-          <div>
-            <dt>Service</dt>
-            <dd data-review-service>Not selected</dd>
-          </div>
-          <div>
-            <dt>Date</dt>
-            <dd data-review-date>Not selected</dd>
-          </div>
-          <div>
-            <dt>Time</dt>
-            <dd data-review-time>Not selected</dd>
-          </div>
-          <div>
-            <dt>Name</dt>
-            <dd data-review-name>Not entered</dd>
-          </div>
-        </dl>
-      </div>
+    <div class="bk-review-card">
+      <div class="bk-review-card-label">Booking Summary</div>
+      <div class="bk-review-svc"   id="bk-rev-svc"></div>
+      <div class="bk-review-meta"  id="bk-rev-date"></div>
+      <div class="bk-review-meta"  id="bk-rev-dur"></div>
+      <div class="bk-review-price" id="bk-rev-price"></div>
+    </div>
 
-      <div class="step-actions">
-        <button class="btn btn-outline-secondary" type="button" data-prev>Back</button>
-        <button class="btn btn-primary" type="submit">Send request</button>
-      </div>
-    </section>
-  </form>
+    <div class="bk-review-card">
+      <div class="bk-review-card-label">Your Details</div>
+      <div class="bk-review-meta" id="bk-rev-name"   style="font-weight:600;font-size:14px;color:#1a1a1a;margin-bottom:4px"></div>
+      <div class="bk-review-meta" id="bk-rev-phone"></div>
+      <div class="bk-review-meta" id="bk-rev-contact"></div>
+    </div>
 
-  <script>
-    (() => {
-      const app = document.querySelector(".booking-app");
-      if (!app) return;
+    <div style="margin-bottom:12px">
+      <div class="bk-section-label" style="margin-top:0">Salon Rules</div>
 
-      const steps = [...app.querySelectorAll("[data-step]")];
-      const progress = [...app.querySelectorAll("[data-progress-step]")];
-      const serviceInput = document.getElementById("id_service");
-      const dateInput = document.getElementById("id_date");
-      const startTimeInput = document.getElementById("id_start_time");
-      const slotGrid = app.querySelector("[data-slot-grid]");
-      const slotsUrl = app.dataset.slotsUrl;
-      let currentStep = 1;
-      let selectedService = "";
-      let selectedSlotLabel = "";
+      <label class="bk-rule-row">
+        <input type="checkbox" class="bk-rule-check">
+        <span class="bk-rule-box"><span class="bk-rule-tick">✓</span></span>
+        <span class="bk-rule-text">The appointment is not confirmed until the salon approves it.</span>
+      </label>
+      <label class="bk-rule-row">
+        <input type="checkbox" class="bk-rule-check">
+        <span class="bk-rule-box"><span class="bk-rule-tick">✓</span></span>
+        <span class="bk-rule-text">Cancellations require at least 24–48 hours notice.</span>
+      </label>
+      <label class="bk-rule-row">
+        <input type="checkbox" class="bk-rule-check">
+        <span class="bk-rule-box"><span class="bk-rule-tick">✓</span></span>
+        <span class="bk-rule-text">Being more than 15 minutes late without notice may result in cancellation.</span>
+      </label>
+      <label class="bk-rule-row">
+        <input type="checkbox" class="bk-rule-check">
+        <span class="bk-rule-box"><span class="bk-rule-tick">✓</span></span>
+        <span class="bk-rule-text">I agree to the selected time and understand it cannot be changed without notice.</span>
+      </label>
 
-      function showStep(stepNumber) {
-        currentStep = Math.max(1, Math.min(steps.length, stepNumber));
-        steps.forEach((step) => step.classList.toggle("is-active", Number(step.dataset.step) === currentStep));
-        progress.forEach((item) => item.classList.toggle("is-active", Number(item.dataset.progressStep) <= currentStep));
-        if (currentStep === 7) updateReview();
-        window.scrollTo({ top: 0, behavior: "smooth" });
+      {# Hidden rules_accepted field — checked by JS when all 4 are ticked #}
+      <div style="display:none">{{ form.rules_accepted }}</div>
+      {% for err in form.rules_accepted.errors %}<span class="bk-field-error">{{ err }}</span>{% endfor %}
+    </div>
+
+    <div class="bk-warning">
+      <span>⚠</span>
+      <span>This is a request only — not confirmed until the salon approves it.</span>
+    </div>
+
+    <button type="submit" class="bk-btn-primary" id="bk-submit" disabled>
+      Submit Booking Request
+    </button>
+  </div>
+
+</form>
+
+<div class="bk-dots">
+  <div class="bk-dot active" data-dot="1"></div>
+  <div class="bk-dot" data-dot="2"></div>
+  <div class="bk-dot" data-dot="3"></div>
+  <div class="bk-dot" data-dot="4"></div>
+</div>
+
+<script>
+(() => {
+  // ── State ────────────────────────────────────────────────────────────────
+  const state = {
+    step: 1,
+    service: null,   // { id, name, duration, price, requiresPhoto, photoRecommended }
+    date: null,      // "YYYY-MM-DD"
+    slot: null,      // { value: "HH:MM", label: "HH:MM - HH:MM" }
+    calYear: 0,
+    calMonth: 0,
+  };
+
+  // ── DOM ──────────────────────────────────────────────────────────────────
+  const form        = document.querySelector('.bk-form');
+  const steps       = [...document.querySelectorAll('[data-step]')];
+  const dots        = [...document.querySelectorAll('[data-dot]')];
+  const svcInput    = document.getElementById('id_service');
+  const dateInput   = document.getElementById('id_date');
+  const timeInput   = document.getElementById('id_start_time');
+  const contactInput= document.getElementById('id_preferred_contact_method');
+  const calGrid     = document.getElementById('bk-cal-grid');
+  const monthLabel  = document.getElementById('bk-month-label');
+  const slotsGrid   = document.getElementById('bk-slots-grid');
+  const slotsUrl    = form.dataset.slotsUrl;
+
+  // Parse date strings as local time (avoids UTC-offset issues)
+  function parseLocalDate(str) {
+    const [y, m, d] = str.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  }
+
+  const minDate = parseLocalDate(form.dataset.minDate);
+  const maxDate = parseLocalDate(form.dataset.maxDate);
+  const today   = new Date(); today.setHours(0, 0, 0, 0);
+
+  state.calYear  = minDate.getFullYear();
+  state.calMonth = minDate.getMonth();
+
+  // ── Navigation ───────────────────────────────────────────────────────────
+  function goTo(n) {
+    state.step = n;
+    steps.forEach(s => s.classList.toggle('active', +s.dataset.step === n));
+    dots.forEach(d  => d.classList.toggle('active',  +d.dataset.dot  === n));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── Calendar ─────────────────────────────────────────────────────────────
+  const MONTHS = ['January','February','March','April','May','June',
+                  'July','August','September','October','November','December'];
+
+  function renderCalendar() {
+    const y = state.calYear;
+    const m = state.calMonth;
+    monthLabel.textContent = `${MONTHS[m]} ${y}`;
+
+    // Monday-first offset: (0=Sun becomes 6, 1=Mon becomes 0, ...)
+    const startOffset = (new Date(y, m, 1).getDay() + 6) % 7;
+    const totalDays   = new Date(y, m + 1, 0).getDate();
+
+    calGrid.innerHTML = '';
+
+    for (let i = 0; i < startOffset; i++) {
+      calGrid.appendChild(document.createElement('div'));
+    }
+
+    for (let d = 1; d <= totalDays; d++) {
+      const dt      = new Date(y, m, d);
+      const dateStr = formatDateStr(dt);
+      const isSun   = dt.getDay() === 0;
+      const isPast  = dt < minDate;
+      const isFar   = dt > maxDate;
+      const disabled = isSun || isPast || isFar;
+
+      const btn = document.createElement('button');
+      btn.type      = 'button';
+      btn.className = 'bk-cal-day' + (disabled ? ' disabled' : '') + (state.date === dateStr ? ' selected' : '');
+      btn.textContent = d;
+      btn.disabled  = disabled;
+
+      if (!disabled) {
+        btn.addEventListener('click', () => pickDate(dateStr));
+      }
+      calGrid.appendChild(btn);
+    }
+  }
+
+  function formatDateStr(dt) {
+    const y = dt.getFullYear();
+    const m = String(dt.getMonth() + 1).padStart(2, '0');
+    const d = String(dt.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  function formatDateDisplay(str) {
+    const d = parseLocalDate(str);
+    const days   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return `${days[d.getDay()]}, ${months[d.getMonth()]} ${d.getDate()}`;
+  }
+
+  // ── Slot loading ─────────────────────────────────────────────────────────
+  async function fetchSlots() {
+    if (!state.service || !state.date) return;
+    slotsGrid.innerHTML = '<span class="bk-slots-hint">Loading times...</span>';
+
+    const url = `${slotsUrl}?service=${encodeURIComponent(state.service.id)}&date=${encodeURIComponent(state.date)}`;
+    try {
+      const res  = await fetch(url);
+      const data = await res.json();
+      renderSlots(data.slots || []);
+    } catch {
+      slotsGrid.innerHTML = '<span class="bk-slots-hint">Could not load times. Please try again.</span>';
+    }
+  }
+
+  function renderSlots(slots) {
+    slotsGrid.innerHTML = '';
+    if (!slots.length) {
+      slotsGrid.innerHTML = '<span class="bk-slots-hint">No times available on this date. Choose another date.</span>';
+      return;
+    }
+    slots.forEach(slot => {
+      const btn = document.createElement('button');
+      btn.type           = 'button';
+      btn.className      = 'bk-slot';
+      btn.textContent    = slot.label;
+      btn.dataset.value  = slot.value;
+      btn.dataset.label  = slot.label;
+      btn.addEventListener('click', () => pickSlot(slot));
+      slotsGrid.appendChild(btn);
+    });
+  }
+
+  // ── Pickers ──────────────────────────────────────────────────────────────
+  function pickDate(dateStr) {
+    state.date = dateStr;
+    state.slot = null;
+    timeInput.value = '';
+    dateInput.value = dateStr;
+    renderCalendar();
+    fetchSlots();
+    refreshStep2UI();
+  }
+
+  function pickSlot(slot) {
+    state.slot      = slot;
+    timeInput.value = slot.value;
+    document.querySelectorAll('.bk-slot').forEach(b => b.classList.remove('selected'));
+    document.querySelector(`.bk-slot[data-value="${slot.value}"]`)?.classList.add('selected');
+    refreshStep2UI();
+  }
+
+  function refreshStep2UI() {
+    const pill = document.getElementById('bk-svc-pill');
+    if (state.service) {
+      pill.textContent = `${state.service.name}  ·  ${state.service.duration} min  ·  ${state.service.price} ден`;
+      pill.style.display = 'block';
+    }
+
+    const card    = document.getElementById('bk-summary-card');
+    const nextBtn = document.getElementById('bk-step2-next');
+
+    if (state.date && state.slot) {
+      document.getElementById('bk-sum-svc').textContent   = state.service.name;
+      document.getElementById('bk-sum-meta').textContent  = `${formatDateDisplay(state.date)}  ·  ${state.slot.label}`;
+      document.getElementById('bk-sum-price').textContent = `${state.service.price} ден`;
+      card.style.display    = 'block';
+      nextBtn.disabled = false;
+    } else {
+      card.style.display = 'none';
+      nextBtn.disabled   = true;
+    }
+  }
+
+  // ── Review update ────────────────────────────────────────────────────────
+  function updateReview() {
+    if (!state.service || !state.date || !state.slot) return;
+
+    const nameEl    = document.getElementById('id_full_name');
+    const phoneEl   = document.getElementById('id_phone_number');
+    const selectedPill = document.querySelector('.bk-contact-pill.selected');
+
+    document.getElementById('bk-rev-svc').textContent    = state.service.name;
+    document.getElementById('bk-rev-date').textContent   = `${formatDateDisplay(state.date)}  ·  ${state.slot.label}`;
+    document.getElementById('bk-rev-dur').textContent    = `Duration: ${state.service.duration} min`;
+    document.getElementById('bk-rev-price').textContent  = `${state.service.price} ден`;
+    document.getElementById('bk-rev-name').textContent   = nameEl?.value || '';
+    document.getElementById('bk-rev-phone').textContent  = phoneEl?.value || '';
+    document.getElementById('bk-rev-contact').textContent = selectedPill ? `Via ${selectedPill.textContent}` : '';
+  }
+
+  // ── Rules & submit ───────────────────────────────────────────────────────
+  function refreshSubmit() {
+    const checks      = [...document.querySelectorAll('.bk-rule-check')];
+    const allDone     = checks.every(c => c.checked);
+    const rulesField  = document.getElementById('id_rules_accepted');
+    const submitBtn   = document.getElementById('bk-submit');
+    if (rulesField) rulesField.checked = allDone;
+    submitBtn.disabled = !allDone;
+  }
+
+  // ── Step 3 validation ────────────────────────────────────────────────────
+  function canAdvanceFromDetails() {
+    const name  = document.getElementById('id_full_name')?.value.trim();
+    const phone = document.getElementById('id_phone_number')?.value.trim();
+    return Boolean(name && phone);
+  }
+
+  // ── Event delegation ─────────────────────────────────────────────────────
+  document.addEventListener('click', e => {
+
+    // Service row → pick service, advance to step 2
+    const svcRow = e.target.closest('.bk-service-row');
+    if (svcRow) {
+      state.service = {
+        id:               svcRow.dataset.serviceId,
+        name:             svcRow.dataset.serviceName,
+        duration:         svcRow.dataset.serviceDuration,
+        price:            svcRow.dataset.servicePrice,
+        requiresPhoto:    svcRow.dataset.requiresPhoto === 'true',
+        photoRecommended: svcRow.dataset.photoRecommended === 'true',
+      };
+      svcInput.value = state.service.id;
+      state.date = null;
+      state.slot = null;
+      timeInput.value = '';
+
+      // Update photo hint label
+      const hint = document.getElementById('bk-photo-hint');
+      if (hint) {
+        hint.textContent = state.service.requiresPhoto   ? '(required)'
+                         : state.service.photoRecommended ? '(recommended)'
+                         : '(optional)';
       }
 
-      function canMove(requirement) {
-        if (requirement === "service") return Boolean(serviceInput.value);
-        if (requirement === "date") return Boolean(dateInput.value);
-        if (requirement === "slot") return Boolean(startTimeInput.value);
-        return true;
+      goTo(2);
+      renderCalendar();
+      refreshStep2UI();
+      return;
+    }
+
+    // Back button
+    if (e.target.closest('[data-prev]')) {
+      goTo(state.step - 1);
+      if (state.step === 2) renderCalendar();
+      return;
+    }
+
+    // Step 2 Continue
+    if (e.target === document.getElementById('bk-step2-next')) {
+      if (state.slot) goTo(3);
+      return;
+    }
+
+    // Step 3 Continue
+    if (e.target === document.getElementById('bk-step3-next')) {
+      if (!canAdvanceFromDetails()) {
+        if (!document.getElementById('id_full_name')?.value.trim()) {
+          document.getElementById('id_full_name')?.focus();
+        } else {
+          document.getElementById('id_phone_number')?.focus();
+        }
+        return;
       }
+      updateReview();
+      goTo(4);
+      return;
+    }
 
-      async function loadSlots() {
-        startTimeInput.value = "";
-        selectedSlotLabel = "";
-        slotGrid.innerHTML = '<p class="text-muted mb-0">Loading available times...</p>';
+    // Contact pills
+    const pill = e.target.closest('.bk-contact-pill');
+    if (pill) {
+      document.querySelectorAll('.bk-contact-pill').forEach(p => p.classList.remove('selected'));
+      pill.classList.add('selected');
+      if (contactInput) contactInput.value = pill.dataset.contact;
+      return;
+    }
+  });
 
-        if (!serviceInput.value || !dateInput.value) {
-          slotGrid.innerHTML = '<p class="text-muted mb-0">Choose a service and date first.</p>';
-          return;
-        }
-
-        const url = `${slotsUrl}?service=${encodeURIComponent(serviceInput.value)}&date=${encodeURIComponent(dateInput.value)}`;
-        const response = await fetch(url);
-        const data = await response.json();
-
-        if (!data.slots.length) {
-          slotGrid.innerHTML = '<p class="text-muted mb-0">No available times for this date. Please choose another date.</p>';
-          return;
-        }
-
-        slotGrid.innerHTML = "";
-        data.slots.forEach((slot) => {
-          const button = document.createElement("button");
-          button.type = "button";
-          button.className = "slot-choice";
-          button.textContent = slot.label;
-          button.dataset.slotValue = slot.value;
-          button.dataset.slotLabel = slot.label;
-          slotGrid.appendChild(button);
-        });
+  // File upload label update
+  const fileInput = document.getElementById('id_reference_photo');
+  if (fileInput) {
+    fileInput.addEventListener('change', () => {
+      const label = document.getElementById('bk-upload-label');
+      if (label) {
+        label.textContent = fileInput.files?.[0]?.name || 'Tap to upload a photo';
       }
+    });
+  }
 
-      function updateReview() {
-        app.querySelector("[data-review-service]").textContent = selectedService || "Not selected";
-        app.querySelector("[data-review-date]").textContent = dateInput.value || "Not selected";
-        app.querySelector("[data-review-time]").textContent = selectedSlotLabel || "Not selected";
-        app.querySelector("[data-review-name]").textContent = document.getElementById("id_full_name").value || "Not entered";
-      }
+  // Rule checkboxes
+  document.querySelectorAll('.bk-rule-check').forEach(cb => {
+    cb.addEventListener('change', refreshSubmit);
+  });
 
-      app.addEventListener("click", (event) => {
-        const serviceButton = event.target.closest(".service-choice");
-        if (serviceButton) {
-          app.querySelectorAll(".service-choice").forEach((button) => button.classList.remove("is-selected"));
-          serviceButton.classList.add("is-selected");
-          serviceInput.value = serviceButton.dataset.serviceId;
-          selectedService = serviceButton.dataset.serviceName;
-          loadSlots();
-          return;
-        }
+  // Calendar month navigation
+  document.getElementById('bk-prev-month')?.addEventListener('click', () => {
+    if (state.calMonth === 0) { state.calMonth = 11; state.calYear--; }
+    else state.calMonth--;
+    renderCalendar();
+  });
+  document.getElementById('bk-next-month')?.addEventListener('click', () => {
+    if (state.calMonth === 11) { state.calMonth = 0; state.calYear++; }
+    else state.calMonth++;
+    renderCalendar();
+  });
 
-        const slotButton = event.target.closest(".slot-choice");
-        if (slotButton) {
-          app.querySelectorAll(".slot-choice").forEach((button) => button.classList.remove("is-selected"));
-          slotButton.classList.add("is-selected");
-          startTimeInput.value = slotButton.dataset.slotValue;
-          selectedSlotLabel = slotButton.dataset.slotLabel;
-          return;
-        }
-
-        const nextButton = event.target.closest("[data-next]");
-        if (nextButton) {
-          const requirement = nextButton.dataset.requires;
-          if (canMove(requirement)) showStep(currentStep + 1);
-          return;
-        }
-
-        if (event.target.closest("[data-prev]")) showStep(currentStep - 1);
-      });
-
-      dateInput.addEventListener("change", loadSlots);
-      showStep(1);
-    })();
-  </script>
+  // ── Init ─────────────────────────────────────────────────────────────────
+  goTo(1);
+})();
+</script>
 {% endblock %}

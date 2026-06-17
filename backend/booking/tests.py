@@ -11,9 +11,10 @@ from .models import (
     DateWorkingHoursOverride,
     Salon,
     Service,
+    UnavailableTimeBlock,
     WorkingHours,
 )
-from .services import calculate_available_slots
+from .services import get_available_slots
 
 
 class BookingSmokeTests(TestCase):
@@ -109,6 +110,10 @@ class AvailabilityTests(TestCase):
             buffer_minutes_between_bookings=0,
         )
         self.selected_date = timezone.localdate() + timedelta(days=7)
+        self.now = timezone.make_aware(
+            datetime.combine(timezone.localdate(), time(7, 0)),
+            timezone.get_current_timezone(),
+        )
         WorkingHours.objects.create(
             salon=self.salon,
             weekday=self.selected_date.weekday(),
@@ -123,69 +128,233 @@ class AvailabilityTests(TestCase):
             instagram_username="test_customer",
         )
 
-    def test_recalculates_slots_after_longer_booking(self):
-        Booking.objects.create(
-            salon=self.salon,
-            customer=self.customer,
-            status=Booking.Status.APPROVED,
-            source=Booking.Source.OWNER_MANUAL,
-            start_at=self._aware_at(12, 0),
-            end_at=self._aware_at(14, 45),
-            total_duration_minutes=165,
-        )
+    def test_closed_day_returns_no_slots(self):
+        sunday = self._next_sunday()
 
-        slots = calculate_available_slots(
+        slots = get_available_slots(
             self.salon,
             self.service,
-            self.selected_date,
-            now=self._aware_at(7, 0),
-        )
-        values = {slot["value"] for slot in slots}
-
-        self.assertNotIn("14:30", values)
-        self.assertIn("15:00", values)
-        self.assertIn("15:30", values)
-        self.assertIn("16:00", values)
-
-    def test_pending_booking_holds_slot_when_policy_enabled(self):
-        Booking.objects.create(
-            salon=self.salon,
-            customer=self.customer,
-            status=Booking.Status.PENDING,
-            source=Booking.Source.OWNER_MANUAL,
-            start_at=self._aware_at(10, 0),
-            end_at=self._aware_at(12, 0),
-            total_duration_minutes=120,
+            sunday,
+            now=self.now,
         )
 
-        slots = calculate_available_slots(
-            self.salon,
-            self.service,
-            self.selected_date,
-            now=self._aware_at(7, 0),
-        )
-        values = {slot["value"] for slot in slots}
+        self.assertEqual(slots, [])
 
-        self.assertNotIn("10:00", values)
-
-    def test_closed_date_override_has_no_slots(self):
+    def test_date_working_hours_override_closed_returns_no_slots(self):
         DateWorkingHoursOverride.objects.create(
             salon=self.salon,
             date=self.selected_date,
             mode=DateWorkingHoursOverride.Mode.CLOSED,
         )
 
-        slots = calculate_available_slots(
+        self.assertEqual(self._slot_values(), set())
+
+    def test_custom_working_hours_are_respected(self):
+        DateWorkingHoursOverride.objects.create(
+            salon=self.salon,
+            date=self.selected_date,
+            mode=DateWorkingHoursOverride.Mode.CUSTOM_HOURS,
+            custom_start_time=time(10, 0),
+            custom_end_time=time(15, 0),
+        )
+
+        values = self._slot_values()
+
+        self.assertIn("10:00", values)
+        self.assertIn("13:00", values)
+        self.assertNotIn("09:30", values)
+        self.assertNotIn("13:30", values)
+
+    def test_unavailable_time_block_removes_overlapping_slots(self):
+        UnavailableTimeBlock.objects.create(
+            salon=self.salon,
+            date=self.selected_date,
+            start_time=time(12, 0),
+            end_time=time(14, 45),
+        )
+
+        values = self._slot_values()
+
+        self.assertIn("10:00", values)
+        self.assertNotIn("10:30", values)
+        self.assertNotIn("14:30", values)
+        self.assertIn("15:00", values)
+
+    def test_approved_booking_blocks_overlapping_slots(self):
+        self._create_booking(Booking.Status.APPROVED, 12, 0, 14, 0)
+
+        values = self._slot_values()
+
+        self.assertIn("10:00", values)
+        self.assertNotIn("10:30", values)
+        self.assertNotIn("12:00", values)
+        self.assertIn("14:00", values)
+
+    def test_pending_booking_blocks_slots_when_policy_enabled(self):
+        self._create_booking(Booking.Status.PENDING, 10, 0, 12, 0)
+
+        values = self._slot_values()
+
+        self.assertIn("08:00", values)
+        self.assertNotIn("08:30", values)
+        self.assertNotIn("10:00", values)
+        self.assertIn("12:00", values)
+
+    def test_pending_booking_does_not_block_slots_when_policy_disabled(self):
+        policy = self.salon.booking_policy
+        policy.pending_holds_slot = False
+        policy.save()
+        self._create_booking(Booking.Status.PENDING, 10, 0, 12, 0)
+
+        values = self._slot_values()
+
+        self.assertIn("10:00", values)
+
+    def test_service_duration_affects_available_slots(self):
+        self.service.duration_minutes = 180
+        self.service.save()
+        DateWorkingHoursOverride.objects.create(
+            salon=self.salon,
+            date=self.selected_date,
+            mode=DateWorkingHoursOverride.Mode.CUSTOM_HOURS,
+            custom_start_time=time(8, 0),
+            custom_end_time=time(12, 0),
+        )
+
+        values = self._slot_values()
+
+        self.assertEqual(values, {"08:00", "08:30", "09:00"})
+
+    def test_slot_interval_controls_start_times(self):
+        policy = self.salon.booking_policy
+        policy.slot_interval_minutes = 45
+        policy.save()
+        self.service.duration_minutes = 30
+        self.service.save()
+        DateWorkingHoursOverride.objects.create(
+            salon=self.salon,
+            date=self.selected_date,
+            mode=DateWorkingHoursOverride.Mode.CUSTOM_HOURS,
+            custom_start_time=time(8, 0),
+            custom_end_time=time(10, 0),
+        )
+
+        values = self._slot_values()
+
+        self.assertEqual(values, {"08:00", "08:45", "09:30"})
+
+    def test_buffer_time_between_bookings_is_respected(self):
+        policy = self.salon.booking_policy
+        policy.buffer_minutes_between_bookings = 15
+        policy.save()
+        self._create_booking(Booking.Status.APPROVED, 12, 0, 14, 0)
+
+        values = self._slot_values()
+
+        self.assertIn("09:30", values)
+        self.assertNotIn("10:00", values)
+        self.assertNotIn("14:00", values)
+        self.assertIn("14:30", values)
+
+    def test_minimum_booking_notice_is_respected(self):
+        policy = self.salon.booking_policy
+        policy.minimum_notice_days = 14
+        policy.save()
+        too_soon = self._next_non_sunday(timezone.localdate() + timedelta(days=1))
+
+        slots = get_available_slots(
             self.salon,
             self.service,
-            self.selected_date,
-            now=self._aware_at(7, 0),
+            too_soon,
+            now=self.now,
         )
 
         self.assertEqual(slots, [])
 
-    def _aware_at(self, hour, minute):
+    def test_maximum_booking_window_is_respected(self):
+        policy = self.salon.booking_policy
+        policy.maximum_booking_window_days = 10
+        policy.save()
+        too_far = self._next_non_sunday(timezone.localdate() + timedelta(days=11))
+
+        slots = get_available_slots(
+            self.salon,
+            self.service,
+            too_far,
+            now=self.now,
+        )
+
+        self.assertEqual(slots, [])
+
+    def test_edited_longer_booking_blocks_later_possible_slots_correctly(self):
+        self._create_booking(Booking.Status.APPROVED, 12, 0, 14, 45)
+
+        values = self._slot_values()
+
+        self.assertEqual(
+            values,
+            {
+                "08:00",
+                "08:30",
+                "09:00",
+                "09:30",
+                "10:00",
+                "15:00",
+                "15:30",
+                "16:00",
+            },
+        )
+
+    def test_legacy_calculate_available_slots_alias_still_works(self):
+        from .services import calculate_available_slots
+
+        slots = calculate_available_slots(
+            self.salon,
+            self.service,
+            self.selected_date,
+            now=self.now,
+        )
+
+        self.assertTrue(slots)
+
+    def _slot_values(self):
+        slots = get_available_slots(
+            self.salon,
+            self.service,
+            self.selected_date,
+            now=self.now,
+        )
+        return {slot["value"] for slot in slots}
+
+    def _create_booking(self, status, start_hour, start_minute, end_hour, end_minute):
+        Booking.objects.create(
+            salon=self.salon,
+            customer=self.customer,
+            status=status,
+            source=Booking.Source.OWNER_MANUAL,
+            start_at=self._aware_at(start_hour, start_minute),
+            end_at=self._aware_at(end_hour, end_minute),
+            total_duration_minutes=(
+                (end_hour * 60 + end_minute) - (start_hour * 60 + start_minute)
+            ),
+        )
+
+    def _aware_at(self, hour, minute, selected_date=None):
+        if selected_date is None:
+            selected_date = self.selected_date
+
         return timezone.make_aware(
-            datetime.combine(self.selected_date, time(hour, minute)),
+            datetime.combine(selected_date, time(hour, minute)),
             timezone.get_current_timezone(),
         )
+
+    def _next_sunday(self):
+        selected_date = timezone.localdate()
+        while selected_date.weekday() != WorkingHours.Weekday.SUNDAY:
+            selected_date += timedelta(days=1)
+        return selected_date
+
+    def _next_non_sunday(self, selected_date):
+        while selected_date.weekday() == WorkingHours.Weekday.SUNDAY:
+            selected_date += timedelta(days=1)
+        return selected_date

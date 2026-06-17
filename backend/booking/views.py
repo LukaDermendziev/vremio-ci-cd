@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime, timedelta
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -11,7 +11,7 @@ from django.views.decorators.http import require_GET
 
 from .forms import BookingRequestForm
 from .models import Booking, Service, Salon
-from .services import calculate_available_slots
+from .services import get_available_slots
 
 
 def home(request):
@@ -97,6 +97,10 @@ def owner_dashboard(request):
 
 def book_salon(request, salon_slug):
     salon = get_object_or_404(Salon, slug=salon_slug, is_active=True)
+    policy = getattr(salon, "booking_policy", None)
+    today = date.today()
+    min_notice = policy.minimum_notice_days if policy else 14
+    max_window = policy.maximum_booking_window_days if policy else 60
 
     if request.method == "POST":
         form = BookingRequestForm(request.POST, request.FILES, salon=salon)
@@ -113,6 +117,8 @@ def book_salon(request, salon_slug):
             "salon": salon,
             "form": form,
             "services": salon.services.filter(is_active=True),
+            "min_date": (today + timedelta(days=min_notice)).isoformat(),
+            "max_date": (today + timedelta(days=max_window)).isoformat(),
         },
     )
 
@@ -142,7 +148,7 @@ def available_slots(request, salon_slug):
     except ValueError:
         return JsonResponse({"slots": []})
 
-    slots = calculate_available_slots(salon, service, selected_date)
+    slots = get_available_slots(salon, service, selected_date)
 
     return JsonResponse(
         {

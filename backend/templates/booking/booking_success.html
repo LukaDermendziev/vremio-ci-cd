@@ -1,35 +1,39 @@
 {% extends "base.html" %}
-
-{% block title %}Request Sent{% endblock %}
-{% block body_class %}customer-booking-page{% endblock %}
+{% block title %}Request Sent — {{ booking.salon.name }}{% endblock %}
+{% block body_class %}bk-page{% endblock %}
 
 {% block content %}
-  <section class="success-shell">
-    <div class="success-mark">OK</div>
-    <p class="eyebrow">Request sent</p>
-    <h1>Your appointment request has been sent.</h1>
-    <p>
-      This is not a confirmed appointment yet. {{ booking.salon.name }} will
-      review your request and contact you.
-    </p>
+<div class="bk-success">
 
-    <div class="summary-list mt-4">
-      <div>
-        <span>Customer</span>
-        <strong>{{ booking.customer.full_name }}</strong>
-      </div>
-      <div>
-        <span>Date and time</span>
-        <strong>{{ booking.start_at|date:"M j, Y H:i" }}</strong>
-      </div>
-      <div>
-        <span>Status</span>
-        <strong>{{ booking.get_status_display }}</strong>
-      </div>
+  <div class="bk-success-icon">✓</div>
+
+  <div class="bk-success-title">Request Sent!</div>
+
+  <p class="bk-success-text">
+    Your booking request has been sent.<br>
+    The appointment is not confirmed yet.<br>
+    {{ booking.salon.name }} will review your request and contact you.
+  </p>
+
+  <div class="bk-success-summary">
+    <div class="bk-success-summary-label">Booking Summary</div>
+    <div class="bk-success-summary-svc">
+      {% for item in booking.booking_services.all %}
+        {{ item.service_name_snapshot }}{% if not forloop.last %}, {% endif %}
+      {% empty %}
+        Appointment
+      {% endfor %}
     </div>
+    <div class="bk-success-summary-meta">
+      {{ booking.start_at|date:"l, N j, Y" }}&nbsp;&nbsp;·&nbsp;&nbsp;{{ booking.start_at|date:"H:i" }} – {{ booking.end_at|date:"H:i" }}
+    </div>
+    <div class="bk-success-summary-meta">{{ booking.customer.full_name }}</div>
+    <div class="bk-success-status">Status: Pending Approval</div>
+  </div>
 
-    <a class="btn btn-outline-primary w-100 mt-4" href="{% url 'booking:book_salon' booking.salon.slug %}">
-      Send another request
-    </a>
-  </section>
+  <a class="bk-btn-outline" href="{% url 'booking:book_salon' booking.salon.slug %}">
+    Back to booking
+  </a>
+
+</div>
 {% endblock %}

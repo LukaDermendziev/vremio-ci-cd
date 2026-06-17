@@ -1,10 +1,9 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from django import forms
-from django.utils import timezone
 
 from .models import Booking, Customer, Service
-from .services import get_salon_timezone, is_slot_available
+from .services import is_slot_available
 
 
 class BookingRequestForm(forms.Form):
@@ -12,20 +11,27 @@ class BookingRequestForm(forms.Form):
         queryset=Service.objects.none(),
         widget=forms.HiddenInput(),
     )
-    date = forms.DateField(widget=forms.DateInput(attrs={"type": "date"}))
+    date = forms.DateField(widget=forms.HiddenInput())
     start_time = forms.CharField(widget=forms.HiddenInput())
-    full_name = forms.CharField(max_length=160, label="Name and surname")
-    phone_number = forms.CharField(max_length=30)
-    instagram_username = forms.CharField(max_length=80, label="Instagram")
-    email = forms.EmailField(required=False)
+    full_name = forms.CharField(max_length=160, label="Full Name")
+    phone_number = forms.CharField(max_length=30, label="Phone Number")
+    instagram_username = forms.CharField(max_length=80, label="Instagram Username")
+    email = forms.EmailField(required=False, label="Email (optional)")
     preferred_contact_method = forms.ChoiceField(
         choices=Customer.PreferredContactMethod.choices,
         initial=Customer.PreferredContactMethod.VIBER,
+        widget=forms.HiddenInput(),
+    )
+    customer_note = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 2, "placeholder": "Any notes for the salon..."}),
+        required=False,
+        label="Message to salon (optional)",
     )
     reference_photo = forms.ImageField(required=False)
     rules_accepted = forms.BooleanField(
         required=True,
         label="I accept the salon rules and understand this is only a request.",
+        widget=forms.CheckboxInput(attrs={"class": "bk-rules-hidden"}),
     )
 
     def __init__(self, *args, salon, **kwargs):
@@ -33,10 +39,12 @@ class BookingRequestForm(forms.Form):
         self.salon = salon
         self.fields["service"].queryset = salon.services.filter(is_active=True)
 
-        for field in self.fields.values():
-            field.widget.attrs.setdefault("class", "form-control")
-
-        self.fields["rules_accepted"].widget.attrs["class"] = "form-check-input"
+        self.fields["full_name"].widget.attrs["placeholder"] = "Marija Petrovska"
+        self.fields["phone_number"].widget.attrs.update(
+            {"placeholder": "+389 70 123 456", "type": "tel"}
+        )
+        self.fields["instagram_username"].widget.attrs["placeholder"] = "@username"
+        self.fields["email"].widget.attrs["placeholder"] = "email@example.com"
 
     def clean(self):
         cleaned_data = super().clean()
@@ -56,12 +64,8 @@ class BookingRequestForm(forms.Form):
                 )
                 return cleaned_data
 
-            parsed_time = datetime.strptime(start_time, "%H:%M").time()
-            naive_start = datetime.combine(date, parsed_time)
-            cleaned_data["start_at"] = timezone.make_aware(
-                naive_start,
-                get_salon_timezone(self.salon),
-            )
+            cleaned_data["start_at"] = slot["start"]
+            cleaned_data["end_at"] = slot["end"]
         elif date or service:
             self.add_error("start_time", "Please choose an available time.")
 
@@ -81,7 +85,9 @@ class BookingRequestForm(forms.Form):
 
         service = self.cleaned_data["service"]
         start_at = self.cleaned_data["start_at"]
-        end_at = start_at + timedelta(minutes=service.duration_minutes)
+        end_at = self.cleaned_data.get("end_at") or start_at + timedelta(
+            minutes=service.duration_minutes
+        )
         policy = getattr(self.salon, "booking_policy", None)
         status = Booking.Status.PENDING
 
@@ -98,6 +104,7 @@ class BookingRequestForm(forms.Form):
             source=Booking.Source.ONLINE,
             reference_photo=self.cleaned_data.get("reference_photo") or "",
             rules_accepted=self.cleaned_data["rules_accepted"],
+            customer_note=self.cleaned_data.get("customer_note", ""),
         )
         booking.save()
         booking.booking_services.create(

@@ -10,6 +10,61 @@ DEFAULT_START_TIME = time(8, 0)
 DEFAULT_END_TIME = time(18, 0)
 
 
+def get_available_slots(salon, service, selected_date, now=None):
+    if now is None:
+        now = timezone.now()
+
+    if not service or service.salon_id != salon.id:
+        return []
+
+    if not is_date_allowed(salon, selected_date, now=now):
+        return []
+
+    working_interval = get_working_interval_for_date(salon, selected_date)
+    if not working_interval:
+        return []
+
+    working_start, working_end = working_interval
+    service_duration = timedelta(minutes=service.duration_minutes)
+    slot_interval = timedelta(minutes=get_policy_value(salon, "slot_interval_minutes", 30))
+    if slot_interval.total_seconds() <= 0:
+        slot_interval = timedelta(minutes=30)
+
+    busy_intervals = get_busy_intervals_for_date(salon, selected_date)
+    candidates = generate_candidate_slots(
+        working_start=working_start,
+        working_end=working_end,
+        duration=service_duration,
+        slot_interval=slot_interval,
+    )
+
+    slots = []
+    for candidate_start, candidate_end in candidates:
+        if candidate_start < now:
+            continue
+
+        if any(
+            intervals_overlap(busy_start, busy_end, candidate_start, candidate_end)
+            for busy_start, busy_end in busy_intervals
+        ):
+            continue
+
+        slots.append(
+            {
+                "start": candidate_start,
+                "end": candidate_end,
+                "value": candidate_start.strftime("%H:%M"),
+                "label": f"{candidate_start:%H:%M} - {candidate_end:%H:%M}",
+            }
+        )
+
+    return slots
+
+
+def calculate_available_slots(salon, service, selected_date, now=None):
+    return get_available_slots(salon, service, selected_date, now=now)
+
+
 def get_policy_value(salon, field_name, default):
     try:
         policy = salon.booking_policy
@@ -24,27 +79,6 @@ def get_salon_timezone(salon):
         return ZoneInfo(salon.timezone)
     except ZoneInfoNotFoundError:
         return timezone.get_current_timezone()
-
-
-def get_working_window_for_date(salon, selected_date):
-    override = salon.date_working_hours_overrides.filter(date=selected_date).first()
-
-    if override:
-        if override.mode == DateWorkingHoursOverride.Mode.CLOSED:
-            return None
-        if override.mode == DateWorkingHoursOverride.Mode.CUSTOM_HOURS:
-            return override.custom_start_time, override.custom_end_time
-
-    working_hours = salon.working_hours.filter(weekday=selected_date.weekday()).first()
-    if working_hours:
-        if not working_hours.is_working_day:
-            return None
-        return working_hours.start_time, working_hours.end_time
-
-    if selected_date.weekday() == WorkingHours.Weekday.SUNDAY:
-        return None
-
-    return DEFAULT_START_TIME, DEFAULT_END_TIME
 
 
 def is_date_allowed(salon, selected_date, now=None):
@@ -75,104 +109,105 @@ def is_date_allowed(salon, selected_date, now=None):
     return True
 
 
-def calculate_available_slots(salon, service, selected_date, now=None):
-    if now is None:
-        now = timezone.now()
-
-    if not service or service.salon_id != salon.id:
-        return []
-
-    if not is_date_allowed(salon, selected_date, now=now):
-        return []
-
+def get_working_interval_for_date(salon, selected_date):
     working_window = get_working_window_for_date(salon, selected_date)
     if not working_window:
-        return []
+        return None
 
     start_time, end_time = working_window
     if not start_time or not end_time or end_time <= start_time:
-        return []
+        return None
 
     salon_tz = get_salon_timezone(salon)
-    day_start = timezone.make_aware(datetime.combine(selected_date, start_time), salon_tz)
-    day_end = timezone.make_aware(datetime.combine(selected_date, end_time), salon_tz)
-    duration = timedelta(minutes=service.duration_minutes)
-    slot_interval = timedelta(
-        minutes=get_policy_value(salon, "slot_interval_minutes", 30)
-    )
-    buffer = timedelta(
-        minutes=get_policy_value(salon, "buffer_minutes_between_bookings", 0)
+    return (
+        timezone.make_aware(datetime.combine(selected_date, start_time), salon_tz),
+        timezone.make_aware(datetime.combine(selected_date, end_time), salon_tz),
     )
 
-    if slot_interval.total_seconds() <= 0:
-        slot_interval = timedelta(minutes=30)
 
-    occupied_intervals = _get_occupied_intervals(salon, day_start, day_end, buffer)
-    slots = []
-    candidate_start = day_start
+def get_working_window_for_date(salon, selected_date):
+    override = salon.date_working_hours_overrides.filter(date=selected_date).first()
 
-    while candidate_start + duration <= day_end:
-        candidate_end = candidate_start + duration
+    if override:
+        if override.mode == DateWorkingHoursOverride.Mode.CLOSED:
+            return None
+        if override.mode == DateWorkingHoursOverride.Mode.CUSTOM_HOURS:
+            return override.custom_start_time, override.custom_end_time
 
-        if candidate_start >= now and not _overlaps_any(
-            candidate_start,
-            candidate_end,
-            occupied_intervals,
-        ):
-            slots.append(
-                {
-                    "start": candidate_start,
-                    "end": candidate_end,
-                    "value": candidate_start.strftime("%H:%M"),
-                    "label": (
-                        f"{candidate_start:%H:%M}-{candidate_end:%H:%M}"
-                    ),
-                }
-            )
+    working_hours = salon.working_hours.filter(weekday=selected_date.weekday()).first()
+    if working_hours:
+        if not working_hours.is_working_day:
+            return None
+        return working_hours.start_time, working_hours.end_time
 
-        candidate_start += slot_interval
+    if selected_date.weekday() == WorkingHours.Weekday.SUNDAY:
+        return None
 
-    return slots
+    return DEFAULT_START_TIME, DEFAULT_END_TIME
 
 
-def is_slot_available(salon, service, selected_date, start_time_value):
-    slots = calculate_available_slots(salon, service, selected_date)
-    return next((slot for slot in slots if slot["value"] == start_time_value), None)
+def get_busy_intervals_for_date(salon, selected_date):
+    working_interval = get_working_interval_for_date(salon, selected_date)
+    if not working_interval:
+        return []
 
-
-def _get_occupied_intervals(salon, day_start, day_end, buffer):
+    day_start, day_end = working_interval
+    buffer = timedelta(minutes=get_policy_value(salon, "buffer_minutes_between_bookings", 0))
     status_values = [Booking.Status.APPROVED]
     if get_policy_value(salon, "pending_holds_slot", True):
         status_values.append(Booking.Status.PENDING)
 
-    occupied_intervals = []
-
+    busy_intervals = []
     bookings = salon.bookings.filter(
         status__in=status_values,
         start_at__lt=day_end,
         end_at__gt=day_start,
     )
     for booking in bookings:
-        occupied_intervals.append((booking.start_at - buffer, booking.end_at + buffer))
+        busy_intervals.append((booking.start_at - buffer, booking.end_at + buffer))
 
-    blocks = salon.unavailable_time_blocks.filter(date=day_start.date())
     salon_tz = get_salon_timezone(salon)
+    blocks = salon.unavailable_time_blocks.filter(date=selected_date)
     for block in blocks:
-        block_start = timezone.make_aware(
-            datetime.combine(block.date, block.start_time),
-            salon_tz,
+        busy_intervals.append(
+            (
+                timezone.make_aware(datetime.combine(block.date, block.start_time), salon_tz),
+                timezone.make_aware(datetime.combine(block.date, block.end_time), salon_tz),
+            )
         )
-        block_end = timezone.make_aware(
-            datetime.combine(block.date, block.end_time),
-            salon_tz,
-        )
-        occupied_intervals.append((block_start, block_end))
 
-    return occupied_intervals
+    return busy_intervals
 
 
-def _overlaps_any(candidate_start, candidate_end, occupied_intervals):
-    return any(
-        occupied_start < candidate_end and candidate_start < occupied_end
-        for occupied_start, occupied_end in occupied_intervals
+def intervals_overlap(existing_start, existing_end, new_start, new_end):
+    return existing_start < new_end and new_start < existing_end
+
+
+def round_to_next_slot(value, slot_interval, base=None):
+    if base is None:
+        base = value.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    elapsed = value - base
+    remainder = elapsed % slot_interval
+    if not remainder:
+        return value
+
+    return value + (slot_interval - remainder)
+
+
+def generate_candidate_slots(working_start, working_end, duration, slot_interval):
+    candidate_start = round_to_next_slot(
+        working_start,
+        slot_interval,
+        base=working_start,
     )
+
+    while candidate_start + duration <= working_end:
+        candidate_end = candidate_start + duration
+        yield candidate_start, candidate_end
+        candidate_start += slot_interval
+
+
+def is_slot_available(salon, service, selected_date, start_time_value):
+    slots = get_available_slots(salon, service, selected_date)
+    return next((slot for slot in slots if slot["value"] == start_time_value), None)
