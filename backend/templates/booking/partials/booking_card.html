@@ -1,0 +1,55 @@
+<div class="od-bk-card" data-status="{{ booking.status }}"
+  data-booking-id="{{ booking.id }}"
+  data-full-name="{{ booking.customer.full_name }}"
+  data-phone="{{ booking.customer.phone_number }}"
+  data-instagram="{{ booking.customer.instagram_username }}"
+  data-email="{{ booking.customer.email }}"
+  data-contact="{{ booking.customer.preferred_contact_method }}"
+  data-service-id="{% with s=booking.booking_services.first %}{{ s.service_id|default:'' }}{% endwith %}"
+  data-date="{{ booking.start_at|date:'Y-m-d' }}"
+  data-start-time="{{ booking.start_at|date:'H:i' }}"
+  data-source="{{ booking.source }}"
+  data-owner-note="{{ booking.owner_note|escape }}">
+  <div class="od-bk-badges">
+    <span class="od-bk-name">{{ booking.customer.full_name }}</span>
+    <span class="od-badge od-badge-{{ booking.status }}">{{ booking.get_status_display }}</span>
+    {% if booking.reference_photo %}<span class="od-badge od-badge-photo">Photo</span>{% endif %}
+  </div>
+  <div class="od-bk-svc">
+    {% for item in booking.booking_services.all %}
+      {{ item.service_name_snapshot }}{% if item.price_snapshot %} · {{ item.price_snapshot|floatformat:0 }} ден{% endif %}{% if not forloop.last %}, {% endif %}
+    {% empty %}—{% endfor %}
+  </div>
+  <div class="od-bk-meta">
+    <span>{{ booking.start_at|date:"d/m/Y" }}</span>
+    <span>{{ booking.start_at|date:"H:i" }} – {{ booking.end_at|date:"H:i" }}</span>
+    <span>{{ booking.total_duration_minutes }} min</span>
+    <span>{{ booking.customer.phone_number }}</span>
+  </div>
+  {% if show_actions %}
+  <div class="od-bk-actions">
+    {% if booking.status == "pending" %}
+      <form method="post" class="od-inline-actions">
+        {% csrf_token %}
+        <input type="hidden" name="booking_id" value="{{ booking.id }}">
+        <input type="hidden" name="return_section" value="bookings">
+        <button class="od-btn od-btn-success od-btn-sm" type="submit" name="action" value="approve">Approve</button>
+        <button class="od-btn od-btn-danger od-btn-sm" type="submit" name="action" value="reject">Reject</button>
+      </form>
+    {% endif %}
+    {% if booking.status == "approved" %}
+      <form method="post" class="od-inline-actions">
+        {% csrf_token %}
+        <input type="hidden" name="booking_id" value="{{ booking.id }}">
+        <input type="hidden" name="return_section" value="bookings">
+        <button class="od-btn od-btn-ghost od-btn-sm" type="submit" name="action" value="mark_completed">Mark completed</button>
+      </form>
+    {% endif %}
+    {% if show_edit %}
+      <button type="button" class="od-btn od-btn-ghost od-btn-sm" data-edit-booking="{{ booking.id }}">Edit</button>
+    {% endif %}
+    <a class="od-btn od-btn-ghost od-btn-sm" href="tel:{{ booking.customer.phone_number }}">Call</a>
+    <button type="button" class="od-btn od-btn-ghost od-btn-sm" data-message-booking="{{ booking.id }}" data-message-type="{% if booking.status == 'pending' %}pending{% elif booking.status == 'approved' %}approved{% elif booking.status == 'rejected' or booking.status == 'cancelled' %}rejected{% else %}reminder{% endif %}">Message</button>
+  </div>
+  {% endif %}
+</div>

@@ -1,6 +1,10 @@
+import re
+from decimal import Decimal
 from datetime import datetime, time, timedelta
+from urllib.parse import quote
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
+from django.db.models import Sum
 from django.utils import timezone
 
 from .models import Booking, BookingPolicy, DateWorkingHoursOverride, WorkingHours
@@ -10,14 +14,22 @@ DEFAULT_START_TIME = time(8, 0)
 DEFAULT_END_TIME = time(18, 0)
 
 
-def get_available_slots(salon, service, selected_date, now=None):
+def get_available_slots(
+    salon,
+    service,
+    selected_date,
+    now=None,
+    *,
+    for_owner=False,
+    exclude_booking_id=None,
+):
     if now is None:
         now = timezone.now()
 
     if not service or service.salon_id != salon.id:
         return []
 
-    if not is_date_allowed(salon, selected_date, now=now):
+    if not for_owner and not is_date_allowed(salon, selected_date, now=now):
         return []
 
     working_interval = get_working_interval_for_date(salon, selected_date)
@@ -30,7 +42,11 @@ def get_available_slots(salon, service, selected_date, now=None):
     if slot_interval.total_seconds() <= 0:
         slot_interval = timedelta(minutes=30)
 
-    busy_intervals = get_busy_intervals_for_date(salon, selected_date)
+    busy_intervals = get_busy_intervals_for_date(
+        salon,
+        selected_date,
+        exclude_booking_id=exclude_booking_id,
+    )
     candidates = generate_candidate_slots(
         working_start=working_start,
         working_end=working_end,
@@ -146,7 +162,7 @@ def get_working_window_for_date(salon, selected_date):
     return DEFAULT_START_TIME, DEFAULT_END_TIME
 
 
-def get_busy_intervals_for_date(salon, selected_date):
+def get_busy_intervals_for_date(salon, selected_date, exclude_booking_id=None):
     working_interval = get_working_interval_for_date(salon, selected_date)
     if not working_interval:
         return []
@@ -163,6 +179,8 @@ def get_busy_intervals_for_date(salon, selected_date):
         start_at__lt=day_end,
         end_at__gt=day_start,
     )
+    if exclude_booking_id:
+        bookings = bookings.exclude(pk=exclude_booking_id)
     for booking in bookings:
         busy_intervals.append((booking.start_at - buffer, booking.end_at + buffer))
 
@@ -208,6 +226,115 @@ def generate_candidate_slots(working_start, working_end, duration, slot_interval
         candidate_start += slot_interval
 
 
-def is_slot_available(salon, service, selected_date, start_time_value):
-    slots = get_available_slots(salon, service, selected_date)
+def is_slot_available(
+    salon,
+    service,
+    selected_date,
+    start_time_value,
+    *,
+    for_owner=False,
+    exclude_booking_id=None,
+):
+    slots = get_available_slots(
+        salon,
+        service,
+        selected_date,
+        for_owner=for_owner,
+        exclude_booking_id=exclude_booking_id,
+    )
     return next((slot for slot in slots if slot["value"] == start_time_value), None)
+
+
+def ensure_default_working_hours(salon):
+    for weekday in range(7):
+        WorkingHours.objects.get_or_create(
+            salon=salon,
+            weekday=weekday,
+            defaults={
+                "is_working_day": weekday != WorkingHours.Weekday.SUNDAY,
+                "start_time": DEFAULT_START_TIME,
+                "end_time": DEFAULT_END_TIME,
+            },
+        )
+
+
+def get_revenue_stats(salon):
+    completed = salon.bookings.filter(status=Booking.Status.COMPLETED)
+    total = completed.aggregate(total=Sum("booking_services__price_snapshot"))["total"]
+    total_revenue = total or Decimal("0")
+
+    today = timezone.localdate()
+    week_start = today - timedelta(days=today.weekday())
+    week_end = week_start + timedelta(days=6)
+    weekly = completed.filter(
+        start_at__date__gte=week_start,
+        start_at__date__lte=week_end,
+    ).aggregate(total=Sum("booking_services__price_snapshot"))["total"]
+    weekly_revenue = weekly or Decimal("0")
+
+    return {
+        "total_revenue": total_revenue,
+        "weekly_revenue": weekly_revenue,
+        "week_start": week_start,
+        "week_end": week_end,
+    }
+
+
+def normalize_phone_for_links(phone_number):
+    digits = re.sub(r"\D", "", phone_number or "")
+    if not digits:
+        return ""
+
+    if digits.startswith("389"):
+        return digits
+    if digits.startswith("0"):
+        return "389" + digits[1:]
+    return "389" + digits
+
+
+def build_prepared_message(booking, message_type):
+    first_name = booking.customer.full_name.split()[0]
+    date_label = timezone.localtime(booking.start_at).strftime("%d %B %Y").lstrip("0")
+    time_label = timezone.localtime(booking.start_at).strftime("%H:%M")
+    salon_name = booking.salon.name
+
+    if message_type == "approved":
+        return (
+            f"Здраво {first_name}, вашиот термин за {date_label} во {time_label} "
+            f"е потврден. Ве очекуваме! — {salon_name}"
+        )
+    if message_type in {"rejected", "cancelled"}:
+        return (
+            f"Здраво {first_name}, за жал терминот за {date_label} во {time_label} "
+            f"не е достапен. Ве молиме изберете друг термин. — {salon_name}"
+        )
+    if message_type == "pending":
+        return (
+            f"Здраво {first_name}, вашето барање за термин на {date_label} во {time_label} "
+            f"е примено. Ќе ве контактираме наскоро. — {salon_name}"
+        )
+    return (
+        f"Здраво {first_name}, ве потсетуваме дека имате термин на {date_label} "
+        f"во {time_label}. Ве очекуваме! — {salon_name}"
+    )
+
+
+def build_contact_links(phone_number, message):
+    digits = normalize_phone_for_links(phone_number)
+    encoded_message = quote(message)
+    links = {
+        "tel": f"tel:{phone_number}",
+        "sms": f"sms:+{digits}?body={encoded_message}" if digits else "",
+        "viber": (
+            f"viber://chat?number=%2B{digits}&text={encoded_message}" if digits else ""
+        ),
+        "whatsapp": f"https://wa.me/{digits}?text={encoded_message}" if digits else "",
+    }
+    return links
+
+
+def get_booking_total_price(booking):
+    return sum(
+        (item.price_snapshot for item in booking.booking_services.all()),
+        Decimal("0"),
+    )

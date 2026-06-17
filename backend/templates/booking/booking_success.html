@@ -1,39 +1,70 @@
 {% extends "base.html" %}
 {% block title %}Request Sent — {{ booking.salon.name }}{% endblock %}
-{% block body_class %}bk-page{% endblock %}
+{% block body_class %}bk-page bk-success-page{% endblock %}
 
 {% block content %}
-<div class="bk-success">
+<div class="bk-success-wrap">
 
-  <div class="bk-success-icon">✓</div>
-
-  <div class="bk-success-title">Request Sent!</div>
-
-  <p class="bk-success-text">
-    Your booking request has been sent.<br>
-    The appointment is not confirmed yet.<br>
-    {{ booking.salon.name }} will review your request and contact you.
-  </p>
-
-  <div class="bk-success-summary">
-    <div class="bk-success-summary-label">Booking Summary</div>
-    <div class="bk-success-summary-svc">
-      {% for item in booking.booking_services.all %}
-        {{ item.service_name_snapshot }}{% if not forloop.last %}, {% endif %}
-      {% empty %}
-        Appointment
-      {% endfor %}
-    </div>
-    <div class="bk-success-summary-meta">
-      {{ booking.start_at|date:"l, N j, Y" }}&nbsp;&nbsp;·&nbsp;&nbsp;{{ booking.start_at|date:"H:i" }} – {{ booking.end_at|date:"H:i" }}
-    </div>
-    <div class="bk-success-summary-meta">{{ booking.customer.full_name }}</div>
-    <div class="bk-success-status">Status: Pending Approval</div>
+  <div class="bk-success-top">
+    <a href="{% url 'booking:salon_page' booking.salon.slug %}" class="bk-back-site">
+      <i class="bi bi-arrow-left"></i> {{ booking.salon.name }}
+    </a>
   </div>
 
-  <a class="bk-btn-outline" href="{% url 'booking:book_salon' booking.salon.slug %}">
-    Back to booking
-  </a>
+  <div class="bk-success-card">
+    <div class="bk-success-icon-wrap">
+      <div class="bk-success-icon"><i class="bi bi-check-lg"></i></div>
+    </div>
+
+    <h1 class="bk-success-title">Request sent!</h1>
+
+    <p class="bk-success-msg">
+      Your booking request has been submitted.<br>
+      The appointment is <strong>not confirmed yet</strong>.<br>
+      {{ booking.salon.name }} will review your request and contact you.
+    </p>
+
+    <div class="bk-success-summary">
+      <div class="bk-ss-label">Booking summary</div>
+
+      <div class="bk-ss-row">
+        <i class="bi bi-scissors"></i>
+        <span>
+          {% for item in booking.booking_services.all %}
+            {{ item.service_name_snapshot }}{% if not forloop.last %}, {% endif %}
+          {% empty %}Appointment{% endfor %}
+        </span>
+      </div>
+
+      <div class="bk-ss-row">
+        <i class="bi bi-calendar3"></i>
+        <span>{{ booking.start_at|date:"d/m/Y" }}</span>
+      </div>
+
+      <div class="bk-ss-row">
+        <i class="bi bi-clock"></i>
+        <span>{{ booking.start_at|date:"H:i" }} – {{ booking.end_at|date:"H:i" }}</span>
+      </div>
+
+      <div class="bk-ss-row">
+        <i class="bi bi-person"></i>
+        <span>{{ booking.customer.full_name }}</span>
+      </div>
+
+      <div class="bk-ss-status">
+        <span class="bk-status-badge">Pending approval</span>
+      </div>
+    </div>
+
+    <div class="bk-success-notice">
+      <i class="bi bi-info-circle"></i>
+      The salon will contact you to confirm via your preferred contact method.
+    </div>
+
+    <a class="bk-btn-primary" href="{% url 'booking:salon_page' booking.salon.slug %}">
+      Back to {{ booking.salon.name }}
+    </a>
+  </div>
 
 </div>
 {% endblock %}

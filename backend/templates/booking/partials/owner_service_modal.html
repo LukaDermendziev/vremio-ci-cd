@@ -1,0 +1,38 @@
+<div class="od-modal-overlay" id="od-service-modal">
+  <div class="od-modal-box od-modal-wide">
+    <div class="od-modal-header">
+      <span class="od-modal-title" id="od-service-modal-title">Add service</span>
+      <button type="button" class="od-modal-close" data-close-modal="od-service-modal">&times;</button>
+    </div>
+    <form method="post" id="od-service-form" class="od-form">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="save_service">
+      <input type="hidden" name="return_section" value="services">
+      <input type="hidden" name="service_id" value="">
+      <div class="od-form-grid od-form-grid-2">
+        <div class="od-field"><label>Name</label><input type="text" name="name" required class="od-input"></div>
+        <div class="od-field"><label>Duration (min)</label><input type="number" name="duration_minutes" required class="od-input" min="1" value="120"></div>
+        <div class="od-field"><label>Price (ден)</label><input type="number" name="base_price" required class="od-input" step="0.01" min="0" value="0"></div>
+        <div class="od-field"><label>Sort order</label><input type="number" name="sort_order" class="od-input" value="0"></div>
+        <div class="od-field od-field-full"><label>Description</label><textarea name="description" rows="2" class="od-input"></textarea></div>
+        <div class="od-field od-field-full"><label>Extra duration note</label><input type="text" name="extra_duration_note" class="od-input"></div>
+        <div class="od-field od-field-check"><label><input type="checkbox" name="is_active" class="od-toggle-cb" checked> Active</label></div>
+        <div class="od-field od-field-check"><label><input type="checkbox" name="requires_photo" class="od-toggle-cb"> Photo required</label></div>
+        <div class="od-field od-field-check"><label><input type="checkbox" name="photo_recommended" class="od-toggle-cb"> Photo recommended</label></div>
+      </div>
+      <div class="od-modal-footer od-modal-footer-split">
+        <button type="button" class="od-btn od-btn-danger od-delete-btn" id="od-service-delete" style="display:none">Delete</button>
+        <div class="od-modal-footer-right">
+          <button type="button" class="od-btn od-btn-ghost" data-close-modal="od-service-modal">Cancel</button>
+          <button type="submit" class="od-btn od-btn-primary">Save service</button>
+        </div>
+      </div>
+    </form>
+    <form method="post" id="od-service-delete-form" style="display:none">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="delete_service">
+      <input type="hidden" name="return_section" value="services">
+      <input type="hidden" name="service_id" value="">
+    </form>
+  </div>
+</div>

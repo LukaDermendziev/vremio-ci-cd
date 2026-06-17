@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}{{ customer.full_name }} — History{% endblock %}
+{% block body_class %}od-page{% endblock %}
+
+{% block content %}
+<div class="od-standalone">
+  <div class="od-standalone-top">
+    <a href="{% url 'booking:owner_dashboard' %}#customers" class="od-back-link">
+      <i class="bi bi-arrow-left"></i> Back to dashboard
+    </a>
+    <h1>{{ customer.full_name }}</h1>
+    <div class="od-customer-meta">
+      <span><i class="bi bi-telephone"></i> {{ customer.phone_number }}</span>
+      {% if customer.instagram_username %}
+        <span><i class="bi bi-instagram"></i> {{ customer.instagram_username }}</span>
+      {% endif %}
+      <span><i class="bi bi-chat-dots"></i> {{ customer.get_preferred_contact_method_display }}</span>
+    </div>
+  </div>
+
+  <div class="od-card">
+    <div class="od-card-title">Appointment history</div>
+    {% if bookings %}
+      <div class="od-bk-list">
+        {% for booking in bookings %}
+          <div class="od-bk-card">
+            <div class="od-bk-badges">
+              <span class="od-bk-name">{{ booking.start_at|date:"d/m/Y" }} · {{ booking.start_at|date:"H:i" }}</span>
+              <span class="od-badge od-badge-{{ booking.status }}">{{ booking.get_status_display }}</span>
+            </div>
+            <div class="od-bk-svc">
+              {% for item in booking.booking_services.all %}
+                {{ item.service_name_snapshot }}{% if item.price_snapshot %} ({{ item.price_snapshot|floatformat:0 }} ден){% endif %}{% if not forloop.last %}, {% endif %}
+              {% empty %}—{% endfor %}
+            </div>
+            {% if booking.customer_note %}
+              <div class="od-bk-note">Customer note: {{ booking.customer_note }}</div>
+            {% endif %}
+            {% if booking.owner_note %}
+              <div class="od-bk-note">Owner note: {{ booking.owner_note }}</div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="od-empty">No appointments recorded for this customer.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

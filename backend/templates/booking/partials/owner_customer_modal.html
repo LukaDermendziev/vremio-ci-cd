@@ -1,0 +1,41 @@
+<div class="od-modal-overlay" id="od-customer-modal">
+  <div class="od-modal-box od-modal-wide">
+    <div class="od-modal-header">
+      <span class="od-modal-title" id="od-customer-modal-title">Add customer</span>
+      <button type="button" class="od-modal-close" data-close-modal="od-customer-modal">&times;</button>
+    </div>
+    <form method="post" id="od-customer-form" class="od-form">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="save_customer">
+      <input type="hidden" name="return_section" value="customers">
+      <input type="hidden" name="customer_id" value="">
+      <div class="od-form-grid od-form-grid-2">
+        <div class="od-field"><label>Full name</label><input type="text" name="full_name" required class="od-input"></div>
+        <div class="od-field"><label>Phone</label><input type="tel" name="phone_number" required class="od-input"></div>
+        <div class="od-field"><label>Instagram</label><input type="text" name="instagram_username" class="od-input"></div>
+        <div class="od-field"><label>Email</label><input type="email" name="email" class="od-input"></div>
+        <div class="od-field">
+          <label>Preferred contact</label>
+          <select name="preferred_contact_method" class="od-input">
+            {% for value, label in customer_form.fields.preferred_contact_method.choices %}
+              <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="od-modal-footer od-modal-footer-split">
+        <button type="button" class="od-btn od-btn-danger od-delete-btn" id="od-customer-delete" style="display:none">Delete</button>
+        <div class="od-modal-footer-right">
+          <button type="button" class="od-btn od-btn-ghost" data-close-modal="od-customer-modal">Cancel</button>
+          <button type="submit" class="od-btn od-btn-primary">Save customer</button>
+        </div>
+      </div>
+    </form>
+    <form method="post" id="od-customer-delete-form" style="display:none">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="delete_customer">
+      <input type="hidden" name="return_section" value="customers">
+      <input type="hidden" name="customer_id" value="">
+    </form>
+  </div>
+</div>

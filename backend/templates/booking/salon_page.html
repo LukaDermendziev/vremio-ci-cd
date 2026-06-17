@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+{% block title %}{{ salon.name }}{% endblock %}
+{% block body_class %}sp-page{% endblock %}
+
+{% block content %}
+
+{# ── Sticky nav ───────────────────────────────────────────────────────────── #}
+<nav class="sp-nav">
+  <a class="sp-nav-brand" href="{% url 'booking:salon_page' salon.slug %}">{{ salon.name }}</a>
+  <div class="sp-nav-links">
+    <a href="#services">Services</a>
+    <a href="#hours">Hours</a>
+    {% if salon.instagram_username %}<a href="https://instagram.com/{{ salon.instagram_username|cut:'@' }}" target="_blank" rel="noopener">Instagram</a>{% endif %}
+  </div>
+  <a class="sp-nav-cta" href="{% url 'booking:book_salon' salon.slug %}">Book now</a>
+</nav>
+
+{# ── Hero ─────────────────────────────────────────────────────────────────── #}
+<section class="sp-hero-section">
+  <div class="sp-hero-overlay"></div>
+
+  {# Left: headline + CTA #}
+  <div class="sp-hero-content">
+    <p class="sp-eyebrow">Professional nail care</p>
+    <h1 class="sp-hero-title">Beautiful nails,<br><em>made just for you.</em></h1>
+    <p class="sp-hero-lead">Explore our services and book your next appointment online — in just a few minutes.</p>
+    <div class="sp-hero-actions">
+      <a class="sp-btn-hero" href="{% url 'booking:book_salon' salon.slug %}">Book an appointment</a>
+      <a class="sp-btn-hero sp-btn-hero-ghost" href="#services">View services</a>
+    </div>
+  </div>
+
+  {# Right: animated masonry gallery (placeholder cards — swap with real photos) #}
+  <div class="sp-gallery" aria-hidden="true">
+
+    {# Column 1 — scrolls UP, 22 s #}
+    <div class="sp-gallery-col" style="--dur:22s;--delay:-4s">
+      <div class="sp-gallery-track sp-track-up">
+        <div class="sp-gal-card nc-a" style="height:240px"></div>
+        <div class="sp-gal-card nc-c" style="height:185px"></div>
+        <div class="sp-gal-card nc-f" style="height:265px"></div>
+        <div class="sp-gal-card nc-b" style="height:210px"></div>
+        <div class="sp-gal-card nc-e" style="height:230px"></div>
+        <div class="sp-gal-card nc-d" style="height:195px"></div>
+        <div class="sp-gal-card nc-g" style="height:250px"></div>
+      </div>
+    </div>
+
+    {# Column 2 — scrolls DOWN, 28 s #}
+    <div class="sp-gallery-col" style="--dur:28s;--delay:-12s">
+      <div class="sp-gallery-track sp-track-down">
+        <div class="sp-gal-card nc-b" style="height:220px"></div>
+        <div class="sp-gal-card nc-g" style="height:260px"></div>
+        <div class="sp-gal-card nc-j" style="height:195px"></div>
+        <div class="sp-gal-card nc-h" style="height:240px"></div>
+        <div class="sp-gal-card nc-i" style="height:175px"></div>
+        <div class="sp-gal-card nc-a" style="height:255px"></div>
+        <div class="sp-gal-card nc-c" style="height:210px"></div>
+      </div>
+    </div>
+
+    {# Column 3 — scrolls UP, 20 s #}
+    <div class="sp-gallery-col" style="--dur:20s;--delay:-7s">
+      <div class="sp-gallery-track sp-track-up">
+        <div class="sp-gal-card nc-f" style="height:230px"></div>
+        <div class="sp-gal-card nc-d" style="height:180px"></div>
+        <div class="sp-gal-card nc-e" style="height:250px"></div>
+        <div class="sp-gal-card nc-a" style="height:215px"></div>
+        <div class="sp-gal-card nc-c" style="height:195px"></div>
+        <div class="sp-gal-card nc-b" style="height:260px"></div>
+        <div class="sp-gal-card nc-j" style="height:200px"></div>
+      </div>
+    </div>
+
+    {# Column 4 — scrolls DOWN, 26 s #}
+    <div class="sp-gallery-col" style="--dur:26s;--delay:-15s">
+      <div class="sp-gallery-track sp-track-down">
+        <div class="sp-gal-card nc-g" style="height:215px"></div>
+        <div class="sp-gal-card nc-h" style="height:255px"></div>
+        <div class="sp-gal-card nc-j" style="height:185px"></div>
+        <div class="sp-gal-card nc-f" style="height:235px"></div>
+        <div class="sp-gal-card nc-d" style="height:200px"></div>
+        <div class="sp-gal-card nc-a" style="height:270px"></div>
+        <div class="sp-gal-card nc-i" style="height:225px"></div>
+      </div>
+    </div>
+
+    {# Column 5 — scrolls UP, 24 s #}
+    <div class="sp-gallery-col" style="--dur:24s;--delay:-8s">
+      <div class="sp-gallery-track sp-track-up">
+        <div class="sp-gal-card nc-c" style="height:260px"></div>
+        <div class="sp-gal-card nc-e" style="height:200px"></div>
+        <div class="sp-gal-card nc-b" style="height:235px"></div>
+        <div class="sp-gal-card nc-a" style="height:180px"></div>
+        <div class="sp-gal-card nc-h" style="height:255px"></div>
+        <div class="sp-gal-card nc-d" style="height:215px"></div>
+        <div class="sp-gal-card nc-g" style="height:270px"></div>
+      </div>
+    </div>
+
+    {# Column 6 — scrolls DOWN, 18 s #}
+    <div class="sp-gallery-col" style="--dur:18s;--delay:-5s">
+      <div class="sp-gallery-track sp-track-down">
+        <div class="sp-gal-card nc-i" style="height:225px"></div>
+        <div class="sp-gal-card nc-j" style="height:250px"></div>
+        <div class="sp-gal-card nc-a" style="height:190px"></div>
+        <div class="sp-gal-card nc-e" style="height:260px"></div>
+        <div class="sp-gal-card nc-c" style="height:215px"></div>
+        <div class="sp-gal-card nc-f" style="height:240px"></div>
+        <div class="sp-gal-card nc-h" style="height:185px"></div>
+      </div>
+    </div>
+
+  </div>{# /sp-gallery #}
+</section>
+
+<script>
+// Duplicate gallery track items for seamless infinite loop
+(function () {
+  document.querySelectorAll('.sp-gallery-track').forEach(function (track) {
+    var items = Array.from(track.children);
+    items.forEach(function (item) {
+      var clone = item.cloneNode(true);
+      clone.setAttribute('aria-hidden', 'true');
+      track.appendChild(clone);
+    });
+  });
+})();
+</script>
+
+{# ── Trust bar ────────────────────────────────────────────────────────────── #}
+<div class="sp-trust-bar">
+  <div class="sp-trust-item"><span class="sp-trust-label">Schedule</span><span>Online booking</span></div>
+  <div class="sp-trust-sep"></div>
+  <div class="sp-trust-item"><span class="sp-trust-label">Approval</span><span>Manual review</span></div>
+  <div class="sp-trust-sep"></div>
+  <div class="sp-trust-item"><span class="sp-trust-label">Reminder</span><span>24 h before</span></div>
+  <div class="sp-trust-sep"></div>
+  <div class="sp-trust-item"><span class="sp-trust-label">Working days</span><span>Mon – Sat</span></div>
+</div>
+
+{# ── Services ─────────────────────────────────────────────────────────────── #}
+<section class="sp-content-section" id="services">
+  <div class="sp-section-inner">
+    <div class="sp-section-heading">
+      <p class="sp-kicker">What we offer</p>
+      <h2 class="sp-section-title">Our <em>services</em></h2>
+    </div>
+
+    <div class="sp-services-grid{% if services|length >= 5 %} sp-svcs-compact{% elif services|length >= 3 %} sp-svcs-many{% endif %}">
+      {% for service in services %}
+        <article class="sp-service-card">
+          <div class="sp-service-header">
+            <h3 class="sp-service-name">{{ service.name }}</h3>
+            {% if service.base_price %}<span class="sp-service-price">{{ service.base_price|floatformat:0 }} ден</span>{% endif %}
+          </div>
+          {% if service.description %}
+            <p class="sp-service-desc">{{ service.description }}</p>
+          {% endif %}
+          <div class="sp-service-footer">
+            <span class="sp-service-dur"><i class="bi bi-clock"></i> {{ service.duration_minutes }} min</span>
+            {% if service.extra_duration_note %}<span class="sp-service-note">{{ service.extra_duration_note }}</span>{% endif %}
+            {% if service.requires_photo %}
+              <span class="sp-badge sp-badge-required">Photo required</span>
+            {% elif service.photo_recommended %}
+              <span class="sp-badge sp-badge-soft">Photo recommended</span>
+            {% endif %}
+          </div>
+          <a class="sp-service-cta" href="{% url 'booking:book_salon' salon.slug %}">Book this service</a>
+        </article>
+      {% empty %}
+        <p class="sp-muted-msg">Services will be listed here soon.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+{# ── Hours + rules ────────────────────────────────────────────────────────── #}
+<section class="sp-info-section" id="hours">
+  <div class="sp-section-inner sp-info-grid">
+    <div class="sp-info-card">
+      <p class="sp-kicker">Schedule</p>
+      <h3 class="sp-info-title">Working <em>hours</em></h3>
+      <ul class="sp-hours-list">
+        {% for row in working_hours %}
+          <li class="sp-hours-row {% if not row.is_working_day %}sp-hours-closed{% endif %}">
+            <span>{{ row.get_weekday_display }}</span>
+            {% if row.is_working_day %}
+              <span>{{ row.start_time|time:"H:i" }} – {{ row.end_time|time:"H:i" }}</span>
+            {% else %}
+              <span class="sp-closed-label">Closed</span>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="sp-info-card">
+      <p class="sp-kicker">Before you book</p>
+      <h3 class="sp-info-title">Booking <em>rules</em></h3>
+      <ul class="sp-rules-list">
+        {% if booking_policy %}
+          <li>
+            <span class="sp-rule-icon">&#x23F0;</span>
+            <span>Minimum booking notice: <strong>{{ booking_policy.minimum_notice_days }} days</strong></span>
+          </li>
+          <li>
+            <span class="sp-rule-icon">&#x1F4C5;</span>
+            <span>Book up to <strong>{{ booking_policy.maximum_booking_window_days }} days</strong> in advance</span>
+          </li>
+          <li>
+            <span class="sp-rule-icon">&#x2714;</span>
+            <span>All requests require <strong>salon approval</strong> before confirmation</span>
+          </li>
+          <li>
+            <span class="sp-rule-icon">&#x23F3;</span>
+            <span>Late arrival limit: <strong>{{ booking_policy.late_arrival_limit_minutes }} minutes</strong></span>
+          </li>
+        {% else %}
+          <li><span class="sp-rule-icon">&#x2714;</span><span>All requests require salon approval before confirmation.</span></li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</section>
+
+{# ── CTA banner ───────────────────────────────────────────────────────────── #}
+<section class="sp-cta-section">
+  <div class="sp-cta-inner">
+    <h2 class="sp-cta-title">Ready for <em>your</em> next appointment?</h2>
+    <p class="sp-cta-sub">Send a request in minutes. We'll review it and contact you to confirm.</p>
+    <a class="sp-btn-hero" href="{% url 'booking:book_salon' salon.slug %}">Book appointment</a>
+  </div>
+</section>
+
+{# ── Footer ───────────────────────────────────────────────────────────────── #}
+<footer class="sp-footer-section">
+  <div class="sp-footer-inner">
+    <div class="sp-footer-brand">{{ salon.name }}</div>
+    <div class="sp-footer-contact">
+      {% if salon.phone_number %}<a href="tel:{{ salon.phone_number }}"><i class="bi bi-telephone"></i> {{ salon.phone_number }}</a>{% endif %}
+      {% if salon.instagram_username %}<a href="https://instagram.com/{{ salon.instagram_username|cut:'@' }}" target="_blank" rel="noopener"><i class="bi bi-instagram"></i> {{ salon.instagram_username }}</a>{% endif %}
+    </div>
+    <div class="sp-footer-note">Online booking powered by Salon Scheduler</div>
+  </div>
+</footer>
+
+{% endblock %}

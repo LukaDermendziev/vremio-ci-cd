@@ -1,26 +1,53 @@
 {% extends "base.html" %}
-
-{% block title %}Book an Appointment{% endblock %}
+{% block title %}Salon Scheduler — Book Online{% endblock %}
+{% block body_class %}sp-page sp-home{% endblock %}
 
 {% block content %}
-  <section class="simple-panel">
-    <p class="eyebrow">Salon Scheduler</p>
-    <h1>Request an appointment</h1>
-    <p>
-      Choose a salon and send an appointment request. Requests stay pending
-      until the salon owner approves them.
-    </p>
+<nav class="sp-nav">
+  <a class="sp-nav-brand" href="/">Salon Scheduler</a>
+  <div class="sp-nav-links"></div>
+</nav>
 
+<section class="sp-home-hero">
+  <div class="sp-hero-overlay"></div>
+  <div class="sp-home-hero-content">
+    <p class="sp-eyebrow">Online booking</p>
+    <h1 class="sp-hero-title">Book your salon<br><em>appointment online</em></h1>
+    <p class="sp-hero-lead">No messages. No waiting. Choose a service, pick a time, and send your request.</p>
+  </div>
+</section>
+
+<section class="sp-content-section">
+  <div class="sp-section-inner">
     {% if salons %}
-      <div class="list-group mt-4">
+      <div class="sp-section-heading">
+        <p class="sp-kicker">Choose your salon</p>
+        <h2 class="sp-section-title">Available <em>salons</em></h2>
+      </div>
+      <div class="sp-salon-grid">
         {% for salon in salons %}
-          <a class="list-group-item list-group-item-action" href="{% url 'booking:book_salon' salon.slug %}">
-            {{ salon.name }}
-          </a>
+          <article class="sp-salon-card">
+            <div class="sp-salon-avatar">{{ salon.name|first }}</div>
+            <div class="sp-salon-info">
+              <h3 class="sp-salon-name">{{ salon.name }}</h3>
+              {% if salon.address %}<p class="sp-salon-address"><i class="bi bi-geo-alt"></i> {{ salon.address }}</p>{% endif %}
+            </div>
+            <a class="sp-btn-small" href="{% url 'booking:salon_page' salon.slug %}">View &amp; Book</a>
+          </article>
         {% endfor %}
       </div>
     {% else %}
-      <p class="text-muted mt-4">No active salons are available yet.</p>
+      <div class="sp-empty-state">
+        <p>No active salons available yet.</p>
+      </div>
     {% endif %}
-  </section>
+  </div>
+</section>
+
+<footer class="sp-footer-section">
+  <div class="sp-footer-inner">
+    <div class="sp-footer-brand">Salon Scheduler</div>
+    <div class="sp-footer-note">Professional scheduling for beauty businesses</div>
+  </div>
+</footer>
 {% endblock %}

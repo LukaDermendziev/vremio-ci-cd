@@ -2,16 +2,16 @@
 {% block title %}Dashboard — {{ salon.name|default:"Owner" }}{% endblock %}
 {% block body_class %}od-page{% endblock %}
 
+{% block extra_head %}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet">
+{% endblock %}
+
 {% block content %}
 {% if not salon %}
-  <div style="padding:40px 24px;max-width:560px;margin:0 auto">
-    <p style="color:#888">No active salon is assigned to your account yet.</p>
-  </div>
+  <div class="od-standalone"><p class="sp-muted">No active salon is assigned to your account yet.</p></div>
 {% else %}
 
 <div class="od-layout">
-
-  {# ── Sidebar ────────────────────────────────────────────────────────── #}
   <aside class="od-sidebar">
     <div class="od-brand">
       <div class="od-logo">{{ salon.name|first }}</div>
@@ -22,606 +22,344 @@
     </div>
 
     <nav class="od-nav">
-      <a href="#" class="is-active" data-section="dashboard">
-        <span class="od-nav-icon">📊</span>
-        <span>Overview</span>
-      </a>
-      <a href="#" data-section="bookings">
-        <span class="od-nav-icon">📋</span>
-        <span>Bookings</span>
-      </a>
-      <a href="#" data-section="customers">
-        <span class="od-nav-icon">👥</span>
-        <span>Customers</span>
-      </a>
-      <a href="#" data-section="services">
-        <span class="od-nav-icon">✨</span>
-        <span>Services</span>
-      </a>
-      <a href="#" data-section="hours">
-        <span class="od-nav-icon">🕐</span>
-        <span>Working Hours</span>
-      </a>
-      <a href="#" data-section="policy">
-        <span class="od-nav-icon">⚙️</span>
-        <span>Booking policy</span>
-      </a>
+      <a href="#dashboard" class="is-active" data-section="dashboard"><i class="bi bi-grid"></i><span>Overview</span></a>
+      <a href="#calendar" data-section="calendar"><i class="bi bi-calendar3"></i><span>Calendar</span></a>
+      <a href="#bookings" data-section="bookings"><i class="bi bi-journal-text"></i><span>Bookings</span></a>
+      <a href="#customers" data-section="customers"><i class="bi bi-people"></i><span>Customers</span></a>
+      <a href="#services" data-section="services"><i class="bi bi-scissors"></i><span>Services</span></a>
+      <a href="#hours" data-section="hours"><i class="bi bi-clock"></i><span>Working hours</span></a>
+      <a href="#availability" data-section="availability"><i class="bi bi-slash-circle"></i><span>Availability</span></a>
+      <a href="#policy" data-section="policy"><i class="bi bi-sliders"></i><span>Booking policy</span></a>
     </nav>
 
     <div class="od-sidebar-foot">
-      <a href="{% url 'booking:book_salon' salon.slug %}">
-        <span>💅</span>
-        <span>Customer view</span>
-      </a>
+      <a href="{% url 'booking:salon_page' salon.slug %}"><i class="bi bi-box-arrow-up-right"></i><span>Customer view</span></a>
     </div>
   </aside>
 
-  {# ── Main content ───────────────────────────────────────────────────── #}
   <main class="od-main">
-
-    {# Flash messages #}
     {% for message in messages %}
-      <div class="od-alert {% if message.tags == 'success' %}od-alert-success{% elif message.tags == 'error' or message.tags == 'danger' %}od-alert-error{% else %}od-alert-warning{% endif %}">
-        {{ message }}
-      </div>
+      <div class="od-alert {% if message.tags == 'success' %}od-alert-success{% elif message.tags == 'error' or message.tags == 'danger' %}od-alert-error{% else %}od-alert-warning{% endif %}">{{ message }}</div>
     {% endfor %}
 
     <div class="od-section active" id="od-sec-dashboard">
-
       <div class="od-page-top">
         <div>
-          <div class="od-page-title">Good day 👋</div>
+          <div class="od-page-title">Overview</div>
           <p class="od-page-sub">{{ salon.name }}</p>
         </div>
-        <a class="od-btn od-btn-primary" href="{% url 'booking:book_salon' salon.slug %}">
-          Open booking page
-        </a>
+        <div class="od-page-actions">
+        <button type="button" class="od-btn od-btn-primary" data-add-booking><i class="bi bi-plus-lg"></i> Add booking</button>
+          <a class="od-btn od-btn-ghost" href="{% url 'booking:salon_page' salon.slug %}">Open booking page</a>
+        </div>
       </div>
 
-      {# Stats #}
       <div class="od-stats">
-        <div class="od-stat">
-          <span class="od-stat-icon">⏳</span>
-          <span class="od-stat-value">{{ pending_count }}</span>
-          <span class="od-stat-label">Pending</span>
-        </div>
-        <div class="od-stat">
-          <span class="od-stat-icon">📅</span>
-          <span class="od-stat-value">{{ today_count }}</span>
-          <span class="od-stat-label">Today</span>
-        </div>
-        <div class="od-stat">
-          <span class="od-stat-icon">✅</span>
-          <span class="od-stat-value">{{ upcoming_approved_bookings|length }}</span>
-          <span class="od-stat-label">Upcoming</span>
-        </div>
-        <div class="od-stat">
-          <span class="od-stat-icon">✨</span>
-          <span class="od-stat-value">{{ active_services_count }}</span>
-          <span class="od-stat-label">Services</span>
-        </div>
+        <div class="od-stat"><span class="od-stat-label">Pending</span><span class="od-stat-value">{{ pending_count }}</span></div>
+        <div class="od-stat"><span class="od-stat-label">Today</span><span class="od-stat-value">{{ today_count }}</span></div>
+        <div class="od-stat"><span class="od-stat-label">Upcoming</span><span class="od-stat-value">{{ upcoming_approved_bookings|length }}</span></div>
+        <div class="od-stat od-stat-revenue"><span class="od-stat-label">Weekly revenue</span><span class="od-stat-value">{{ revenue.weekly_revenue|floatformat:0 }} <small>ден</small></span></div>
+        <div class="od-stat od-stat-revenue"><span class="od-stat-label">Total revenue</span><span class="od-stat-value">{{ revenue.total_revenue|floatformat:0 }} <small>ден</small></span></div>
       </div>
+      <p class="od-revenue-note">Revenue from completed appointments only. No online payments.</p>
 
-      {# Today's appointments #}
       <div class="od-card">
-        <div class="od-card-top">
-          <div>
-            <div class="od-card-title">Today's Appointments</div>
-          </div>
-          <span class="od-badge {% if today_count > 0 %}od-badge-approved{% else %}od-badge-no_show{% endif %}">
-            {{ today_count }} today
-          </span>
-        </div>
-
+        <div class="od-card-top"><div class="od-card-title">Today's appointments</div></div>
         {% if todays_appointments %}
           <div class="od-today-list">
             {% for booking in todays_appointments %}
               <div class="od-today-row">
-                <div class="od-today-time">
-                  <strong>{{ booking.start_at|date:"H:i" }}</strong>
-                  <span>{{ booking.end_at|date:"H:i" }}</span>
-                </div>
+                <div class="od-today-time"><strong>{{ booking.start_at|date:"H:i" }}</strong><span>{{ booking.end_at|date:"H:i" }}</span></div>
                 <div class="od-today-line"></div>
                 <div style="flex:1">
                   <div class="od-today-name">{{ booking.customer.full_name }}</div>
-                  <div class="od-today-svc">
-                    {% for item in booking.booking_services.all %}
-                      {{ item.service_name_snapshot }}{% if not forloop.last %}, {% endif %}
-                    {% empty %}
-                      —
-                    {% endfor %}
-                  </div>
+                  <div class="od-today-svc">{% for item in booking.booking_services.all %}{{ item.service_name_snapshot }}{% if not forloop.last %}, {% endif %}{% endfor %}</div>
                 </div>
-                <span class="od-badge od-badge-{{ booking.status }}">{{ booking.get_status_display }}</span>
               </div>
             {% endfor %}
           </div>
         {% else %}
-          <div class="od-empty">
-            <span class="od-empty-icon">☀️</span>
-            No approved appointments for today.
-          </div>
+          <div class="od-empty">No approved appointments for today.</div>
         {% endif %}
       </div>
 
-      {# Pending requests #}
       <div class="od-card">
         <div class="od-card-top">
-          <div>
-            <div class="od-card-title">Pending booking requests</div>
-          </div>
-          {% if pending_count %}
-            <button class="od-card-link" data-goto="bookings">View all →</button>
-          {% endif %}
+          <div class="od-card-title">Pending booking requests</div>
+          {% if pending_count %}<button class="od-card-link" data-goto="bookings">View all</button>{% endif %}
         </div>
-
         {% if pending_bookings %}
           <div class="od-bk-list">
             {% for booking in pending_bookings|slice:":4" %}
-              <div class="od-bk-card">
-                <div class="od-bk-badges">
-                  <span class="od-bk-name">{{ booking.customer.full_name }}</span>
-                  <span class="od-badge od-badge-pending">Pending</span>
-                  {% if booking.reference_photo %}<span class="od-badge od-badge-photo">📷 Photo</span>{% endif %}
-                </div>
-                <div class="od-bk-svc">
-                  {% for item in booking.booking_services.all %}
-                    {{ item.service_name_snapshot }}{% if not forloop.last %}, {% endif %}
-                  {% empty %}—{% endfor %}
-                </div>
-                <div class="od-bk-meta">
-                  <span>{{ booking.start_at|date:"M j, Y" }}</span>
-                  <span>{{ booking.start_at|date:"H:i" }} – {{ booking.end_at|date:"H:i" }}</span>
-                  <span>{{ booking.customer.phone_number }}</span>
-                  <span>{{ booking.customer.instagram_username }}</span>
-                </div>
-                <div class="od-bk-actions">
-                  <form method="post" style="display:contents">
-                    {% csrf_token %}
-                    <input type="hidden" name="booking_id" value="{{ booking.id }}">
-                    <button class="od-btn-approve" type="submit" name="action" value="approve">✓ Approve</button>
-                    <button class="od-btn-reject"  type="submit" name="action" value="reject">✕ Reject</button>
-                  </form>
-                  <a class="od-btn-call" href="tel:{{ booking.customer.phone_number }}">📞 Call</a>
-                  <button class="od-btn-msg" type="button"
-                    data-msg-name="{{ booking.customer.full_name|truncatewords:1 }}"
-                    data-msg-date="{{ booking.start_at|date:'j N Y' }}"
-                    data-msg-time="{{ booking.start_at|date:'H:i' }}"
-                    data-msg-type="pending">
-                    💬 Message
-                  </button>
-                </div>
-              </div>
+              {% include "booking/partials/booking_card.html" with booking=booking show_actions=True %}
             {% endfor %}
           </div>
         {% else %}
-          <div class="od-empty">
-            <span class="od-empty-icon">🎉</span>
-            All caught up — no pending requests.
-          </div>
+          <div class="od-empty">All caught up — no pending requests.</div>
         {% endif %}
       </div>
+    </div>
 
-      {# Quick actions #}
-      <div class="od-card">
-        <div class="od-card-title" style="margin-bottom:14px">Quick Actions</div>
-        <div class="od-quick-grid">
-          <button class="od-quick-btn" data-goto="bookings">
-            <span class="od-quick-icon">📋</span> All bookings
-          </button>
-          <button class="od-quick-btn" data-goto="services">
-            <span class="od-quick-icon">✨</span> Services
-          </button>
-          <button class="od-quick-btn" data-goto="hours">
-            <span class="od-quick-icon">🕐</span> Working hours
-          </button>
-          <button class="od-quick-btn" data-goto="policy">
-            <span class="od-quick-icon">⚙️</span> Booking policy
-          </button>
+    <div class="od-section" id="od-sec-calendar">
+      <div class="od-cal-header">
+        <div>
+          <div class="od-page-title">Calendar</div>
+          <p class="od-page-sub">View and manage your appointment schedule.</p>
         </div>
       </div>
 
-    </div>{# /dashboard #}
+      <div class="od-cal-card">
+        <div class="od-cal-toolbar">
+          <div class="od-cal-nav">
+            <button type="button" class="od-cal-nav-btn" id="cal-prev" aria-label="Previous"><i class="bi bi-chevron-left"></i></button>
+            <span class="od-cal-range" id="cal-range-label"></span>
+            <button type="button" class="od-cal-nav-btn" id="cal-next" aria-label="Next"><i class="bi bi-chevron-right"></i></button>
+            <button type="button" class="od-btn od-btn-ghost od-btn-sm" id="cal-today">Today</button>
+          </div>
+          <div class="od-cal-actions">
+            <div class="od-cal-view-toggle">
+              <button type="button" class="od-cal-view-btn" id="cal-view-day">Day</button>
+              <button type="button" class="od-cal-view-btn" id="cal-view-week">Week</button>
+            </div>
+            <button type="button" class="od-btn od-btn-primary" data-add-booking><i class="bi bi-plus-lg"></i> Add</button>
+            <button type="button" class="od-btn od-btn-ghost" data-add-block><i class="bi bi-slash-circle"></i> Block</button>
+          </div>
+        </div>
+        <div id="od-calendar"></div>
+        <div class="od-cal-legend">
+          <span class="od-cal-legend-title">Legend</span>
+          <span class="od-legend-item"><i class="od-legend-dot od-legend-pending"></i> Pending</span>
+          <span class="od-legend-item"><i class="od-legend-dot od-legend-approved"></i> Approved</span>
+          <span class="od-legend-item"><i class="od-legend-dot od-legend-completed"></i> Completed</span>
+          <span class="od-legend-item"><i class="od-legend-dot od-legend-rejected"></i> Rejected</span>
+          <span class="od-legend-item"><i class="od-legend-dot od-legend-cancelled"></i> Cancelled</span>
+          <span class="od-legend-item"><i class="od-legend-dot od-legend-no_show"></i> No Show</span>
+          <span class="od-legend-item"><i class="od-legend-dot od-legend-block"></i> Unavailable</span>
+        </div>
+        <p class="od-cal-hint">Double-click an empty time slot to add a booking.</p>
+      </div>
+    </div>
 
     <div class="od-section" id="od-sec-bookings">
       <div class="od-page-top">
         <div class="od-page-title">Bookings</div>
+        <button type="button" class="od-btn od-btn-primary" data-add-booking><i class="bi bi-plus-lg"></i> Add booking</button>
       </div>
-
       <div class="od-tabs" id="bk-tabs">
-        <button class="od-tab active" data-tab="pending">
-          Pending <span class="od-tab-n">{{ pending_count }}</span>
-        </button>
+        <button class="od-tab active" data-tab="pending">Pending <span class="od-tab-n">{{ pending_count }}</span></button>
         <button class="od-tab" data-tab="approved">Approved</button>
         <button class="od-tab" data-tab="cancelled">Cancelled</button>
         <button class="od-tab" data-tab="completed">Completed</button>
         <button class="od-tab" data-tab="no_show">No Show</button>
       </div>
-
       <div class="od-bk-list" id="bk-list">
         {% for booking in booking_management_list %}
-          <div class="od-bk-card" data-status="{{ booking.status }}">
-            <div class="od-bk-badges">
-              <span class="od-bk-name">{{ booking.customer.full_name }}</span>
-              <span class="od-badge od-badge-{{ booking.status }}">{{ booking.get_status_display }}</span>
-              {% if booking.reference_photo %}<span class="od-badge od-badge-photo">📷 Photo</span>{% endif %}
-            </div>
-            <div class="od-bk-svc">
-              {% for item in booking.booking_services.all %}
-                {{ item.service_name_snapshot }}{% if not forloop.last %}, {% endif %}
-              {% empty %}—{% endfor %}
-            </div>
-            <div class="od-bk-meta">
-              <span>{{ booking.start_at|date:"M j, Y" }}</span>
-              <span>{{ booking.start_at|date:"H:i" }} – {{ booking.end_at|date:"H:i" }}</span>
-              <span>{{ booking.total_duration_minutes }} min</span>
-              <span>{{ booking.customer.phone_number }}</span>
-              <span>{{ booking.customer.instagram_username }}</span>
-            </div>
-            <div class="od-bk-actions">
-              {% if booking.status == "pending" %}
-                <form method="post" style="display:contents">
-                  {% csrf_token %}
-                  <input type="hidden" name="booking_id" value="{{ booking.id }}">
-                  <button class="od-btn-approve" type="submit" name="action" value="approve">✓ Approve</button>
-                  <button class="od-btn-reject"  type="submit" name="action" value="reject">✕ Reject</button>
-                </form>
-              {% endif %}
-              <a class="od-btn-call" href="tel:{{ booking.customer.phone_number }}">📞 Call</a>
-              <button class="od-btn-msg" type="button"
-                data-msg-name="{{ booking.customer.full_name|truncatewords:1 }}"
-                data-msg-date="{{ booking.start_at|date:'j N Y' }}"
-                data-msg-time="{{ booking.start_at|date:'H:i' }}"
-                data-msg-type="{{ booking.status }}">
-                💬 Message
-              </button>
-            </div>
-          </div>
+          {% include "booking/partials/booking_card.html" with booking=booking show_actions=True show_edit=True %}
         {% empty %}
-          <div class="od-empty">
-            <span class="od-empty-icon">📭</span>
-            No bookings yet.
-          </div>
+          <div class="od-empty">No bookings yet.</div>
         {% endfor %}
       </div>
-    </div>{# /bookings #}
+    </div>
 
     <div class="od-section" id="od-sec-customers">
       <div class="od-page-top">
         <div class="od-page-title">Customers</div>
+        <button type="button" class="od-btn od-btn-primary" data-add-customer><i class="bi bi-plus-lg"></i> Add customer</button>
       </div>
-
       <div class="od-card">
-        {% if booking_management_list %}
-          {# Deduplicate customers via template grouping — show from bookings #}
-          <div style="overflow-x:auto">
-            <table class="od-table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Phone</th>
-                  <th>Instagram</th>
-                  <th>Contact via</th>
+        {% if customers %}
+          <table class="od-table">
+            <thead><tr><th>Name</th><th>Phone</th><th>Instagram</th><th>Contact</th><th></th></tr></thead>
+            <tbody>
+              {% for customer in customers %}
+                <tr data-customer-id="{{ customer.id }}"
+                    data-full-name="{{ customer.full_name }}"
+                    data-phone="{{ customer.phone_number }}"
+                    data-instagram="{{ customer.instagram_username }}"
+                    data-email="{{ customer.email }}"
+                    data-contact="{{ customer.preferred_contact_method }}">
+                  <td><strong>{{ customer.full_name }}</strong></td>
+                  <td>{{ customer.phone_number }}</td>
+                  <td>{{ customer.instagram_username }}</td>
+                  <td>{{ customer.get_preferred_contact_method_display }}</td>
+                  <td class="od-row-actions">
+                    <a href="{% url 'booking:customer_history' customer.id %}" class="od-link">History</a>
+                    <button type="button" class="od-btn-text" data-edit-customer="{{ customer.id }}">Edit</button>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {% for booking in booking_management_list %}
-                  <tr>
-                    <td><strong>{{ booking.customer.full_name }}</strong></td>
-                    <td>{{ booking.customer.phone_number }}</td>
-                    <td>{{ booking.customer.instagram_username }}</td>
-                    <td>{{ booking.customer.get_preferred_contact_method_display }}</td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
+              {% endfor %}
+            </tbody>
+          </table>
         {% else %}
-          <div class="od-empty">
-            <span class="od-empty-icon">👥</span>
-            No customers yet.
-          </div>
+          <div class="od-empty">No customers yet.</div>
         {% endif %}
       </div>
-    </div>{# /customers #}
+    </div>
 
     <div class="od-section" id="od-sec-services">
       <div class="od-page-top">
         <div class="od-page-title">Services</div>
-        <a class="od-btn od-btn-primary" href="/admin/booking/service/add/" target="_blank">+ Add</a>
+        <button type="button" class="od-btn od-btn-primary" data-add-service><i class="bi bi-plus-lg"></i> Add service</button>
       </div>
-
       <div class="od-card">
-        {% if services %}
-          {% for service in services %}
-            <div class="od-svc-row" style="opacity:{% if service.is_active %}1{% else %}0.5{% endif %}">
-              <div class="od-svc-info">
-                <div class="od-svc-name">
-                  {{ service.name }}
-                  {% if not service.is_active %}
-                    <span style="font-size:11px;background:#F3F4F6;color:#6B7280;padding:1px 8px;border-radius:20px;margin-left:6px;font-weight:400">Inactive</span>
-                  {% endif %}
-                </div>
-                <div class="od-svc-meta">
-                  {{ service.duration_minutes }} min
-                  {% if service.base_price %} · {{ service.base_price }} ден{% endif %}
-                  {% if service.requires_photo %}
-                    · <span style="color:#EF4444">Photo required</span>
-                  {% elif service.photo_recommended %}
-                    · <span style="color:#F59E0B">Photo recommended</span>
-                  {% endif %}
-                  {% if service.extra_duration_note %}
-                    · {{ service.extra_duration_note }}
-                  {% endif %}
-                </div>
-              </div>
-              <a href="/admin/booking/service/{{ service.id }}/change/" target="_blank"
-                 style="font-size:12px;color:#4F6AF5;text-decoration:none">Edit</a>
+        {% for service in services %}
+          <div class="od-svc-row" data-service-id="{{ service.id }}"
+               data-name="{{ service.name }}"
+               data-description="{{ service.description|escape }}"
+               data-duration="{{ service.duration_minutes }}"
+               data-price="{{ service.base_price }}"
+               data-sort-order="{{ service.sort_order }}"
+               data-extra-note="{{ service.extra_duration_note|escape }}"
+               data-active="{{ service.is_active|yesno:'true,false' }}"
+               data-requires-photo="{{ service.requires_photo|yesno:'true,false' }}"
+               data-photo-recommended="{{ service.photo_recommended|yesno:'true,false' }}"
+               style="opacity:{% if service.is_active %}1{% else %}0.55{% endif %}">
+            <div class="od-svc-info">
+              <div class="od-svc-name">{{ service.name }}{% if not service.is_active %} <span class="od-tag-muted">Inactive</span>{% endif %}</div>
+              <div class="od-svc-meta">{{ service.duration_minutes }} min{% if service.base_price %} · {{ service.base_price|floatformat:0 }} ден{% endif %}</div>
             </div>
-          {% endfor %}
-        {% else %}
-          <div class="od-empty">
-            <span class="od-empty-icon">✨</span>
-            No services yet. Add services in admin.
+            <div class="od-row-actions">
+              <button type="button" class="od-btn-text" data-edit-service="{{ service.id }}">Edit</button>
+            </div>
           </div>
-        {% endif %}
+        {% empty %}
+          <div class="od-empty">No services yet.</div>
+        {% endfor %}
       </div>
-    </div>{# /services #}
+    </div>
 
     <div class="od-section" id="od-sec-hours">
+      <div class="od-page-top"><div class="od-page-title">Working hours</div></div>
+      <form method="post" class="od-card od-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="save_working_hours">
+        <input type="hidden" name="return_section" value="hours">
+        {{ hours_formset.management_form }}
+        {% for form in hours_formset %}
+          <div class="od-hours-edit-row">
+            {{ form.weekday }}
+            <div class="od-hours-day">{{ form.instance.get_weekday_display }}</div>
+            <label class="od-check-label">{{ form.is_working_day }} Open</label>
+            <div class="od-hours-fields">{{ form.start_time }} {{ form.end_time }}</div>
+          </div>
+        {% endfor %}
+        <button type="submit" class="od-btn od-btn-primary">Save working hours</button>
+      </form>
+    </div>
+
+    <div class="od-section" id="od-sec-availability">
       <div class="od-page-top">
-        <div class="od-page-title">Working Hours</div>
-        <a class="od-btn od-btn-primary" href="/admin/booking/workinghours/" target="_blank" style="font-size:12px">Edit in admin</a>
+        <div class="od-page-title">Availability</div>
+        <div class="od-page-actions">
+          <button type="button" class="od-btn od-btn-primary" data-add-blocked-date><i class="bi bi-calendar-x"></i> Block day</button>
+          <button type="button" class="od-btn od-btn-ghost" data-add-block><i class="bi bi-slash-circle"></i> Block time</button>
+        </div>
       </div>
 
-      <div class="od-card">
-        {% with salon.working_hours.all as wh %}
-          {% if wh %}
-            {% for row in wh %}
-              <div class="od-hours-row">
-                <div class="od-hours-day {% if not row.is_working_day %}closed{% endif %}">
-                  {{ row.get_weekday_display }}
-                </div>
-                {% if row.is_working_day %}
-                  <div class="od-hours-time">{{ row.start_time|time:"H:i" }} – {{ row.end_time|time:"H:i" }}</div>
-                {% else %}
-                  <div class="od-hours-closed">CLOSED</div>
-                {% endif %}
-              </div>
-            {% endfor %}
+      <div class="od-grid-2">
+        <div class="od-card">
+          <div class="od-card-title">Blocked dates</div>
+          {% if blocked_dates %}
+            <ul class="od-list">
+              {% for row in blocked_dates %}
+                <li>
+                  <span>{{ row.date|date:"d/m/Y" }}{% if row.reason %} — {{ row.reason }}{% endif %}</span>
+                  <form method="post" style="display:inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete_blocked_date">
+                    <input type="hidden" name="override_id" value="{{ row.id }}">
+                    <input type="hidden" name="return_section" value="availability">
+                    <button type="submit" class="od-btn-text od-btn-danger" data-delete-blocked-date>Delete</button>
+                  </form>
+                </li>
+              {% endfor %}
+            </ul>
           {% else %}
-            <div class="od-empty" style="padding:24px">
-              No working hours configured. Add them in admin.
-            </div>
+            <p class="od-muted">No blocked dates.</p>
           {% endif %}
-        {% endwith %}
-      </div>
-    </div>{# /hours #}
-
-    <div class="od-section" id="od-sec-policy">
-      <div class="od-page-top">
-        <div class="od-page-title">Booking Policy</div>
-        {% if booking_policy %}
-          <a class="od-btn od-btn-primary" href="/admin/booking/bookingpolicy/{{ booking_policy.id }}/change/" target="_blank" style="font-size:12px">Edit in admin</a>
-        {% endif %}
-      </div>
-
-      {% if booking_policy %}
-        <div class="od-card" style="margin-bottom:16px">
-          <div style="font-size:11px;color:#9CA3AF;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:14px">Time Windows</div>
-          {% with bp=booking_policy %}
-            <div class="od-policy-row">
-              <div class="od-policy-label">Minimum booking notice</div>
-              <div class="od-policy-value">{{ bp.minimum_notice_days }} days</div>
-            </div>
-            <div class="od-policy-row">
-              <div class="od-policy-label">Maximum booking window</div>
-              <div class="od-policy-value">{{ bp.maximum_booking_window_days }} days</div>
-            </div>
-            <div class="od-policy-row">
-              <div class="od-policy-label">Slot interval</div>
-              <div class="od-policy-value">{{ bp.slot_interval_minutes }} min</div>
-            </div>
-            <div class="od-policy-row">
-              <div class="od-policy-label">Buffer between bookings</div>
-              <div class="od-policy-value">{{ bp.buffer_minutes_between_bookings }} min</div>
-            </div>
-            <div class="od-policy-row">
-              <div class="od-policy-label">Reminder before appointment</div>
-              <div class="od-policy-value">{{ bp.reminder_hours_before }} hours</div>
-            </div>
-            <div class="od-policy-row">
-              <div class="od-policy-label">Late arrival limit</div>
-              <div class="od-policy-value">{{ bp.late_arrival_limit_minutes }} min</div>
-            </div>
-          {% endwith %}
         </div>
 
         <div class="od-card">
-          <div style="font-size:11px;color:#9CA3AF;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:14px">Rules</div>
-          {% with bp=booking_policy %}
-            <div class="od-policy-row">
-              <div>
-                <div class="od-policy-label">Allow same-day bookings</div>
-              </div>
-              <div class="od-policy-value {% if bp.allow_same_day_booking %}od-policy-bool-on{% else %}od-policy-bool-off{% endif %}">
-                {% if bp.allow_same_day_booking %}On{% else %}Off{% endif %}
-              </div>
-            </div>
-            <div class="od-policy-row">
-              <div class="od-policy-label">Allow next-day bookings</div>
-              <div class="od-policy-value {% if bp.allow_next_day_booking %}od-policy-bool-on{% else %}od-policy-bool-off{% endif %}">
-                {% if bp.allow_next_day_booking %}On{% else %}Off{% endif %}
-              </div>
-            </div>
-            <div class="od-policy-row">
-              <div class="od-policy-label">Auto-approve bookings</div>
-              <div class="od-policy-value {% if bp.auto_approve_bookings %}od-policy-bool-on{% else %}od-policy-bool-off{% endif %}">
-                {% if bp.auto_approve_bookings %}On{% else %}Off{% endif %}
-              </div>
-            </div>
-            <div class="od-policy-row">
-              <div class="od-policy-label">Pending holds the slot</div>
-              <div class="od-policy-value {% if bp.pending_holds_slot %}od-policy-bool-on{% else %}od-policy-bool-off{% endif %}">
-                {% if bp.pending_holds_slot %}On{% else %}Off{% endif %}
-              </div>
-            </div>
-          {% endwith %}
+          <div class="od-card-title">Unavailable time blocks</div>
+          {% if unavailable_blocks %}
+            <ul class="od-list">
+              {% for block in unavailable_blocks %}
+                <li>
+                  <span>{{ block.date|date:"d/m/Y" }} · {{ block.start_time|time:"H:i" }}–{{ block.end_time|time:"H:i" }}{% if block.reason %} — {{ block.reason }}{% endif %}</span>
+                  <div class="od-row-actions">
+                    <button type="button" class="od-btn-text" data-edit-block="{{ block.id }}"
+                      data-block-date="{{ block.date|date:'Y-m-d' }}"
+                      data-block-start="{{ block.start_time|time:'H:i' }}"
+                      data-block-end="{{ block.end_time|time:'H:i' }}"
+                      data-block-reason="{{ block.reason|escape }}">Edit</button>
+                    <form method="post" style="display:inline">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="delete_unavailable_block">
+                      <input type="hidden" name="block_id" value="{{ block.id }}">
+                      <input type="hidden" name="return_section" value="availability">
+                      <button type="submit" class="od-btn-text od-btn-danger">Delete</button>
+                    </form>
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="od-muted">No time blocks.</p>
+          {% endif %}
         </div>
+      </div>
+    </div>
 
-        {% if booking_policy.auto_approve_bookings %}
-          <div style="background:#FFF9E6;border:1px solid #F5E6A3;border-radius:10px;padding:12px 16px;font-size:13px;color:#8a6f00;display:flex;gap:8px;align-items:center">
-            <span>⚠️</span>
-            <span>Auto-approve is on. New online bookings will be confirmed automatically.</span>
+    <div class="od-section" id="od-sec-policy">
+      <div class="od-page-top"><div class="od-page-title">Booking policy</div></div>
+      {% if policy_form %}
+        <form method="post" class="od-card od-form">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="save_policy">
+          <input type="hidden" name="return_section" value="policy">
+          <div class="od-form-grid od-form-grid-2">
+            {% for field in policy_form %}
+              <div class="od-field {% if field.field.widget.input_type == 'checkbox' %}od-field-check{% endif %}">
+                {% if field.field.widget.input_type == 'checkbox' %}
+                  <label>{{ field }} {{ field.label }}</label>
+                {% else %}
+                  <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                  {{ field }}
+                {% endif %}
+                {% if field.errors %}<span class="od-field-error">{{ field.errors.0 }}</span>{% endif %}
+              </div>
+            {% endfor %}
           </div>
-        {% endif %}
+          <button type="submit" class="od-btn od-btn-primary">Save policy</button>
+        </form>
       {% else %}
-        <div class="od-empty">
-          <span class="od-empty-icon">⚙️</span>
-          No Booking policy exists yet. Add one in admin.
-        </div>
+        <div class="od-empty">No booking policy configured.</div>
       {% endif %}
-    </div>{# /policy #}
-
+    </div>
   </main>
 </div>
 
-{# ── Message modal ────────────────────────────────────────────────────────── #}
-<div class="od-modal-overlay" id="od-msg-modal">
-  <div class="od-modal-box">
-    <div class="od-modal-header">
-      <span class="od-modal-title">💬 Prepared Message</span>
-      <button class="od-modal-close" id="od-modal-close">×</button>
-    </div>
-    <div class="od-modal-msg" id="od-modal-text"></div>
-    <div class="od-modal-footer">
-      <button class="od-modal-cancel" id="od-modal-cancel">Close</button>
-      <button class="od-modal-copy"   id="od-modal-copy">📋 Copy message</button>
-    </div>
-  </div>
-</div>
+{% include "booking/partials/owner_booking_modal.html" %}
+{% include "booking/partials/owner_service_modal.html" %}
+{% include "booking/partials/owner_customer_modal.html" %}
+{% include "booking/partials/owner_block_modals.html" %}
+{% include "booking/partials/owner_message_modal.html" %}
 
-{# ── Toast ────────────────────────────────────────────────────────────────── #}
-<div class="od-toast" id="od-toast"></div>
+{% endif %}
+{% endblock %}
 
+{% block extra_js %}
+{% if salon %}
+{% load static %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+<script src="{% static 'js/owner_dashboard.js' %}"></script>
 <script>
-(() => {
-  // ── Section navigation ───────────────────────────────────────────────────
-  function showSection(sectionId) {
-    document.querySelectorAll('.od-section').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.od-nav a').forEach(a => a.classList.remove('is-active'));
-
-    const sec = document.getElementById('od-sec-' + sectionId);
-    const nav = document.querySelector(`.od-nav a[data-section="${sectionId}"]`);
-    if (sec) sec.classList.add('active');
-    if (nav) nav.classList.add('is-active');
-
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
-  document.querySelectorAll('[data-section]').forEach(link => {
-    link.addEventListener('click', e => {
-      e.preventDefault();
-      showSection(link.dataset.section);
-    });
-  });
-
-  document.querySelectorAll('[data-goto]').forEach(btn => {
-    btn.addEventListener('click', () => showSection(btn.dataset.goto));
-  });
-
-  // ── Status tab filtering ─────────────────────────────────────────────────
-  const tabs    = document.querySelectorAll('.od-tab');
-  const bkCards = document.querySelectorAll('#bk-list .od-bk-card');
-
-  tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      tabs.forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-
-      const status = tab.dataset.tab;
-      let shown = 0;
-      bkCards.forEach(card => {
-        const visible = card.dataset.status === status;
-        card.style.display = visible ? '' : 'none';
-        if (visible) shown++;
-      });
-
-      // Show empty state if none
-      let empty = document.getElementById('bk-empty');
-      if (!empty) {
-        empty = document.createElement('div');
-        empty.id = 'bk-empty';
-        empty.className = 'od-empty';
-        empty.innerHTML = '<span class="od-empty-icon">📭</span>No bookings in this category.';
-        document.getElementById('bk-list').appendChild(empty);
-      }
-      empty.style.display = shown === 0 ? 'block' : 'none';
-    });
-  });
-
-  // Filter to pending on load
-  tabs[0]?.click();
-
-  // ── Prepared message modal ───────────────────────────────────────────────
-  const modal      = document.getElementById('od-msg-modal');
-  const modalText  = document.getElementById('od-modal-text');
-  const closeBtn   = document.getElementById('od-modal-close');
-  const cancelBtn  = document.getElementById('od-modal-cancel');
-  const copyBtn    = document.getElementById('od-modal-copy');
-  const toast      = document.getElementById('od-toast');
-
-  function showToast(msg, isError) {
-    toast.textContent = msg;
-    toast.className   = 'od-toast show' + (isError ? ' error' : '');
-    setTimeout(() => toast.classList.remove('show'), 3000);
-  }
-
-  function buildMessage(name, date, time, type) {
-    const first = name.split(' ')[0];
-    if (type === 'approved') {
-      return `Здраво ${first}, вашиот термин за ${date} во ${time} е потврден. Ве очекуваме! 💅 — {{ salon.name }}`;
-    }
-    if (type === 'rejected' || type === 'cancelled') {
-      return `Здраво ${first}, за жал терминот за ${date} во ${time} не е достапен. Ве молиме изберете друг термин. — {{ salon.name }}`;
-    }
-    if (type === 'pending') {
-      return `Здраво ${first}, вашето барање за термин на ${date} во ${time} е примено. Ќе ве контактираме наскоро. — {{ salon.name }}`;
-    }
-    return `Здраво ${first}, ве потсетуваме дека имате термин на ${date} во ${time}. Ве очекуваме! 💅 — {{ salon.name }}`;
-  }
-
-  document.querySelectorAll('[data-msg-name]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const msg = buildMessage(
-        btn.dataset.msgName,
-        btn.dataset.msgDate,
-        btn.dataset.msgTime,
-        btn.dataset.msgType,
-      );
-      modalText.textContent = msg;
-      modal.classList.add('open');
-    });
-  });
-
-  function closeModal() { modal.classList.remove('open'); }
-  closeBtn?.addEventListener('click', closeModal);
-  cancelBtn?.addEventListener('click', closeModal);
-  modal?.addEventListener('click', e => { if (e.target === modal) closeModal(); });
-
-  copyBtn?.addEventListener('click', () => {
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(modalText.textContent)
-        .then(() => { showToast('Message copied ✓'); closeModal(); })
-        .catch(() => showToast('Copy failed', true));
-    } else {
-      showToast('Copy not supported in this browser', true);
-    }
-  });
-
-  // ── Init ─────────────────────────────────────────────────────────────────
-  showSection('dashboard');
-})();
+initOwnerDashboard({
+  eventsUrl: "{% url 'booking:owner_calendar_events' %}",
+  slotsUrl: "{% url 'booking:owner_available_slots' %}",
+  bookingDetailUrl: "/owner/booking/",
+  messageUrlBase: "/owner/booking/",
+});
 </script>
 {% endif %}
 {% endblock %}

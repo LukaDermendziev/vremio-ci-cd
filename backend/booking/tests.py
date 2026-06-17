@@ -44,7 +44,7 @@ class BookingViewTests(TestCase):
         BookingPolicy.objects.create(salon=self.salon)
 
     def test_booking_page_loads_step_flow(self):
-        response = self.client.get("/book/fancy-fingers/")
+        response = self.client.get("/book/fancy-fingers/request/")
 
         self.assertContains(response, "Choose service")
         self.assertContains(response, "data-slots-url")
@@ -66,7 +66,7 @@ class BookingViewTests(TestCase):
 
         service = self.salon.services.get(name="Manicure")
         response = self.client.post(
-            "/book/fancy-fingers/",
+            "/book/fancy-fingers/request/",
             {
                 "service": service.id,
                 "date": selected_date.isoformat(),
