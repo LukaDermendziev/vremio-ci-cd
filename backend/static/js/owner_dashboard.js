@@ -52,11 +52,55 @@ function initOwnerDashboard(config) {
     }
   }
 
+  // ── Mobile sidebar + bottom nav ──────────────────────────────────────────
+  const sidebar    = document.querySelector(".od-sidebar");
+  const backdrop   = document.getElementById("od-backdrop");
+  const hamClose   = document.getElementById("od-ham-close");
+  const bnMoreBtn  = document.getElementById("od-bn-more");
+
+  function openSidebar() {
+    sidebar?.classList.add("is-open");
+    backdrop?.classList.add("is-visible");
+    document.body.style.overflow = "hidden";
+  }
+  function closeSidebar() {
+    sidebar?.classList.remove("is-open");
+    backdrop?.classList.remove("is-visible");
+    document.body.style.overflow = "";
+  }
+
+  hamClose?.addEventListener("click", closeSidebar);
+  backdrop?.addEventListener("click", closeSidebar);
+  bnMoreBtn?.addEventListener("click", openSidebar);
+
+  // Close sidebar overlay when window widens past mobile breakpoint
+  window.addEventListener("resize", () => {
+    if (window.innerWidth > 600) closeSidebar();
+  });
+
+  // ── Bottom nav clicks ─────────────────────────────────────────────────────
+  function syncBottomNav(sectionId) {
+    document.querySelectorAll(".od-bn-item[data-bn-section]").forEach(btn => {
+      btn.classList.toggle("is-active", btn.dataset.bnSection === sectionId);
+    });
+  }
+
+  document.querySelectorAll(".od-bn-item[data-bn-section]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      showSection(btn.dataset.bnSection);
+      history.replaceState(null, "", "#" + btn.dataset.bnSection);
+      syncBottomNav(btn.dataset.bnSection);
+      closeSidebar();
+    });
+  });
+
   document.querySelectorAll("[data-section]").forEach(el => {
     el.addEventListener("click", e => {
       e.preventDefault();
       showSection(el.dataset.section);
       history.replaceState(null, "", "#" + el.dataset.section);
+      syncBottomNav(el.dataset.section);
+      if (window.innerWidth <= 600 && sidebar?.classList.contains("is-open")) closeSidebar();
     });
   });
 
@@ -65,7 +109,9 @@ function initOwnerDashboard(config) {
   });
 
   const hash = location.hash.replace("#", "");
-  showSection(hash || "dashboard");
+  const initSection = hash || "dashboard";
+  showSection(initSection);
+  syncBottomNav(initSection);
 
   // Status tabs
   const tabs = document.querySelectorAll(".od-tab");

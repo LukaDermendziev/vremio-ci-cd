@@ -25,6 +25,7 @@ from .forms import (
 )
 from .models import (
     Booking,
+    BookingActivityLog,
     Customer,
     DateWorkingHoursOverride,
     Service,
@@ -39,6 +40,8 @@ from .services import (
     get_available_slots,
     get_revenue_stats,
     get_working_window_for_date,
+    log_booking_activity,
+    send_booking_notification,
 )
 
 
@@ -107,6 +110,15 @@ def _owner_dashboard_context(salon):
     unavailable_blocks = salon.unavailable_time_blocks.order_by("date", "start_time")[:30]
     revenue = get_revenue_stats(salon)
 
+    week_start = today - timedelta(days=today.weekday())
+    week_end   = week_start + timedelta(days=6)
+    no_show_count = salon.bookings.filter(status=Booking.Status.NO_SHOW).count()
+    completed_week_count = salon.bookings.filter(
+        status=Booking.Status.COMPLETED,
+        start_at__date__gte=week_start,
+        start_at__date__lte=week_end,
+    ).count()
+
     return {
         "salon": salon,
         "pending_bookings": pending_bookings,
@@ -114,6 +126,8 @@ def _owner_dashboard_context(salon):
         "upcoming_approved_bookings": upcoming_approved_bookings,
         "todays_appointments": todays_appointments,
         "today_count": todays_appointments.count(),
+        "no_show_count": no_show_count,
+        "completed_week_count": completed_week_count,
         "booking_management_list": booking_management_list,
         "customers": customers,
         "services": services,
@@ -184,26 +198,53 @@ def owner_dashboard(request):
                 except ValidationError as exc:
                     messages.error(request, _validation_error_to_text(exc))
                 else:
-                    messages.success(request, "Booking approved.")
+                    log_booking_activity(booking, BookingActivityLog.Action.APPROVED, user=request.user)
+                    sent, reason = send_booking_notification(booking, "approved")
+                    if sent:
+                        log_booking_activity(booking, BookingActivityLog.Action.EMAIL_SENT, user=request.user, note="Approval email sent")
+                        messages.success(request, "Booking approved. Email sent to customer.")
+                    elif reason == "no_email":
+                        messages.success(request, "Booking approved. Customer has no email — use prepared message.")
+                    else:
+                        messages.success(request, "Booking approved. Email could not be sent — use prepared message.")
             else:
                 booking.status = Booking.Status.REJECTED
                 booking.save()
-                messages.success(request, "Booking rejected.")
+                log_booking_activity(booking, BookingActivityLog.Action.REJECTED, user=request.user)
+                sent, reason = send_booking_notification(booking, "rejected")
+                if sent:
+                    log_booking_activity(booking, BookingActivityLog.Action.EMAIL_SENT, user=request.user, note="Rejection email sent")
+                    messages.success(request, "Booking rejected. Email sent to customer.")
+                elif reason == "no_email":
+                    messages.success(request, "Booking rejected. Customer has no email — use prepared message.")
+                else:
+                    messages.success(request, "Booking rejected. Email could not be sent — use prepared message.")
 
         elif action == "save_booking":
+            is_edit = bool(request.POST.get("booking_id"))
             booking = None
-            booking_id = request.POST.get("booking_id")
-            if booking_id:
-                booking = get_object_or_404(Booking, pk=booking_id, salon=salon)
+            if is_edit:
+                booking = get_object_or_404(Booking, pk=request.POST.get("booking_id"), salon=salon)
             form = OwnerBookingForm(request.POST, salon=salon, booking=booking)
             if form.is_valid():
                 try:
-                    form.save()
+                    saved = form.save()
                 except ValidationError as exc:
                     messages.error(request, _validation_error_to_text(exc))
                 else:
-                    label = "updated" if booking else "added"
-                    messages.success(request, f"Booking {label} successfully.")
+                    if is_edit:
+                        log_booking_activity(saved, BookingActivityLog.Action.EDITED, user=request.user)
+                        inform = request.POST.get("inform_customer")
+                        if inform:
+                            sent, reason = send_booking_notification(saved, "edited")
+                            if sent:
+                                log_booking_activity(saved, BookingActivityLog.Action.EMAIL_SENT, user=request.user, note="Edit email sent")
+                            messages.success(request, "Booking updated." + (" Email sent." if sent else " Use prepared message to notify customer."))
+                        else:
+                            messages.success(request, "Booking updated successfully.")
+                    else:
+                        log_booking_activity(saved, BookingActivityLog.Action.REQUESTED, user=request.user, note="Manually added by owner")
+                        messages.success(request, "Booking added successfully.")
             else:
                 for field, errs in form.errors.items():
                     for err in errs:
@@ -281,7 +322,39 @@ def owner_dashboard(request):
             )
             booking.status = Booking.Status.COMPLETED
             booking.save()
+            log_booking_activity(booking, BookingActivityLog.Action.COMPLETED, user=request.user)
             messages.success(request, "Booking marked as completed.")
+
+        elif action == "mark_no_show":
+            booking = get_object_or_404(
+                Booking, pk=request.POST.get("booking_id"), salon=salon
+            )
+            booking.status = Booking.Status.NO_SHOW
+            booking.save()
+            log_booking_activity(booking, BookingActivityLog.Action.NO_SHOW, user=request.user)
+            sent, reason = send_booking_notification(booking, "no_show")
+            if sent:
+                log_booking_activity(booking, BookingActivityLog.Action.EMAIL_SENT, user=request.user, note="No-show email sent")
+            messages.success(request, "Booking marked as no-show.")
+
+        elif action == "cancel_booking":
+            booking = get_object_or_404(
+                Booking, pk=request.POST.get("booking_id"), salon=salon
+            )
+            if booking.status in {Booking.Status.COMPLETED, Booking.Status.NO_SHOW}:
+                messages.warning(request, "Cannot cancel a completed or no-show booking.")
+            else:
+                booking.status = Booking.Status.CANCELLED
+                booking.save()
+                log_booking_activity(booking, BookingActivityLog.Action.CANCELLED, user=request.user)
+                sent, reason = send_booking_notification(booking, "cancelled")
+                if sent:
+                    log_booking_activity(booking, BookingActivityLog.Action.EMAIL_SENT, user=request.user, note="Cancellation email sent")
+                    messages.success(request, "Booking cancelled. Email sent to customer.")
+                elif reason == "no_email":
+                    messages.success(request, "Booking cancelled. Customer has no email — use prepared message.")
+                else:
+                    messages.success(request, "Booking cancelled.")
 
         elif action == "delete_booking":
             booking = get_object_or_404(
@@ -540,11 +613,36 @@ def owner_booking_detail(request, booking_id):
         return JsonResponse({"error": "Unauthorized"}, status=403)
 
     booking = get_object_or_404(
-        Booking.objects.select_related("customer").prefetch_related("booking_services"),
+        Booking.objects.select_related("customer").prefetch_related(
+            "booking_services__service", "activity_log__performed_by"
+        ),
         pk=booking_id,
         salon=salon,
     )
     first_service = booking.booking_services.first()
+    local_start = timezone.localtime(booking.start_at)
+    local_end   = timezone.localtime(booking.end_at)
+
+    services_list = [
+        {
+            "name": bs.service_name_snapshot,
+            "duration": bs.duration_minutes_snapshot,
+            "price": str(bs.price_snapshot),
+        }
+        for bs in booking.booking_services.all()
+    ]
+
+    activity = [
+        {
+            "action": entry.action,
+            "action_label": entry.get_action_display(),
+            "by": entry.performed_by.get_full_name() or entry.performed_by.username if entry.performed_by else "System",
+            "note": entry.note,
+            "at": entry.created_at.isoformat(),
+        }
+        for entry in booking.activity_log.order_by("created_at")
+    ]
+
     return JsonResponse(
         {
             "id": booking.id,
@@ -554,13 +652,72 @@ def owner_booking_detail(request, booking_id):
             "email": booking.customer.email,
             "preferred_contact_method": booking.customer.preferred_contact_method,
             "service_id": first_service.service_id if first_service else None,
-            "date": timezone.localtime(booking.start_at).strftime("%Y-%m-%d"),
-            "start_time": timezone.localtime(booking.start_at).strftime("%H:%M"),
+            "services": services_list,
+            "date": local_start.strftime("%Y-%m-%d"),
+            "date_display": local_start.strftime("%d/%m/%Y"),
+            "start_time": local_start.strftime("%H:%M"),
+            "end_time": local_end.strftime("%H:%M"),
+            "duration": booking.total_duration_minutes,
             "status": booking.status,
+            "status_label": booking.get_status_display(),
             "source": booking.source,
+            "customer_note": booking.customer_note,
             "owner_note": booking.owner_note,
+            "has_reference_photo": bool(booking.reference_photo),
+            "reference_photo_url": booking.reference_photo.url if booking.reference_photo else None,
+            "created_at": booking.created_at.isoformat(),
+            "updated_at": booking.updated_at.isoformat(),
+            "activity_log": activity,
         }
     )
+
+
+@login_required
+@require_GET
+def booking_ics(request, booking_id):
+    """Generate an .ics calendar file for an approved booking."""
+    from django.http import HttpResponse
+
+    salon = _get_owner_salon(request.user)
+    if not salon:
+        return HttpResponse(status=403)
+
+    booking = get_object_or_404(
+        Booking.objects.select_related("customer").prefetch_related("booking_services"),
+        pk=booking_id,
+        salon=salon,
+    )
+
+    local_start = timezone.localtime(booking.start_at)
+    local_end   = timezone.localtime(booking.end_at)
+    services    = ", ".join(bs.service_name_snapshot for bs in booking.booking_services.all())
+    uid         = f"booking-{booking.id}@salonscheduler"
+    now_stamp   = timezone.now().strftime("%Y%m%dT%H%M%SZ")
+
+    def fmt(dt):
+        return dt.strftime("%Y%m%dT%H%M%S")
+
+    ics_lines = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "PRODID:-//Salon Scheduler//EN",
+        "CALSCALE:GREGORIAN",
+        "BEGIN:VEVENT",
+        f"UID:{uid}",
+        f"DTSTAMP:{now_stamp}",
+        f"DTSTART:{fmt(local_start)}",
+        f"DTEND:{fmt(local_end)}",
+        f"SUMMARY:{booking.customer.full_name} — {services}",
+        f"DESCRIPTION:Phone: {booking.customer.phone_number}\\nInstagram: {booking.customer.instagram_username}\\nStatus: {booking.get_status_display()}",
+        f"LOCATION:{salon.name}",
+        "END:VEVENT",
+        "END:VCALENDAR",
+    ]
+
+    content = "\r\n".join(ics_lines) + "\r\n"
+    response = HttpResponse(content, content_type="text/calendar; charset=utf-8")
+    response["Content-Disposition"] = f'attachment; filename="booking-{booking.id}.ics"'
+    return response
 
 
 @login_required

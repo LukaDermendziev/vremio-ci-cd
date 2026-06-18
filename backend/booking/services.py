@@ -1,13 +1,18 @@
+import logging
 import re
 from decimal import Decimal
 from datetime import datetime, time, timedelta
 from urllib.parse import quote
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
+from django.conf import settings
+from django.core.mail import send_mail
 from django.db.models import Sum
 from django.utils import timezone
 
-from .models import Booking, BookingPolicy, DateWorkingHoursOverride, WorkingHours
+from .models import Booking, BookingActivityLog, BookingPolicy, DateWorkingHoursOverride, WorkingHours
+
+logger = logging.getLogger(__name__)
 
 
 DEFAULT_START_TIME = time(8, 0)
@@ -303,19 +308,80 @@ def build_prepared_message(booking, message_type):
             f"Здраво {first_name}, вашиот термин за {date_label} во {time_label} "
             f"е потврден. Ве очекуваме! — {salon_name}"
         )
-    if message_type in {"rejected", "cancelled"}:
+    if message_type == "rejected":
         return (
             f"Здраво {first_name}, за жал терминот за {date_label} во {time_label} "
             f"не е достапен. Ве молиме изберете друг термин. — {salon_name}"
+        )
+    if message_type == "cancelled":
+        return (
+            f"Здраво {first_name}, вашиот термин за {date_label} во {time_label} "
+            f"е откажан. Ви благодариме на разбирањето. — {salon_name}"
+        )
+    if message_type == "edited":
+        return (
+            f"Здраво {first_name}, вашиот термин е променет на {date_label} во {time_label}. "
+            f"Ве очекуваме! — {salon_name}"
+        )
+    if message_type == "no_show":
+        return (
+            f"Здраво {first_name}, не се јавивте на вашиот термин на {date_label} "
+            f"во {time_label}. Доколку сакате да закажете нов термин, контактирајте нè. "
+            f"— {salon_name}"
         )
     if message_type == "pending":
         return (
             f"Здраво {first_name}, вашето барање за термин на {date_label} во {time_label} "
             f"е примено. Ќе ве контактираме наскоро. — {salon_name}"
         )
+    # fallback: reminder
     return (
         f"Здраво {first_name}, ве потсетуваме дека имате термин на {date_label} "
         f"во {time_label}. Ве очекуваме! — {salon_name}"
+    )
+
+
+def send_booking_notification(booking, action, request=None):
+    """
+    Send an email to the customer if they have one.
+    Returns (sent: bool, reason: str).
+    """
+    email = booking.customer.email
+    if not email:
+        return False, "no_email"
+
+    subject_map = {
+        "approved":  f"Вашиот термин е потврден — {booking.salon.name}",
+        "rejected":  f"За жал терминот не е достапен — {booking.salon.name}",
+        "cancelled": f"Вашиот термин е откажан — {booking.salon.name}",
+        "edited":    f"Вашиот термин е променет — {booking.salon.name}",
+        "no_show":   f"Пропуштен термин — {booking.salon.name}",
+        "pending":   f"Барањето е примено — {booking.salon.name}",
+    }
+    subject = subject_map.get(action, f"Информација за термин — {booking.salon.name}")
+    body = build_prepared_message(booking, action)
+
+    try:
+        send_mail(
+            subject=subject,
+            message=body,
+            from_email=getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@salonscheduler.app"),
+            recipient_list=[email],
+            fail_silently=False,
+        )
+        return True, "sent"
+    except Exception as exc:
+        logger.warning("Could not send booking email to %s: %s", email, exc)
+        return False, "error"
+
+
+def log_booking_activity(booking, action, user=None, note=""):
+    """Create a BookingActivityLog entry for a booking action."""
+    BookingActivityLog.objects.create(
+        booking=booking,
+        action=action,
+        performed_by=user,
+        note=note,
     )
 
 

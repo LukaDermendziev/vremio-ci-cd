@@ -422,6 +422,39 @@ class BookingService(models.Model):
         super().save(*args, **kwargs)
 
 
+class BookingActivityLog(models.Model):
+    class Action(models.TextChoices):
+        REQUESTED  = "requested",  "Requested"
+        APPROVED   = "approved",   "Approved"
+        REJECTED   = "rejected",   "Rejected"
+        CANCELLED  = "cancelled",  "Cancelled"
+        EDITED     = "edited",     "Edited"
+        COMPLETED  = "completed",  "Completed"
+        NO_SHOW    = "no_show",    "No Show"
+        EMAIL_SENT = "email_sent", "Email sent"
+
+    booking = models.ForeignKey(
+        Booking,
+        on_delete=models.CASCADE,
+        related_name="activity_log",
+    )
+    action = models.CharField(max_length=30, choices=Action.choices)
+    performed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+    )
+    note = models.CharField(max_length=500, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.booking} — {self.action}"
+
+
 class CustomerBlocklist(TimeStampedModel):
     salon = models.ForeignKey(
         Salon,

@@ -178,15 +178,22 @@
 {# ── Hours + rules ────────────────────────────────────────────────────────── #}
 <section class="sp-info-section" id="hours">
   <div class="sp-section-inner sp-info-grid">
+
     <div class="sp-info-card">
-      <p class="sp-kicker">Schedule</p>
+      <div class="sp-info-card-head">
+        <p class="sp-kicker">Schedule</p>
+        <span class="sp-open-badge" id="sp-open-badge">
+          <span class="sp-open-dot"></span>
+          <span class="sp-open-label"></span>
+        </span>
+      </div>
       <h3 class="sp-info-title">Working <em>hours</em></h3>
       <ul class="sp-hours-list">
         {% for row in working_hours %}
-          <li class="sp-hours-row {% if not row.is_working_day %}sp-hours-closed{% endif %}">
-            <span>{{ row.get_weekday_display }}</span>
+          <li class="sp-hours-row {% if not row.is_working_day %}sp-hours-closed{% endif %}" data-day="{{ row.weekday }}">
+            <span class="sp-hours-day">{{ row.get_weekday_display }}<span class="sp-today-badge">Today</span></span>
             {% if row.is_working_day %}
-              <span>{{ row.start_time|time:"H:i" }} – {{ row.end_time|time:"H:i" }}</span>
+              <span class="sp-hours-time">{{ row.start_time|time:"H:i" }} – {{ row.end_time|time:"H:i" }}</span>
             {% else %}
               <span class="sp-closed-label">Closed</span>
             {% endif %}
@@ -221,8 +228,57 @@
         {% endif %}
       </ul>
     </div>
+
   </div>
 </section>
+
+<script>
+(function () {
+  // Highlight today in the hours list
+  // Django weekday: 0=Mon … 6=Sun  |  JS getDay(): 0=Sun … 6=Sat
+  var jsDay = new Date().getDay();
+  var djangoDay = jsDay === 0 ? 6 : jsDay - 1;
+  var rows = document.querySelectorAll('.sp-hours-row[data-day]');
+  rows.forEach(function (row) {
+    if (parseInt(row.dataset.day, 10) === djangoDay) {
+      row.classList.add('is-today');
+      var badge = row.querySelector('.sp-today-badge');
+      if (badge) badge.style.display = 'inline-block';
+
+      // Show open/closed card in header
+      var headerBadge = document.getElementById('sp-open-badge');
+      if (headerBadge) {
+        var now = new Date();
+        var hhmm = now.getHours() * 60 + now.getMinutes();
+        var timeEl = row.querySelector('.sp-hours-time');
+        var labelEl = headerBadge.querySelector('.sp-open-label');
+        var setCard = function (text, cls) {
+          if (labelEl) labelEl.textContent = text;
+          headerBadge.classList.add(cls);
+        };
+        if (timeEl && !row.classList.contains('sp-hours-closed')) {
+          var parts = timeEl.textContent.trim().split('–');
+          if (parts.length === 2) {
+            var parse = function (s) {
+              var p = s.trim().split(':');
+              return parseInt(p[0], 10) * 60 + parseInt(p[1], 10);
+            };
+            var openMin = parse(parts[0]);
+            var closeMin = parse(parts[1]);
+            if (hhmm >= openMin && hhmm < closeMin) {
+              setCard('Open now', 'sp-open-now');
+            } else {
+              setCard('Closed now', 'sp-closed-now');
+            }
+          }
+        } else {
+          setCard('Closed today', 'sp-closed-now');
+        }
+      }
+    }
+  });
+})();
+</script>
 
 {# ── CTA banner ───────────────────────────────────────────────────────────── #}
 <section class="sp-cta-section">
@@ -236,12 +292,39 @@
 {# ── Footer ───────────────────────────────────────────────────────────────── #}
 <footer class="sp-footer-section">
   <div class="sp-footer-inner">
-    <div class="sp-footer-brand">{{ salon.name }}</div>
-    <div class="sp-footer-contact">
-      {% if salon.phone_number %}<a href="tel:{{ salon.phone_number }}"><i class="bi bi-telephone"></i> {{ salon.phone_number }}</a>{% endif %}
-      {% if salon.instagram_username %}<a href="https://instagram.com/{{ salon.instagram_username|cut:'@' }}" target="_blank" rel="noopener"><i class="bi bi-instagram"></i> {{ salon.instagram_username }}</a>{% endif %}
+
+    {# Left — brand + tagline #}
+    <div class="sp-footer-col sp-footer-col-brand">
+      <div class="sp-footer-brand">{{ salon.name }}</div>
+      <p class="sp-footer-tagline">Online booking, made simple.</p>
     </div>
-    <div class="sp-footer-note">Online booking powered by Salon Scheduler</div>
+
+    {# Right — contact links #}
+    <div class="sp-footer-col sp-footer-contact">
+      {% if salon.phone_number %}
+        <a href="tel:{{ salon.phone_number }}"><i class="bi bi-telephone"></i> {{ salon.phone_number }}</a>
+      {% endif %}
+      {% if salon.instagram_username %}
+        <a href="https://instagram.com/{{ salon.instagram_username|cut:'@' }}" target="_blank" rel="noopener"><i class="bi bi-instagram"></i> {{ salon.instagram_username }}</a>
+      {% endif %}
+    </div>
+
+  </div>
+
+  {# Bottom bar — nav links · copyright · credit #}
+  <div class="sp-footer-bottom">
+    <nav class="sp-footer-nav" aria-label="Footer navigation">
+      <a href="#services">Services</a>
+      <span class="sp-footer-dot"></span>
+      <a href="#hours">Hours</a>
+      <span class="sp-footer-dot"></span>
+      <a href="{% url 'booking:book_salon' salon.slug %}">Book now</a>
+    </nav>
+    <div class="sp-footer-bottom-right">
+      <span class="sp-footer-copy">&copy; {% now "Y" %} {{ salon.name }}</span>
+      <span class="sp-footer-sep">·</span>
+      <span class="sp-footer-credit">Made by <a href="https://lexilens-mk.netlify.app" target="_blank" rel="noopener">Luka Dermendziev</a></span>
+    </div>
   </div>
 </footer>
 

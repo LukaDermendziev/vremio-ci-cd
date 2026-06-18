@@ -16,12 +16,23 @@
 {% else %}
 
 <div class="od-layout">
+  <div class="od-backdrop" id="od-backdrop"></div>
   <aside class="od-sidebar">
     <div class="od-brand">
-      <div class="od-logo">{{ salon.name|first }}</div>
-      <div>
-        <div class="od-brand-name">{{ salon.name }}</div>
-        <div class="od-brand-sub">Owner panel</div>
+      <div class="od-brand-header">
+        <button class="od-ham-expand" id="od-ham" aria-label="Expand sidebar">
+          <i class="bi bi-chevron-right"></i>
+        </button>
+        <button class="od-ham-close" id="od-ham-close" aria-label="Collapse sidebar">
+          <i class="bi bi-chevron-left"></i>
+        </button>
+      </div>
+      <div class="od-wordmark">
+        <div class="od-wordmark-initials">{{ salon.name|slice:":2"|upper }}</div>
+        <div class="od-wordmark-text">
+          <div class="od-brand-name">{{ salon.name }}</div>
+          <div class="od-brand-sub">Owner panel</div>
+        </div>
       </div>
     </div>
 
@@ -70,7 +81,9 @@
         <div class="od-stat"><span class="od-stat-label">Pending</span><span class="od-stat-value">{{ pending_count }}</span></div>
         <div class="od-stat"><span class="od-stat-label">Today</span><span class="od-stat-value">{{ today_count }}</span></div>
         <div class="od-stat"><span class="od-stat-label">Upcoming</span><span class="od-stat-value">{{ upcoming_approved_bookings|length }}</span></div>
-        <div class="od-stat od-stat-revenue"><span class="od-stat-label">Weekly revenue</span><span class="od-stat-value">{{ revenue.weekly_revenue|floatformat:0 }} <small>ден</small></span></div>
+        <div class="od-stat"><span class="od-stat-label">No-shows</span><span class="od-stat-value">{{ no_show_count }}</span></div>
+       <div class="od-stat"><span class="od-stat-label">Completed this week</span><span class="od-stat-value">{{ completed_week_count }}</span></div>
+       <div class="od-stat od-stat-revenue"><span class="od-stat-label">Weekly revenue</span><span class="od-stat-value">{{ revenue.weekly_revenue|floatformat:0 }} <small>ден</small></span></div>
         <div class="od-stat od-stat-revenue"><span class="od-stat-label">Total revenue</span><span class="od-stat-value">{{ revenue.total_revenue|floatformat:0 }} <small>ден</small></span></div>
       </div>
       <p class="od-revenue-note">Revenue from completed appointments only. No online payments.</p>
@@ -346,7 +359,32 @@
         <div class="od-empty">No booking policy configured.</div>
       {% endif %}
     </div>
-  </main>
+  
+  <!-- ── Mobile bottom navigation bar ───────────────────────────────────── -->
+  <nav class="od-bottom-nav" id="od-bottom-nav">
+    <button class="od-bn-item" data-bn-section="dashboard" aria-label="Overview">
+      <i class="bi bi-grid-1x2"></i>
+      <span>Overview</span>
+    </button>
+    <button class="od-bn-item" data-bn-section="bookings" aria-label="Bookings">
+      <i class="bi bi-journal-text"></i>
+      <span>Bookings</span>
+    </button>
+    <button class="od-bn-item" data-bn-section="calendar" aria-label="Calendar">
+      <i class="bi bi-calendar3"></i>
+      <span>Calendar</span>
+    </button>
+    <button class="od-bn-item" data-bn-section="services" aria-label="Services">
+      <i class="bi bi-scissors"></i>
+      <span>Services</span>
+    </button>
+    <button class="od-bn-item od-bn-more" id="od-bn-more" aria-label="More">
+      <i class="bi bi-list"></i>
+      <span>More</span>
+    </button>
+  </nav>
+
+</main>
 </div>
 
 {% include "booking/partials/owner_booking_modal.html" %}

@@ -29,6 +29,11 @@ urlpatterns = [
         name="booking_message_links",
     ),
     path(
+        "owner/booking/<int:booking_id>/ics/",
+        views.booking_ics,
+        name="booking_ics",
+    ),
+    path(
         "owner/customers/<int:customer_id>/",
         views.customer_history,
         name="customer_history",

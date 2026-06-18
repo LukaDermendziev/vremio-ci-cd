@@ -2,6 +2,7 @@ from django.contrib import admin
 
 from .models import (
     Booking,
+    BookingActivityLog,
     BookingPolicy,
     BookingService,
     Customer,
@@ -121,6 +122,14 @@ class UnavailableTimeBlockAdmin(admin.ModelAdmin):
     list_display = ("salon", "date", "start_time", "end_time", "reason")
     list_filter = ("salon", "date")
     search_fields = ("reason",)
+
+
+@admin.register(BookingActivityLog)
+class BookingActivityLogAdmin(admin.ModelAdmin):
+    list_display = ("booking", "action", "performed_by", "note", "created_at")
+    list_filter = ("action", "created_at")
+    search_fields = ("booking__customer__full_name", "note")
+    readonly_fields = ("booking", "action", "performed_by", "note", "created_at")
 
 
 @admin.register(CustomerBlocklist)
