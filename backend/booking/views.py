@@ -1,6 +1,9 @@
 from datetime import date, datetime, timedelta
 
 from django.contrib import messages
+from django.contrib.auth import authenticate
+from django.contrib.auth import login as auth_login
+from django.contrib.auth import logout as auth_logout
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.db.models import Prefetch
@@ -127,6 +130,29 @@ def _owner_dashboard_context(salon):
         "service_form": ServiceForm(salon=salon),
         "customer_form": OwnerCustomerForm(salon=salon),
     }
+
+
+def owner_login(request):
+    """Custom login page for salon owners."""
+    if request.user.is_authenticated:
+        return redirect("booking:owner_dashboard")
+
+    error = None
+    if request.method == "POST":
+        username = request.POST.get("username", "").strip()
+        password = request.POST.get("password", "")
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            auth_login(request, user)
+            return redirect("booking:owner_dashboard")
+        error = "Invalid username or password."
+
+    return render(request, "booking/auth/login.html", {"error": error})
+
+
+def owner_logout(request):
+    auth_logout(request)
+    return redirect("booking:owner_login")
 
 
 @login_required

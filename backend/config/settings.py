@@ -114,4 +114,19 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-LOGIN_URL = "admin:login"
+LOGIN_URL = "/owner/login/"
+LOGIN_REDIRECT_URL = "/owner/dashboard/"
+LOGOUT_REDIRECT_URL = "/owner/login/"
+PASSWORD_RESET_TIMEOUT = 86400  # 24 hours
+
+# ── Email ──────────────────────────────────────────────────────────────────────
+# Development: print emails to console. Switch to SMTP for production.
+EMAIL_BACKEND = os.environ.get(
+    "EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
+)
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True") == "True"
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "Salon Scheduler <noreply@salonscheduler.app>")

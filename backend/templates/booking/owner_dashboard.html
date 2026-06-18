@@ -2,13 +2,17 @@
 {% block title %}Dashboard — {{ salon.name|default:"Owner" }}{% endblock %}
 {% block body_class %}od-page{% endblock %}
 
-{% block extra_head %}
-<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet">
-{% endblock %}
+{% block extra_head %}{% endblock %}
 
 {% block content %}
 {% if not salon %}
-  <div class="od-standalone"><p class="sp-muted">No active salon is assigned to your account yet.</p></div>
+  <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;padding:24px;">
+    <i class="bi bi-building-x" style="font-size:40px;color:#D1D5DB;"></i>
+    <p style="font-size:15px;color:#6B7280;margin:0;">No active salon is assigned to your account yet.<br>Please contact the administrator.</p>
+    <a href="{% url 'booking:owner_logout' %}" class="auth-btn" style="display:inline-flex;align-items:center;gap:8px;width:auto;padding:10px 24px;text-decoration:none;">
+      <i class="bi bi-box-arrow-left"></i> Back to login
+    </a>
+  </div>
 {% else %}
 
 <div class="od-layout">
@@ -35,7 +39,15 @@
     <div class="od-sidebar-foot">
       <a href="{% url 'booking:salon_page' salon.slug %}"><i class="bi bi-box-arrow-up-right"></i><span>Customer view</span></a>
     </div>
-  </aside>
+  
+        <div class="od-user-footer">
+          <div class="od-user-name">{{ request.user.get_full_name|default:request.user.username }}</div>
+          <div class="od-user-actions">
+            <a href="{% url 'booking:owner_password_change' %}" class="od-user-action-link"><i class="bi bi-key"></i> Change password</a>
+            <a href="{% url 'booking:owner_logout' %}" class="od-user-action-link"><i class="bi bi-box-arrow-right"></i> Sign out</a>
+          </div>
+        </div>
+      </aside>
 
   <main class="od-main">
     {% for message in messages %}
@@ -108,38 +120,36 @@
         </div>
       </div>
 
-      <div class="od-cal-card">
-        <div class="od-cal-toolbar">
-          <div class="od-cal-nav">
-            <button type="button" class="od-cal-nav-btn" id="cal-prev" aria-label="Previous"><i class="bi bi-chevron-left"></i></button>
-            <span class="od-cal-range" id="cal-range-label"></span>
-            <button type="button" class="od-cal-nav-btn" id="cal-next" aria-label="Next"><i class="bi bi-chevron-right"></i></button>
-            <button type="button" class="od-btn od-btn-ghost od-btn-sm" id="cal-today">Today</button>
-          </div>
-          <div class="od-cal-actions">
-            <div class="od-cal-view-toggle">
-              <button type="button" class="od-cal-view-btn" id="cal-view-day">Day</button>
-              <button type="button" class="od-cal-view-btn" id="cal-view-week">Week</button>
-            </div>
-            <button type="button" class="od-btn od-btn-primary" data-add-booking><i class="bi bi-plus-lg"></i> Add</button>
-            <button type="button" class="od-btn od-btn-ghost" data-add-block><i class="bi bi-slash-circle"></i> Block</button>
-          </div>
+            <div class="cgrid-toolbar">
+        <div class="cgrid-nav">
+          <button type="button" class="cgrid-nav-btn" id="cal-prev"><i class="bi bi-chevron-left"></i></button>
+          <span class="cgrid-range" id="cal-range-label">—</span>
+          <button type="button" class="cgrid-nav-btn" id="cal-next"><i class="bi bi-chevron-right"></i></button>
+          <button type="button" class="cgrid-today-btn" id="cal-today">Today</button>
         </div>
-        <div id="od-calendar"></div>
-        <div class="od-cal-legend">
-          <span class="od-cal-legend-title">Legend</span>
-          <span class="od-legend-item"><i class="od-legend-dot od-legend-pending"></i> Pending</span>
-          <span class="od-legend-item"><i class="od-legend-dot od-legend-approved"></i> Approved</span>
-          <span class="od-legend-item"><i class="od-legend-dot od-legend-completed"></i> Completed</span>
-          <span class="od-legend-item"><i class="od-legend-dot od-legend-rejected"></i> Rejected</span>
-          <span class="od-legend-item"><i class="od-legend-dot od-legend-cancelled"></i> Cancelled</span>
-          <span class="od-legend-item"><i class="od-legend-dot od-legend-no_show"></i> No Show</span>
-          <span class="od-legend-item"><i class="od-legend-dot od-legend-block"></i> Unavailable</span>
+        <div class="cgrid-actions">
+          <div class="cgrid-view-toggle">
+            <button type="button" class="cgrid-view-btn active" id="cal-view-week">Week</button>
+            <button type="button" class="cgrid-view-btn" id="cal-view-day">Day</button>
+          </div>
+          <button type="button" class="od-btn od-btn-primary" data-add-booking><i class="bi bi-plus-lg"></i> Add</button>
+          <button type="button" class="od-btn od-btn-ghost" data-add-block><i class="bi bi-slash-circle"></i> Block</button>
         </div>
-        <p class="od-cal-hint">Double-click an empty time slot to add a booking.</p>
       </div>
-    </div>
 
+      <div id="od-calendar-grid" class="cgrid-outer"></div>
+
+      <div class="cgrid-legend">
+        <span class="cgrid-legend-item"><span class="cgrid-dot" style="background:#D97706"></span> Pending</span>
+        <span class="cgrid-legend-item"><span class="cgrid-dot" style="background:#059669"></span> Approved</span>
+        <span class="cgrid-legend-item"><span class="cgrid-dot" style="background:#2563EB"></span> Completed</span>
+        <span class="cgrid-legend-item"><span class="cgrid-dot" style="background:#DB2777"></span> Rejected</span>
+        <span class="cgrid-legend-item"><span class="cgrid-dot" style="background:#6B7280"></span> Cancelled</span>
+        <span class="cgrid-legend-item"><span class="cgrid-dot" style="background:#C2410C"></span> No Show</span>
+        <span class="cgrid-legend-item"><span class="cgrid-dot" style="background:#7C3AED"></span> Unavailable</span>
+      </div>
+      <p class="od-cal-hint">Double-click an empty slot to add a booking · Click an appointment to view details</p>
+    </div>
     <div class="od-section" id="od-sec-bookings">
       <div class="od-page-top">
         <div class="od-page-title">Bookings</div>
@@ -351,7 +361,6 @@
 {% block extra_js %}
 {% if salon %}
 {% load static %}
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
 <script src="{% static 'js/owner_dashboard.js' %}"></script>
 <script>
 initOwnerDashboard({

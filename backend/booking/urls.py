@@ -1,4 +1,6 @@
+from django.contrib.auth import views as auth_views
 from django.urls import path
+from django.urls import reverse_lazy
 
 from . import views
 
@@ -11,6 +13,8 @@ urlpatterns = [
     path("book/<slug:salon_slug>/request/", views.book_salon, name="book_salon"),
     path("book/<slug:salon_slug>/slots/", views.available_slots, name="available_slots"),
     path("booking/<int:booking_id>/success/", views.booking_success, name="booking_success"),
+
+    # ── Owner dashboard ─────────────────────────────────────────────────────────
     path("owner/dashboard/", views.owner_dashboard, name="owner_dashboard"),
     path("owner/calendar/events/", views.owner_calendar_events, name="owner_calendar_events"),
     path("owner/slots/", views.owner_available_slots, name="owner_available_slots"),
@@ -28,5 +32,51 @@ urlpatterns = [
         "owner/customers/<int:customer_id>/",
         views.customer_history,
         name="customer_history",
+    ),
+
+    # ── Owner auth ───────────────────────────────────────────────────────────────
+    path("owner/login/", views.owner_login, name="owner_login"),
+    path("owner/logout/", views.owner_logout, name="owner_logout"),
+
+    # Password reset flow (Django built-in views, custom templates)
+    path(
+        "owner/password/reset/",
+        auth_views.PasswordResetView.as_view(
+            template_name="booking/auth/password_reset.html",
+            email_template_name="booking/auth/password_reset_email.html",
+            subject_template_name="booking/auth/password_reset_subject.txt",
+            success_url=reverse_lazy("booking:owner_password_reset_done"),
+        ),
+        name="owner_password_reset",
+    ),
+    path(
+        "owner/password/reset/done/",
+        auth_views.PasswordResetDoneView.as_view(
+            template_name="booking/auth/password_reset_done.html",
+        ),
+        name="owner_password_reset_done",
+    ),
+    path(
+        "owner/password/reset/confirm/<uidb64>/<token>/",
+        auth_views.PasswordResetConfirmView.as_view(
+            template_name="booking/auth/password_reset_confirm.html",
+            success_url=reverse_lazy("booking:owner_password_reset_complete"),
+        ),
+        name="owner_password_reset_confirm",
+    ),
+    path(
+        "owner/password/reset/complete/",
+        auth_views.PasswordResetCompleteView.as_view(
+            template_name="booking/auth/password_reset_complete.html",
+        ),
+        name="owner_password_reset_complete",
+    ),
+    path(
+        "owner/password/change/",
+        auth_views.PasswordChangeView.as_view(
+            template_name="booking/auth/password_change.html",
+            success_url=reverse_lazy("booking:owner_dashboard"),
+        ),
+        name="owner_password_change",
     ),
 ]

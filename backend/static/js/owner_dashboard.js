@@ -48,10 +48,7 @@ function initOwnerDashboard(config) {
     document.getElementById("od-sec-" + id)?.classList.add("active");
     document.querySelector(`.od-nav a[data-section="${id}"]`)?.classList.add("is-active");
     if (id === "calendar") {
-      setTimeout(() => {
-        calendar?.updateSize();
-        calendar?.refetchEvents();
-      }, 100);
+      setTimeout(() => cgFetchAndRender(), 100);
     }
   }
 
@@ -323,41 +320,253 @@ function initOwnerDashboard(config) {
     });
   });
 
-  // Calendar
-  const calEl = document.getElementById("od-calendar");
-  const rangeLabel = document.getElementById("cal-range-label");
-  const btnDay = document.getElementById("cal-view-day");
-  const btnWeek = document.getElementById("cal-view-week");
+  // ── Custom calendar grid (cgrid) ─────────────────────────────────────────────
+  const cgridEl = document.getElementById("od-calendar-grid");
+  const cgRangeLabel = document.getElementById("cal-range-label");
 
-  function formatRange(start, end, viewType) {
-    const opts = { month: "long", day: "numeric", year: "numeric" };
-    const optsShort = { month: "short", day: "numeric" };
-    if (viewType === "timeGridDay") {
-      return start.toLocaleDateString(undefined, opts);
+  const CG_HOURS = ["08:00","09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00","18:00"];
+  const CG_STATUS = {
+    pending:   { cls: "cgrid-chip-pending",   label: "Pending" },
+    approved:  { cls: "cgrid-chip-approved",  label: "Approved" },
+    completed: { cls: "cgrid-chip-completed", label: "Completed" },
+    rejected:  { cls: "cgrid-chip-rejected",  label: "Rejected" },
+    cancelled: { cls: "cgrid-chip-cancelled", label: "Cancelled" },
+    no_show:   { cls: "cgrid-chip-no_show",   label: "No Show" },
+    block:     { cls: "cgrid-chip-block",     label: "Block" },
+  };
+
+  let cgView = "week";
+  let cgWeekStart = cgMonday(new Date());
+  let cgDayDate  = new Date();
+  let cgEvents   = [];
+  let cgMeta     = { closedDates: [], closedWeekdays: [] };
+
+  function cgMonday(d) {
+    const r = new Date(d); r.setHours(0,0,0,0);
+    const day = r.getDay(); r.setDate(r.getDate() - (day === 0 ? 6 : day - 1));
+    return r;
+  }
+  function cgIso(d) {
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+  function cgIsClosedDay(d) {
+    const ds = cgIso(d);
+    const dw = (d.getDay() + 6) % 7;
+    return cgMeta.closedDates.includes(ds) || cgMeta.closedWeekdays.includes(dw);
+  }
+  function cgIsPast(ds, time) {
+    const dt = new Date(ds + "T" + time + ":00");
+    return dt < new Date();
+  }
+  function cgFmtWeekRange(mon) {
+    const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+    const fmtS = mon.toLocaleDateString("en-GB", { day:"numeric", month:"short" });
+    const fmtE = sun.toLocaleDateString("en-GB", { day:"numeric", month:"short", year:"numeric" });
+    return `${fmtS} – ${fmtE}`;
+  }
+  function cgEventsAt(ds, hour) {
+    return cgEvents.filter(ev => {
+      if (ev.date !== ds) return false;
+      const h = parseInt((ev.time || ev.start_time || "").split(":")[0]);
+      return h === hour;
+    });
+  }
+
+  function cgChipHtml(ev) {
+    if (ev.type === "block") {
+      return `<div class="cgrid-chip cgrid-chip-block" data-block-id="${ev.blockId||ev.id||''}">
+        <div class="cgrid-chip-block">Blocked ${ev.start_time||ev.time||''}${ev.end_time ? '–'+ev.end_time : ''}</div>
+      </div>`;
     }
-    const endDisplay = new Date(end);
-    endDisplay.setDate(endDisplay.getDate() - 1);
-    return `${start.toLocaleDateString(undefined, optsShort)} – ${endDisplay.toLocaleDateString(undefined, opts)}`;
+    const sc = CG_STATUS[ev.status] || CG_STATUS.pending;
+    return `<div class="cgrid-chip ${sc.cls}" data-booking-id="${ev.bookingId||ev.id||''}">
+      <div class="cgrid-chip-name">${ev.customerName||ev.title||''}</div>
+      <div class="cgrid-chip-meta">${ev.time||''} · ${ev.duration||''}min</div>
+    </div>`;
   }
 
-  function isClosedDate(dateStr) {
-    const d = new Date(dateStr + "T12:00:00");
-    const djangoWeekday = (d.getDay() + 6) % 7;
-    return calendarMeta.closedDates.includes(dateStr) || calendarMeta.closedWeekdays.includes(djangoWeekday);
+  function cgRenderWeek() {
+    const days = Array.from({length:7}, (_,i) => { const d=new Date(cgWeekStart); d.setDate(d.getDate()+i); return d; });
+    const today = cgIso(new Date());
+    const cols = `68px repeat(7, 1fr)`;
+
+    let html = `<div class="cgrid-head" style="grid-template-columns:${cols}">`;
+    html += `<div class="cgrid-head-time"></div>`;
+    days.forEach(d => {
+      const ds = cgIso(d);
+      const isToday = ds === today;
+      const isClosed = cgIsClosedDay(d);
+      const dow = d.toLocaleDateString("en-GB",{weekday:"short"}).toUpperCase();
+      html += `<div class="cgrid-head-day${isToday?' cgrid-head-today':''}${isClosed?' cgrid-head-closed':''}">
+        <div class="cgrid-head-dow">${dow}</div>
+        <div class="cgrid-head-num">${d.getDate()}</div>
+        ${isClosed ? '<div class="cgrid-closed-tag">Closed</div>' : ''}
+      </div>`;
+    });
+    html += `</div>`;
+
+    CG_HOURS.forEach(time => {
+      const hour = parseInt(time);
+      html += `<div class="cgrid-row" style="grid-template-columns:${cols}">`;
+      html += `<div class="cgrid-time-label">${time}</div>`;
+      days.forEach(d => {
+        const ds = cgIso(d);
+        const isClosed = cgIsClosedDay(d);
+        const isPast = cgIsPast(ds, time);
+        let cls = "cgrid-cell";
+        if (isClosed) cls += " cgrid-cell-closed";
+        else if (isPast) cls += " cgrid-cell-past";
+        const evs = cgEventsAt(ds, hour);
+        html += `<div class="${cls}" data-date="${ds}" data-time="${time}">`;
+        evs.forEach(ev => { html += cgChipHtml(ev); });
+        html += `</div>`;
+      });
+      html += `</div>`;
+    });
+
+    cgridEl.innerHTML = html;
+
+    // Click handlers
+    cgridEl.querySelectorAll(".cgrid-chip[data-booking-id]").forEach(chip => {
+      chip.addEventListener("click", e => { e.stopPropagation(); openBookingModal(chip.dataset.bookingId); });
+    });
+    cgridEl.querySelectorAll(".cgrid-chip[data-block-id]").forEach(chip => {
+      chip.addEventListener("click", e => { e.stopPropagation(); openBlockModal(chip.dataset.blockId); });
+    });
+    cgridEl.querySelectorAll(".cgrid-cell:not(.cgrid-cell-closed):not(.cgrid-cell-past)").forEach(cell => {
+      cell.addEventListener("dblclick", () => {
+        openBookingModal(null, { date: cell.dataset.date, time: cell.dataset.time });
+      });
+    });
   }
 
-  async function fetchCalendarEvents(info, successCallback, failureCallback) {
+  function cgRenderDay() {
+    const ds = cgIso(cgDayDate);
+    const dayStr = cgDayDate.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+    const count = cgEvents.filter(ev => ev.date === ds).length;
+    let html = `<div class="cgrid-day-header" style="padding:14px 16px;border-bottom:1px solid #E5E7EB;background:#F9FAFB;">
+      <p style="font-size:14px;font-weight:600;color:#111827;margin:0">${dayStr}</p>
+      <p style="font-size:12px;color:#6B7280;margin:4px 0 0">${count} appointment${count!==1?'s':''}</p>
+    </div>`;
+
+    CG_HOURS.forEach(time => {
+      const hour = parseInt(time);
+      const isPast = cgIsPast(ds, time);
+      const evs = cgEventsAt(ds, hour);
+      html += `<div class="cgrid-day-row${isPast?' cgrid-cell-past':''}" data-date="${ds}" data-time="${time}">
+        <div class="cgrid-day-time">${time}</div>
+        <div class="cgrid-day-content">`;
+      if (evs.length) {
+        evs.forEach(ev => {
+          if (ev.type === "block") {
+            html += `<div class="cgrid-day-chip cgrid-chip-block" data-block-id="${ev.blockId||''}"
+              style="border-left-color:#7C3AED;background:#EDE9FE;">
+              <div><div class="cgrid-day-chip-name" style="color:#7C3AED">Blocked</div>
+              <div class="cgrid-day-chip-meta">${ev.start_time||ev.time||''}${ev.end_time?'–'+ev.end_time:''}</div></div>
+            </div>`;
+          } else {
+            const sc = CG_STATUS[ev.status] || CG_STATUS.pending;
+            const dotColor = {"pending":"#D97706","approved":"#059669","completed":"#2563EB","rejected":"#DB2777","cancelled":"#6B7280","no_show":"#C2410C"}[ev.status]||"#D97706";
+            html += `<div class="cgrid-day-chip ${sc.cls}" data-booking-id="${ev.bookingId||ev.id||''}"
+              style="cursor:pointer;">
+              <div>
+                <div class="cgrid-day-chip-name">${ev.customerName||ev.title||''}</div>
+                <div class="cgrid-day-chip-svc">${ev.services||ev.service||''}</div>
+                <div class="cgrid-day-chip-meta">${ev.time||''} · ${ev.duration||''}min</div>
+              </div>
+              <span style="font-size:11px;padding:2px 8px;border-radius:99px;background:${dotColor}22;color:${dotColor};font-weight:600">${sc.label}</span>
+            </div>`;
+          }
+        });
+      } else {
+        html += `<div class="cgrid-day-empty">— Available</div>`;
+      }
+      html += `</div></div>`;
+    });
+
+    cgridEl.innerHTML = html;
+
+    cgridEl.querySelectorAll(".cgrid-day-chip[data-booking-id]").forEach(c => {
+      c.addEventListener("click", () => openBookingModal(c.dataset.bookingId));
+    });
+    cgridEl.querySelectorAll(".cgrid-day-chip[data-block-id]").forEach(c => {
+      c.addEventListener("click", () => openBlockModal(c.dataset.blockId));
+    });
+    cgridEl.querySelectorAll(".cgrid-day-row:not(.cgrid-cell-past)").forEach(row => {
+      row.addEventListener("dblclick", () => {
+        openBookingModal(null, { date: row.dataset.date, time: row.dataset.time });
+      });
+    });
+  }
+
+  function cgRender() {
+    if (!cgridEl) return;
+    if (cgView === "week") {
+      cgRangeLabel && (cgRangeLabel.textContent = cgFmtWeekRange(cgWeekStart));
+      cgRenderWeek();
+    } else {
+      cgRangeLabel && (cgRangeLabel.textContent = cgDayDate.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"}));
+      cgRenderDay();
+    }
+    document.querySelectorAll(".cgrid-view-btn").forEach(b => b.classList.remove("active"));
+    document.getElementById(cgView === "week" ? "cal-view-week" : "cal-view-day")?.classList.add("active");
+  }
+
+  async function cgFetchAndRender() {
+    if (!cgridEl) return;
+    let start, end;
+    if (cgView === "week") {
+      start = cgIso(cgWeekStart);
+      const endD = new Date(cgWeekStart); endD.setDate(endD.getDate()+7);
+      end = cgIso(endD);
+    } else {
+      start = cgIso(cgDayDate);
+      const endD = new Date(cgDayDate); endD.setDate(endD.getDate()+1);
+      end = cgIso(endD);
+    }
     try {
-      const res = await fetch(`${config.eventsUrl}?start=${info.startStr}&end=${info.endStr}`);
+      const res = await fetch(`${config.eventsUrl}?start=${start}&end=${end}`);
       const data = await res.json();
-      calendarMeta = { closedDates: data.closedDates || [], closedWeekdays: data.closedWeekdays || [] };
-      successCallback(data.events || []);
-    } catch (err) {
-      failureCallback(err);
-    }
+      cgMeta = { closedDates: data.closedDates||[], closedWeekdays: data.closedWeekdays||[] };
+      cgEvents = (data.events||[]).map(ev => {
+        const s = ev.start || "";
+        const ds = s.split("T")[0] || "";
+        const tm = s.split("T")[1]?.slice(0,5) || ev.time || "";
+        const endS = ev.end || "";
+        const endTm = endS.split("T")[1]?.slice(0,5) || "";
+        const ep = ev.extendedProps || {};
+        return {
+          ...ep, date: ds, time: tm, end_time: endTm,
+          title: ev.title||"",
+          bookingId: ep.bookingId, blockId: ep.blockId,
+          type: ep.type||"booking",
+        };
+      });
+    } catch(e) { console.error("cgrid fetch error", e); }
+    cgRender();
   }
 
-  if (calEl && window.FullCalendar) {
+  document.getElementById("cal-prev")?.addEventListener("click", () => {
+    if (cgView === "week") { cgWeekStart.setDate(cgWeekStart.getDate()-7); }
+    else { cgDayDate.setDate(cgDayDate.getDate()-1); }
+    cgFetchAndRender();
+  });
+  document.getElementById("cal-next")?.addEventListener("click", () => {
+    if (cgView === "week") { cgWeekStart.setDate(cgWeekStart.getDate()+7); }
+    else { cgDayDate.setDate(cgDayDate.getDate()+1); }
+    cgFetchAndRender();
+  });
+  document.getElementById("cal-today")?.addEventListener("click", () => {
+    cgWeekStart = cgMonday(new Date()); cgDayDate = new Date();
+    cgFetchAndRender();
+  });
+  document.getElementById("cal-view-week")?.addEventListener("click", () => { cgView="week"; cgFetchAndRender(); });
+  document.getElementById("cal-view-day")?.addEventListener("click",  () => { cgView="day";  cgFetchAndRender(); });
+
+  // End of cgrid — remove old FullCalendar placeholder
+  if (cgridEl) cgFetchAndRender();
+
+  if (false && window.FullCalendar) {
     calendar = new FullCalendar.Calendar(calEl, {
       initialView: "timeGridWeek",
       headerToolbar: false,
@@ -495,56 +704,4 @@ function initOwnerDashboard(config) {
     ).forEach(cb => cb.classList.add("od-toggle-cb"));
   }
   initToggles();
-
-  // ── Calendar per-slot hover (snaps to 30-min rows within the hovered column) ─
-  if (calEl) {
-    let _hoverEl = null;
-
-    function _clearSlotHover() {
-      if (_hoverEl) { _hoverEl.remove(); _hoverEl = null; }
-    }
-
-    calEl.addEventListener("mousemove", e => {
-      if (e.target.closest(".fc-event")) { _clearSlotHover(); return; }
-      const col = e.target.closest(".fc-timegrid-col");
-      if (!col) { _clearSlotHover(); return; }
-
-      const frame = col.querySelector(".fc-timegrid-col-frame");
-      if (!frame) { _clearSlotHover(); return; }
-
-      const slotEl = calEl.querySelector(".fc-timegrid-slot-lane");
-      const slotH = slotEl ? slotEl.offsetHeight : 42;
-
-      const frameRect = frame.getBoundingClientRect();
-      const relY = e.clientY - frameRect.top;
-      const slotIdx = Math.max(0, Math.floor(relY / slotH));
-      const snapY = slotIdx * slotH;
-
-      if (!_hoverEl) {
-        _hoverEl = document.createElement("div");
-        _hoverEl.style.cssText =
-          "position:absolute;left:0;right:0;pointer-events:none;" +
-          "background:rgba(0,0,0,0.035);border-radius:2px;z-index:1;" +
-          "transition:top 0.06s;";
-      }
-      if (_hoverEl.parentNode !== frame) {
-        _clearSlotHover();
-        _hoverEl = document.createElement("div");
-        _hoverEl.style.cssText =
-          "position:absolute;left:0;right:0;pointer-events:none;" +
-          "background:rgba(0,0,0,0.035);border-radius:2px;z-index:1;" +
-          "transition:top 0.06s;";
-        frame.style.position = "relative";
-        frame.appendChild(_hoverEl);
-      }
-      _hoverEl.style.top = snapY + "px";
-      _hoverEl.style.height = slotH + "px";
-    });
-
-    calEl.addEventListener("mouseleave", _clearSlotHover);
-    // Also clear when hovering an event
-    calEl.addEventListener("mouseenter", e => {
-      if (e.target.closest(".fc-event")) _clearSlotHover();
-    }, true);
-  }
 }
