@@ -1421,7 +1421,7 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
 }
 @media (max-width: 600px) {
   .od-bottom-nav {
-    display: flex;
+  display: flex;
     position: fixed;
     bottom: 0; left: 0; right: 0;
     z-index: 800;
@@ -1435,7 +1435,7 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
     flex: 1;
     display: flex;
     flex-direction: column;
-    align-items: center;
+  align-items: center;
     justify-content: center;
     gap: 3px;
     background: none;
@@ -1723,11 +1723,20 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
   display: flex;
   align-items: center;
   overflow: hidden;
-  /* Replace with: url('/static/images/hero-nails.jpg') center/cover no-repeat
-     Then add rgba overlay on top of it. */
+  margin-bottom: -1px; /* pull trust bar flush with gallery bottom seal */
   background:
-    linear-gradient(160deg, rgba(20,10,16,0.80) 0%, rgba(28,14,22,0.75) 55%, rgba(45,25,38,0.68) 100%),
-    linear-gradient(135deg, #2C1820 0%, #3D2030 30%, #4A2840 65%, #2A1822 100%);
+    linear-gradient(160deg, rgba(20,10,16,0.82) 0%, rgba(28,14,22,0.78) 55%, rgba(28,14,22,0.90) 100%),
+    linear-gradient(135deg, #2C1820 0%, #3D2030 30%, #4A2840 65%, #1C1018 100%);
+}
+.sp-hero-section::before {
+  content: '';
+  position: absolute;
+  /* extend 4px past the bottom edge so it fully covers the seam */
+  bottom: -4px; left: 0; right: 0;
+  height: 100px;
+  background: linear-gradient(to top, #1C1018 0%, #1C1018 10%, transparent 100%);
+  z-index: 20;
+  pointer-events: none;
 }
 .sp-hero-section::after {
   content: '';
@@ -1837,6 +1846,8 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 101%;
+  box-sizing: border-box;
   background: var(--sp-dark);
   padding: 22px 5%;
   overflow-x: auto;
@@ -2188,14 +2199,42 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
   text-align: center;
   position: relative;
   overflow: hidden;
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: -1px; /* seal bottom seam with footer */
 }
+/* Photo collage grid — fills the section background */
+.sp-cta-photos {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 3px;
+  z-index: 0;
+}
+.sp-cta-photos img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  filter: brightness(0.52) saturate(1.1) contrast(1.05);
+}
+/* Dark gradient overlay so text stays readable */
 .sp-cta-section::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at 50% 0%, rgba(181,132,139,0.14) 0%, transparent 65%);
+  z-index: 1;
+  background:
+    linear-gradient(to bottom, #1C1018 0%, rgba(28,16,24,0.38) 28%, rgba(28,16,24,0.38) 72%, #1C1018 100%),
+    radial-gradient(ellipse at 50% 50%, rgba(181,132,139,0.10) 0%, transparent 60%);
+  pointer-events: none;
 }
-.sp-cta-inner { position: relative; z-index: 1; max-width: 640px; margin: 0 auto; }
+.sp-cta-inner { position: relative; z-index: 2; max-width: 640px; margin: 0 auto; }
+@media (max-width: 600px) {
+  .sp-cta-photos { grid-template-columns: repeat(3, 1fr); }
+}
 .sp-cta-title {
   font-family: var(--sp-serif);
   font-size: clamp(34px, 5vw, 56px);
@@ -2889,7 +2928,7 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
   position: absolute;
   right: 0;
   top: 0;
-  bottom: 0;
+  bottom: -1px;        /* seal the 1px gap at the section bottom edge */
   width: 100%;         /* full-width on mobile (behind text) */
   z-index: 1;
   display: flex;
@@ -2947,7 +2986,7 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
 /* ── Track (the scrolling list) ──────────────────────────────────────────── */
 .sp-gallery-track {
   display: flex;
-  flex-direction: column;
+    flex-direction: column;
   gap: 10px;
   will-change: transform;
 }
@@ -2969,25 +3008,20 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
   .sp-gallery-track { animation: none !important; }
 }
 
-/* ── Individual card ─────────────────────────────────────────────────────── */
+/* ── Individual card (now <img> tags with real photos) ───────────────────── */
 .sp-gal-card {
   border-radius: 14px;
   flex-shrink: 0;
-  width: 100%;
-  position: relative;
+    width: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center center;
   overflow: hidden;
   box-shadow: 0 4px 18px rgba(0,0,0,0.30);
   transition: transform 0.3s ease;
-  /* When real images are used:
-     background-size: cover;
-     background-position: center;
-  */
 }
 
-/* ── Nail art colour palette (placeholders)
-   Replace with background-image: url(...) on each card
-   when you have real nail photos.
-   ─────────────────────────────────────────────────────────────────────────── */
+/* ── Placeholder colour classes no longer needed (kept for fallback) ──────── */
 
 /* Soft blush pink */
 .nc-a {

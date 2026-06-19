@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}{{ salon.name }}{% endblock %}
 {% block body_class %}sp-page{% endblock %}
 
@@ -30,84 +31,84 @@
     </div>
   </div>
 
-  {# Right: animated masonry gallery (placeholder cards — swap with real photos) #}
+  {# Right: animated masonry gallery — real nail photos #}
   <div class="sp-gallery" aria-hidden="true">
 
-    {# Column 1 — scrolls UP, 22 s #}
+    {# Column 1 — scrolls UP, 22s #}
     <div class="sp-gallery-col" style="--dur:22s;--delay:-4s">
       <div class="sp-gallery-track sp-track-up">
-        <div class="sp-gal-card nc-a" style="height:240px"></div>
-        <div class="sp-gal-card nc-c" style="height:185px"></div>
-        <div class="sp-gal-card nc-f" style="height:265px"></div>
-        <div class="sp-gal-card nc-b" style="height:210px"></div>
-        <div class="sp-gal-card nc-e" style="height:230px"></div>
-        <div class="sp-gal-card nc-d" style="height:195px"></div>
-        <div class="sp-gal-card nc-g" style="height:250px"></div>
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-1.jpg' %}" alt="Nail design 1" style="height:240px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-5.jpg' %}" alt="Nail design 5" style="height:185px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-9.jpg' %}" alt="Nail design 9" style="height:265px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-13.jpg' %}" alt="Nail design 13" style="height:210px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-17.jpg' %}" alt="Nail design 17" style="height:230px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-21.jpg' %}" alt="Nail design 21" style="height:195px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-3.jpg' %}" alt="Nail design 3" style="height:250px">
       </div>
     </div>
 
-    {# Column 2 — scrolls DOWN, 28 s #}
+    {# Column 2 — scrolls DOWN, 28s #}
     <div class="sp-gallery-col" style="--dur:28s;--delay:-12s">
       <div class="sp-gallery-track sp-track-down">
-        <div class="sp-gal-card nc-b" style="height:220px"></div>
-        <div class="sp-gal-card nc-g" style="height:260px"></div>
-        <div class="sp-gal-card nc-j" style="height:195px"></div>
-        <div class="sp-gal-card nc-h" style="height:240px"></div>
-        <div class="sp-gal-card nc-i" style="height:175px"></div>
-        <div class="sp-gal-card nc-a" style="height:255px"></div>
-        <div class="sp-gal-card nc-c" style="height:210px"></div>
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-4.jpg' %}" alt="Nail design 4" style="height:220px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-8.jpg' %}" alt="Nail design 8" style="height:260px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-12.jpg' %}" alt="Nail design 12" style="height:195px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-16.jpg' %}" alt="Nail design 16" style="height:240px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-20.jpg' %}" alt="Nail design 20" style="height:175px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-2.jpg' %}" alt="Nail design 2" style="height:255px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-6.jpg' %}" alt="Nail design 6" style="height:210px">
       </div>
     </div>
 
-    {# Column 3 — scrolls UP, 20 s #}
+    {# Column 3 — scrolls UP, 20s #}
     <div class="sp-gallery-col" style="--dur:20s;--delay:-7s">
       <div class="sp-gallery-track sp-track-up">
-        <div class="sp-gal-card nc-f" style="height:230px"></div>
-        <div class="sp-gal-card nc-d" style="height:180px"></div>
-        <div class="sp-gal-card nc-e" style="height:250px"></div>
-        <div class="sp-gal-card nc-a" style="height:215px"></div>
-        <div class="sp-gal-card nc-c" style="height:195px"></div>
-        <div class="sp-gal-card nc-b" style="height:260px"></div>
-        <div class="sp-gal-card nc-j" style="height:200px"></div>
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-7.jpg' %}" alt="Nail design 7" style="height:230px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-11.jpg' %}" alt="Nail design 11" style="height:180px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-15.jpg' %}" alt="Nail design 15" style="height:250px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-19.jpg' %}" alt="Nail design 19" style="height:215px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-1.jpg' %}" alt="Nail design 1" style="height:195px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-5.jpg' %}" alt="Nail design 5" style="height:260px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-9.jpg' %}" alt="Nail design 9" style="height:200px">
       </div>
     </div>
 
-    {# Column 4 — scrolls DOWN, 26 s #}
+    {# Column 4 — scrolls DOWN, 26s #}
     <div class="sp-gallery-col" style="--dur:26s;--delay:-15s">
       <div class="sp-gallery-track sp-track-down">
-        <div class="sp-gal-card nc-g" style="height:215px"></div>
-        <div class="sp-gal-card nc-h" style="height:255px"></div>
-        <div class="sp-gal-card nc-j" style="height:185px"></div>
-        <div class="sp-gal-card nc-f" style="height:235px"></div>
-        <div class="sp-gal-card nc-d" style="height:200px"></div>
-        <div class="sp-gal-card nc-a" style="height:270px"></div>
-        <div class="sp-gal-card nc-i" style="height:225px"></div>
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-10.jpg' %}" alt="Nail design 10" style="height:215px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-14.jpg' %}" alt="Nail design 14" style="height:255px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-18.jpg' %}" alt="Nail design 18" style="height:185px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-22.jpg' %}" alt="Nail design 22" style="height:235px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-4.jpg' %}" alt="Nail design 4" style="height:200px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-8.jpg' %}" alt="Nail design 8" style="height:270px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-12.jpg' %}" alt="Nail design 12" style="height:225px">
       </div>
     </div>
 
-    {# Column 5 — scrolls UP, 24 s #}
+    {# Column 5 — scrolls UP, 24s #}
     <div class="sp-gallery-col" style="--dur:24s;--delay:-8s">
       <div class="sp-gallery-track sp-track-up">
-        <div class="sp-gal-card nc-c" style="height:260px"></div>
-        <div class="sp-gal-card nc-e" style="height:200px"></div>
-        <div class="sp-gal-card nc-b" style="height:235px"></div>
-        <div class="sp-gal-card nc-a" style="height:180px"></div>
-        <div class="sp-gal-card nc-h" style="height:255px"></div>
-        <div class="sp-gal-card nc-d" style="height:215px"></div>
-        <div class="sp-gal-card nc-g" style="height:270px"></div>
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-13.jpg' %}" alt="Nail design 13" style="height:260px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-17.jpg' %}" alt="Nail design 17" style="height:200px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-21.jpg' %}" alt="Nail design 21" style="height:235px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-3.jpg' %}" alt="Nail design 3" style="height:180px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-7.jpg' %}" alt="Nail design 7" style="height:255px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-11.jpg' %}" alt="Nail design 11" style="height:215px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-15.jpg' %}" alt="Nail design 15" style="height:270px">
       </div>
     </div>
 
-    {# Column 6 — scrolls DOWN, 18 s #}
+    {# Column 6 — scrolls DOWN, 18s #}
     <div class="sp-gallery-col" style="--dur:18s;--delay:-5s">
       <div class="sp-gallery-track sp-track-down">
-        <div class="sp-gal-card nc-i" style="height:225px"></div>
-        <div class="sp-gal-card nc-j" style="height:250px"></div>
-        <div class="sp-gal-card nc-a" style="height:190px"></div>
-        <div class="sp-gal-card nc-e" style="height:260px"></div>
-        <div class="sp-gal-card nc-c" style="height:215px"></div>
-        <div class="sp-gal-card nc-f" style="height:240px"></div>
-        <div class="sp-gal-card nc-h" style="height:185px"></div>
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-16.jpg' %}" alt="Nail design 16" style="height:225px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-20.jpg' %}" alt="Nail design 20" style="height:250px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-2.jpg' %}" alt="Nail design 2" style="height:190px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-6.jpg' %}" alt="Nail design 6" style="height:260px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-10.jpg' %}" alt="Nail design 10" style="height:215px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-14.jpg' %}" alt="Nail design 14" style="height:240px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-18.jpg' %}" alt="Nail design 18" style="height:185px">
       </div>
     </div>
 
@@ -282,6 +283,15 @@
 
 {# ── CTA banner ───────────────────────────────────────────────────────────── #}
 <section class="sp-cta-section">
+  {# Background photo collage — 6 nail images darkened behind the text #}
+  <div class="sp-cta-photos" aria-hidden="true">
+    <img src="{% static 'images/gallery/nail-10.jpg' %}" alt="">
+    <img src="{% static 'images/gallery/nail-4.jpg' %}" alt="">
+    <img src="{% static 'images/gallery/nail-19.jpg' %}" alt="">
+    <img src="{% static 'images/gallery/nail-7.jpg' %}" alt="">
+    <img src="{% static 'images/gallery/nail-22.jpg' %}" alt="">
+    <img src="{% static 'images/gallery/nail-11.jpg' %}" alt="">
+  </div>
   <div class="sp-cta-inner">
     <h2 class="sp-cta-title">Ready for <em>your</em> next appointment?</h2>
     <p class="sp-cta-sub">Send a request in minutes. We'll review it and contact you to confirm.</p>
