@@ -29,6 +29,7 @@ from .models import (
     Customer,
     DateWorkingHoursOverride,
     Service,
+    ServicePriceItem,
     Salon,
     UnavailableTimeBlock,
     WorkingHours,
@@ -101,7 +102,7 @@ def _owner_dashboard_context(salon):
         )
         .order_by("full_name")
     )
-    services = salon.services.all()
+    services = salon.services.prefetch_related("price_items").all()
     booking_policy = getattr(salon, "booking_policy", None)
     working_hours = salon.working_hours.order_by("weekday")
     blocked_dates = salon.date_working_hours_overrides.filter(
@@ -337,7 +338,7 @@ def owner_dashboard(request):
                 log_booking_activity(booking, BookingActivityLog.Action.EMAIL_SENT, user=request.user, note="No-show email sent")
             messages.success(request, "Booking marked as no-show.")
 
-        elif action == "cancel_booking":
+        elif action in ("cancel_booking", "cancel"):
             booking = get_object_or_404(
                 Booking, pk=request.POST.get("booking_id"), salon=salon
             )
@@ -385,6 +386,53 @@ def owner_dashboard(request):
             )
             service.delete()
             messages.success(request, "Service deleted.")
+
+        elif action == "save_price_item":
+            service = get_object_or_404(
+                Service, pk=request.POST.get("service_id"), salon=salon
+            )
+            item_id = request.POST.get("item_id")
+            item = get_object_or_404(ServicePriceItem, pk=item_id, service__salon=salon) if item_id else None
+            name = request.POST.get("item_name", "").strip()
+            price = request.POST.get("item_price", "").strip()
+            group = request.POST.get("item_group", "").strip()
+            sort_order = int(request.POST.get("item_sort", 0) or 0)
+            photo_required = request.POST.get("item_photo_required") == "1"
+            if name and price:
+                if item:
+                    item.name = name
+                    item.price_display = price
+                    item.group = group
+                    item.sort_order = sort_order
+                    item.photo_required = photo_required
+                    item.save()
+                else:
+                    ServicePriceItem.objects.create(
+                        service=service, name=name, price_display=price,
+                        group=group, sort_order=sort_order,
+                        photo_required=photo_required,
+                    )
+                messages.success(request, "Price item saved.")
+            else:
+                messages.error(request, "Name and price are required.")
+
+        elif action == "delete_price_item":
+            item = get_object_or_404(
+                ServicePriceItem, pk=request.POST.get("item_id"), service__salon=salon
+            )
+            item.delete()
+            messages.success(request, "Price item deleted.")
+
+        elif action == "reorder_price_items":
+            raw_ids = request.POST.get("item_ids", "")
+            ids = [i.strip() for i in raw_ids.split(",") if i.strip().isdigit()]
+            for sort_index, item_id in enumerate(ids):
+                ServicePriceItem.objects.filter(
+                    pk=item_id, service__salon=salon
+                ).update(sort_order=sort_index)
+            # AJAX call — return 204 with no redirect
+            from django.http import HttpResponse
+            return HttpResponse(status=204)
 
         elif action == "save_customer":
             customer = None
@@ -448,6 +496,28 @@ def owner_dashboard(request):
 
         else:
             messages.error(request, "Unknown action.")
+
+        # AJAX path: return JSON so JS can update UI without reload
+        if request.headers.get("X-Requested-With") == "fetch":
+            booking_obj = None
+            if action in ("approve", "reject", "mark_completed", "mark_no_show", "cancel", "cancel_booking"):
+                try:
+                    booking_obj = Booking.objects.get(
+                        pk=request.POST.get("booking_id"), salon=salon
+                    )
+                except Exception:
+                    pass
+            response_data = {"ok": True, "action": action}
+            if booking_obj:
+                response_data.update({
+                    "booking_id": booking_obj.id,
+                    "new_status": booking_obj.status,
+                    "new_status_display": booking_obj.get_status_display(),
+                })
+            # Include any Django messages
+            msg_list = [(m.level_tag, str(m)) for m in messages.get_messages(request)]
+            response_data["messages"] = msg_list
+            return JsonResponse(response_data)
 
         section = request.POST.get("return_section", "dashboard")
         return redirect(f"{reverse('booking:owner_dashboard')}#{section}")
@@ -794,12 +864,13 @@ def salon_page(request, salon_slug):
         ensure_default_working_hours(salon)
         working_hours = salon.working_hours.order_by("weekday")
 
+    services = salon.services.filter(is_active=True).prefetch_related("price_items")
     return render(
         request,
         "booking/salon_page.html",
         {
             "salon": salon,
-            "services": salon.services.filter(is_active=True),
+            "services": services,
             "working_hours": working_hours,
             "booking_policy": policy,
         },

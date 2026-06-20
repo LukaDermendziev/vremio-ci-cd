@@ -69,6 +69,36 @@ class Service(TimeStampedModel):
         return self.name
 
 
+class ServicePriceItem(models.Model):
+    """A sub-service / price list entry shown under a service card on the salon page."""
+    service = models.ForeignKey(
+        Service,
+        on_delete=models.CASCADE,
+        related_name="price_items",
+    )
+    group = models.CharField(
+        max_length=120,
+        blank=True,
+        help_text='Optional section heading, e.g. "Express treatments". Leave blank for ungrouped.',
+    )
+    name = models.CharField(max_length=200)
+    price_display = models.CharField(
+        max_length=60,
+        help_text='e.g. "600", "+100/200", "1500-2000"',
+    )
+    sort_order = models.PositiveSmallIntegerField(default=0)
+    photo_required = models.BooleanField(
+        default=False,
+        help_text="Customer must upload a reference photo when booking this specific sub-service.",
+    )
+
+    class Meta:
+        ordering = ["sort_order", "id"]
+
+    def __str__(self):
+        return f"{self.service.name} — {self.name}"
+
+
 class Customer(TimeStampedModel):
     class PreferredContactMethod(models.TextChoices):
         PHONE = "phone", "Phone call"
@@ -124,6 +154,65 @@ class BookingPolicy(TimeStampedModel):
     max_appointments_per_day = models.PositiveSmallIntegerField(default=5)
     slot_interval_minutes = models.PositiveSmallIntegerField(default=30)
     buffer_minutes_between_bookings = models.PositiveSmallIntegerField(default=0)
+
+    # ── Salon rules shown to customer before booking ──────────────────────────
+    salon_rules = models.TextField(
+        blank=True,
+        help_text=(
+            "Rules shown to customers on the booking form. "
+            "Each line becomes a separate rule bullet."
+        ),
+        default=(
+            "Закажувањето е можно минимум 14 дена однапред.\n"
+            "Доцнење повеќе од 15 минути без известување може да резултира со откажување на терминот.\n"
+            "При откажување, известете не најмалку 24 часа однапред.\n"
+            "За одредени услуги е потребна референтна фотографија."
+        ),
+    )
+
+    # ── Prepared message templates (use {ime}, {datum}, {vreme}, {salon}) ─────
+    msg_approved = models.TextField(
+        blank=True,
+        verbose_name="Approved message",
+        help_text="Variables: {ime} {datum} {vreme} {salon}",
+        default="Здраво {ime}, вашиот термин за {datum} во {vreme} е потврден. Ве очекуваме! — {salon}",
+    )
+    msg_rejected = models.TextField(
+        blank=True,
+        verbose_name="Rejected message",
+        help_text="Variables: {ime} {datum} {vreme} {salon}",
+        default="Здраво {ime}, за жал терминот за {datum} во {vreme} не е достапен. Ве молиме изберете друг термин. — {salon}",
+    )
+    msg_cancelled = models.TextField(
+        blank=True,
+        verbose_name="Cancelled message",
+        help_text="Variables: {ime} {datum} {vreme} {salon}",
+        default="Здраво {ime}, вашиот термин за {datum} во {vreme} е откажан. Ви благодариме на разбирањето. — {salon}",
+    )
+    msg_edited = models.TextField(
+        blank=True,
+        verbose_name="Edited/rescheduled message",
+        help_text="Variables: {ime} {datum} {vreme} {salon}",
+        default="Здраво {ime}, вашиот термин е променет на {datum} во {vreme}. Ве очекуваме! — {salon}",
+    )
+    msg_no_show = models.TextField(
+        blank=True,
+        verbose_name="No-show message",
+        help_text="Variables: {ime} {datum} {vreme} {salon}",
+        default="Здраво {ime}, не се јавивте на вашиот термин на {datum} во {vreme}. Доколку сакате да закажете нов термин, контактирајте нè. — {salon}",
+    )
+    msg_pending = models.TextField(
+        blank=True,
+        verbose_name="Pending/received message",
+        help_text="Variables: {ime} {datum} {vreme} {salon}",
+        default="Здраво {ime}, вашето барање за термин на {datum} во {vreme} е примено. Ќе ве контактираме наскоро. — {salon}",
+    )
+    msg_reminder = models.TextField(
+        blank=True,
+        verbose_name="Reminder message",
+        help_text="Variables: {ime} {datum} {vreme} {salon}",
+        default="Здраво {ime}, ве потсетуваме дека имате термин на {datum} во {vreme}. Ве очекуваме! — {salon}",
+    )
 
     class Meta:
         verbose_name_plural = "booking policies"

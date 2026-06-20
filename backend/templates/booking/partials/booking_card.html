@@ -12,7 +12,7 @@
   data-owner-note="{{ booking.owner_note|escape }}">
   <div class="od-bk-badges">
     <span class="od-bk-name">{{ booking.customer.full_name }}</span>
-    <span class="od-badge od-badge-{{ booking.status }}">{{ booking.get_status_display }}</span>
+    <span class="od-badge od-badge-{{ booking.status }} od-bk-status-badge">{{ booking.get_status_display }}</span>
     {% if booking.reference_photo %}<span class="od-badge od-badge-photo">Photo</span>{% endif %}
   </div>
   <div class="od-bk-svc">
@@ -27,29 +27,29 @@
     <span>{{ booking.customer.phone_number }}</span>
   </div>
   {% if show_actions %}
-  <div class="od-bk-actions">
+  <div class="od-bk-actions od-bk-actions-live">
+    {# Actions rendered from JS based on current status — see renderBkActions() #}
     {% if booking.status == "pending" %}
-      <form method="post" class="od-inline-actions">
-        {% csrf_token %}
-        <input type="hidden" name="booking_id" value="{{ booking.id }}">
-        <input type="hidden" name="return_section" value="bookings">
-        <button class="od-btn od-btn-success od-btn-sm" type="submit" name="action" value="approve">Approve</button>
-        <button class="od-btn od-btn-danger od-btn-sm" type="submit" name="action" value="reject">Reject</button>
-      </form>
+      <button class="od-btn od-btn-success od-btn-sm" type="button"
+              data-bk-action="approve" data-bk-id="{{ booking.id }}">Approve</button>
+      <button class="od-btn od-btn-danger od-btn-sm" type="button"
+              data-bk-action="reject" data-bk-id="{{ booking.id }}">Reject</button>
     {% endif %}
     {% if booking.status == "approved" %}
-      <form method="post" class="od-inline-actions">
-        {% csrf_token %}
-        <input type="hidden" name="booking_id" value="{{ booking.id }}">
-        <input type="hidden" name="return_section" value="bookings">
-        <button class="od-btn od-btn-ghost od-btn-sm" type="submit" name="action" value="mark_completed">Mark completed</button>
-      </form>
+      <button class="od-btn od-btn-ghost od-btn-sm" type="button"
+              data-bk-action="mark_completed" data-bk-id="{{ booking.id }}">Mark completed</button>
+      <button class="od-btn od-btn-ghost od-btn-sm" type="button"
+              data-bk-action="mark_no_show" data-bk-id="{{ booking.id }}">No-show</button>
+      <button class="od-btn od-btn-ghost od-btn-sm" type="button"
+              data-bk-action="cancel" data-bk-id="{{ booking.id }}">Cancel</button>
     {% endif %}
     {% if show_edit %}
       <button type="button" class="od-btn od-btn-ghost od-btn-sm" data-edit-booking="{{ booking.id }}">Edit</button>
     {% endif %}
     <a class="od-btn od-btn-ghost od-btn-sm" href="tel:{{ booking.customer.phone_number }}">Call</a>
-    <button type="button" class="od-btn od-btn-ghost od-btn-sm" data-message-booking="{{ booking.id }}" data-message-type="{% if booking.status == 'pending' %}pending{% elif booking.status == 'approved' %}approved{% elif booking.status == 'rejected' or booking.status == 'cancelled' %}rejected{% else %}reminder{% endif %}">Message</button>
+    <button type="button" class="od-btn od-btn-ghost od-btn-sm"
+            data-message-booking="{{ booking.id }}"
+            data-message-type="{% if booking.status == 'pending' %}pending{% elif booking.status == 'approved' %}approved{% elif booking.status == 'rejected' or booking.status == 'cancelled' %}rejected{% else %}reminder{% endif %}">Message</button>
   </div>
   {% endif %}
 </div>

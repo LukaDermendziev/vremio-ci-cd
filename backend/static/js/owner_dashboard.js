@@ -184,9 +184,17 @@ function initOwnerDashboard(config) {
     bookingForm.querySelector('[name="owner_note"]').value = data.owner_note || "";
   }
 
+  function getCurrentSection() {
+    return document.querySelector(".od-section.active")?.id?.replace("od-sec-", "") || "dashboard";
+  }
+
   async function openBookingModal(bookingId, preset = {}) {
     bookingForm.reset();
     bookingForm.querySelector('[name="booking_id"]').value = "";
+    // Set return_section dynamically so Save/Delete lands back where the owner is
+    const returnSec = getCurrentSection();
+    bookingForm.querySelector('[name="return_section"]').value = returnSec;
+    bookingDeleteForm.querySelector('[name="return_section"]').value = returnSec;
     document.getElementById("od-booking-modal-title").textContent = bookingId ? "Edit booking" : "Add booking";
     bookingDeleteBtn.style.display = bookingId ? "" : "none";
 
@@ -235,10 +243,6 @@ function initOwnerDashboard(config) {
     btn.addEventListener("click", () => openBookingModal(null));
   });
 
-  document.querySelectorAll("[data-edit-booking]").forEach(btn => {
-    btn.addEventListener("click", () => openBookingModal(btn.dataset.editBooking));
-  });
-
   // Service modal
   const serviceForm = document.getElementById("od-service-form");
   const serviceDeleteBtn = document.getElementById("od-service-delete");
@@ -274,6 +278,409 @@ function initOwnerDashboard(config) {
   document.querySelectorAll("[data-edit-service]").forEach(btn => btn.addEventListener("click", () => openServiceModal(btn.dataset.editService)));
   serviceDeleteBtn?.addEventListener("click", () => {
     if (confirm("Delete this service?")) serviceDeleteForm.submit();
+  });
+
+  // ── AJAX booking status actions (no page reload) ─────────────────────────────
+  const STATUS_LABELS = {
+    pending: "Pending", approved: "Approved", rejected: "Rejected",
+    cancelled: "Cancelled", completed: "Completed", no_show: "No Show"
+  };
+  const CONFIRM_ACTIONS = {
+    reject: "Reject this booking?",
+    cancel: "Cancel this booking?",
+    mark_no_show: "Mark as no-show?",
+  };
+
+  function bkActionButtons(status, bookingId) {
+    const b = id => `data-bk-id="${id}"`;
+    const btn = (action, label, cls) =>
+      `<button class="od-btn ${cls} od-btn-sm" type="button" data-bk-action="${action}" ${b(bookingId)}>${label}</button>`;
+    let html = "";
+    if (status === "pending") {
+      html += btn("approve", "Approve", "od-btn-success");
+      html += btn("reject",  "Reject",  "od-btn-danger");
+    }
+    if (status === "approved") {
+      html += btn("mark_completed", "Mark completed", "od-btn-ghost");
+      html += btn("mark_no_show",   "No-show",        "od-btn-ghost");
+      html += btn("cancel",         "Cancel",         "od-btn-ghost");
+    }
+    return html;
+  }
+
+  async function sendBookingAction(action, bookingId, card) {
+    const csrf = document.querySelector("[name=csrfmiddlewaretoken]")?.value;
+    const body = new URLSearchParams({ action, booking_id: bookingId, return_section: "bookings" });
+    try {
+      const resp = await fetch(window.location.pathname, {
+        method: "POST",
+        headers: { "X-CSRFToken": csrf, "X-Requested-With": "fetch",
+                   "Content-Type": "application/x-www-form-urlencoded" },
+        body,
+      });
+      if (!resp.ok) throw new Error("Server error");
+      const data = await resp.json();
+      if (!data.ok) throw new Error("Action failed");
+
+      // Infer the new status from the action name — don't depend solely on server response
+      // so the UI always updates correctly even if new_status is missing from JSON
+      const ACTION_TO_STATUS = {
+        approve:         "approved",
+        reject:          "rejected",
+        mark_completed:  "completed",
+        mark_no_show:    "no_show",
+        cancel:          "cancelled",
+        cancel_booking:  "cancelled",
+      };
+      const newStatus = data.new_status || ACTION_TO_STATUS[action] || "pending";
+      const newStatusDisplay = data.new_status_display || STATUS_LABELS[newStatus] || newStatus;
+
+      // ── 1. Decrement pending badge BEFORE touching card.dataset.status ────────
+      const wasPending = card.dataset.status === "pending";
+      if (wasPending && newStatus !== "pending") {
+        const pendingBadge = document.querySelector('.od-tab[data-tab="pending"] .od-tab-n');
+        if (pendingBadge) {
+          const cur = parseInt(pendingBadge.textContent, 10);
+          if (!isNaN(cur) && cur > 0) pendingBadge.textContent = String(cur - 1);
+        }
+      }
+
+      // ── 2. Update card's data-status ─────────────────────────────────────────
+      card.dataset.status = newStatus;
+
+      // ── 3. Update the visible status badge ───────────────────────────────────
+      const badge = card.querySelector(".od-bk-status-badge");
+      if (badge) {
+        badge.textContent = newStatusDisplay;
+        badge.className = `od-badge od-badge-${newStatus} od-bk-status-badge`;
+      }
+
+      // ── 4. Swap action buttons to match new status ───────────────────────────
+      const actionsEl = card.querySelector(".od-bk-actions-live");
+      if (actionsEl) {
+        const staticBtns = [...actionsEl.querySelectorAll(
+          "[data-edit-booking],[href^='tel:'],[data-message-booking]"
+        )].map(el => el.outerHTML).join("");
+        actionsEl.innerHTML = bkActionButtons(newStatus, bookingId) + staticBtns;
+        actionsEl.querySelectorAll("[data-bk-action]").forEach(b => bindBkAction(b));
+        actionsEl.querySelectorAll("[data-edit-booking]").forEach(btn =>
+          btn.addEventListener("click", () => openBookingModal(btn.dataset.editBooking)));
+        actionsEl.querySelectorAll("[data-message-booking]").forEach(btn =>
+          bindMessageBtn(btn));
+      }
+
+      // ── 5. Toast ──────────────────────────────────────────────────────────────
+      if (data.messages?.length) {
+        showToast(data.messages[0][1], data.messages[0][0] === "success" ? "success" : "error");
+      }
+
+      // ── 6. Fade out of current tab — card stays in DOM for other tabs ─────────
+      const activeTab = document.querySelector(".od-tab.active")?.dataset.tab;
+      if (activeTab && activeTab !== "all" && activeTab !== newStatus) {
+        card.style.transition = "opacity .3s";
+        card.style.opacity = "0";
+        setTimeout(() => {
+          card.style.display = "none";
+          card.style.opacity = "";
+          card.style.transition = "";
+          const shownNow = [...document.querySelectorAll("#bk-list .od-bk-card")]
+            .filter(c => c.style.display !== "none" && c.dataset.status === activeTab).length;
+          const empty = document.getElementById("bk-empty");
+          if (empty) empty.style.display = shownNow === 0 ? "block" : "none";
+        }, 320);
+      }
+    } catch (err) {
+      showToast("Something went wrong. Please try again.", "error");
+      console.error(err);
+    }
+  }
+
+  function showToast(msg, type = "success") {
+    let toast = document.getElementById("od-toast");
+    if (!toast) {
+      toast = document.createElement("div");
+      toast.id = "od-toast";
+      document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.className = `od-toast od-toast-${type} od-toast-show`;
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => toast.classList.remove("od-toast-show"), 3200);
+  }
+
+  function bindBkAction(btn) {
+    btn.addEventListener("click", async () => {
+      const action = btn.dataset.bkAction;
+      const bookingId = btn.dataset.bkId;
+      const card = btn.closest(".od-bk-card");
+      if (!card) return;
+      if (CONFIRM_ACTIONS[action]) {
+        if (!confirm(CONFIRM_ACTIONS[action])) return;
+      }
+      btn.disabled = true;
+      btn.style.opacity = ".5";
+      await sendBookingAction(action, bookingId, card);
+      btn.disabled = false;
+      btn.style.opacity = "";
+    });
+  }
+
+  // Bind all status-action buttons on load (covers server-rendered cards)
+  document.querySelectorAll("[data-bk-action]").forEach(bindBkAction);
+
+  // Also bind edit buttons on load
+  document.querySelectorAll("[data-edit-booking]").forEach(btn => {
+    btn.addEventListener("click", () => openBookingModal(btn.dataset.editBooking));
+  });
+
+  function bindMessageBtn(btn) {
+    btn.addEventListener("click", async () => {
+      const id = btn.dataset.messageBooking;
+      const type = btn.dataset.messageType || "approved";
+      // Delegate to the message modal handler if it exists
+      const existing = document.querySelector(`[data-message-booking="${id}"]`);
+      if (existing && existing !== btn) { existing.click(); return; }
+      // Fallback: just open the modal directly
+      const msgModal = document.getElementById("od-message-modal");
+      if (msgModal) {
+        msgModal.querySelector?.('[name="booking_id"]') && (msgModal.querySelector('[name="booking_id"]').value = id);
+        openModal("od-message-modal");
+      }
+    });
+  }
+
+  // ── Price list modal ────────────────────────────────────────────────────────
+  const priceServiceId   = document.getElementById("od-price-service-id");
+  const priceItemId      = document.getElementById("od-price-item-id");
+  const priceItemGroup   = document.getElementById("od-price-item-group");
+  const priceItemName    = document.getElementById("od-price-item-name");
+  const priceItemPrice   = document.getElementById("od-price-item-price");
+  const priceItemSort    = document.getElementById("od-price-item-sort");
+  const priceItemPhoto   = document.getElementById("od-price-item-photo");
+  const priceItemSubmit  = document.getElementById("od-price-item-submit");
+  const priceItemClear   = document.getElementById("od-price-item-clear");
+  const priceSvcName     = document.getElementById("od-price-modal-svc-name");
+
+  function resetPriceForm() {
+    if (priceItemId)    priceItemId.value = "";
+    if (priceItemGroup) priceItemGroup.value = "";
+    if (priceItemName)  priceItemName.value = "";
+    if (priceItemPrice) priceItemPrice.value = "";
+    if (priceItemSort)  priceItemSort.value = "0";
+    if (priceItemPhoto) priceItemPhoto.checked = false;
+    if (priceItemSubmit) {
+      priceItemSubmit.innerHTML = '<i class="bi bi-plus-lg"></i> Add item';
+    }
+  }
+
+  function openPriceModal(serviceId, serviceName) {
+    const card = document.querySelector(`[data-service-id="${serviceId}"]`);
+    if (priceServiceId) priceServiceId.value = serviceId;
+    if (priceSvcName)   priceSvcName.textContent = serviceName || (card ? card.dataset.name : "");
+    resetPriceForm();
+    openModal("od-price-modal");
+    setTimeout(() => priceItemName?.focus(), 120);
+  }
+
+  // "Add price item" buttons on service cards
+  document.querySelectorAll("[data-manage-prices]").forEach(btn => {
+    btn.addEventListener("click", e => {
+      e.stopPropagation();
+      openPriceModal(btn.dataset.managePrices, btn.dataset.serviceName);
+    });
+  });
+
+  // Inline "Edit" buttons inside the price table — data comes directly from button attributes
+  document.querySelectorAll("[data-inline-edit-item]").forEach(btn => {
+    btn.addEventListener("click", e => {
+      e.stopPropagation();
+      const svcId   = btn.dataset.svcId;
+      const svcName = btn.dataset.svcName;
+      // Fill modal from button data-* attributes (no JSON parsing needed)
+      if (priceServiceId) priceServiceId.value = svcId;
+      if (priceSvcName)   priceSvcName.textContent = svcName;
+      resetPriceForm();
+      if (priceItemId)    priceItemId.value    = btn.dataset.inlineEditItem;
+      if (priceItemGroup) priceItemGroup.value  = btn.dataset.itemGroup  || "";
+      if (priceItemName)  priceItemName.value   = btn.dataset.itemName   || "";
+      if (priceItemPrice) priceItemPrice.value  = btn.dataset.itemPrice  || "";
+      if (priceItemSort)  priceItemSort.value   = btn.dataset.itemSort   || "0";
+      if (priceItemPhoto) priceItemPhoto.checked = btn.dataset.itemPhoto === "true";
+      if (priceItemSubmit) priceItemSubmit.innerHTML = '<i class="bi bi-check-lg"></i> Save changes';
+      openModal("od-price-modal");
+      setTimeout(() => priceItemName?.focus(), 80);
+    });
+  });
+
+  // ── Drag-to-reorder price list rows ──────────────────────────────────────────
+  document.querySelectorAll(".od-svc-price-body").forEach(body => {
+    const tbody = body.querySelector("tbody");
+    if (!tbody) return;
+    let dragSrc = null;
+
+    tbody.addEventListener("dragstart", e => {
+      const row = e.target.closest(".od-price-drag-row");
+      if (!row) return;
+      dragSrc = row;
+      row.classList.add("od-drag-active");
+      e.dataTransfer.effectAllowed = "move";
+    });
+
+    tbody.addEventListener("dragend", e => {
+      const row = e.target.closest(".od-price-drag-row");
+      if (row) row.classList.remove("od-drag-active");
+      tbody.querySelectorAll(".od-drag-over").forEach(r => r.classList.remove("od-drag-over"));
+      dragSrc = null;
+    });
+
+    tbody.addEventListener("dragover", e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      const row = e.target.closest(".od-price-drag-row");
+      tbody.querySelectorAll(".od-drag-over").forEach(r => r.classList.remove("od-drag-over"));
+      if (row && row !== dragSrc) row.classList.add("od-drag-over");
+    });
+
+    tbody.addEventListener("drop", e => {
+      e.preventDefault();
+      const target = e.target.closest(".od-price-drag-row");
+      if (!target || target === dragSrc || !dragSrc) return;
+      // Re-insert dragged row before or after target
+      const allRows = [...tbody.querySelectorAll(".od-price-drag-row")];
+      const srcIdx = allRows.indexOf(dragSrc);
+      const tgtIdx = allRows.indexOf(target);
+      if (srcIdx < tgtIdx) {
+        target.after(dragSrc);
+      } else {
+        target.before(dragSrc);
+      }
+      target.classList.remove("od-drag-over");
+      // Persist new order via AJAX
+      const orderedIds = [...tbody.querySelectorAll(".od-price-drag-row")]
+        .map(r => r.dataset.itemId).join(",");
+      const csrf = document.querySelector("[name=csrfmiddlewaretoken]")?.value;
+      fetch(window.location.pathname, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded", "X-CSRFToken": csrf },
+        body: `action=reorder_price_items&item_ids=${encodeURIComponent(orderedIds)}&return_section=services`
+      });
+    });
+  });
+
+  priceItemClear?.addEventListener("click", resetPriceForm);
+
+  // ── Touch long-press drag-to-reorder (mobile) ────────────────────────────────
+  document.querySelectorAll(".od-svc-price-body").forEach(body => {
+    const tbody = body.querySelector("tbody");
+    if (!tbody) return;
+
+    let touchDragEl  = null;
+    let lpTimer      = null;
+    let touchActive  = false;
+    let startTouchY  = 0;
+    let startTouchX  = 0;
+
+    function saveTouchOrder() {
+      const orderedIds = [...tbody.querySelectorAll(".od-price-drag-row")]
+        .map(r => r.dataset.itemId).join(",");
+      const csrf = document.querySelector("[name=csrfmiddlewaretoken]")?.value;
+      fetch(window.location.pathname, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded", "X-CSRFToken": csrf },
+        body: `action=reorder_price_items&item_ids=${encodeURIComponent(orderedIds)}&return_section=services`
+      });
+    }
+
+    tbody.addEventListener("touchstart", e => {
+      const handle = e.target.closest(".od-drag-handle");
+      if (!handle) return;
+      const row = handle.closest(".od-price-drag-row");
+      if (!row) return;
+
+      startTouchY = e.touches[0].clientY;
+      startTouchX = e.touches[0].clientX;
+
+      lpTimer = setTimeout(() => {
+        touchActive = true;
+        touchDragEl = row;
+        row.classList.add("od-drag-active");
+        try { navigator.vibrate?.(40); } catch (_) {}
+      }, 420);
+    }, { passive: true });
+
+    tbody.addEventListener("touchmove", e => {
+      const t = e.touches[0];
+      // Cancel long-press if user scrolled before it fired
+      if (!touchActive) {
+        if (Math.abs(t.clientY - startTouchY) > 8 || Math.abs(t.clientX - startTouchX) > 8) {
+          clearTimeout(lpTimer);
+          lpTimer = null;
+        }
+        return;
+      }
+      e.preventDefault(); // stop page scroll while dragging
+
+      const rows = [...tbody.querySelectorAll(".od-price-drag-row")];
+      let over = null;
+      for (const r of rows) {
+        if (r === touchDragEl) continue;
+        const rect = r.getBoundingClientRect();
+        if (t.clientY >= rect.top && t.clientY <= rect.bottom) { over = r; break; }
+      }
+      rows.forEach(r => r.classList.remove("od-drag-over"));
+      if (over) over.classList.add("od-drag-over");
+    }, { passive: false });
+
+    function endTouchDrag() {
+      clearTimeout(lpTimer);
+      if (!touchActive || !touchDragEl) { touchActive = false; touchDragEl = null; return; }
+
+      const target = tbody.querySelector(".od-drag-over");
+      if (target && target !== touchDragEl) {
+        const rows = [...tbody.querySelectorAll(".od-price-drag-row")];
+        const si = rows.indexOf(touchDragEl);
+        const ti = rows.indexOf(target);
+        if (si < ti) target.after(touchDragEl);
+        else target.before(touchDragEl);
+        saveTouchOrder();
+      }
+      tbody.querySelectorAll(".od-drag-active,.od-drag-over").forEach(r =>
+        r.classList.remove("od-drag-active","od-drag-over"));
+      touchActive  = false;
+      touchDragEl  = null;
+    }
+
+    tbody.addEventListener("touchend",    endTouchDrag);
+    tbody.addEventListener("touchcancel", endTouchDrag);
+  });
+
+  // ── Collapsible group header rows in price tables ────────────────────────────
+  document.querySelectorAll(".od-price-group-toggle").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const groupId = btn.dataset.toggleGroup;
+      const collapsed = btn.classList.toggle("od-group-collapsed");
+      // Hide/show all item rows that belong to this group
+      // They are the sibling <tr> rows after this header row until the next group row
+      let row = btn.closest("tr").nextElementSibling;
+      while (row && !row.classList.contains("od-price-group-row")) {
+        row.classList.toggle("od-group-hidden", collapsed);
+        row = row.nextElementSibling;
+      }
+    });
+  });
+
+  // ── Expand/collapse price list panels ────────────────────────────────────────
+  document.querySelectorAll("[data-price-toggle]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const svcId  = btn.dataset.priceToggle;
+      const body   = document.getElementById(`od-price-body-${svcId}`);
+      const chev   = document.getElementById(`od-price-chevron-${svcId}`);
+      if (!body) return;
+      const open = !body.hidden;
+      body.hidden = open;
+      btn.setAttribute("aria-expanded", String(!open));
+      chev?.classList.toggle("od-price-toggle-chevron--open", !open);
+    });
   });
 
   // Customer modal

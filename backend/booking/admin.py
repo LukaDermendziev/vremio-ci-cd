@@ -10,6 +10,7 @@ from .models import (
     DateWorkingHoursOverride,
     Salon,
     Service,
+    ServicePriceItem,
     UnavailableTimeBlock,
     WorkingHours,
 )
@@ -28,6 +29,12 @@ class SalonAdmin(admin.ModelAdmin):
     prepopulated_fields = {"slug": ("name",)}
 
 
+class ServicePriceItemInline(admin.TabularInline):
+    model = ServicePriceItem
+    extra = 1
+    fields = ("group", "name", "price_display", "photo_required", "sort_order")
+
+
 @admin.register(Service)
 class ServiceAdmin(admin.ModelAdmin):
     list_display = (
@@ -41,6 +48,7 @@ class ServiceAdmin(admin.ModelAdmin):
     list_filter = ("salon", "is_active", "requires_photo", "photo_recommended")
     search_fields = ("name", "description")
     list_editable = ("duration_minutes", "base_price", "is_active")
+    inlines = [ServicePriceItemInline]
 
 
 @admin.register(Customer)

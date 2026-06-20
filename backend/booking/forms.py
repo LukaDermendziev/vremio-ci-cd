@@ -320,7 +320,25 @@ class BookingPolicyForm(forms.ModelForm):
             "max_appointments_per_day",
             "slot_interval_minutes",
             "buffer_minutes_between_bookings",
+            "salon_rules",
+            "msg_approved",
+            "msg_rejected",
+            "msg_cancelled",
+            "msg_edited",
+            "msg_no_show",
+            "msg_pending",
+            "msg_reminder",
         ]
+        widgets = {
+            "salon_rules":   forms.Textarea(attrs={"rows": 5}),
+            "msg_approved":  forms.Textarea(attrs={"rows": 3}),
+            "msg_rejected":  forms.Textarea(attrs={"rows": 3}),
+            "msg_cancelled": forms.Textarea(attrs={"rows": 3}),
+            "msg_edited":    forms.Textarea(attrs={"rows": 3}),
+            "msg_no_show":   forms.Textarea(attrs={"rows": 3}),
+            "msg_pending":   forms.Textarea(attrs={"rows": 3}),
+            "msg_reminder":  forms.Textarea(attrs={"rows": 3}),
+        }
 
 
 class UnavailableTimeBlockForm(forms.ModelForm):

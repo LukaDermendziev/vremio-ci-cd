@@ -148,16 +148,25 @@
       <h2 class="sp-section-title">Our <em>services</em></h2>
     </div>
 
-    <div class="sp-services-grid{% if services|length >= 5 %} sp-svcs-compact{% elif services|length >= 3 %} sp-svcs-many{% endif %}">
+    <div class="sp-services-grid{% if services|length >= 5 %} sp-svcs-compact{% elif services|length >= 3 %} sp-svcs-many{% elif services|length <= 2 %} sp-svcs-centered{% endif %}">
       {% for service in services %}
-        <article class="sp-service-card">
+        {% with items=service.price_items.all %}
+        <article class="sp-service-card{% if items %} sp-service-card--expandable{% endif %}"
+                 {% if items %}role="button" tabindex="0" aria-expanded="false"{% endif %}>
+
+          {# Card header — always visible #}
           <div class="sp-service-header">
             <h3 class="sp-service-name">{{ service.name }}</h3>
-            {% if service.base_price %}<span class="sp-service-price">{{ service.base_price|floatformat:0 }} ден</span>{% endif %}
+            <div class="sp-service-header-right">
+              {% if service.base_price %}<span class="sp-service-price">од {{ service.base_price|floatformat:0 }} ден</span>{% endif %}
+              {% if items %}<span class="sp-expand-icon"><i class="bi bi-chevron-down"></i></span>{% endif %}
+            </div>
           </div>
+
           {% if service.description %}
             <p class="sp-service-desc">{{ service.description }}</p>
           {% endif %}
+
           <div class="sp-service-footer">
             <span class="sp-service-dur"><i class="bi bi-clock"></i> {{ service.duration_minutes }} min</span>
             {% if service.extra_duration_note %}<span class="sp-service-note">{{ service.extra_duration_note }}</span>{% endif %}
@@ -167,8 +176,47 @@
               <span class="sp-badge sp-badge-soft">Photo recommended</span>
             {% endif %}
           </div>
+
+          {# Hint shown only on expandable cards before they open #}
+          {% if items %}
+          <div class="sp-more-hint">
+            <span>Повеќе</span> <i class="bi bi-chevron-down"></i>
+          </div>
+          {% endif %}
+
+          {# Expandable price list — hidden until card is clicked #}
+          {% if items %}
+          <div class="sp-price-list" aria-hidden="true">
+            <div class="sp-price-list-inner">
+              <p class="sp-price-list-label">Price list</p>
+              {% regroup items by group as grouped_items %}
+              {% for group_entry in grouped_items %}
+                {% if group_entry.grouper %}
+                  <p class="sp-price-group-label">{{ group_entry.grouper }}</p>
+                {% endif %}
+                <ul class="sp-price-items">
+                  {% for item in group_entry.list %}
+                    <li class="sp-price-item{% if item.photo_required %} sp-price-item--photo{% endif %}">
+                      <span class="sp-price-item-name">{{ item.name }}</span>
+                      <span class="sp-price-item-price">{{ item.price_display }} ден</span>
+                      {% if item.photo_required %}
+                        <span class="sp-photo-note">📷 Потребна е референтна фотографија</span>
+                      {% endif %}
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% endfor %}
+              <a class="sp-btn-hero sp-price-list-cta" href="{% url 'booking:book_salon' salon.slug %}">
+                Book an appointment
+              </a>
+            </div>
+          </div>
+          {% else %}
           <a class="sp-service-cta" href="{% url 'booking:book_salon' salon.slug %}">Book this service</a>
+          {% endif %}
+
         </article>
+        {% endwith %}
       {% empty %}
         <p class="sp-muted-msg">Services will be listed here soon.</p>
       {% endfor %}
@@ -277,6 +325,24 @@
         }
       }
     }
+  });
+})();
+
+// ── Service card accordion ──────────────────────────────────────────────────
+(function () {
+  document.querySelectorAll('.sp-service-card--expandable').forEach(function (card) {
+    function toggle(e) {
+      // Don't toggle if user clicked the CTA button inside
+      if (e && e.target.closest('a')) return;
+      var expanded = card.getAttribute('aria-expanded') === 'true';
+      card.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+      var list = card.querySelector('.sp-price-list');
+      if (list) list.setAttribute('aria-hidden', expanded ? 'true' : 'false');
+    }
+    card.addEventListener('click', toggle);
+    card.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+    });
   });
 })();
 </script>

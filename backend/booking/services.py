@@ -303,6 +303,29 @@ def build_prepared_message(booking, message_type):
     time_label = timezone.localtime(booking.start_at).strftime("%H:%M")
     salon_name = booking.salon.name
 
+    vars_ = {"ime": first_name, "datum": date_label, "vreme": time_label, "salon": salon_name}
+
+    # Try custom template from BookingPolicy first
+    try:
+        policy = booking.salon.booking_policy
+        field_map = {
+            "approved":  "msg_approved",
+            "rejected":  "msg_rejected",
+            "cancelled": "msg_cancelled",
+            "edited":    "msg_edited",
+            "no_show":   "msg_no_show",
+            "pending":   "msg_pending",
+            "reminder":  "msg_reminder",
+        }
+        field = field_map.get(message_type)
+        if field:
+            template = getattr(policy, field, "").strip()
+            if template:
+                return template.format(**vars_)
+    except Exception:
+        pass  # no policy configured — fall through to hardcoded defaults
+
+    # Hardcoded fallbacks
     if message_type == "approved":
         return (
             f"Здраво {first_name}, вашиот термин за {date_label} во {time_label} "

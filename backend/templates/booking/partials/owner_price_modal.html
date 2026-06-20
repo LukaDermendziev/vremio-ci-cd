@@ -1,0 +1,60 @@
+<div class="od-modal-overlay" id="od-price-modal">
+  <div class="od-modal-box od-modal-wide">
+    <div class="od-modal-header">
+      <span class="od-modal-title">Price item — <span id="od-price-modal-svc-name"></span></span>
+      <button type="button" class="od-modal-close" data-close-modal="od-price-modal">&times;</button>
+    </div>
+
+    <form method="post" id="od-price-item-form" class="od-form">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="save_price_item">
+      <input type="hidden" name="return_section" value="services">
+      <input type="hidden" name="service_id" id="od-price-service-id" value="">
+      <input type="hidden" name="item_id" id="od-price-item-id" value="">
+
+      <div class="od-form-grid od-form-grid-price">
+        <div class="od-field od-field-full">
+          <label>Section / Group <span class="od-label-hint">(optional — e.g. "Express treatments", "Add-ons")</span></label>
+          <input type="text" name="item_group" id="od-price-item-group" class="od-input"
+                 placeholder="Leave blank if not in a group">
+        </div>
+        <div class="od-field od-field-grow">
+          <label>Sub-service name</label>
+          <input type="text" name="item_name" id="od-price-item-name" class="od-input"
+                 placeholder="e.g. Dry Express Pedicure" required>
+        </div>
+        <div class="od-field">
+          <label>Price</label>
+          <input type="text" name="item_price" id="od-price-item-price" class="od-input"
+                 placeholder="e.g. 600 or +100/200" required>
+        </div>
+        <div class="od-field">
+          <label>Sort order</label>
+          <input type="number" name="item_sort" id="od-price-item-sort" class="od-input" value="0" min="0">
+        </div>
+        <div class="od-field od-field-full">
+          <div class="od-toggle-row">
+            <div class="od-toggle-info">
+              <span class="od-toggle-label">Photo required</span>
+              <span class="od-toggle-desc">Customer must upload a reference photo when booking this sub-service</span>
+            </div>
+            <label class="od-toggle-switch">
+              <input type="checkbox" name="item_photo_required" id="od-price-item-photo" value="1">
+              <span class="od-toggle-track"><span class="od-toggle-thumb"></span></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="od-modal-footer od-modal-footer-split">
+        <button type="button" class="od-btn od-btn-ghost od-btn-sm" id="od-price-item-clear">
+          <i class="bi bi-x-circle"></i> Clear form
+        </button>
+        <button type="submit" class="od-btn od-btn-primary od-btn-sm" id="od-price-item-submit">
+          <i class="bi bi-plus-lg"></i> Add item
+        </button>
+      </div>
+    </form>
+
+  </div>
+</div>

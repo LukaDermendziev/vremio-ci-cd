@@ -189,30 +189,35 @@
         <div class="od-page-title">Customers</div>
         <button type="button" class="od-btn od-btn-primary" data-add-customer><i class="bi bi-plus-lg"></i> Add customer</button>
       </div>
-      <div class="od-card">
+      <div class="od-card od-table-card">
         {% if customers %}
-          <table class="od-table">
-            <thead><tr><th>Name</th><th>Phone</th><th>Instagram</th><th>Contact</th><th></th></tr></thead>
-            <tbody>
-              {% for customer in customers %}
-                <tr data-customer-id="{{ customer.id }}"
-                    data-full-name="{{ customer.full_name }}"
-                    data-phone="{{ customer.phone_number }}"
-                    data-instagram="{{ customer.instagram_username }}"
-                    data-email="{{ customer.email }}"
-                    data-contact="{{ customer.preferred_contact_method }}">
-                  <td><strong>{{ customer.full_name }}</strong></td>
-                  <td>{{ customer.phone_number }}</td>
-                  <td>{{ customer.instagram_username }}</td>
-                  <td>{{ customer.get_preferred_contact_method_display }}</td>
-                  <td class="od-row-actions">
-                    <a href="{% url 'booking:customer_history' customer.id %}" class="od-link">History</a>
-                    <button type="button" class="od-btn-text" data-edit-customer="{{ customer.id }}">Edit</button>
-                  </td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+          <div class="od-table-wrap">
+            <table class="od-table">
+              <thead><tr><th>Name</th><th class="od-col-hide-xs">Phone</th><th class="od-col-hide-sm">Instagram</th><th class="od-col-hide-sm">Contact</th><th></th></tr></thead>
+              <tbody>
+                {% for customer in customers %}
+                  <tr data-customer-id="{{ customer.id }}"
+                      data-full-name="{{ customer.full_name }}"
+                      data-phone="{{ customer.phone_number }}"
+                      data-instagram="{{ customer.instagram_username }}"
+                      data-email="{{ customer.email }}"
+                      data-contact="{{ customer.preferred_contact_method }}">
+                    <td>
+                      <strong>{{ customer.full_name }}</strong>
+                      <div class="od-cell-sub od-col-show-xs">{{ customer.phone_number }}</div>
+                    </td>
+                    <td class="od-col-hide-xs">{{ customer.phone_number }}</td>
+                    <td class="od-col-hide-sm">{{ customer.instagram_username }}</td>
+                    <td class="od-col-hide-sm">{{ customer.get_preferred_contact_method_display }}</td>
+                    <td class="od-row-actions od-actions-wrap">
+                      <a href="{% url 'booking:customer_history' customer.id %}" class="od-btn od-btn-ghost od-btn-sm">History</a>
+                      <button type="button" class="od-btn od-btn-ghost od-btn-sm" data-edit-customer="{{ customer.id }}">Edit</button>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
         {% else %}
           <div class="od-empty">No customers yet.</div>
         {% endif %}
@@ -224,31 +229,158 @@
         <div class="od-page-title">Services</div>
         <button type="button" class="od-btn od-btn-primary" data-add-service><i class="bi bi-plus-lg"></i> Add service</button>
       </div>
-      <div class="od-card">
-        {% for service in services %}
-          <div class="od-svc-row" data-service-id="{{ service.id }}"
-               data-name="{{ service.name }}"
-               data-description="{{ service.description|escape }}"
-               data-duration="{{ service.duration_minutes }}"
-               data-price="{{ service.base_price }}"
-               data-sort-order="{{ service.sort_order }}"
-               data-extra-note="{{ service.extra_duration_note|escape }}"
-               data-active="{{ service.is_active|yesno:'true,false' }}"
-               data-requires-photo="{{ service.requires_photo|yesno:'true,false' }}"
-               data-photo-recommended="{{ service.photo_recommended|yesno:'true,false' }}"
-               style="opacity:{% if service.is_active %}1{% else %}0.55{% endif %}">
-            <div class="od-svc-info">
-              <div class="od-svc-name">{{ service.name }}{% if not service.is_active %} <span class="od-tag-muted">Inactive</span>{% endif %}</div>
-              <div class="od-svc-meta">{{ service.duration_minutes }} min{% if service.base_price %} · {{ service.base_price|floatformat:0 }} ден{% endif %}</div>
+
+      {% for service in services %}
+        <div class="od-svc-card{% if not service.is_active %} od-svc-card--inactive{% endif %}"
+             data-service-id="{{ service.id }}"
+             data-price-items='{% spaceless %}[{% for item in service.price_items.all %}{"id":{{ item.id }},"name":"{{ item.name|escapejs }}","price_display":"{{ item.price_display|escapejs }}","group":"{{ item.group|escapejs }}","sort_order":{{ item.sort_order }},"photo_required":{% if item.photo_required %}true{% else %}false{% endif %}}{% if not forloop.last %},{% endif %}{% endfor %}]{% endspaceless %}'
+             data-name="{{ service.name }}"
+             data-description="{{ service.description|escape }}"
+             data-duration="{{ service.duration_minutes }}"
+             data-price="{{ service.base_price }}"
+             data-sort-order="{{ service.sort_order }}"
+             data-extra-note="{{ service.extra_duration_note|escape }}"
+             data-active="{{ service.is_active|yesno:'true,false' }}"
+             data-requires-photo="{{ service.requires_photo|yesno:'true,false' }}"
+             data-photo-recommended="{{ service.photo_recommended|yesno:'true,false' }}">
+
+          {# ── Card header ── #}
+          <div class="od-svc-card-header">
+            <div class="od-svc-card-left">
+              <div class="od-svc-card-name">
+                {{ service.name }}
+                {% if not service.is_active %}<span class="od-badge od-badge-muted">Inactive</span>{% else %}<span class="od-badge od-badge-active">Active</span>{% endif %}
+              </div>
+              <div class="od-svc-card-meta">
+                <span><i class="bi bi-clock"></i> {{ service.duration_minutes }} min</span>
+                {% if service.base_price %}<span><i class="bi bi-tag"></i> {{ service.base_price|floatformat:0 }} ден</span>{% endif %}
+                {% if service.requires_photo %}<span class="od-svc-meta-tag od-svc-meta-tag-photo"><i class="bi bi-camera"></i> Photo required</span>{% endif %}
+                {% if service.photo_recommended %}<span class="od-svc-meta-tag"><i class="bi bi-camera"></i> Photo recommended</span>{% endif %}
+              </div>
+              {% if service.description %}<div class="od-svc-card-desc">{{ service.description }}</div>{% endif %}
             </div>
-            <div class="od-row-actions">
-              <button type="button" class="od-btn-text" data-edit-service="{{ service.id }}">Edit</button>
+            <div class="od-svc-card-actions">
+              <button type="button" class="od-btn od-btn-ghost od-btn-sm" data-edit-service="{{ service.id }}">
+                <i class="bi bi-pencil"></i> Edit
+              </button>
+              <form method="post" style="display:inline"
+                    onsubmit="return confirm('Delete service &quot;{{ service.name }}&quot;? This cannot be undone.')">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="delete_service">
+                <input type="hidden" name="service_id" value="{{ service.id }}">
+                <input type="hidden" name="return_section" value="services">
+                <button type="submit" class="od-btn od-btn-danger-ghost od-btn-sm">
+                  <i class="bi bi-trash"></i> Delete
+                </button>
+              </form>
             </div>
           </div>
-        {% empty %}
-          <div class="od-empty">No services yet.</div>
-        {% endfor %}
-      </div>
+
+          {# ── Price list panel ── #}
+          <div class="od-svc-price-panel">
+            <button type="button" class="od-svc-price-toggle" data-price-toggle="{{ service.id }}">
+              <span class="od-svc-price-toggle-label">
+                <i class="bi bi-list-ul"></i>
+                Price list
+                {% with cnt=service.price_items.count %}
+                  <span class="od-svc-price-count" id="od-price-count-{{ service.id }}">{{ cnt }}</span>
+                {% endwith %}
+              </span>
+              <i class="bi bi-chevron-down od-price-toggle-chevron" id="od-price-chevron-{{ service.id }}"></i>
+            </button>
+
+            <div class="od-svc-price-body" id="od-price-body-{{ service.id }}" hidden>
+              {% with items=service.price_items.all %}
+                {% if items %}
+                  <div class="od-price-table-wrap"><table class="od-price-table">
+                    <thead>
+                      <tr>
+                        <th class="od-price-col-drag"></th>
+                        <th colspan="2">Name</th>
+                        <th>Price</th>
+                        <th class="od-price-col-photo">Photo req.</th>
+                        <th class="od-price-col-actions">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% regroup items by group as price_groups %}
+                      {% for grp in price_groups %}
+                        {% if grp.grouper %}
+                          {# ── Collapsible group header row ── #}
+                          <tr class="od-price-group-row" data-group-id="{{ service.id }}-{{ forloop.counter }}">
+                            <td></td>
+                            <td colspan="5">
+                              <button type="button" class="od-price-group-toggle"
+                                      data-toggle-group="{{ service.id }}-{{ forloop.counter }}">
+                                <i class="bi bi-chevron-down od-group-chevron"></i>
+                                <span class="od-price-group-name">{{ grp.grouper }}</span>
+                                <span class="od-price-group-count">{{ grp.list|length }}</span>
+                              </button>
+                            </td>
+                          </tr>
+                        {% endif %}
+                        {% for item in grp.list %}
+                          <tr class="od-price-drag-row{% if grp.grouper %} od-price-group-item{% endif %}"
+                              draggable="true"
+                              data-item-id="{{ item.id }}"
+                              {% if grp.grouper %}data-group-member="{{ service.id }}-{{ grp|dictsort:'grouper'|first }}"{% endif %}>
+                            <td class="od-price-td-drag"><span class="od-drag-handle" title="Drag to reorder"><i class="bi bi-grip-vertical"></i></span></td>
+                            <td colspan="2" class="od-price-td-name">
+                              {{ item.name }}
+                              {% if item.photo_required %}
+                                <span class="od-price-photo-note"><i class="bi bi-camera"></i> Photo needed</span>
+                              {% endif %}
+                            </td>
+                            <td class="od-price-td-price">{{ item.price_display }} ден</td>
+                            <td class="od-price-col-photo">
+                              {% if item.photo_required %}
+                                <span class="od-badge od-badge-photo"><i class="bi bi-camera-fill"></i> Yes</span>
+                              {% else %}
+                                <span class="od-badge od-badge-muted">No</span>
+                              {% endif %}
+                            </td>
+                            <td class="od-price-col-actions">
+                              <button type="button" class="od-btn od-btn-ghost od-btn-sm"
+                                data-inline-edit-item="{{ item.id }}"
+                                data-svc-id="{{ service.id }}"
+                                data-svc-name="{{ service.name|escapejs }}"
+                                data-item-name="{{ item.name|escapejs }}"
+                                data-item-price="{{ item.price_display|escapejs }}"
+                                data-item-group="{{ item.group|escapejs }}"
+                                data-item-sort="{{ item.sort_order }}"
+                                data-item-photo="{{ item.photo_required|yesno:'true,false' }}">Edit</button>
+                              <form method="post" style="display:inline" onsubmit="return confirm('Delete this item?')">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="delete_price_item">
+                                <input type="hidden" name="return_section" value="services">
+                                <input type="hidden" name="item_id" value="{{ item.id }}">
+                                <button type="submit" class="od-btn od-btn-danger-ghost od-btn-sm">Delete</button>
+                              </form>
+                            </td>
+                          </tr>
+                        {% endfor %}
+                      {% endfor %}
+                    </tbody>
+                  </table></div>
+                {% else %}
+                  <p class="od-price-empty">No price items yet. Add the first one below.</p>
+                {% endif %}
+              {% endwith %}
+
+              <div class="od-price-add-bar">
+                <button type="button" class="od-btn od-btn-primary od-btn-sm"
+                        data-manage-prices="{{ service.id }}" data-service-name="{{ service.name }}">
+                  <i class="bi bi-plus-lg"></i> Add price item
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      {% empty %}
+        <div class="od-card od-empty">No services yet. Add your first service.</div>
+      {% endfor %}
+
     </div>
 
     <div class="od-section" id="od-sec-hours">
@@ -292,7 +424,7 @@
                     <input type="hidden" name="action" value="delete_blocked_date">
                     <input type="hidden" name="override_id" value="{{ row.id }}">
                     <input type="hidden" name="return_section" value="availability">
-                    <button type="submit" class="od-btn-text od-btn-danger" data-delete-blocked-date>Delete</button>
+                    <button type="submit" class="od-btn od-btn-danger-ghost od-btn-sm" data-delete-blocked-date>Delete</button>
                   </form>
                 </li>
               {% endfor %}
@@ -310,7 +442,7 @@
                 <li>
                   <span>{{ block.date|date:"d/m/Y" }} · {{ block.start_time|time:"H:i" }}–{{ block.end_time|time:"H:i" }}{% if block.reason %} — {{ block.reason }}{% endif %}</span>
                   <div class="od-row-actions">
-                    <button type="button" class="od-btn-text" data-edit-block="{{ block.id }}"
+                    <button type="button" class="od-btn od-btn-ghost od-btn-sm" data-edit-block="{{ block.id }}"
                       data-block-date="{{ block.date|date:'Y-m-d' }}"
                       data-block-start="{{ block.start_time|time:'H:i' }}"
                       data-block-end="{{ block.end_time|time:'H:i' }}"
@@ -320,7 +452,7 @@
                       <input type="hidden" name="action" value="delete_unavailable_block">
                       <input type="hidden" name="block_id" value="{{ block.id }}">
                       <input type="hidden" name="return_section" value="availability">
-                      <button type="submit" class="od-btn-text od-btn-danger">Delete</button>
+                      <button type="submit" class="od-btn od-btn-danger-ghost od-btn-sm">Delete</button>
                     </form>
                   </div>
                 </li>
@@ -336,24 +468,93 @@
     <div class="od-section" id="od-sec-policy">
       <div class="od-page-top"><div class="od-page-title">Booking policy</div></div>
       {% if policy_form %}
-        <form method="post" class="od-card od-form">
+        <form method="post" class="od-form" id="od-policy-form">
           {% csrf_token %}
           <input type="hidden" name="action" value="save_policy">
           <input type="hidden" name="return_section" value="policy">
-          <div class="od-form-grid od-form-grid-2">
-            {% for field in policy_form %}
-              <div class="od-field {% if field.field.widget.input_type == 'checkbox' %}od-field-check{% endif %}">
-                {% if field.field.widget.input_type == 'checkbox' %}
-                  <label>{{ field }} {{ field.label }}</label>
-                {% else %}
-                  <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                  {{ field }}
-                {% endif %}
-                {% if field.errors %}<span class="od-field-error">{{ field.errors.0 }}</span>{% endif %}
-              </div>
-            {% endfor %}
+
+          {# ── Scheduling rules ── #}
+          <div class="od-policy-card">
+            <div class="od-policy-card-title">Scheduling rules</div>
+            <div class="od-form-grid od-form-grid-2">
+              {% with f=policy_form.minimum_notice_days %}
+                <div class="od-field"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% if f.errors %}<span class="od-field-error">{{ f.errors.0 }}</span>{% endif %}</div>
+              {% endwith %}
+              {% with f=policy_form.maximum_booking_window_days %}
+                <div class="od-field"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% if f.errors %}<span class="od-field-error">{{ f.errors.0 }}</span>{% endif %}</div>
+              {% endwith %}
+              {% with f=policy_form.max_appointments_per_day %}
+                <div class="od-field"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% if f.errors %}<span class="od-field-error">{{ f.errors.0 }}</span>{% endif %}</div>
+              {% endwith %}
+              {% with f=policy_form.slot_interval_minutes %}
+                <div class="od-field"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% if f.errors %}<span class="od-field-error">{{ f.errors.0 }}</span>{% endif %}</div>
+              {% endwith %}
+              {% with f=policy_form.buffer_minutes_between_bookings %}
+                <div class="od-field"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% if f.errors %}<span class="od-field-error">{{ f.errors.0 }}</span>{% endif %}</div>
+              {% endwith %}
+              {% with f=policy_form.late_arrival_limit_minutes %}
+                <div class="od-field"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% if f.errors %}<span class="od-field-error">{{ f.errors.0 }}</span>{% endif %}</div>
+              {% endwith %}
+              {% with f=policy_form.reminder_hours_before %}
+                <div class="od-field"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% if f.errors %}<span class="od-field-error">{{ f.errors.0 }}</span>{% endif %}</div>
+              {% endwith %}
+            </div>
           </div>
-          <button type="submit" class="od-btn od-btn-primary">Save policy</button>
+
+          {# ── Toggles ── #}
+          <div class="od-policy-card">
+            <div class="od-policy-card-title">Booking settings</div>
+            <div class="od-policy-toggles">
+              {% for f in policy_form %}
+                {% if f.field.widget.input_type == "checkbox" %}
+                  <div class="od-toggle-row">
+                    <div class="od-toggle-info">
+                      <span class="od-toggle-label">{{ f.label }}</span>
+                    </div>
+                    <label class="od-toggle-switch">
+                      {{ f }}
+                      <span class="od-toggle-track"><span class="od-toggle-thumb"></span></span>
+                    </label>
+                  </div>
+                {% endif %}
+              {% endfor %}
+            </div>
+          </div>
+
+          {# ── Salon rules ── #}
+          <div class="od-policy-card">
+            <div class="od-policy-card-title">Salon rules shown to customers</div>
+            <p class="od-policy-hint">Shown on the booking form. Each line is a separate rule.</p>
+            {% with f=policy_form.salon_rules %}
+              <div class="od-field">{{ f }}{% if f.errors %}<span class="od-field-error">{{ f.errors.0 }}</span>{% endif %}</div>
+            {% endwith %}
+          </div>
+
+          {# ── Prepared message templates ── #}
+          <div class="od-policy-card">
+            <div class="od-policy-card-title">Prepared messages</div>
+            <p class="od-policy-hint">
+              Available variables: <code>{ime}</code> (customer first name) &nbsp;·&nbsp;
+              <code>{datum}</code> (date) &nbsp;·&nbsp;
+              <code>{vreme}</code> (time) &nbsp;·&nbsp;
+              <code>{salon}</code> (salon name)
+            </p>
+            <div class="od-policy-messages">
+              {% for f in policy_form %}
+                {% if f.name|slice:":4" == "msg_" %}
+                  <div class="od-policy-msg-row">
+                    <label class="od-policy-msg-label" for="{{ f.id_for_label }}">{{ f.label }}</label>
+                    {{ f }}
+                    {% if f.errors %}<span class="od-field-error">{{ f.errors.0 }}</span>{% endif %}
+                  </div>
+                {% endif %}
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="od-policy-save-bar">
+            <button type="submit" class="od-btn od-btn-primary">Save all policy settings</button>
+          </div>
         </form>
       {% else %}
         <div class="od-empty">No booking policy configured.</div>
@@ -389,6 +590,7 @@
 
 {% include "booking/partials/owner_booking_modal.html" %}
 {% include "booking/partials/owner_service_modal.html" %}
+{% include "booking/partials/owner_price_modal.html" %}
 {% include "booking/partials/owner_customer_modal.html" %}
 {% include "booking/partials/owner_block_modals.html" %}
 {% include "booking/partials/owner_message_modal.html" %}
