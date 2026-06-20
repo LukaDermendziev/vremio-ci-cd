@@ -58,6 +58,9 @@
             <a href="{% url 'booking:owner_logout' %}" class="od-user-action-link"><i class="bi bi-box-arrow-right"></i> Sign out</a>
           </div>
         </div>
+        <button class="od-sidebar-close-bottom" id="od-ham-close-bottom" aria-label="Close sidebar">
+          <i class="bi bi-chevron-right"></i> Close
+        </button>
       </aside>
 
   <main class="od-main">
@@ -78,8 +81,8 @@
       </div>
 
       <div class="od-stats">
-        <div class="od-stat"><span class="od-stat-label">Pending</span><span class="od-stat-value">{{ pending_count }}</span></div>
-        <div class="od-stat"><span class="od-stat-label">Today</span><span class="od-stat-value">{{ today_count }}</span></div>
+        <div class="od-stat"><span class="od-stat-label">Pending</span><span class="od-stat-value" data-stat="pending">{{ pending_count }}</span></div>
+        <div class="od-stat"><span class="od-stat-label">Today</span><span class="od-stat-value" data-stat="today">{{ today_count }}</span></div>
         <div class="od-stat"><span class="od-stat-label">Upcoming</span><span class="od-stat-value">{{ upcoming_approved_bookings|length }}</span></div>
         <div class="od-stat"><span class="od-stat-label">No-shows</span><span class="od-stat-value">{{ no_show_count }}</span></div>
        <div class="od-stat"><span class="od-stat-label">Completed this week</span><span class="od-stat-value">{{ completed_week_count }}</span></div>
@@ -161,7 +164,7 @@
         <span class="cgrid-legend-item"><span class="cgrid-dot" style="background:#C2410C"></span> No Show</span>
         <span class="cgrid-legend-item"><span class="cgrid-dot" style="background:#7C3AED"></span> Unavailable</span>
       </div>
-      <p class="od-cal-hint">Double-click an empty slot to add a booking · Click an appointment to view details</p>
+      <p class="od-cal-hint">Double-click (or double-tap on mobile) an empty slot to add a booking · Click an appointment to view details</p>
     </div>
     <div class="od-section" id="od-sec-bookings">
       <div class="od-page-top">

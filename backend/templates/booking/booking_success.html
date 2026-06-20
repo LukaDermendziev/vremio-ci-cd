@@ -12,8 +12,11 @@
   </div>
 
   <div class="bk-success-card">
-    <div class="bk-success-icon-wrap">
-      <div class="bk-success-icon"><i class="bi bi-check-lg"></i></div>
+    <div class="bk-success-icon-wrap" id="bk-check-wrap">
+      <svg class="bk-check-svg" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle class="bk-check-circle" cx="30" cy="30" r="26" stroke-width="2.5" stroke-linecap="round"/>
+        <polyline class="bk-check-mark" points="16,31 25,40 44,20" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
     </div>
 
     <h1 class="bk-success-title">Request sent!</h1>
@@ -67,4 +70,43 @@
   </div>
 
 </div>
+
+<script>
+(function () {
+  // Confetti — respects prefers-reduced-motion
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  const colors = ['#C4878A', '#EDE5E1', '#F5ECEB', '#9B6B72', '#D4A9AB', '#FDE8E8'];
+  const wrap   = document.getElementById('bk-check-wrap');
+  const card   = wrap?.closest('.bk-success-card');
+  if (!wrap || !card) return;
+
+  // Position confetti origin at center of check icon
+  const wRect  = wrap.getBoundingClientRect();
+  const cRect  = card.getBoundingClientRect();
+  const ox     = wRect.left - cRect.left + wRect.width  / 2;
+  const oy     = wRect.top  - cRect.top  + wRect.height / 2;
+
+  for (let i = 0; i < 38; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'bk-confetti-dot';
+    const size = 4 + Math.random() * 6;
+    const tx   = (Math.random() - 0.5) * 200;
+    const ty   = -60 - Math.random() * 130;
+    dot.style.cssText = [
+      `left:${ox}px`,
+      `top:${oy}px`,
+      `width:${size}px`,
+      `height:${size}px`,
+      `background:${colors[Math.floor(Math.random() * colors.length)]}`,
+      `border-radius:${Math.random() > 0.5 ? '50%' : '3px'}`,
+      `animation-delay:${(0.5 + Math.random() * 0.5).toFixed(2)}s`,
+      `--tx:${tx.toFixed(0)}px`,
+      `--ty:${ty.toFixed(0)}px`,
+    ].join(';');
+    card.appendChild(dot);
+    setTimeout(() => dot.remove(), 2800);
+  }
+})();
+</script>
 {% endblock %}

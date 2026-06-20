@@ -1,4 +1,5 @@
 from datetime import timedelta
+from decimal import Decimal, InvalidOperation
 
 from django import forms
 from django.forms import modelformset_factory
@@ -9,10 +10,35 @@ from .models import (
     Customer,
     DateWorkingHoursOverride,
     Service,
+    ServicePriceItem,
     UnavailableTimeBlock,
     WorkingHours,
 )
 from .services import is_slot_available
+
+
+def _price_from_display(price_display: str, base_price: Decimal) -> Decimal:
+    """
+    Derive a numeric price_snapshot from a ServicePriceItem.price_display string.
+
+    Rules:
+      "+100"        → base_price + 100   (addon)
+      "+100/200"    → base_price + 100   (smallest addon in a range)
+      "1000"        → 1000               (fixed price)
+      "1500-2000"   → 1500               (lower bound of a range)
+      anything else → base_price         (fallback)
+    """
+    if not price_display:
+        return base_price
+    p = price_display.strip().replace(",", ".")
+    try:
+        if p.startswith("+"):
+            first = p[1:].split("/")[0].split("-")[0].strip()
+            return base_price + Decimal(first)
+        first = p.split("/")[0].split("-")[0].strip()
+        return Decimal(first)
+    except (InvalidOperation, ValueError):
+        return base_price
 
 
 class BookingRequestForm(forms.Form):
@@ -36,7 +62,13 @@ class BookingRequestForm(forms.Form):
         required=False,
         label="Message to salon (optional)",
     )
-    reference_photo = forms.ImageField(required=False)
+    reference_photo = forms.ImageField(
+        required=False,
+        widget=forms.FileInput(attrs={
+            'accept': 'image/jpeg,image/jpg,image/png,image/webp',
+        }),
+    )
+    selected_price_item_id = forms.IntegerField(required=False, widget=forms.HiddenInput())
     rules_accepted = forms.BooleanField(
         required=True,
         label="I accept the salon rules and understand this is only a request.",
@@ -60,9 +92,25 @@ class BookingRequestForm(forms.Form):
         service = cleaned_data.get("service")
         date = cleaned_data.get("date")
         start_time = cleaned_data.get("start_time")
+        price_item_id = cleaned_data.get("selected_price_item_id")
 
         if service and service.salon_id != self.salon.id:
             self.add_error("service", "Choose a valid service for this salon.")
+
+        # Validate reference photo size (JS guards first, but backend must also check)
+        photo = cleaned_data.get("reference_photo")
+        if photo and hasattr(photo, "size") and photo.size > 8 * 1024 * 1024:
+            self.add_error("reference_photo", "Image is too large. Maximum allowed size is 8 MB.")
+
+        # Validate selected price item belongs to the chosen service
+        if price_item_id and service:
+            try:
+                price_item = ServicePriceItem.objects.get(pk=price_item_id, service=service)
+                cleaned_data["_price_item"] = price_item
+            except ServicePriceItem.DoesNotExist:
+                cleaned_data["_price_item"] = None
+        else:
+            cleaned_data["_price_item"] = None
 
         if service and date and start_time:
             slot = is_slot_available(self.salon, service, date, start_time)
@@ -93,6 +141,7 @@ class BookingRequestForm(forms.Form):
         )
 
         service = self.cleaned_data["service"]
+        price_item = self.cleaned_data.get("_price_item")
         start_at = self.cleaned_data["start_at"]
         end_at = self.cleaned_data.get("end_at") or start_at + timedelta(
             minutes=service.duration_minutes
@@ -102,6 +151,9 @@ class BookingRequestForm(forms.Form):
 
         if policy and policy.auto_approve_bookings:
             status = Booking.Status.APPROVED
+
+        # Use the price item name as snapshot so the booking reflects the exact sub-service
+        name_snapshot = price_item.name if price_item else service.name
 
         booking = Booking(
             salon=self.salon,
@@ -116,11 +168,16 @@ class BookingRequestForm(forms.Form):
             customer_note=self.cleaned_data.get("customer_note", ""),
         )
         booking.save()
+        price_snap = (
+            _price_from_display(price_item.price_display, service.base_price)
+            if price_item
+            else service.base_price
+        )
         booking.booking_services.create(
             service=service,
-            service_name_snapshot=service.name,
+            service_name_snapshot=name_snapshot,
             duration_minutes_snapshot=service.duration_minutes,
-            price_snapshot=service.base_price,
+            price_snapshot=price_snap,
         )
 
         return booking

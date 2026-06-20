@@ -70,6 +70,7 @@ function initOwnerDashboard(config) {
   }
 
   hamClose?.addEventListener("click", closeSidebar);
+  document.getElementById("od-ham-close-bottom")?.addEventListener("click", closeSidebar);
   backdrop?.addEventListener("click", closeSidebar);
   bnMoreBtn?.addEventListener("click", openSidebar);
 
@@ -157,12 +158,28 @@ function initOwnerDashboard(config) {
     const res = await fetch(url);
     const data = await res.json();
     if (!slotsSelect) return;
-    slotsSelect.innerHTML = data.slots.length
-      ? data.slots.map(s => `<option value="${s.value}">${s.label}</option>`).join("")
+
+    const prevTime = startInput?.value || "";
+    const slotsAvailable = data.slots || [];
+
+    slotsSelect.innerHTML = slotsAvailable.length
+      ? slotsAvailable.map(s => `<option value="${s.value}">${s.label}</option>`).join("")
       : '<option value="">No slots available</option>';
-    if (startInput?.value && data.slots.some(s => s.value === startInput.value)) {
-      slotsSelect.value = startInput.value;
+
+    const warning = document.getElementById("od-slots-warning");
+    if (prevTime && slotsAvailable.length && slotsAvailable.some(s => s.value === prevTime)) {
+      slotsSelect.value = prevTime;
+      if (warning) warning.style.display = "none";
+    } else if (prevTime && slotsAvailable.length && !slotsAvailable.some(s => s.value === prevTime)) {
+      // Previously selected time is no longer available
+      if (warning) {
+        warning.textContent = `The time ${prevTime} is no longer available. Please select another slot.`;
+        warning.style.display = "block";
+      }
+    } else {
+      if (warning) warning.style.display = "none";
     }
+
     startInput.value = slotsSelect.value || "";
   }
 
@@ -374,7 +391,19 @@ function initOwnerDashboard(config) {
         showToast(data.messages[0][1], data.messages[0][0] === "success" ? "success" : "error");
       }
 
-      // ── 6. Fade out of current tab — card stays in DOM for other tabs ─────────
+      // ── 6. Sync overview stat counters without a full reload ─────────────────
+      if (data.pending_count !== undefined) {
+        document.querySelectorAll('[data-stat="pending"]').forEach(el => {
+          el.textContent = data.pending_count;
+        });
+      }
+      if (data.today_count !== undefined) {
+        document.querySelectorAll('[data-stat="today"]').forEach(el => {
+          el.textContent = data.today_count;
+        });
+      }
+
+      // ── 7. Fade out of current tab — card stays in DOM for other tabs ─────────
       const activeTab = document.querySelector(".od-tab.active")?.dataset.tab;
       if (activeTab && activeTab !== "all" && activeTab !== newStatus) {
         card.style.transition = "opacity .3s";
@@ -389,6 +418,37 @@ function initOwnerDashboard(config) {
           if (empty) empty.style.display = shownNow === 0 ? "block" : "none";
         }, 320);
       }
+
+      // ── 8. Update / remove duplicate copies of this card in OTHER sections ────
+      // (e.g. the overview panel "Pending booking requests" card)
+      document.querySelectorAll(`.od-bk-card[data-booking-id="${bookingId}"]`).forEach(otherCard => {
+        if (otherCard === card) return; // already handled above
+        // Update status badge
+        const otherBadge = otherCard.querySelector(".od-bk-status-badge");
+        if (otherBadge) {
+          otherBadge.textContent = newStatusDisplay;
+          otherBadge.className = `od-badge od-badge-${newStatus} od-bk-status-badge`;
+        }
+        otherCard.dataset.status = newStatus;
+        // Fade out from sections that only show pending (the overview card)
+        otherCard.style.transition = "opacity .3s";
+        otherCard.style.opacity = "0";
+        setTimeout(() => {
+          otherCard.style.display = "none";
+          otherCard.style.opacity = "";
+          otherCard.style.transition = "";
+          // Show "all caught up" message if overview list is now empty
+          const list = otherCard.closest(".od-bk-list");
+          if (list) {
+            const remaining = list.querySelectorAll(".od-bk-card:not([style*='display: none'])");
+            if (remaining.length === 0) {
+              const emptyEl = list.nextElementSibling;
+              if (emptyEl?.classList.contains("od-empty")) emptyEl.style.display = "block";
+              list.style.display = "none";
+            }
+          }
+        }, 320);
+      });
     } catch (err) {
       showToast("Something went wrong. Please try again.", "error");
       console.error(err);
@@ -773,6 +833,20 @@ function initOwnerDashboard(config) {
     });
   });
 
+  // ── Utility: register both dblclick (desktop) and double-tap (mobile) ───────
+  function onDoubleTap(el, handler) {
+    el.addEventListener("dblclick", handler);
+    let _last = 0;
+    el.addEventListener("touchend", (e) => {
+      const now = Date.now();
+      if (now - _last < 320 && now - _last > 30) {
+        e.preventDefault(); // suppress the ghost click that follows
+        handler(e);
+      }
+      _last = now;
+    }, { passive: false });
+  }
+
   // ── Custom calendar grid (cgrid) ─────────────────────────────────────────────
   const cgridEl = document.getElementById("od-calendar-grid");
   const cgRangeLabel = document.getElementById("cal-range-label");
@@ -887,7 +961,7 @@ function initOwnerDashboard(config) {
       chip.addEventListener("click", e => { e.stopPropagation(); openBlockModal(chip.dataset.blockId); });
     });
     cgridEl.querySelectorAll(".cgrid-cell:not(.cgrid-cell-closed):not(.cgrid-cell-past)").forEach(cell => {
-      cell.addEventListener("dblclick", () => {
+      onDoubleTap(cell, () => {
         openBookingModal(null, { date: cell.dataset.date, time: cell.dataset.time });
       });
     });
@@ -946,7 +1020,7 @@ function initOwnerDashboard(config) {
       c.addEventListener("click", () => openBlockModal(c.dataset.blockId));
     });
     cgridEl.querySelectorAll(".cgrid-day-row:not(.cgrid-cell-past)").forEach(row => {
-      row.addEventListener("dblclick", () => {
+      onDoubleTap(row, () => {
         openBookingModal(null, { date: row.dataset.date, time: row.dataset.time });
       });
     });

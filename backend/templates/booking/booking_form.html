@@ -10,6 +10,7 @@
   data-slots-url="{% url 'booking:available_slots' salon.slug %}"
   data-min-date="{{ min_date }}"
   data-max-date="{{ max_date }}"
+  data-closed-weekdays="{{ closed_weekdays_js }}"
   novalidate
 >
   {% csrf_token %}
@@ -17,6 +18,7 @@
   {{ form.start_time }}
   {{ form.date }}
   {{ form.preferred_contact_method }}
+  {{ form.selected_price_item_id }}
 
   {% if form.errors %}
     <div class="bk-error-banner">
@@ -57,6 +59,63 @@
     <div class="bk-section-label">Choose service</div>
 
     {% for service in services %}
+      {% with items=service.price_items.all %}
+      {% if items %}
+      {# ── Expandable card (service has sub-items / price list) ── #}
+      <div class="bk-svc-card"
+           data-service-id="{{ service.id }}"
+           data-service-name="{{ service.name }}"
+           data-service-duration="{{ service.duration_minutes }}"
+           data-service-price="{{ service.base_price }}"
+           data-requires-photo="{{ service.requires_photo|yesno:'true,false' }}"
+           data-photo-recommended="{{ service.photo_recommended|yesno:'true,false' }}">
+        <button type="button" class="bk-svc-card-header">
+          <div class="bk-service-body">
+            <div class="bk-service-name">{{ service.name }}</div>
+            {% if service.description %}<div class="bk-service-desc">{{ service.description }}</div>{% endif %}
+            <div class="bk-service-tags">
+              <span class="bk-service-dur"><i class="bi bi-clock"></i> {{ service.duration_minutes }} min</span>
+              {% if service.extra_duration_note %}<span class="bk-service-note">{{ service.extra_duration_note }}</span>{% endif %}
+            </div>
+            {# Shows which sub-service is selected when card is collapsed #}
+            <div class="bk-svc-selected-summary" aria-live="polite">
+              <i class="bi bi-check-circle-fill" style="font-size:11px"></i>
+              <span class="bk-svc-selected-name"></span>
+            </div>
+          </div>
+          <div class="bk-service-right">
+            {% if service.base_price %}<div class="bk-service-price">од {{ service.base_price|floatformat:0 }} ден</div>{% endif %}
+            <i class="bi bi-chevron-down bk-svc-chevron"></i>
+          </div>
+        </button>
+        {# No hidden attribute — open/close via CSS class #}
+        <div class="bk-svc-items">
+          <div class="bk-svc-items-inner">
+            {% regroup items by group as grouped_items %}
+            {% for group_entry in grouped_items %}
+              {% if group_entry.grouper %}
+              <div class="bk-svc-group-label">{{ group_entry.grouper }}</div>
+              {% endif %}
+              {% for item in group_entry.list %}
+              <button type="button" class="bk-price-item-btn"
+                      data-item-id="{{ item.id }}"
+                      data-item-name="{{ item.name }}"
+                      data-price="{{ item.price_display }}"
+                      data-photo-required="{{ item.photo_required|yesno:'true,false' }}">
+                <span class="bk-pi-check" aria-hidden="true"><i class="bi bi-check-lg"></i></span>
+                <div class="bk-pi-info">
+                  <span class="bk-pi-name">{{ item.name }}</span>
+                  {% if item.photo_required %}<span class="bk-photo-badge required">Photo required</span>{% endif %}
+                </div>
+                <span class="bk-pi-price">{{ item.price_display }} ден</span>
+              </button>
+              {% endfor %}
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      {% else %}
+      {# ── Flat service row (no sub-items) ── #}
       <button
         type="button"
         class="bk-service-row"
@@ -82,9 +141,22 @@
           <i class="bi bi-chevron-right bk-chevron"></i>
         </div>
       </button>
+      {% endif %}
+      {% endwith %}
     {% empty %}
       <p class="bk-empty-msg">No active services available yet.</p>
     {% endfor %}
+
+    {# ── Confirm bar: appears after tapping a sub-service item ── #}
+    <div class="bk-confirm-bar" id="bk-confirm-bar" style="display:none">
+      <div class="bk-confirm-bar-info">
+        <span class="bk-confirm-bar-name" id="bk-confirm-bar-name"></span>
+        <span class="bk-confirm-bar-meta" id="bk-confirm-bar-meta"></span>
+      </div>
+      <button type="button" class="bk-confirm-bar-btn" id="bk-confirm-bar-btn">
+        Продолжи <i class="bi bi-arrow-right"></i>
+      </button>
+    </div>
   </div>
 
   {# ── Step 2: Date & time ───────────────────────────────────────────────── #}
@@ -215,26 +287,42 @@
     <div class="bk-rules-section">
       <div class="bk-section-label" style="margin-top:0">Salon rules</div>
 
+      {# Always-present base rule #}
       <label class="bk-rule-row">
         <input type="checkbox" class="bk-rule-check">
         <span class="bk-rule-box"><i class="bi bi-check"></i></span>
-        <span class="bk-rule-text">The appointment is not confirmed until the salon approves it.</span>
+        <span class="bk-rule-text">This is a request only — not confirmed until the salon approves it.</span>
       </label>
-      <label class="bk-rule-row">
-        <input type="checkbox" class="bk-rule-check">
-        <span class="bk-rule-box"><i class="bi bi-check"></i></span>
-        <span class="bk-rule-text">Cancellations require at least 24–48 hours notice.</span>
-      </label>
-      <label class="bk-rule-row">
-        <input type="checkbox" class="bk-rule-check">
-        <span class="bk-rule-box"><i class="bi bi-check"></i></span>
-        <span class="bk-rule-text">Being more than 15 minutes late without notice may result in cancellation.</span>
-      </label>
-      <label class="bk-rule-row">
-        <input type="checkbox" class="bk-rule-check">
-        <span class="bk-rule-box"><i class="bi bi-check"></i></span>
-        <span class="bk-rule-text">I agree to the selected time and understand it cannot be changed without notice.</span>
-      </label>
+
+      {% if booking_policy and booking_policy.salon_rules %}
+        {# Rules configured by the owner in Booking Policy #}
+        {% for rule in booking_policy.salon_rules.splitlines %}
+          {% if rule %}
+          <label class="bk-rule-row">
+            <input type="checkbox" class="bk-rule-check">
+            <span class="bk-rule-box"><i class="bi bi-check"></i></span>
+            <span class="bk-rule-text">{{ rule }}</span>
+          </label>
+          {% endif %}
+        {% endfor %}
+      {% else %}
+        {# Fallback rules when no policy is configured #}
+        <label class="bk-rule-row">
+          <input type="checkbox" class="bk-rule-check">
+          <span class="bk-rule-box"><i class="bi bi-check"></i></span>
+          <span class="bk-rule-text">Cancellations require at least 24–48 hours notice.</span>
+        </label>
+        <label class="bk-rule-row">
+          <input type="checkbox" class="bk-rule-check">
+          <span class="bk-rule-box"><i class="bi bi-check"></i></span>
+          <span class="bk-rule-text">Being more than 15 minutes late without notice may result in cancellation.</span>
+        </label>
+        <label class="bk-rule-row">
+          <input type="checkbox" class="bk-rule-check">
+          <span class="bk-rule-box"><i class="bi bi-check"></i></span>
+          <span class="bk-rule-text">I agree to the selected time and understand it cannot be changed without notice.</span>
+        </label>
+      {% endif %}
 
       <div style="display:none">{{ form.rules_accepted }}</div>
       {% for err in form.rules_accepted.errors %}<span class="bk-field-error">{{ err }}</span>{% endfor %}
@@ -257,24 +345,30 @@
   const state = {
     step: 1,
     service: null,
+    priceItem: null,
     date: null,
     slot: null,
     calYear: 0,
     calMonth: 0,
   };
 
-  const form        = document.querySelector('.bk-form');
-  const steps       = [...document.querySelectorAll('[data-step]')];
-  const progressSteps = [...document.querySelectorAll('[data-dot]')];
-  const progressLines = [...document.querySelectorAll('.bk-progress-line')];
-  const svcInput    = document.getElementById('id_service');
-  const dateInput   = document.getElementById('id_date');
-  const timeInput   = document.getElementById('id_start_time');
-  const contactInput= document.getElementById('id_preferred_contact_method');
-  const calGrid     = document.getElementById('bk-cal-grid');
-  const monthLabel  = document.getElementById('bk-month-label');
-  const slotsGrid   = document.getElementById('bk-slots-grid');
-  const slotsUrl    = form.dataset.slotsUrl;
+  const form           = document.querySelector('.bk-form');
+  const steps          = [...document.querySelectorAll('[data-step]')];
+  const progressSteps  = [...document.querySelectorAll('[data-dot]')];
+  const progressLines  = [...document.querySelectorAll('.bk-progress-line')];
+  const svcInput       = document.getElementById('id_service');
+  const priceItemInput = document.getElementById('id_selected_price_item_id');
+  const dateInput      = document.getElementById('id_date');
+  const timeInput      = document.getElementById('id_start_time');
+  const contactInput   = document.getElementById('id_preferred_contact_method');
+  const calGrid        = document.getElementById('bk-cal-grid');
+  const monthLabel     = document.getElementById('bk-month-label');
+  const slotsGrid      = document.getElementById('bk-slots-grid');
+  const slotsUrl       = form.dataset.slotsUrl;
+
+  // Closed weekdays from the backend (JS day numbers: 0=Sun, 1=Mon … 6=Sat)
+  let closedWeekdays = [];
+  try { closedWeekdays = JSON.parse(form.dataset.closedWeekdays || '[]'); } catch {}
 
   function parseLocalDate(str) {
     const [y, m, d] = str.split('-').map(Number);
@@ -287,6 +381,10 @@
   state.calYear  = minDate.getFullYear();
   state.calMonth = minDate.getMonth();
 
+  // ── Display name / price helpers ──────────────────────────────────────────
+  function displayName()  { return state.priceItem ? state.priceItem.name  : state.service?.name  || ''; }
+  function displayPrice() { return state.priceItem ? state.priceItem.price : state.service?.price || ''; }
+
   function goTo(n) {
     state.step = n;
     steps.forEach(s => s.classList.toggle('active', +s.dataset.step === n));
@@ -295,14 +393,14 @@
       ps.classList.toggle('active', i === n);
       ps.classList.toggle('done', i < n);
     });
-    progressLines.forEach((line, idx) => {
-      line.classList.toggle('done', idx < n - 1);
-    });
+    progressLines.forEach((line, idx) => line.classList.toggle('done', idx < n - 1));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   const MONTHS = ['January','February','March','April','May','June',
                   'July','August','September','October','November','December'];
+
+  const todayStr = formatDateStr(new Date());
 
   function renderCalendar() {
     const y = state.calYear;
@@ -321,22 +419,26 @@
     }
 
     for (let d = 1; d <= totalDays; d++) {
-      const dt      = new Date(y, m, d);
-      const dateStr = formatDateStr(dt);
-      const isSun   = dt.getDay() === 0;
-      const isPast  = dt < minDate;
-      const isFar   = dt > maxDate;
-      const disabled = isSun || isPast || isFar;
+      const dt        = new Date(y, m, d);
+      const dateStr   = formatDateStr(dt);
+      const isClosed  = closedWeekdays.includes(dt.getDay());
+      const isPast    = dt < minDate;
+      const isFar     = dt > maxDate;
+      const disabled  = isClosed || isPast || isFar;
+      const isToday   = dateStr === todayStr;
+      const isSelected = state.date === dateStr;
 
       const btn = document.createElement('button');
-      btn.type      = 'button';
+      btn.type        = 'button';
       btn.textContent = d;
 
       if (disabled) {
-        btn.className = 'bk-cal-day disabled';
+        btn.className = 'bk-cal-day disabled' + (isClosed ? ' closed' : '') + (isToday ? ' today' : '');
         btn.disabled  = true;
       } else {
-        btn.className = 'bk-cal-day' + (state.date === dateStr ? ' selected' : '');
+        btn.className = 'bk-cal-day'
+          + (isSelected ? ' selected' : '')
+          + (isToday && !isSelected ? ' today' : '');
         btn.addEventListener('click', () => pickDate(dateStr));
       }
       calGrid.appendChild(btn);
@@ -374,17 +476,19 @@
   function renderSlots(slots) {
     slotsGrid.innerHTML = '';
     if (!slots.length) {
-      slotsGrid.innerHTML = '<span class="bk-slots-hint">No times available on this date.</span>';
+      slotsGrid.innerHTML = '<span class="bk-slots-hint">No available times on this date.</span>';
       return;
     }
-    slots.forEach(slot => {
+    slots.forEach((slot, idx) => {
       const btn = document.createElement('button');
-      btn.type           = 'button';
-      btn.className      = 'bk-slot';
-      btn.textContent    = slot.value;
-      btn.title          = slot.label;
-      btn.dataset.value  = slot.value;
-      btn.dataset.label  = slot.label;
+      btn.type          = 'button';
+      btn.className     = 'bk-slot';
+      btn.textContent   = slot.value;
+      btn.title         = slot.label;
+      btn.dataset.value = slot.value;
+      btn.dataset.label = slot.label;
+      // Staggered fade-in for each slot
+      btn.style.animationDelay = `${idx * 35}ms`;
       btn.addEventListener('click', () => pickSlot(slot));
       slotsGrid.appendChild(btn);
     });
@@ -408,10 +512,28 @@
     refreshStep2UI();
   }
 
+  function updatePhotoHint(requiresPhoto, photoRecommended) {
+    const hint = document.getElementById('bk-photo-hint');
+    if (!hint) return;
+    if (requiresPhoto) {
+      hint.textContent = '(required)';
+      hint.className = 'bk-req';
+    } else if (photoRecommended) {
+      hint.textContent = '(recommended)';
+      hint.className = 'bk-opt';
+    } else {
+      hint.textContent = '(optional)';
+      hint.className = 'bk-opt';
+    }
+  }
+
   function refreshStep2UI() {
     const pill = document.getElementById('bk-svc-pill');
     if (state.service) {
-      pill.textContent = `${state.service.name}  ·  ${state.service.duration} min  ·  ${state.service.price} ден`;
+      const label = state.priceItem
+        ? `${state.service.name}  ·  ${state.priceItem.name}  ·  ${state.service.duration} min`
+        : `${state.service.name}  ·  ${state.service.duration} min  ·  ${displayPrice()} ден`;
+      pill.textContent   = label;
       pill.style.display = 'block';
     }
 
@@ -419,11 +541,11 @@
     const nextBtn = document.getElementById('bk-step2-next');
 
     if (state.date && state.slot) {
-      document.getElementById('bk-sum-svc').textContent   = state.service.name;
+      document.getElementById('bk-sum-svc').textContent   = displayName();
       document.getElementById('bk-sum-meta').textContent  = `${formatDateDisplay(state.date)}  ·  ${state.slot.label}`;
-      document.getElementById('bk-sum-price').textContent = `${state.service.price} ден`;
-      card.style.display    = 'block';
-      nextBtn.disabled = false;
+      document.getElementById('bk-sum-price').textContent = displayPrice() ? `${displayPrice()} ден` : '';
+      card.style.display = 'block';
+      nextBtn.disabled   = false;
     } else {
       card.style.display = 'none';
       nextBtn.disabled   = true;
@@ -433,24 +555,25 @@
   function updateReview() {
     if (!state.service || !state.date || !state.slot) return;
 
-    const nameEl    = document.getElementById('id_full_name');
-    const phoneEl   = document.getElementById('id_phone_number');
+    const nameEl       = document.getElementById('id_full_name');
+    const phoneEl      = document.getElementById('id_phone_number');
     const selectedPill = document.querySelector('.bk-contact-pill.selected');
 
-    document.getElementById('bk-rev-svc').textContent    = state.service.name;
-    document.getElementById('bk-rev-date').textContent   = `${formatDateDisplay(state.date)}  ·  ${state.slot.label}`;
-    document.getElementById('bk-rev-dur').textContent    = `${state.service.duration} min`;
-    document.getElementById('bk-rev-price').textContent  = `${state.service.price} ден`;
-    document.getElementById('bk-rev-name').textContent   = nameEl?.value || '';
-    document.getElementById('bk-rev-phone').textContent  = phoneEl?.value || '';
+    document.getElementById('bk-rev-svc').textContent   = displayName();
+    document.getElementById('bk-rev-date').textContent  = `${formatDateDisplay(state.date)}  ·  ${state.slot.label}`;
+    document.getElementById('bk-rev-dur').textContent   = `${state.service.duration} min`;
+    const priceText = displayPrice() ? `${displayPrice()} ден` : '';
+    document.getElementById('bk-rev-price').textContent = priceText;
+    document.getElementById('bk-rev-name').textContent  = nameEl?.value || '';
+    document.getElementById('bk-rev-phone').textContent = phoneEl?.value || '';
     document.getElementById('bk-rev-contact').textContent = selectedPill ? `Via ${selectedPill.textContent}` : '';
   }
 
   function refreshSubmit() {
-    const checks      = [...document.querySelectorAll('.bk-rule-check')];
-    const allDone     = checks.every(c => c.checked);
-    const rulesField  = document.getElementById('id_rules_accepted');
-    const submitBtn   = document.getElementById('bk-submit');
+    const checks     = [...document.querySelectorAll('.bk-rule-check')];
+    const allDone    = checks.every(c => c.checked);
+    const rulesField = document.getElementById('id_rules_accepted');
+    const submitBtn  = document.getElementById('bk-submit');
     if (rulesField) rulesField.checked = allDone;
     submitBtn.disabled = !allDone;
   }
@@ -461,30 +584,166 @@
     return Boolean(name && phone);
   }
 
+  // ── Confirm bar refs ──────────────────────────────────────────────────────
+  const confirmBar     = document.getElementById('bk-confirm-bar');
+  const confirmBarName = document.getElementById('bk-confirm-bar-name');
+  const confirmBarMeta = document.getElementById('bk-confirm-bar-meta');
+  const confirmBarBtn  = document.getElementById('bk-confirm-bar-btn');
+
+  const _step1El = document.querySelector('.bk-step[data-step="1"]');
+
+  function showConfirmBar(service, priceItem) {
+    if (!confirmBar) return;
+    // Re-trigger slide-up animation every time
+    confirmBar.style.animation = 'none';
+    void confirmBar.offsetHeight;
+    confirmBar.style.animation = '';
+    confirmBarName.textContent = priceItem.name;
+    confirmBarMeta.textContent = `${service.name}  ·  ${service.duration} мин  ·  ${priceItem.price} ден`;
+    confirmBar.style.display   = 'flex';
+    // Push step content up so the last item isn't hidden behind the fixed bar
+    if (_step1El) _step1El.style.paddingBottom = '88px';
+  }
+
+  function hideConfirmBar() {
+    if (confirmBar) confirmBar.style.display = 'none';
+    if (_step1El) _step1El.style.paddingBottom = '';
+  }
+
+  // ── Macedonian toast ─────────────────────────────────────────────────────
+  function showBkToast(msg, durationMs = 3400) {
+    const old = document.getElementById('bk-toast-el');
+    if (old) old.remove();
+    const el = document.createElement('div');
+    el.id        = 'bk-toast-el';
+    el.className = 'bk-toast';
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(() => {
+      el.classList.add('bk-toast-hiding');
+      setTimeout(() => el.remove(), 220);
+    }, durationMs);
+  }
+
+  // ── Helpers for expandable card open/close ────────────────────────────────
+  function openCard(card) {
+    card.querySelector('.bk-svc-items')?.classList.add('open');
+    card.querySelector('.bk-svc-chevron')?.classList.add('bk-svc-chevron--open');
+  }
+  function closeCard(card) {
+    card.querySelector('.bk-svc-items')?.classList.remove('open');
+    card.querySelector('.bk-svc-chevron')?.classList.remove('bk-svc-chevron--open');
+  }
+  function closeAllCards() {
+    document.querySelectorAll('.bk-svc-card').forEach(closeCard);
+  }
+
+  // ── Update "Selected: X" summary in one card; clears all others ──────────
+  function setCardSummary(activeCard, name) {
+    document.querySelectorAll('.bk-svc-card').forEach(c => {
+      const nameEl = c.querySelector('.bk-svc-selected-name');
+      if (c === activeCard) {
+        if (nameEl) nameEl.textContent = name || '';
+        if (name) c.classList.add('has-selection');
+        else      c.classList.remove('has-selection');
+      } else {
+        // Clear every other card's summary
+        if (nameEl) nameEl.textContent = '';
+        c.classList.remove('has-selection');
+      }
+    });
+  }
+
+  // ── "Продолжи" button handler ─────────────────────────────────────────────
+  confirmBarBtn?.addEventListener('click', () => {
+    if (!state.service) return;
+    state.date = null;
+    state.slot = null;
+    timeInput.value = '';
+    goTo(2);
+    renderCalendar();
+    refreshStep2UI();
+  });
+
   document.addEventListener('click', e => {
+
+    // ── Expandable card header: toggle open/close ──
+    const cardHeader = e.target.closest('.bk-svc-card-header');
+    if (cardHeader) {
+      const card   = cardHeader.closest('.bk-svc-card');
+      const items  = card.querySelector('.bk-svc-items');
+      const isOpen = items?.classList.contains('open');
+      closeAllCards();
+      if (!isOpen) openCard(card);
+      return;
+    }
+
+    // ── Price item selected (expandable card) ──
+    const priceItemBtn = e.target.closest('.bk-price-item-btn');
+    if (priceItemBtn) {
+      const card = priceItemBtn.closest('.bk-svc-card');
+
+      // Toast when switching to a different service
+      const prevSvcId = state.service?.id;
+      const newSvcId  = card.dataset.serviceId;
+      if (prevSvcId && prevSvcId !== newSvcId) {
+        showBkToast('Дозволена е само 1 услуга по резервација. Претходниот избор е заменет.');
+      }
+
+      state.service = {
+        id:              card.dataset.serviceId,
+        name:            card.dataset.serviceName,
+        duration:        card.dataset.serviceDuration,
+        price:           card.dataset.servicePrice,
+        requiresPhoto:   card.dataset.requiresPhoto === 'true',
+        photoRecommended: card.dataset.photoRecommended === 'true',
+      };
+      state.priceItem = {
+        id:            priceItemBtn.dataset.itemId,
+        name:          priceItemBtn.dataset.itemName,
+        price:         priceItemBtn.dataset.price,
+        photoRequired: priceItemBtn.dataset.photoRequired === 'true',
+      };
+      svcInput.value = state.service.id;
+      if (priceItemInput) priceItemInput.value = state.priceItem.id;
+
+      // Visually mark selected button; clear all others
+      document.querySelectorAll('.bk-price-item-btn').forEach(b => b.classList.remove('selected'));
+      priceItemBtn.classList.add('selected');
+
+      // Update card summary; clear other cards' summaries
+      setCardSummary(card, state.priceItem.name);
+
+      updatePhotoHint(
+        state.priceItem.photoRequired || state.service.requiresPhoto,
+        state.service.photoRecommended
+      );
+
+      // Show confirm bar — do NOT navigate yet so the user sees the selection
+      showConfirmBar(state.service, state.priceItem);
+      return;
+    }
+
+    // ── Flat service row (no sub-items) — navigate immediately ──
     const svcRow = e.target.closest('.bk-service-row');
     if (svcRow) {
       state.service = {
-        id: svcRow.dataset.serviceId,
-        name: svcRow.dataset.serviceName,
-        duration: svcRow.dataset.serviceDuration,
-        price: svcRow.dataset.servicePrice,
-        requiresPhoto: svcRow.dataset.requiresPhoto === 'true',
+        id:              svcRow.dataset.serviceId,
+        name:            svcRow.dataset.serviceName,
+        duration:        svcRow.dataset.serviceDuration,
+        price:           svcRow.dataset.servicePrice,
+        requiresPhoto:   svcRow.dataset.requiresPhoto === 'true',
         photoRecommended: svcRow.dataset.photoRecommended === 'true',
       };
+      state.priceItem = null;
       svcInput.value = state.service.id;
+      if (priceItemInput) priceItemInput.value = '';
       state.date = null;
       state.slot = null;
       timeInput.value = '';
-
-      const hint = document.getElementById('bk-photo-hint');
-      if (hint) {
-        hint.textContent = state.service.requiresPhoto   ? '(required)'
-                         : state.service.photoRecommended ? '(recommended)'
-                         : '(optional)';
-        hint.className = state.service.requiresPhoto ? 'bk-req' : 'bk-opt';
-      }
-
+      // Confirm bar is inside step 1 which hides on goTo(2)
+      hideConfirmBar();
+      updatePhotoHint(state.service.requiresPhoto, state.service.photoRecommended);
       goTo(2);
       renderCalendar();
       refreshStep2UI();
@@ -492,8 +751,22 @@
     }
 
     if (e.target.closest('[data-prev]')) {
-      goTo(state.step - 1);
-      if (state.step === 2) renderCalendar();
+      const targetStep = state.step - 1;
+      goTo(targetStep);
+      if (targetStep === 2) renderCalendar();
+      // Going back to step 1: restore the visible selected state
+      if (targetStep === 1 && state.priceItem) {
+        const selectedBtn = document.querySelector(
+          `.bk-price-item-btn[data-item-id="${state.priceItem.id}"]`
+        );
+        if (selectedBtn) {
+          closeAllCards();
+          openCard(selectedBtn.closest('.bk-svc-card'));
+          selectedBtn.classList.add('selected');
+        }
+        // Restore confirm bar so the user can continue without re-selecting
+        showConfirmBar(state.service, state.priceItem);
+      }
       return;
     }
 
@@ -525,11 +798,31 @@
     }
   });
 
+  // ── File upload: type + size validation ───────────────────────────────────
   const fileInput = document.getElementById('id_reference_photo');
   if (fileInput) {
     fileInput.addEventListener('change', () => {
       const label = document.getElementById('bk-upload-label');
-      if (label) label.textContent = fileInput.files?.[0]?.name || 'Tap to upload a photo';
+      const file  = fileInput.files?.[0];
+      if (!file) {
+        if (label) label.textContent = 'Допри за да прикачиш слика';
+        return;
+      }
+      const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      if (!allowed.includes(file.type)) {
+        showBkToast('Дозволени се само слики (JPG, PNG, WebP). Одбери друг формат.');
+        fileInput.value = '';
+        if (label) label.textContent = 'Допри за да прикачиш слика';
+        return;
+      }
+      const maxMB = 8;
+      if (file.size > maxMB * 1024 * 1024) {
+        showBkToast(`Сликата е преголема. Максималната дозволена големина е ${maxMB} MB.`);
+        fileInput.value = '';
+        if (label) label.textContent = 'Допри за да прикачиш слика';
+        return;
+      }
+      if (label) label.textContent = file.name;
     });
   }
 

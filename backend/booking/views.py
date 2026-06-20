@@ -1,3 +1,4 @@
+import json
 from datetime import date, datetime, timedelta
 
 from django.contrib import messages
@@ -514,6 +515,15 @@ def owner_dashboard(request):
                     "new_status": booking_obj.status,
                     "new_status_display": booking_obj.get_status_display(),
                 })
+            # Fresh counts so the UI can update overview stats without reload
+            today_date = timezone.localdate()
+            response_data["pending_count"] = salon.bookings.filter(
+                status=Booking.Status.PENDING
+            ).count()
+            response_data["today_count"] = salon.bookings.filter(
+                status=Booking.Status.APPROVED,
+                start_at__date=today_date,
+            ).count()
             # Include any Django messages
             msg_list = [(m.level_tag, str(m)) for m in messages.get_messages(request)]
             response_data["messages"] = msg_list
@@ -593,12 +603,14 @@ def owner_calendar_events(request):
             item.service_name_snapshot for item in booking.booking_services.all()
         )
         style = status_styles.get(booking.status, status_styles[Booking.Status.APPROVED])
+        local_start = timezone.localtime(booking.start_at)
+        local_end   = timezone.localtime(booking.end_at)
         events.append(
             {
                 "id": f"booking-{booking.id}",
                 "title": booking.customer.full_name,
-                "start": booking.start_at.isoformat(),
-                "end": booking.end_at.isoformat(),
+                "start": local_start.isoformat(),
+                "end": local_end.isoformat(),
                 "backgroundColor": style["bg"],
                 "borderColor": style["border"],
                 "textColor": style["text"],
@@ -884,6 +896,18 @@ def book_salon(request, salon_slug):
     min_notice = policy.minimum_notice_days if policy else 14
     max_window = policy.maximum_booking_window_days if policy else 60
 
+    # Ensure working hours exist so we can derive closed weekdays
+    working_hours = salon.working_hours.order_by("weekday")
+    if not working_hours.exists():
+        ensure_default_working_hours(salon)
+        working_hours = salon.working_hours.order_by("weekday")
+
+    # Convert Django weekday (0=Mon…6=Sun) → JS day (0=Sun, 1=Mon…6=Sat)
+    closed_weekdays_js = [(wh.weekday + 1) % 7 for wh in working_hours if not wh.is_working_day]
+    # If salon has no Sunday record, add JS Sunday (0) as closed by default
+    if not working_hours.filter(weekday=6).exists() and 0 not in closed_weekdays_js:
+        closed_weekdays_js.append(0)
+
     if request.method == "POST":
         form = BookingRequestForm(request.POST, request.FILES, salon=salon)
         if form.is_valid():
@@ -898,9 +922,11 @@ def book_salon(request, salon_slug):
         {
             "salon": salon,
             "form": form,
-            "services": salon.services.filter(is_active=True),
+            "services": salon.services.filter(is_active=True).prefetch_related("price_items"),
             "min_date": (today + timedelta(days=min_notice)).isoformat(),
             "max_date": (today + timedelta(days=max_window)).isoformat(),
+            "booking_policy": policy,
+            "closed_weekdays_js": json.dumps(closed_weekdays_js),
         },
     )
 

@@ -11,6 +11,7 @@ from .models import (
     DateWorkingHoursOverride,
     Salon,
     Service,
+    ServicePriceItem,
     UnavailableTimeBlock,
     WorkingHours,
 )
@@ -84,6 +85,57 @@ class BookingViewTests(TestCase):
         booking = Booking.objects.get(customer__phone_number="071111222")
         self.assertEqual(booking.status, Booking.Status.PENDING)
         self.assertEqual(booking.booking_services.first().service_name_snapshot, "Manicure")
+
+    def test_booking_with_price_item_uses_item_name_as_snapshot(self):
+        """When a ServicePriceItem is selected, its name should become service_name_snapshot."""
+        selected_date = timezone.localdate() + timedelta(days=20)
+        if selected_date.weekday() == WorkingHours.Weekday.SUNDAY:
+            selected_date += timedelta(days=1)
+
+        service = self.salon.services.get(name="Manicure")
+        price_item = ServicePriceItem.objects.create(
+            service=service,
+            name="Classic Manicure",
+            price_display="600",
+            sort_order=1,
+        )
+        response = self.client.post(
+            "/book/fancy-fingers/request/",
+            {
+                "service": service.id,
+                "selected_price_item_id": price_item.id,
+                "date": selected_date.isoformat(),
+                "start_time": "08:00",
+                "full_name": "Price Item Customer",
+                "phone_number": "072222333",
+                "instagram_username": "price_item_test",
+                "email": "",
+                "preferred_contact_method": Customer.PreferredContactMethod.VIBER,
+                "rules_accepted": "on",
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        booking = Booking.objects.get(customer__phone_number="072222333")
+        self.assertEqual(
+            booking.booking_services.first().service_name_snapshot, "Classic Manicure"
+        )
+
+    def test_available_slots_api_returns_json(self):
+        """The available_slots endpoint must return JSON with a slots list."""
+        selected_date = timezone.localdate() + timedelta(days=20)
+        if selected_date.weekday() == WorkingHours.Weekday.SUNDAY:
+            selected_date += timedelta(days=1)
+
+        service = self.salon.services.get(name="Manicure")
+        response = self.client.get(
+            f"/book/fancy-fingers/slots/",
+            {"service": service.id, "date": selected_date.isoformat()},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn("slots", data)
 
 
 class AvailabilityTests(TestCase):
