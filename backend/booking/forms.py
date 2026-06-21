@@ -496,6 +496,7 @@ class BookingPolicyForm(forms.ModelForm):
             "enable_honeypot_protection",
             "max_reference_photo_size_mb",
             "salon_rules",
+            "salon_rules_en",
             "msg_approved",
             "msg_rejected",
             "msg_cancelled",
@@ -524,7 +525,8 @@ class BookingPolicyForm(forms.ModelForm):
             "booking_rate_limit_per_phone_per_day": _("Booking rate limit per phone per day"),
             "enable_honeypot_protection": _("Enable honeypot protection"),
             "max_reference_photo_size_mb": _("Max reference photo size (MB)"),
-            "salon_rules": _("Salon rules"),
+            "salon_rules": _("Salon rules (Macedonian)"),
+            "salon_rules_en": _("Salon rules (English)"),
             "msg_approved": _("Approved message"),
             "msg_rejected": _("Rejected message"),
             "msg_cancelled": _("Cancelled message"),
@@ -534,7 +536,8 @@ class BookingPolicyForm(forms.ModelForm):
             "msg_reminder": _("Reminder message"),
         }
         widgets = {
-            "salon_rules":   forms.Textarea(attrs={"rows": 5}),
+            "salon_rules":    forms.Textarea(attrs={"rows": 5}),
+            "salon_rules_en": forms.Textarea(attrs={"rows": 5}),
             "msg_approved":  forms.Textarea(attrs={"rows": 3}),
             "msg_rejected":  forms.Textarea(attrs={"rows": 3}),
             "msg_cancelled": forms.Textarea(attrs={"rows": 3}),

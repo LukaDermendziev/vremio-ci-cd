@@ -572,6 +572,13 @@ msgstr "Duration"
 msgid "Duration (min)"
 msgstr "Duration (min)"
 
+msgid ""
+"Each line is a separate rule. Customers see the Macedonian or English "
+"version based on their language."
+msgstr ""
+"Each line is a separate rule. Customers see the Macedonian or English "
+"version based on their language."
+
 msgid "Edit"
 msgstr "Edit"
 
@@ -839,6 +846,9 @@ msgid ""
 msgstr ""
 "I agree to the selected time and understand it cannot be changed without "
 "notice."
+
+msgid "I understand:"
+msgstr "I understand:"
 
 msgid ""
 "If an account with that email exists, a password reset link has been sent. "
@@ -1351,6 +1361,12 @@ msgstr "Salon Scheduler — Book Online"
 
 msgid "Salon rules"
 msgstr "Salon rules"
+
+msgid "Salon rules (English)"
+msgstr "Salon rules (English)"
+
+msgid "Salon rules (Macedonian)"
+msgstr "Salon rules (Macedonian)"
 
 msgid "Salon rules shown to customers"
 msgstr "Salon rules shown to customers"

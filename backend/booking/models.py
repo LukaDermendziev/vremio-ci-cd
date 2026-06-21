@@ -173,18 +173,36 @@ class BookingPolicy(TimeStampedModel):
     max_reference_photo_size_mb = models.PositiveSmallIntegerField(default=5)
 
     # ── Salon rules shown to customer before booking ──────────────────────────
+    DEFAULT_SALON_RULES_MK = (
+        "Закажувањето е можно минимум 14 дена однапред.\n"
+        "Доцнење повеќе од 15 минути без известување може да резултира со откажување на терминот.\n"
+        "При откажување, известете не најмалку 24 часа однапред.\n"
+        "За одредени услуги е потребна референтна фотографија."
+    )
+    DEFAULT_SALON_RULES_EN = (
+        "Booking is available at least 14 days in advance.\n"
+        "Being more than 15 minutes late without notice may result in cancellation.\n"
+        "When cancelling, please notify us at least 24 hours in advance.\n"
+        "A reference photo is required for certain services."
+    )
+
     salon_rules = models.TextField(
         blank=True,
-        help_text=(
-            "Rules shown to customers on the booking form. "
-            "Each line becomes a separate rule bullet."
+        verbose_name=_("Salon rules (Macedonian)"),
+        help_text=_(
+            "Rules shown to customers when the site language is Macedonian. "
+            "Each line becomes a separate rule."
         ),
-        default=(
-            "Закажувањето е можно минимум 14 дена однапред.\n"
-            "Доцнење повеќе од 15 минути без известување може да резултира со откажување на терминот.\n"
-            "При откажување, известете не најмалку 24 часа однапред.\n"
-            "За одредени услуги е потребна референтна фотографија."
+        default=DEFAULT_SALON_RULES_MK,
+    )
+    salon_rules_en = models.TextField(
+        blank=True,
+        verbose_name=_("Salon rules (English)"),
+        help_text=_(
+            "Rules shown to customers when the site language is English. "
+            "Each line becomes a separate rule."
         ),
+        default=DEFAULT_SALON_RULES_EN,
     )
 
     # ── Prepared message templates (use {ime}, {datum}, {vreme}, {salon}) ─────
@@ -236,6 +254,17 @@ class BookingPolicy(TimeStampedModel):
 
     def __str__(self):
         return f"Booking policy for {self.salon}"
+
+    def get_salon_rules_lines(self):
+        """Return salon rule lines for the active customer-facing language."""
+        from django.utils.translation import get_language
+
+        lang = (get_language() or "mk").split("-")[0].lower()
+        if lang == "en":
+            raw = (self.salon_rules_en or "").strip() or (self.salon_rules or "")
+        else:
+            raw = self.salon_rules or ""
+        return [line.strip() for line in raw.splitlines() if line.strip()]
 
     def clean(self):
         errors = {}

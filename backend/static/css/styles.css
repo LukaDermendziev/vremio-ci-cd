@@ -3269,6 +3269,13 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
 
 /* ── Rules section ───────────────────────────────────────────────────────── */
 .bk-rules-section { margin-bottom: 16px; }
+.bk-rules-intro {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--bk-muted, #6B7280);
+  margin: -6px 0 12px;
+  line-height: 1.4;
+}
 .bk-rule-row:has(input:checked) .bk-rule-box i { display: block !important; }
 .bk-rule-box i { display: none; color: #fff; font-size: 13px; font-weight: 900; }
 

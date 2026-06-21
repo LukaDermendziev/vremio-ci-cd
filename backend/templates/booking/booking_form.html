@@ -295,6 +295,7 @@
 
     <div class="bk-rules-section">
       <div class="bk-section-label" style="margin-top:0">{% trans "Salon rules" %}</div>
+      <p class="bk-rules-intro">{% trans "I understand:" %}</p>
 
       {# Always-present base rule #}
       <label class="bk-rule-row">
@@ -303,16 +304,14 @@
         <span class="bk-rule-text">{% trans "This is a request only — not confirmed until the salon approves it." %}</span>
       </label>
 
-      {% if booking_policy and booking_policy.salon_rules %}
-        {# Rules configured by the owner in Booking Policy #}
-        {% for rule in booking_policy.salon_rules.splitlines %}
-          {% if rule %}
+      {% if booking_policy %}
+        {# Rules configured by the owner in Booking Policy (language-aware) #}
+        {% for rule in booking_policy.get_salon_rules_lines %}
           <label class="bk-rule-row">
             <input type="checkbox" class="bk-rule-check">
             <span class="bk-rule-box"><i class="bi bi-check"></i></span>
             <span class="bk-rule-text">{{ rule }}</span>
           </label>
-          {% endif %}
         {% endfor %}
       {% else %}
         {# Fallback rules when no policy is configured #}

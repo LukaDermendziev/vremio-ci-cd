@@ -630,9 +630,12 @@
           {# ── Salon rules ── #}
           <div class="od-policy-card">
             <div class="od-policy-card-title">{% trans "Salon rules shown to customers" %}</div>
-            <p class="od-policy-hint">{% trans "Shown on the booking form. Each line is a separate rule." %}</p>
+            <p class="od-policy-hint">{% trans "Each line is a separate rule. Customers see the Macedonian or English version based on their language." %}</p>
             {% with f=policy_form.salon_rules %}
-              <div class="od-field">{{ f }}{% if f.errors %}<span class="od-field-error">{{ f.errors.0 }}</span>{% endif %}</div>
+              <div class="od-field"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% if f.errors %}<span class="od-field-error">{{ f.errors.0 }}</span>{% endif %}</div>
+            {% endwith %}
+            {% with f=policy_form.salon_rules_en %}
+              <div class="od-field"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% if f.errors %}<span class="od-field-error">{{ f.errors.0 }}</span>{% endif %}</div>
             {% endwith %}
           </div>
 

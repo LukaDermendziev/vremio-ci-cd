@@ -1053,9 +1053,7 @@ def manage_booking(request, token):
         manage_token=token,
     )
     policy = getattr(booking.salon, "booking_policy", None)
-    salon_rules = []
-    if policy and policy.salon_rules:
-        salon_rules = [line.strip() for line in policy.salon_rules.splitlines() if line.strip()]
+    salon_rules = policy.get_salon_rules_lines() if policy else []
 
     can_cancel, cancel_reason = can_customer_cancel_booking(booking)
     notice_hours = 24

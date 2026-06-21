@@ -578,6 +578,13 @@ msgstr "Времетраење"
 msgid "Duration (min)"
 msgstr "Времетраење (мин)"
 
+msgid ""
+"Each line is a separate rule. Customers see the Macedonian or English "
+"version based on their language."
+msgstr ""
+"Секој ред е посебно правило. Клиентите ја гледаат македонската или "
+"англиската верзија според јазикот."
+
 msgid "Edit"
 msgstr "Уреди"
 
@@ -845,6 +852,9 @@ msgid ""
 msgstr ""
 "Се согласувам со избраниот термин и разбирам дека не може да се промени без "
 "најава."
+
+msgid "I understand:"
+msgstr "Разбирам дека:"
 
 msgid ""
 "If an account with that email exists, a password reset link has been sent. "
@@ -1355,6 +1365,12 @@ msgstr "Salon Scheduler — Резервирај онлајн"
 msgid "Salon rules"
 msgstr "Правила на салонот"
 
+msgid "Salon rules (English)"
+msgstr "Правила на салонот (англиски)"
+
+msgid "Salon rules (Macedonian)"
+msgstr "Правила на салонот (македонски)"
+
 msgid "Salon rules shown to customers"
 msgstr "Правила на салонот за клиентите"
 
@@ -1445,7 +1461,8 @@ msgid "Set password"
 msgstr "Постави лозинка"
 
 msgid "Shown on the booking form. Each line is a separate rule."
-msgstr "Се прикажува на формуларот. Секој ред е посебно правило."
+msgstr ""
+"Се прикажуваат на формата за резервација. Секој ред е посебно правило."
 
 msgid "Sign in"
 msgstr "Најави се"

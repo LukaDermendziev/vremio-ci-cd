@@ -9,7 +9,7 @@ from django.db import connection
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext as _, override
 
 from .forms import BookingRequestForm
 from .models import (
@@ -1154,3 +1154,39 @@ class PhotoValidationTests(TestCase):
                     email=f"photo{index}@example.com",
                 )
                 self.assertTrue(form.is_valid(), form.errors)
+
+
+class SalonRulesLanguageTests(TestCase):
+    def setUp(self):
+        User = get_user_model()
+        self.owner = User.objects.create_user(username="owner", password="pass")
+        self.salon = Salon.objects.create(owner=self.owner, name="Salon A", slug="salon-a")
+        self.policy = BookingPolicy.objects.create(
+            salon=self.salon,
+            salon_rules="MK rule one\nMK rule two",
+            salon_rules_en="EN rule one\nEN rule two",
+        )
+
+    def test_macedonian_rules_for_mk_language(self):
+        with override("mk"):
+            self.assertEqual(
+                self.policy.get_salon_rules_lines(),
+                ["MK rule one", "MK rule two"],
+            )
+
+    def test_english_rules_for_en_language(self):
+        with override("en"):
+            self.assertEqual(
+                self.policy.get_salon_rules_lines(),
+                ["EN rule one", "EN rule two"],
+            )
+
+    def test_english_falls_back_to_macedonian_when_empty(self):
+        self.policy.salon_rules_en = ""
+        self.policy.save(update_fields=["salon_rules_en"])
+        with override("en"):
+            self.assertEqual(
+                self.policy.get_salon_rules_lines(),
+                ["MK rule one", "MK rule two"],
+            )
+
