@@ -9,6 +9,8 @@ from django.db.models import Q
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from .image_utils import booking_photo_upload_to
+
 
 class TimeStampedModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
@@ -160,6 +162,15 @@ class BookingPolicy(TimeStampedModel):
         default=24,
         help_text="Minimum hours before appointment start when customers may cancel online.",
     )
+
+    # ── Anti-abuse settings ───────────────────────────────────────────────────
+    max_pending_bookings_per_customer = models.PositiveSmallIntegerField(default=1)
+    max_active_future_bookings_per_customer = models.PositiveSmallIntegerField(default=2)
+    booking_rate_limit_per_ip_per_hour = models.PositiveSmallIntegerField(default=5)
+    booking_rate_limit_per_email_per_day = models.PositiveSmallIntegerField(default=3)
+    booking_rate_limit_per_phone_per_day = models.PositiveSmallIntegerField(default=3)
+    enable_honeypot_protection = models.BooleanField(default=True)
+    max_reference_photo_size_mb = models.PositiveSmallIntegerField(default=5)
 
     # ── Salon rules shown to customer before booking ──────────────────────────
     salon_rules = models.TextField(
@@ -403,7 +414,7 @@ class Booking(TimeStampedModel):
     )
     customer_note = models.TextField(blank=True)
     owner_note = models.TextField(blank=True)
-    reference_photo = models.ImageField(upload_to="booking_photos/", blank=True)
+    reference_photo = models.ImageField(upload_to=booking_photo_upload_to, blank=True)
     rules_accepted = models.BooleanField(default=False)
     rules_accepted_at = models.DateTimeField(null=True, blank=True)
     rejection_reason = models.TextField(blank=True)
@@ -560,6 +571,7 @@ class CustomerBlocklist(TimeStampedModel):
         related_name="customer_blocklist_entries",
     )
     phone_number = models.CharField(max_length=30)
+    email = models.EmailField(blank=True)
     instagram_username = models.CharField(max_length=80, blank=True)
     reason = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)

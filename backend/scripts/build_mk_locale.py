@@ -616,6 +616,46 @@ TRANSLATIONS = {
         "Статус: На чекање (чека ваше одобрување)\n\n"
         "Преглед во контролна табла: %(dashboard)s\n"
     ),
+    "You already have a booking request waiting for approval. Please wait for the salon to respond or cancel your existing request.": (
+        "Веќе имате барање за термин кое чека одобрување. "
+        "Ве молиме почекајте одговор од салонот или откажете го постоечкото барање."
+    ),
+    "You already have the maximum number of active appointments. To book a new one, please cancel or complete an existing appointment.": (
+        "Веќе го имате максималниот број активни термини. "
+        "За нов термин, ве молиме откажете или завршете постоечки термин."
+    ),
+    "You have sent too many requests in a short time. Please try again later.": (
+        "Испративте премногу барања за кратко време. Ве молиме обидете се повторно подоцна."
+    ),
+    "Your request could not be sent. Please contact the salon.": (
+        "Вашето барање не може да биде испратено. Ве молиме контактирајте го салонот."
+    ),
+    "Something went wrong. Please check your details and choose an available time.": (
+        "Нешто тргна наопаку. Проверете ги податоците и изберете слободен термин."
+    ),
+    "This customer already has active appointment(s).": (
+        "Клиентот веќе има активен/и термин/и."
+    ),
+    "The image is too large. Please upload an image up to %(size)s MB.": (
+        "Сликата е преголема. Ве молиме прикачете слика до %(size)s MB."
+    ),
+    "Invalid image format. Allowed formats are JPG, PNG, and WEBP.": (
+        "Невалиден формат на слика. Дозволени се JPG, PNG и WEBP."
+    ),
+    "A reference photo is required for this service.": (
+        "Потребна е референтна фотографија за оваа услуга."
+    ),
+    "Max pending bookings per customer": "Макс. барања на чекање по клиент",
+    "Max active future bookings per customer": "Макс. активни идни термини по клиент",
+    "Booking rate limit per IP per hour": "Лимит на барања по IP на час",
+    "Booking rate limit per email per day": "Лимит на барања по email на ден",
+    "Booking rate limit per phone per day": "Лимит на барања по телефон на ден",
+    "Enable honeypot protection": "Honeypot заштита",
+    "Max reference photo size (MB)": "Макс. големина на фотографија (MB)",
+    "Anti-abuse": "Anti-abuse",
+    "The image is too large. Please upload an image up to %(max)s MB.": (
+        "Сликата е преголема. Ве молиме прикачете слика до %(max)s MB."
+    ),
 }
 
 

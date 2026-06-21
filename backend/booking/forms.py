@@ -2,9 +2,20 @@ from datetime import timedelta
 from decimal import Decimal, InvalidOperation
 
 from django import forms
+from django.core.exceptions import ValidationError
 from django.forms import modelformset_factory
 from django.utils.translation import gettext_lazy as _
 
+from .anti_abuse import (
+    MSG_GENERIC_INVALID,
+    check_public_booking_allowed,
+    get_client_ip,
+    get_device_token,
+    honeypot_triggered,
+    normalize_phone,
+    record_booking_attempt,
+)
+from .image_utils import FORMAT_TO_EXT, prepare_reference_photo, validate_reference_photo
 from .models import (
     Booking,
     BookingPolicy,
@@ -75,10 +86,23 @@ class BookingRequestForm(forms.Form):
         label=_("I accept the salon rules and understand this is only a request."),
         widget=forms.CheckboxInput(attrs={"class": "bk-rules-hidden"}),
     )
+    company_website = forms.CharField(
+        required=False,
+        widget=forms.TextInput(
+            attrs={
+                "class": "bk-honeypot",
+                "tabindex": "-1",
+                "autocomplete": "off",
+            }
+        ),
+    )
 
-    def __init__(self, *args, salon, **kwargs):
+    def __init__(self, *args, salon, request=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.salon = salon
+        self.request = request
+        self.policy = getattr(salon, "booking_policy", None)
+        self.customer_warnings = []
         self.fields["service"].queryset = salon.services.filter(is_active=True)
 
         self.fields["full_name"].widget.attrs.update(
@@ -110,16 +134,43 @@ class BookingRequestForm(forms.Form):
         date = cleaned_data.get("date")
         start_time = cleaned_data.get("start_time")
         price_item_id = cleaned_data.get("selected_price_item_id")
+        phone = cleaned_data.get("phone_number", "")
+        email = cleaned_data.get("email", "")
+        instagram = cleaned_data.get("instagram_username", "")
+
+        if honeypot_triggered(cleaned_data.get("company_website"), self.policy):
+            self.add_error(None, str(MSG_GENERIC_INVALID))
+            return cleaned_data
+
+        ip = get_client_ip(self.request)
+        device_token = get_device_token(self.request)
+        abuse_result = check_public_booking_allowed(
+            self.salon,
+            self.policy,
+            phone=phone,
+            email=email,
+            instagram=instagram,
+            ip=ip,
+            device_token=device_token,
+            check_rate_limit=True,
+        )
+        if not abuse_result.ok:
+            self.add_error(None, abuse_result.user_message)
+            return cleaned_data
+
+        record_booking_attempt(
+            self.salon.id,
+            self.policy,
+            ip,
+            phone,
+            email,
+            device_token,
+        )
 
         if service and service.salon_id != self.salon.id:
             self.add_error("service", _("Choose a valid service for this salon."))
 
-        # Validate reference photo size (JS guards first, but backend must also check)
-        photo = cleaned_data.get("reference_photo")
-        if photo and hasattr(photo, "size") and photo.size > 8 * 1024 * 1024:
-            self.add_error("reference_photo", _("Image is too large. Maximum allowed size is 8 MB."))
-
-        # Validate selected price item belongs to the chosen service
+        price_item = None
         if price_item_id and service:
             try:
                 price_item = ServicePriceItem.objects.get(pk=price_item_id, service=service)
@@ -128,6 +179,24 @@ class BookingRequestForm(forms.Form):
                 cleaned_data["_price_item"] = None
         else:
             cleaned_data["_price_item"] = None
+
+        photo = cleaned_data.get("reference_photo")
+        photo_required = bool(service and service.requires_photo)
+        if price_item and price_item.photo_required:
+            photo_required = True
+        if photo_required and not photo:
+            self.add_error(
+                "reference_photo",
+                _("A reference photo is required for this service."),
+            )
+        elif photo:
+            max_size_mb = getattr(self.policy, "max_reference_photo_size_mb", 5) if self.policy else 5
+            try:
+                image_format = validate_reference_photo(photo, max_size_mb=max_size_mb)
+            except ValidationError as exc:
+                self.add_error("reference_photo", exc.messages[0])
+            else:
+                cleaned_data["_photo_format"] = image_format
 
         if service and date and start_time:
             slot = is_slot_available(self.salon, service, date, start_time)
@@ -146,9 +215,10 @@ class BookingRequestForm(forms.Form):
         return cleaned_data
 
     def save(self):
+        phone = normalize_phone(self.cleaned_data["phone_number"])
         customer, _created = Customer.objects.update_or_create(
             salon=self.salon,
-            phone_number=self.cleaned_data["phone_number"],
+            phone_number=phone,
             defaults={
                 "full_name": self.cleaned_data["full_name"],
                 "instagram_username": self.cleaned_data["instagram_username"],
@@ -163,13 +233,12 @@ class BookingRequestForm(forms.Form):
         end_at = self.cleaned_data.get("end_at") or start_at + timedelta(
             minutes=service.duration_minutes
         )
-        policy = getattr(self.salon, "booking_policy", None)
+        policy = self.policy
         status = Booking.Status.PENDING
 
         if policy and policy.auto_approve_bookings:
             status = Booking.Status.APPROVED
 
-        # Use the price item name as snapshot so the booking reflects the exact sub-service
         name_snapshot = price_item.name if price_item else service.name
 
         booking = Booking(
@@ -180,10 +249,17 @@ class BookingRequestForm(forms.Form):
             end_at=end_at,
             total_duration_minutes=service.duration_minutes,
             source=Booking.Source.ONLINE,
-            reference_photo=self.cleaned_data.get("reference_photo") or "",
             rules_accepted=self.cleaned_data["rules_accepted"],
             customer_note=self.cleaned_data.get("customer_note", ""),
         )
+
+        photo = self.cleaned_data.get("reference_photo")
+        photo_format = self.cleaned_data.get("_photo_format")
+        if photo and photo_format:
+            prepared = prepare_reference_photo(photo, photo_format)
+            booking._reference_photo_ext = FORMAT_TO_EXT.get(photo_format, "jpg")
+            booking.reference_photo = prepared
+
         booking.save()
         price_snap = (
             _price_from_display(price_item.price_display, service.base_price)
@@ -230,6 +306,8 @@ class OwnerBookingForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.salon = salon
         self.booking = booking
+        self.policy = getattr(salon, "booking_policy", None)
+        self.customer_warnings = []
         self.fields["service"].queryset = salon.services.filter(is_active=True)
 
         if booking:
@@ -294,12 +372,27 @@ class OwnerBookingForm(forms.Form):
             cleaned_data["start_at"] = slot["start"]
             cleaned_data["end_at"] = slot["end"]
 
+        phone = cleaned_data.get("phone_number", "")
+        email = cleaned_data.get("email", "")
+        instagram = cleaned_data.get("instagram_username", "")
+        abuse_result = check_public_booking_allowed(
+            self.salon,
+            self.policy,
+            phone=phone,
+            email=email,
+            instagram=instagram,
+            skip_customer_limits=True,
+            check_rate_limit=False,
+        )
+        self.customer_warnings = abuse_result.warnings
+
         return cleaned_data
 
     def save(self):
+        phone = normalize_phone(self.cleaned_data["phone_number"])
         customer, _created = Customer.objects.update_or_create(
             salon=self.salon,
-            phone_number=self.cleaned_data["phone_number"],
+            phone_number=phone,
             defaults={
                 "full_name": self.cleaned_data["full_name"],
                 "instagram_username": self.cleaned_data.get("instagram_username", ""),
@@ -395,6 +488,13 @@ class BookingPolicyForm(forms.ModelForm):
             "slot_interval_minutes",
             "buffer_minutes_between_bookings",
             "customer_cancellation_notice_hours",
+            "max_pending_bookings_per_customer",
+            "max_active_future_bookings_per_customer",
+            "booking_rate_limit_per_ip_per_hour",
+            "booking_rate_limit_per_email_per_day",
+            "booking_rate_limit_per_phone_per_day",
+            "enable_honeypot_protection",
+            "max_reference_photo_size_mb",
             "salon_rules",
             "msg_approved",
             "msg_rejected",
@@ -417,6 +517,13 @@ class BookingPolicyForm(forms.ModelForm):
             "slot_interval_minutes": _("Slot interval minutes"),
             "buffer_minutes_between_bookings": _("Buffer minutes between bookings"),
             "customer_cancellation_notice_hours": _("Customer cancellation notice (hours)"),
+            "max_pending_bookings_per_customer": _("Max pending bookings per customer"),
+            "max_active_future_bookings_per_customer": _("Max active future bookings per customer"),
+            "booking_rate_limit_per_ip_per_hour": _("Booking rate limit per IP per hour"),
+            "booking_rate_limit_per_email_per_day": _("Booking rate limit per email per day"),
+            "booking_rate_limit_per_phone_per_day": _("Booking rate limit per phone per day"),
+            "enable_honeypot_protection": _("Enable honeypot protection"),
+            "max_reference_photo_size_mb": _("Max reference photo size (MB)"),
             "salon_rules": _("Salon rules"),
             "msg_approved": _("Approved message"),
             "msg_rejected": _("Rejected message"),

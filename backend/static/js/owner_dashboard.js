@@ -387,6 +387,17 @@ function initOwnerDashboard(config) {
     return html;
   }
 
+  function syncPendingCount(count) {
+    const n = Number(count);
+    if (Number.isNaN(n)) return;
+    document.querySelectorAll('[data-stat="pending"]').forEach(el => {
+      el.textContent = String(n);
+      if (el.tagName === "EM" && el.closest(".od-quick-action")) {
+        el.hidden = n === 0;
+      }
+    });
+  }
+
   async function sendBookingAction(action, bookingId, card) {
     const csrf = document.querySelector("[name=csrfmiddlewaretoken]")?.value;
     const body = new URLSearchParams({ action, booking_id: bookingId, return_section: "bookings" });
@@ -414,27 +425,17 @@ function initOwnerDashboard(config) {
       const newStatus = data.new_status || ACTION_TO_STATUS[action] || "pending";
       const newStatusDisplay = data.new_status_display || STATUS_LABELS[newStatus] || newStatus;
 
-      // ── 1. Decrement pending badge BEFORE touching card.dataset.status ────────
-      const wasPending = card.dataset.status === "pending";
-      if (wasPending && newStatus !== "pending") {
-        const pendingBadge = document.querySelector('.od-tab[data-tab="pending"] .od-tab-n');
-        if (pendingBadge) {
-          const cur = parseInt(pendingBadge.textContent, 10);
-          if (!isNaN(cur) && cur > 0) pendingBadge.textContent = String(cur - 1);
-        }
-      }
-
-      // ── 2. Update card's data-status ─────────────────────────────────────────
+      // ── 1. Update card's data-status ─────────────────────────────────────────
       card.dataset.status = newStatus;
 
-      // ── 3. Update the visible status badge ───────────────────────────────────
+      // ── 2. Update the visible status badge ───────────────────────────────────
       const badge = card.querySelector(".od-bk-status-badge");
       if (badge) {
         badge.textContent = newStatusDisplay;
         badge.className = `od-badge od-badge-${newStatus} od-bk-status-badge`;
       }
 
-      // ── 4. Swap action buttons to match new status ───────────────────────────
+      // ── 3. Swap action buttons to match new status ───────────────────────────
       const actionsEl = card.querySelector(".od-bk-actions-live");
       if (actionsEl) {
         const staticBtns = [...actionsEl.querySelectorAll(
@@ -448,16 +449,14 @@ function initOwnerDashboard(config) {
           bindMessageBtn(btn));
       }
 
-      // ── 5. Toast ──────────────────────────────────────────────────────────────
+      // ── 4. Toast ──────────────────────────────────────────────────────────────
       if (data.messages?.length) {
         showToast(data.messages[0][1], data.messages[0][0] === "success" ? "success" : "error");
       }
 
-      // ── 6. Sync overview stat counters without a full reload ─────────────────
+      // ── 5. Sync overview stat counters without a full reload ─────────────────
       if (data.pending_count !== undefined) {
-        document.querySelectorAll('[data-stat="pending"]').forEach(el => {
-          el.textContent = data.pending_count;
-        });
+        syncPendingCount(data.pending_count);
       }
       if (data.today_count !== undefined) {
         document.querySelectorAll('[data-stat="today"]').forEach(el => {
@@ -465,7 +464,7 @@ function initOwnerDashboard(config) {
         });
       }
 
-      // ── 7. Fade out of current tab — card stays in DOM for other tabs ─────────
+      // ── 6. Fade out of current tab — card stays in DOM for other tabs ─────────
       const activeTab = document.querySelector(".od-tab.active")?.dataset.tab;
       if (activeTab && activeTab !== "all" && activeTab !== newStatus) {
         card.style.transition = "opacity .3s";
@@ -481,7 +480,7 @@ function initOwnerDashboard(config) {
         }, 320);
       }
 
-      // ── 8. Update / remove duplicate copies of this card in OTHER sections ────
+      // ── 7. Update / remove duplicate copies of this card in OTHER sections ────
       // (e.g. the overview panel "Pending booking requests" card)
       document.querySelectorAll(`.od-bk-card[data-booking-id="${bookingId}"]`).forEach(otherCard => {
         if (otherCard === card) return; // already handled above

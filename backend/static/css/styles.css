@@ -55,6 +55,16 @@ button { font-family: inherit; cursor: pointer; }
   flex-direction: column;
 }
 
+.bk-honeypot {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
 /* ── Error banner ──────────────────────────────────────────────────────────── */
 .bk-error-banner {
   background: #fee2e2;

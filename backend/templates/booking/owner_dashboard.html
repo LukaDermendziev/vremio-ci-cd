@@ -89,7 +89,7 @@
         <button type="button" class="od-quick-action" data-goto="bookings">
           <i class="bi bi-hourglass-split"></i>
           <span>{% trans "Pending requests" %}</span>
-          {% if pending_count %}<em>{{ pending_count }}</em>{% endif %}
+          <em data-stat="pending"{% if not pending_count %} hidden{% endif %}>{{ pending_count }}</em>
         </button>
         <button type="button" class="od-quick-action" data-goto="calendar">
           <i class="bi bi-calendar3"></i>
@@ -247,7 +247,7 @@
         <button type="button" class="od-btn od-btn-primary" data-add-booking><i class="bi bi-plus-lg"></i> {% trans "Add booking" %}</button>
       </div>
       <div class="od-tabs" id="bk-tabs">
-        <button class="od-tab active" data-tab="pending">{% trans "Pending" %} <span class="od-tab-n">{{ pending_count }}</span></button>
+        <button class="od-tab active" data-tab="pending">{% trans "Pending" %} <span class="od-tab-n" data-stat="pending">{{ pending_count }}</span></button>
         <button class="od-tab" data-tab="approved">{% trans "Approved" %}</button>
         <button class="od-tab" data-tab="cancelled">{% trans "Cancelled" %}</button>
         <button class="od-tab" data-tab="completed">{% trans "Completed" %}</button>
@@ -577,6 +577,31 @@
                 <div class="od-field"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% if f.errors %}<span class="od-field-error">{{ f.errors.0 }}</span>{% endif %}</div>
               {% endwith %}
               {% with f=policy_form.customer_cancellation_notice_hours %}
+                <div class="od-field"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% if f.errors %}<span class="od-field-error">{{ f.errors.0 }}</span>{% endif %}</div>
+              {% endwith %}
+            </div>
+          </div>
+
+          {# ── Anti-abuse ── #}
+          <div class="od-policy-card">
+            <div class="od-policy-card-title">{% trans "Anti-abuse" %}</div>
+            <div class="od-form-grid od-form-grid-2">
+              {% with f=policy_form.max_pending_bookings_per_customer %}
+                <div class="od-field"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% if f.errors %}<span class="od-field-error">{{ f.errors.0 }}</span>{% endif %}</div>
+              {% endwith %}
+              {% with f=policy_form.max_active_future_bookings_per_customer %}
+                <div class="od-field"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% if f.errors %}<span class="od-field-error">{{ f.errors.0 }}</span>{% endif %}</div>
+              {% endwith %}
+              {% with f=policy_form.booking_rate_limit_per_ip_per_hour %}
+                <div class="od-field"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% if f.errors %}<span class="od-field-error">{{ f.errors.0 }}</span>{% endif %}</div>
+              {% endwith %}
+              {% with f=policy_form.booking_rate_limit_per_email_per_day %}
+                <div class="od-field"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% if f.errors %}<span class="od-field-error">{{ f.errors.0 }}</span>{% endif %}</div>
+              {% endwith %}
+              {% with f=policy_form.booking_rate_limit_per_phone_per_day %}
+                <div class="od-field"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% if f.errors %}<span class="od-field-error">{{ f.errors.0 }}</span>{% endif %}</div>
+              {% endwith %}
+              {% with f=policy_form.max_reference_photo_size_mb %}
                 <div class="od-field"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% if f.errors %}<span class="od-field-error">{{ f.errors.0 }}</span>{% endif %}</div>
               {% endwith %}
             </div>

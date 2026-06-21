@@ -168,13 +168,20 @@ STORAGES = {
     },
 }
 
+# Rate limiting uses Django's cache backend (LocMem in dev; use Redis in multi-worker production).
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+    }
+}
+
 MEDIA_URL = "media/"
 _media_root = os.environ.get("MEDIA_ROOT", "")
 MEDIA_ROOT = Path(_media_root) if _media_root else BASE_DIR / "media"
 
-# Align with 8 MB reference photo limit in booking forms
-DATA_UPLOAD_MAX_MEMORY_SIZE = 8 * 1024 * 1024
-FILE_UPLOAD_MAX_MEMORY_SIZE = 8 * 1024 * 1024
+# Align with reference photo limit in booking policy (default 5 MB)
+DATA_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

@@ -15,6 +15,7 @@
   data-max-date="{{ max_date }}"
   data-closed-weekdays="{{ closed_weekdays_js }}"
   data-salon-url="{% url 'booking:salon_page' salon.slug %}"
+  data-max-photo-mb="{{ booking_policy.max_reference_photo_size_mb|default:5 }}"
   novalidate
 >
   {% csrf_token %}
@@ -23,8 +24,14 @@
   {{ form.date }}
   {{ form.preferred_contact_method }}
   {{ form.selected_price_item_id }}
+  <div class="bk-honeypot" aria-hidden="true">{{ form.company_website }}</div>
 
-  {% if form.errors %}
+  {% if form.non_field_errors %}
+    <div class="bk-error-banner">
+      <i class="bi bi-exclamation-circle"></i>
+      {% for err in form.non_field_errors %}{{ err }}{% if not forloop.last %} {% endif %}{% endfor %}
+    </div>
+  {% elif form.errors %}
     <div class="bk-error-banner">
       <i class="bi bi-exclamation-circle"></i>
       {% trans "Something went wrong. Please check your details and choose an available time." %}
@@ -357,7 +364,7 @@ window.BK_I18N = {
   oneServiceWarning: "{% filter escapejs %}{% trans 'Only one service is allowed per booking. Your previous selection was replaced.' %}{% endfilter %}",
   tapToUpload: "{% filter escapejs %}{% trans 'Tap to upload a photo' %}{% endfilter %}",
   fileTypeError: "{% filter escapejs %}{% trans 'Only images are allowed (JPG, PNG, WebP). Choose another format.' %}{% endfilter %}",
-  fileSizeError: "{% filter escapejs %}{% blocktrans with max=8 %}The image is too large. Maximum allowed size is {{ max }} MB.{% endblocktrans %}{% endfilter %}",
+  fileSizeError: "{% filter escapejs %}{% blocktrans with max=booking_policy.max_reference_photo_size_mb|default:5 %}The image is too large. Please upload an image up to {{ max }} MB.{% endblocktrans %}{% endfilter %}",
   photoRequired: "{% filter escapejs %}{% trans '(required)' %}{% endfilter %}",
   photoRecommended: "{% filter escapejs %}{% trans '(recommended)' %}{% endfilter %}",
   photoOptional: "{% filter escapejs %}{% trans '(optional)' %}{% endfilter %}",
@@ -994,7 +1001,7 @@ window.BK_I18N = {
         if (label) label.textContent = I18N.tapToUpload;
         return;
       }
-      const maxMB = 8;
+      const maxMB = Number(form?.dataset.maxPhotoMb) || 5;
       if (file.size > maxMB * 1024 * 1024) {
         showBkToast(I18N.fileSizeError);
         fileInput.value = '';

@@ -68,6 +68,9 @@ msgstr ""
 "\n"
 "Review in dashboard: %(dashboard)s\n"
 
+msgid "A reference photo is required for this service."
+msgstr "A reference photo is required for this service."
+
 msgid "Actions"
 msgstr "Actions"
 
@@ -114,6 +117,9 @@ msgstr "Allow next day booking"
 
 msgid "Allow same day booking"
 msgstr "Allow same day booking"
+
+msgid "Anti-abuse"
+msgstr "Anti-abuse"
 
 msgid "Appointment"
 msgstr "Appointment"
@@ -305,6 +311,15 @@ msgstr "Booking policy"
 
 msgid "Booking policy saved."
 msgstr "Booking policy saved."
+
+msgid "Booking rate limit per IP per hour"
+msgstr "Booking rate limit per IP per hour"
+
+msgid "Booking rate limit per email per day"
+msgstr "Booking rate limit per email per day"
+
+msgid "Booking rate limit per phone per day"
+msgstr "Booking rate limit per phone per day"
 
 msgid "Booking rejected. Customer has no email — use prepared message."
 msgstr "Booking rejected. Customer has no email — use prepared message."
@@ -590,6 +605,9 @@ msgstr "Email could not be sent. Prepared message is available."
 msgid "Email sent"
 msgstr "Email sent"
 
+msgid "Enable honeypot protection"
+msgstr "Enable honeypot protection"
+
 msgid "End"
 msgstr "End"
 
@@ -851,6 +869,9 @@ msgstr "Instagram username"
 msgid "Invalid blocked date."
 msgstr "Invalid blocked date."
 
+msgid "Invalid image format. Allowed formats are JPG, PNG, and WEBP."
+msgstr "Invalid image format. Allowed formats are JPG, PNG, and WEBP."
+
 msgid "Invalid username or password."
 msgstr "Invalid username or password."
 
@@ -902,8 +923,17 @@ msgstr "Mark as no-show?"
 msgid "Mark completed"
 msgstr "Mark completed"
 
+msgid "Max active future bookings per customer"
+msgstr "Max active future bookings per customer"
+
 msgid "Max appointments per day"
 msgstr "Max appointments per day"
+
+msgid "Max pending bookings per customer"
+msgstr "Max pending bookings per customer"
+
+msgid "Max reference photo size (MB)"
+msgstr "Max reference photo size (MB)"
 
 msgid "Maximum booking window days"
 msgstr "Maximum booking window days"
@@ -1493,6 +1523,12 @@ msgstr ""
 msgid "The image is too large. Maximum allowed size is %(max)s MB."
 msgstr "The image is too large. Maximum allowed size is %(max)s MB."
 
+msgid "The image is too large. Please upload an image up to %(max)s MB."
+msgstr "The image is too large. Please upload an image up to %(max)s MB."
+
+msgid "The image is too large. Please upload an image up to %(size)s MB."
+msgstr "The image is too large. Please upload an image up to %(size)s MB."
+
 msgid ""
 "The salon will contact you to confirm via your preferred contact method."
 msgstr ""
@@ -1535,6 +1571,9 @@ msgstr "This appointment was marked as a no-show."
 
 msgid "This booking request was declined by the salon."
 msgstr "This booking request was declined by the salon."
+
+msgid "This customer already has active appointment(s)."
+msgstr "This customer already has active appointment(s)."
 
 msgid "This is a request only — not confirmed until the salon approves it."
 msgstr "This is a request only — not confirmed until the salon approves it."
@@ -1685,6 +1724,20 @@ msgstr "Working hours saved."
 msgid "Yes, cancel appointment"
 msgstr "Yes, cancel appointment"
 
+msgid ""
+"You already have a booking request waiting for approval. Please wait for the"
+" salon to respond or cancel your existing request."
+msgstr ""
+"You already have a booking request waiting for approval. Please wait for the"
+" salon to respond or cancel your existing request."
+
+msgid ""
+"You already have the maximum number of active appointments. To book a new "
+"one, please cancel or complete an existing appointment."
+msgstr ""
+"You already have the maximum number of active appointments. To book a new "
+"one, please cancel or complete an existing appointment."
+
 msgid "You can cancel this appointment online."
 msgstr "You can cancel this appointment online."
 
@@ -1702,6 +1755,11 @@ msgstr ""
 "Phone: %(phone)s\n"
 "Service: %(service)s\n"
 "Date and time: %(date)s at %(time)s"
+
+msgid ""
+"You have sent too many requests in a short time. Please try again later."
+msgstr ""
+"You have sent too many requests in a short time. Please try again later."
 
 msgid "You requested a password reset for your Salon Scheduler owner account."
 msgstr ""
@@ -1751,6 +1809,9 @@ msgstr "Your booking request was declined."
 
 msgid "Your password has been set. You can now sign in."
 msgstr "Your password has been set. You can now sign in."
+
+msgid "Your request could not be sent. Please contact the salon."
+msgstr "Your request could not be sent. Please contact the salon."
 
 msgid ""
 "Your request is not confirmed yet. The salon will review it and contact you."

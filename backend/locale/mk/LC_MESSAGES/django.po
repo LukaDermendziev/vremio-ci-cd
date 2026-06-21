@@ -68,6 +68,9 @@ msgstr ""
 "\n"
 "Преглед во контролна табла: %(dashboard)s\n"
 
+msgid "A reference photo is required for this service."
+msgstr "Потребна е референтна фотографија за оваа услуга."
+
 msgid "Actions"
 msgstr "Акции"
 
@@ -114,6 +117,9 @@ msgstr "Дозволи резервација следен ден"
 
 msgid "Allow same day booking"
 msgstr "Дозволи резервација ист ден"
+
+msgid "Anti-abuse"
+msgstr "Anti-abuse"
 
 msgid "Appointment"
 msgstr "Термин"
@@ -308,6 +314,15 @@ msgstr "Политика за резервации"
 
 msgid "Booking policy saved."
 msgstr "Политиката е зачувана."
+
+msgid "Booking rate limit per IP per hour"
+msgstr "Лимит на барања по IP на час"
+
+msgid "Booking rate limit per email per day"
+msgstr "Лимит на барања по email на ден"
+
+msgid "Booking rate limit per phone per day"
+msgstr "Лимит на барања по телефон на ден"
 
 msgid "Booking rejected. Customer has no email — use prepared message."
 msgstr ""
@@ -596,6 +611,9 @@ msgstr "Email не можеше да се испрати. Подготвенат
 msgid "Email sent"
 msgstr "Е-пошта испратена"
 
+msgid "Enable honeypot protection"
+msgstr "Honeypot заштита"
+
 msgid "End"
 msgstr "Крај"
 
@@ -857,6 +875,9 @@ msgstr "Instagram корисничко име"
 msgid "Invalid blocked date."
 msgstr "Невалиден блокиран датум."
 
+msgid "Invalid image format. Allowed formats are JPG, PNG, and WEBP."
+msgstr "Невалиден формат на слика. Дозволени се JPG, PNG и WEBP."
+
 msgid "Invalid username or password."
 msgstr "Невалидно корисничко име или лозинка."
 
@@ -908,8 +929,17 @@ msgstr "Означи како не се појави?"
 msgid "Mark completed"
 msgstr "Означи завршен"
 
+msgid "Max active future bookings per customer"
+msgstr "Макс. активни идни термини по клиент"
+
 msgid "Max appointments per day"
 msgstr "Макс. термини дневно"
+
+msgid "Max pending bookings per customer"
+msgstr "Макс. барања на чекање по клиент"
+
+msgid "Max reference photo size (MB)"
+msgstr "Макс. големина на фотографија (MB)"
 
 msgid "Maximum booking window days"
 msgstr "Максимален прозорец (дена)"
@@ -1496,6 +1526,12 @@ msgstr ""
 msgid "The image is too large. Maximum allowed size is %(max)s MB."
 msgstr "Сликата е преголема. Максималната дозволена големина е %(max)s MB."
 
+msgid "The image is too large. Please upload an image up to %(max)s MB."
+msgstr "Сликата е преголема. Ве молиме прикачете слика до %(max)s MB."
+
+msgid "The image is too large. Please upload an image up to %(size)s MB."
+msgstr "Сликата е преголема. Ве молиме прикачете слика до %(size)s MB."
+
 msgid ""
 "The salon will contact you to confirm via your preferred contact method."
 msgstr ""
@@ -1539,6 +1575,9 @@ msgstr "Овој термин е означен како не се појави.
 
 msgid "This booking request was declined by the salon."
 msgstr "Ова барање е одбиено од салонот."
+
+msgid "This customer already has active appointment(s)."
+msgstr "Клиентот веќе има активен/и термин/и."
 
 msgid "This is a request only — not confirmed until the salon approves it."
 msgstr "Ова е само барање — не е потврдено додека салонот не одобри."
@@ -1690,6 +1729,20 @@ msgstr "Работното време е зачувано."
 msgid "Yes, cancel appointment"
 msgstr "Да, откажи термин"
 
+msgid ""
+"You already have a booking request waiting for approval. Please wait for the"
+" salon to respond or cancel your existing request."
+msgstr ""
+"Веќе имате барање за термин кое чека одобрување. Ве молиме почекајте одговор"
+" од салонот или откажете го постоечкото барање."
+
+msgid ""
+"You already have the maximum number of active appointments. To book a new "
+"one, please cancel or complete an existing appointment."
+msgstr ""
+"Веќе го имате максималниот број активни термини. За нов термин, ве молиме "
+"откажете или завршете постоечки термин."
+
 msgid "You can cancel this appointment online."
 msgstr "Можете да го откажете терминот онлајн."
 
@@ -1707,6 +1760,12 @@ msgstr ""
 "Телефон: %(phone)s\n"
 "Услуга: %(service)s\n"
 "Датум и време: %(date)s во %(time)s"
+
+msgid ""
+"You have sent too many requests in a short time. Please try again later."
+msgstr ""
+"Испративте премногу барања за кратко време. Ве молиме обидете се повторно "
+"подоцна."
 
 msgid "You requested a password reset for your Salon Scheduler owner account."
 msgstr "Побаравте ресетирање на лозинката за вашата Salon Scheduler сметка."
@@ -1755,6 +1814,10 @@ msgstr "Вашето барање за термин е одбиено."
 
 msgid "Your password has been set. You can now sign in."
 msgstr "Вашата лозинка е поставена. Сега можете да се најавите."
+
+msgid "Your request could not be sent. Please contact the salon."
+msgstr ""
+"Вашето барање не може да биде испратено. Ве молиме контактирајте го салонот."
 
 msgid ""
 "Your request is not confirmed yet. The salon will review it and contact you."

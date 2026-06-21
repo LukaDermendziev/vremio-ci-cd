@@ -1,6 +1,8 @@
 from datetime import datetime, time, timedelta
+import io
 
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.db import connection
@@ -16,6 +18,7 @@ from .models import (
     BookingPolicy,
     BookingService,
     Customer,
+    CustomerBlocklist,
     DateWorkingHoursOverride,
     Salon,
     Service,
@@ -35,6 +38,7 @@ class BookingSmokeTests(TestCase):
 
 class BookingViewTests(TestCase):
     def setUp(self):
+        cache.clear()
         self.user = get_user_model().objects.create_user(
             username="owner",
             password="password",
@@ -583,7 +587,7 @@ class BetaReadinessTests(TestCase):
     def test_photo_upload_rejects_oversized_file(self):
         big = SimpleUploadedFile(
             "big.jpg",
-            b"x" * (8 * 1024 * 1024 + 1),
+            b"x" * (5 * 1024 * 1024 + 1),
             content_type="image/jpeg",
         )
         selected_date = timezone.localdate() + timedelta(days=20)
@@ -604,6 +608,7 @@ class BetaReadinessTests(TestCase):
                 "full_name": "Test",
                 "phone_number": "070999888",
                 "instagram_username": "test",
+                "email": "test@example.com",
                 "preferred_contact_method": Customer.PreferredContactMethod.VIBER,
                 "rules_accepted": True,
             },
@@ -891,3 +896,261 @@ class BetaReadinessTests(TestCase):
         self.assertFalse(
             salon.working_hours.get(weekday=WorkingHours.Weekday.SUNDAY).is_working_day
         )
+
+
+class AntiAbuseTests(TestCase):
+    def setUp(self):
+        cache.clear()
+        User = get_user_model()
+        self.owner = User.objects.create_user(username="owner", password="pass")
+        self.salon = Salon.objects.create(owner=self.owner, name="Salon A", slug="salon-a")
+        self.policy = BookingPolicy.objects.create(
+            salon=self.salon,
+            minimum_notice_days=0,
+            max_pending_bookings_per_customer=1,
+            max_active_future_bookings_per_customer=2,
+            booking_rate_limit_per_ip_per_hour=5,
+            booking_rate_limit_per_email_per_day=3,
+            booking_rate_limit_per_phone_per_day=3,
+            max_reference_photo_size_mb=5,
+        )
+        self.service = Service.objects.create(
+            salon=self.salon,
+            name="Manicure",
+            duration_minutes=120,
+            base_price=600,
+        )
+        for weekday in range(6):
+            WorkingHours.objects.create(
+                salon=self.salon,
+                weekday=weekday,
+                is_working_day=True,
+                start_time=time(8, 0),
+                end_time=time(18, 0),
+            )
+
+    def _future_date(self, days=20):
+        selected = timezone.localdate() + timedelta(days=days)
+        while selected.weekday() == WorkingHours.Weekday.SUNDAY:
+            selected += timedelta(days=1)
+        return selected
+
+    def _post_data(self, phone, email, date=None, start_time="08:00", **extra):
+        return {
+            "service": self.service.id,
+            "date": (date or self._future_date()).isoformat(),
+            "start_time": start_time,
+            "full_name": "Test Customer",
+            "phone_number": phone,
+            "instagram_username": "test_user",
+            "email": email,
+            "preferred_contact_method": Customer.PreferredContactMethod.VIBER,
+            "rules_accepted": "on",
+            **extra,
+        }
+
+    def _create_booking(self, phone, email, status=Booking.Status.PENDING, start_time=(10, 0)):
+        customer, _created = Customer.objects.get_or_create(
+            salon=self.salon,
+            phone_number=phone,
+            defaults={
+                "full_name": "Existing",
+                "instagram_username": "existing",
+                "email": email,
+            },
+        )
+        selected = self._future_date()
+        start = timezone.make_aware(
+            datetime.combine(selected, time(*start_time)),
+            timezone.get_current_timezone(),
+        )
+        booking = Booking.objects.create(
+            salon=self.salon,
+            customer=customer,
+            status=status,
+            source=Booking.Source.ONLINE,
+            start_at=start,
+            end_at=start + timedelta(hours=2),
+            total_duration_minutes=120,
+            rules_accepted=True,
+        )
+        BookingService.objects.create(
+            booking=booking,
+            service=self.service,
+            service_name_snapshot="Manicure",
+        )
+        return booking
+
+    def test_second_pending_blocked_for_same_phone(self):
+        self._create_booking("070111222", "first@example.com")
+        response = self.client.post(
+            "/book/salon-a/request/",
+            self._post_data("070111222", "other@example.com", start_time="12:00"),
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "барање за термин")
+
+    def test_second_pending_blocked_for_same_email(self):
+        self._create_booking("070111222", "shared@example.com")
+        response = self.client.post(
+            "/book/salon-a/request/",
+            self._post_data("070999888", "shared@example.com", start_time="12:00"),
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "барање за термин")
+
+    def test_customer_can_book_after_cancelled(self):
+        booking = self._create_booking("070111222", "retry@example.com")
+        booking.status = Booking.Status.CANCELLED
+        booking.save()
+        response = self.client.post(
+            "/book/salon-a/request/",
+            self._post_data("070111222", "retry@example.com", start_time="12:00"),
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            Booking.objects.filter(
+                customer__phone_number="070111222",
+                status=Booking.Status.PENDING,
+            ).count(),
+            1,
+        )
+
+    def test_active_future_limit_blocks_third_booking(self):
+        self._create_booking("070111222", "active@example.com", status=Booking.Status.APPROVED)
+        self._create_booking(
+            "070111222",
+            "active@example.com",
+            status=Booking.Status.APPROVED,
+            start_time=(14, 0),
+        )
+        response = self.client.post(
+            "/book/salon-a/request/",
+            self._post_data("070111222", "active@example.com", start_time="16:00"),
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "максималниот број активни")
+
+    def test_blocklisted_customer_cannot_submit(self):
+        CustomerBlocklist.objects.create(
+            salon=self.salon,
+            phone_number="070555444",
+            is_active=True,
+        )
+        response = self.client.post(
+            "/book/salon-a/request/",
+            self._post_data("070555444", "blocked@example.com"),
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "не може да биде испратено")
+
+    def test_rate_limit_blocks_repeated_submissions(self):
+        self.policy.booking_rate_limit_per_ip_per_hour = 1
+        self.policy.save()
+        first = self.client.post(
+            "/book/salon-a/request/",
+            self._post_data("070111001", "one@example.com"),
+        )
+        self.assertEqual(first.status_code, 302)
+        second = self.client.post(
+            "/book/salon-a/request/",
+            self._post_data("070111002", "two@example.com", start_time="12:00"),
+        )
+        self.assertEqual(second.status_code, 200)
+        self.assertContains(second, "премногу барања")
+
+    def test_owner_manual_booking_not_blocked_with_warning(self):
+        self._create_booking("070111222", "owner@example.com")
+        self.client.login(username="owner", password="pass")
+        selected = self._future_date()
+        response = self.client.post(
+            "/owner/dashboard/",
+            {
+                "action": "save_booking",
+                "full_name": "Manual Customer",
+                "phone_number": "070111222",
+                "instagram_username": "manual",
+                "email": "owner@example.com",
+                "preferred_contact_method": Customer.PreferredContactMethod.VIBER,
+                "service": self.service.id,
+                "date": selected.isoformat(),
+                "start_time": "14:00",
+                "status": Booking.Status.APPROVED,
+                "source": Booking.Source.OWNER_MANUAL,
+            },
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "активен")
+
+
+def _make_test_image(fmt="JPEG", name="test.jpg"):
+    from PIL import Image
+
+    buffer = io.BytesIO()
+    Image.new("RGB", (12, 12), color="red").save(buffer, format=fmt)
+    content_types = {
+        "JPEG": "image/jpeg",
+        "PNG": "image/png",
+        "WEBP": "image/webp",
+    }
+    return SimpleUploadedFile(name, buffer.getvalue(), content_type=content_types[fmt])
+
+
+class PhotoValidationTests(TestCase):
+    def setUp(self):
+        cache.clear()
+        User = get_user_model()
+        self.owner = User.objects.create_user(username="owner", password="pass")
+        self.salon = Salon.objects.create(owner=self.owner, name="Salon A", slug="salon-a")
+        BookingPolicy.objects.create(salon=self.salon, minimum_notice_days=0, max_reference_photo_size_mb=5)
+        self.service = Service.objects.create(
+            salon=self.salon,
+            name="Manicure",
+            duration_minutes=120,
+            base_price=600,
+        )
+
+    def _future_date(self):
+        selected = timezone.localdate() + timedelta(days=20)
+        while selected.weekday() == WorkingHours.Weekday.SUNDAY:
+            selected += timedelta(days=1)
+        return selected
+
+    def _form(self, files=None, **extra):
+        data = {
+            "service": self.service.id,
+            "date": self._future_date().isoformat(),
+            "start_time": "08:00",
+            "full_name": "Photo Test",
+            "phone_number": "070888777",
+            "instagram_username": "photo_test",
+            "email": "photo@example.com",
+            "preferred_contact_method": Customer.PreferredContactMethod.VIBER,
+            "rules_accepted": True,
+            **extra,
+        }
+        return BookingRequestForm(data, files or {}, salon=self.salon)
+
+    def test_oversized_image_rejected(self):
+        big = SimpleUploadedFile("big.jpg", b"x" * (5 * 1024 * 1024 + 1), content_type="image/jpeg")
+        form = self._form(files={"reference_photo": big})
+        self.assertFalse(form.is_valid())
+        self.assertIn("reference_photo", form.errors)
+
+    def test_renamed_fake_image_rejected(self):
+        fake = SimpleUploadedFile("fake.jpg", b"not-an-image", content_type="image/jpeg")
+        form = self._form(files={"reference_photo": fake})
+        self.assertFalse(form.is_valid())
+        self.assertIn("reference_photo", form.errors)
+
+    def test_valid_jpg_png_webp_accepted(self):
+        for index, (fmt, name) in enumerate([("JPEG", "a.jpg"), ("PNG", "a.png"), ("WEBP", "a.webp")]):
+            with self.subTest(fmt=fmt):
+                cache.clear()
+                form = self._form(
+                    files={"reference_photo": _make_test_image(fmt, name)},
+                    phone_number=f"07088877{index}",
+                    email=f"photo{index}@example.com",
+                )
+                self.assertTrue(form.is_valid(), form.errors)

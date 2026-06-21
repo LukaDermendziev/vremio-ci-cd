@@ -142,6 +142,6 @@ class BookingActivityLogAdmin(admin.ModelAdmin):
 
 @admin.register(CustomerBlocklist)
 class CustomerBlocklistAdmin(admin.ModelAdmin):
-    list_display = ("phone_number", "salon", "instagram_username", "is_active", "created_at")
+    list_display = ("phone_number", "salon", "email", "instagram_username", "is_active", "created_at")
     list_filter = ("salon", "is_active")
-    search_fields = ("phone_number", "instagram_username", "reason")
+    search_fields = ("phone_number", "email", "instagram_username", "reason")

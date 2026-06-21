@@ -1,4 +1,5 @@
 import json
+import uuid
 from datetime import date, datetime, timedelta
 
 from django.contrib import messages
@@ -15,6 +16,7 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET, require_POST
 
+from .anti_abuse import DEVICE_COOKIE_MAX_AGE, DEVICE_COOKIE_NAME
 from .forms import (
     BlockedDateForm,
     BookingPolicyForm,
@@ -241,6 +243,8 @@ def owner_dashboard(request):
                 except ValidationError as exc:
                     messages.error(request, _validation_error_to_text(exc))
                 else:
+                    for warning in form.customer_warnings:
+                        messages.warning(request, warning)
                     if is_edit:
                         log_booking_activity(saved, BookingActivityLog.Action.EDITED, user=request.user)
                         inform = request.POST.get("inform_customer")
@@ -938,6 +942,18 @@ def salon_page(request, salon_slug):
     )
 
 
+def _ensure_booking_device_cookie(response, request):
+    if DEVICE_COOKIE_NAME not in request.COOKIES:
+        response.set_cookie(
+            DEVICE_COOKIE_NAME,
+            uuid.uuid4().hex,
+            max_age=DEVICE_COOKIE_MAX_AGE,
+            httponly=True,
+            samesite="Lax",
+        )
+    return response
+
+
 def book_salon(request, salon_slug):
     salon = get_object_or_404(Salon, slug=salon_slug, is_active=True)
     policy = getattr(salon, "booking_policy", None)
@@ -958,7 +974,7 @@ def book_salon(request, salon_slug):
         closed_weekdays_js.append(0)
 
     if request.method == "POST":
-        form = BookingRequestForm(request.POST, request.FILES, salon=salon)
+        form = BookingRequestForm(request.POST, request.FILES, salon=salon, request=request)
         if form.is_valid():
             booking = form.save()
             log_booking_activity(
@@ -980,11 +996,12 @@ def book_salon(request, salon_slug):
                     BookingActivityLog.Action.EMAIL_SENT,
                     note="Owner notified of new request",
                 )
-            return redirect(reverse("booking:booking_success", args=[booking.pk]))
+            response = redirect(reverse("booking:booking_success", args=[booking.pk]))
+            return _ensure_booking_device_cookie(response, request)
     else:
-        form = BookingRequestForm(salon=salon)
+        form = BookingRequestForm(salon=salon, request=request)
 
-    return render(
+    response = render(
         request,
         "booking/booking_form.html",
         {
@@ -997,6 +1014,7 @@ def book_salon(request, salon_slug):
             "closed_weekdays_js": json.dumps(closed_weekdays_js),
         },
     )
+    return _ensure_booking_device_cookie(response, request)
 
 
 def booking_success(request, booking_id):
