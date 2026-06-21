@@ -6,8 +6,8 @@ from urllib.parse import quote
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from django.conf import settings
-from django.core.mail import send_mail
 from django.db.models import Sum
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
@@ -363,41 +363,67 @@ def build_prepared_message(booking, message_type):
     ) % {"name": first_name, "date": date_label, "time": time_label, "salon": salon_name}
 
 
+def get_manage_booking_url(booking):
+    """Absolute or relative URL for the customer's private manage-booking page."""
+    path = reverse("booking:manage_booking", args=[booking.manage_token])
+    site_url = getattr(settings, "SITE_URL", "").rstrip("/")
+    return f"{site_url}{path}" if site_url else path
+
+
+def can_customer_cancel_booking(booking, now=None):
+    """
+    Return (allowed: bool, reason: str).
+    reason is one of: pending, approved, past, too_close, rejected, cancelled, completed, no_show
+    """
+    if now is None:
+        now = timezone.now()
+
+    if booking.start_at <= now:
+        return False, "past"
+
+    if booking.status == Booking.Status.PENDING:
+        return True, "pending"
+
+    if booking.status == Booking.Status.APPROVED:
+        notice_hours = get_policy_value(booking.salon, "customer_cancellation_notice_hours", 24)
+        hours_until = (booking.start_at - now).total_seconds() / 3600
+        if hours_until >= notice_hours:
+            return True, "approved"
+        return False, "too_close"
+
+    if booking.status == Booking.Status.REJECTED:
+        return False, "rejected"
+    if booking.status == Booking.Status.CANCELLED:
+        return False, "cancelled"
+    if booking.status == Booking.Status.COMPLETED:
+        return False, "completed"
+    if booking.status == Booking.Status.NO_SHOW:
+        return False, "no_show"
+
+    return False, booking.status
+
+
 def send_booking_notification(booking, action, request=None):
     """
     Send an email to the customer if they have one.
     Returns (sent: bool, reason: str).
     """
-    email = booking.customer.email
-    if not email:
-        return False, "no_email"
+    from . import email_utils
 
-    subject_map = {
-        "approved": _("Your appointment is confirmed — %(salon)s") % {"salon": booking.salon.name},
-        "rejected": _("Unfortunately the appointment is unavailable — %(salon)s") % {"salon": booking.salon.name},
-        "cancelled": _("Your appointment was cancelled — %(salon)s") % {"salon": booking.salon.name},
-        "edited": _("Your appointment was changed — %(salon)s") % {"salon": booking.salon.name},
-        "no_show": _("Missed appointment — %(salon)s") % {"salon": booking.salon.name},
-        "pending": _("Request received — %(salon)s") % {"salon": booking.salon.name},
+    send_map = {
+        "approved": email_utils.send_booking_approved_email,
+        "rejected": email_utils.send_booking_rejected_email,
+        "edited": email_utils.send_booking_updated_email,
+        "cancelled": email_utils.send_booking_cancelled_email,
+        "no_show": lambda b: email_utils.send_customer_booking_email(b, "no_show"),
+        "pending": lambda b: email_utils.send_customer_booking_email(b, "pending"),
+        "request_received": email_utils.send_booking_request_received_email,
+        "customer_cancelled": email_utils.send_customer_cancellation_confirmation_email,
     }
-    subject = subject_map.get(
-        action,
-        _("Appointment information — %(salon)s") % {"salon": booking.salon.name},
-    )
-    body = build_prepared_message(booking, action)
-
-    try:
-        send_mail(
-            subject=subject,
-            message=body,
-            from_email=getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@salonscheduler.app"),
-            recipient_list=[email],
-            fail_silently=False,
-        )
-        return True, "sent"
-    except Exception as exc:
-        logger.warning("Could not send booking email to %s: %s", email, exc)
-        return False, "error"
+    sender = send_map.get(action)
+    if not sender:
+        return False, "unknown_action"
+    return sender(booking)
 
 
 def send_owner_new_booking_notification(booking):
@@ -405,51 +431,16 @@ def send_owner_new_booking_notification(booking):
     Notify the salon owner when a new online booking request arrives.
     Returns (sent: bool, reason: str). Never raises — booking must always succeed.
     """
-    owner = booking.salon.owner
-    owner_email = (owner.email or "").strip()
-    if not owner_email:
-        return False, "no_email"
+    from . import email_utils
 
-    local_start = timezone.localtime(booking.start_at)
-    services = ", ".join(
-        item.service_name_snapshot for item in booking.booking_services.all()
-    )
-    site_url = getattr(settings, "SITE_URL", "").rstrip("/")
-    dashboard_hint = f"{site_url}/owner/dashboard/" if site_url else "/owner/dashboard/"
+    return email_utils.send_owner_new_booking_email(booking)
 
-    subject = _("New booking request — %(salon)s") % {"salon": booking.salon.name}
-    body = _(
-        "A new booking request was submitted.\n\n"
-        "Customer: %(customer)s\n"
-        "Phone: %(phone)s\n"
-        "Instagram: %(instagram)s\n"
-        "Service: %(service)s\n"
-        "Date: %(date)s\n"
-        "Time: %(time)s\n"
-        "Status: Pending (awaiting your approval)\n\n"
-        "Review in dashboard: %(dashboard)s\n"
-    ) % {
-        "customer": booking.customer.full_name,
-        "phone": booking.customer.phone_number,
-        "instagram": booking.customer.instagram_username or "—",
-        "service": services or "—",
-        "date": local_start.strftime("%d/%m/%Y"),
-        "time": local_start.strftime("%H:%M"),
-        "dashboard": dashboard_hint,
-    }
 
-    try:
-        send_mail(
-            subject=subject,
-            message=body,
-            from_email=getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@salonscheduler.app"),
-            recipient_list=[owner_email],
-            fail_silently=False,
-        )
-        return True, "sent"
-    except Exception as exc:
-        logger.warning("Could not send owner notification to %s: %s", owner_email, exc)
-        return False, "error"
+def send_owner_customer_cancelled_notification(booking):
+    """Notify owner when a customer cancels via the manage link."""
+    from . import email_utils
+
+    return email_utils.send_owner_customer_cancelled_email(booking)
 
 
 def log_booking_activity(booking, action, user=None, note=""):

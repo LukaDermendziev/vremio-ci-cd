@@ -118,8 +118,35 @@ msgstr "Дозволи резервација ист ден"
 msgid "Appointment"
 msgstr "Термин"
 
+msgid "Appointment approved."
+msgstr "Терминот е одобрен."
+
+msgid "Appointment approved. Customer did not provide an email."
+msgstr "Терминот е одобрен. Клиентот нема внесено email."
+
+msgid "Appointment approved. Email sent to customer."
+msgstr "Терминот е одобрен. Испратен е email до клиентот."
+
+msgid "Appointment cancelled."
+msgstr "Терминот е откажан."
+
+msgid "Appointment cancelled. Customer did not provide an email."
+msgstr "Терминот е откажан. Клиентот нема внесено email."
+
+msgid "Appointment cancelled. Email sent to customer."
+msgstr "Терминот е откажан. Испратен е email до клиентот."
+
 msgid "Appointment information — %(salon)s"
 msgstr "Информација за термин — %(salon)s"
+
+msgid "Appointment updated."
+msgstr "Терминот е променет."
+
+msgid "Appointment updated. Customer did not provide an email."
+msgstr "Терминот е променет. Клиентот нема внесено email."
+
+msgid "Appointment updated. Email sent to customer."
+msgstr "Терминот е променет. Испратен е email до клиентот."
 
 msgid "Approval"
 msgstr "Одобрување"
@@ -130,6 +157,9 @@ msgstr "Одобри"
 msgid "Approved"
 msgstr "Одобрено"
 
+msgid "Approved bookings scheduled for today."
+msgstr "Одобрени термини закажани за денес."
+
 msgid "Approved message"
 msgstr "Порака за одобрување"
 
@@ -138,6 +168,9 @@ msgstr "Апр"
 
 msgid "April"
 msgstr "Април"
+
+msgid "Are you sure you want to cancel this appointment?"
+msgstr "Дали сте сигурни дека сакате да го откажете терминот?"
 
 msgid "Aug"
 msgstr "Авг"
@@ -168,6 +201,9 @@ msgstr "Назад кон %(salon_name)s"
 
 msgid "Back to login"
 msgstr "Назад на најава"
+
+msgid "Back to salon"
+msgstr "Назад кон салонот"
 
 msgid "Beautiful nails,"
 msgstr "Убави нокти,"
@@ -217,7 +253,7 @@ msgid "Book an appointment"
 msgstr "Резервирај термин"
 
 msgid "Book appointment"
-msgstr "Резервирај термин"
+msgstr "Закажи термин"
 
 msgid "Book now"
 msgstr "Резервирај"
@@ -314,14 +350,26 @@ msgstr "Повикај"
 msgid "Cancel"
 msgstr "Откажи"
 
+msgid "Cancel appointment?"
+msgstr "Откажи термин?"
+
 msgid "Cancel this booking?"
 msgstr "Откажи го терминот?"
+
+msgid "Cancellation"
+msgstr "Откажување"
+
+msgid "Cancellation is not available for this appointment."
+msgstr "Откажувањето не е достапно за овој термин."
 
 msgid "Cancellations require at least 24–48 hours notice."
 msgstr "Откажувањата бараат најмалку 24–48 часа однапред."
 
 msgid "Cancelled"
 msgstr "Откажано"
+
+msgid "Cancelled by customer"
+msgstr "Откажано од клиент"
 
 msgid "Cancelled message"
 msgstr "Порака за откажување"
@@ -338,6 +386,9 @@ msgstr ""
 "Не може да се избрише клиент со постоечки термини. Прво отстранете ги "
 "термините."
 
+msgid "Care, style, and an appointment that suits you."
+msgstr "Нега, стил и термин што ви одговара."
+
 msgid "Change Password"
 msgstr "Промени лозинка"
 
@@ -346,6 +397,20 @@ msgstr "Промени лозинка"
 
 msgid "Check your inbox"
 msgstr "Проверете ја вашата поштенска сандуче"
+
+msgid ""
+"Choose a service, date and available time. The salon will review your "
+"request."
+msgstr ""
+"Избери услуга, датум и слободен термин. Барањето ќе биде прегледано од "
+"салонот."
+
+msgid ""
+"Choose a service, date and available time. Your request will be reviewed by "
+"the salon."
+msgstr ""
+"Изберете услуга, датум и слободен термин. Барањето ќе биде прегледано од "
+"салонот."
 
 msgid "Choose a strong password for your account."
 msgstr "Изберете силна лозинка за вашата сметка."
@@ -421,6 +486,12 @@ msgstr "Не можеше да се зачува работното време. 
 
 msgid "Customer added successfully."
 msgstr "Клиентот е успешно додаден."
+
+msgid "Customer cancellation notice (hours)"
+msgstr "Одредба за откажување од клиент (часови)"
+
+msgid "Customer cancelled appointment"
+msgstr "Клиент откажа термин"
 
 msgid "Customer deleted."
 msgstr "Клиентот е избришан."
@@ -519,6 +590,9 @@ msgstr "Е-пошта"
 msgid "Email address"
 msgstr "Е-пошта"
 
+msgid "Email could not be sent. Prepared message is available."
+msgstr "Email не можеше да се испрати. Подготвената порака е достапна."
+
 msgid "Email sent"
 msgstr "Е-пошта испратена"
 
@@ -564,6 +638,130 @@ msgstr "Име и презиме"
 
 msgid "Go to login"
 msgstr "Оди на најава"
+
+msgid ""
+"Hello %(name)s,\n"
+"\n"
+"Unfortunately, the requested appointment for %(date)s at %(time)s is not available.\n"
+"\n"
+"Please choose another time."
+msgstr ""
+"Здраво %(name)s,\n"
+"\n"
+"За жал, бараниот термин за %(date)s во %(time)s не е достапен.\n"
+"\n"
+"Ве молиме изберете друг термин."
+
+msgid ""
+"Hello %(name)s,\n"
+"\n"
+"We received your booking request.\n"
+"\n"
+"Service: %(service)s\n"
+"Date and time: %(date)s at %(time)s\n"
+"\n"
+"Your appointment is not confirmed yet. The salon will review your request.\n"
+"\n"
+"You can track your appointment here:\n"
+"%(manage_url)s"
+msgstr ""
+"Здраво %(name)s,\n"
+"\n"
+"Го примивме вашето барање за термин.\n"
+"\n"
+"Услуга: %(service)s\n"
+"Датум и време: %(date)s во %(time)s\n"
+"\n"
+"Терминот сè уште не е потврден. Салонот ќе го прегледа барањето.\n"
+"\n"
+"Вашиот термин можете да го следите тука:\n"
+"%(manage_url)s"
+
+msgid ""
+"Hello %(name)s,\n"
+"\n"
+"You did not attend your appointment on %(date)s at %(time)s.\n"
+"\n"
+"If you would like to book again, please contact us. — %(salon)s"
+msgstr ""
+"Здраво %(name)s,\n"
+"\n"
+"Не се појавивте на терминот за %(date)s во %(time)s.\n"
+"\n"
+"Ако сакате повторно да закажете, контактирајте нè. — %(salon)s"
+
+msgid ""
+"Hello %(name)s,\n"
+"\n"
+"Your appointment for %(date)s at %(time)s has been confirmed.\n"
+"\n"
+"Service: %(service)s\n"
+"\n"
+"We look forward to seeing you."
+msgstr ""
+"Здраво %(name)s,\n"
+"\n"
+"Вашиот термин за %(date)s во %(time)s е потврден.\n"
+"\n"
+"Услуга: %(service)s\n"
+"\n"
+"Ве очекуваме."
+
+msgid ""
+"Hello %(name)s,\n"
+"\n"
+"Your appointment has been changed to %(date)s at %(time)s.\n"
+"\n"
+"Service: %(service)s\n"
+"\n"
+"We look forward to seeing you."
+msgstr ""
+"Здраво %(name)s,\n"
+"\n"
+"Вашиот термин е променет на %(date)s во %(time)s.\n"
+"\n"
+"Услуга: %(service)s\n"
+"\n"
+"Ве очекуваме."
+
+msgid ""
+"Hello %(name)s,\n"
+"\n"
+"Your appointment on %(date)s at %(time)s has been cancelled.\n"
+"\n"
+"Thank you for letting us know in time."
+msgstr ""
+"Здраво %(name)s,\n"
+"\n"
+"Вашиот термин за %(date)s во %(time)s е откажан.\n"
+"\n"
+"Ви благодариме што нè известивте навреме."
+
+msgid ""
+"Hello %(name)s,\n"
+"\n"
+"Your appointment on %(date)s at %(time)s has been cancelled.\n"
+"\n"
+"Thank you for your understanding."
+msgstr ""
+"Здраво %(name)s,\n"
+"\n"
+"Вашиот термин за %(date)s во %(time)s е откажан.\n"
+"\n"
+"Ви благодариме на разбирањето."
+
+msgid ""
+"Hello %(name)s,\n"
+"\n"
+"Your appointment request for %(date)s at %(time)s has been received.\n"
+"\n"
+"We will contact you soon. — %(salon)s"
+msgstr ""
+"Здраво %(name)s,\n"
+"\n"
+"Вашето барање за %(date)s во %(time)s е примено.\n"
+"\n"
+"Ќе ве контактираме наскоро. — %(salon)s"
 
 msgid ""
 "Hello %(name)s, this is a reminder that you have an appointment on %(date)s "
@@ -728,6 +926,9 @@ msgstr "Минимално однапред: <strong>%(days)s дена</strong>"
 msgid "Minimum notice days"
 msgstr "Минимален рок однапред (дена)"
 
+msgid "Missed appointment"
+msgstr "Пропуштен термин"
+
 msgid "Missed appointment — %(salon)s"
 msgstr "Пропуштен термин — %(salon)s"
 
@@ -748,6 +949,13 @@ msgstr "Име"
 
 msgid "Name and price are required."
 msgstr "Името и цената се задолжителни."
+
+msgid ""
+"Need help? Contact %(salon_name)s directly if you have questions about your "
+"appointment."
+msgstr ""
+"Потребна ви е помош? Контактирајте го %(salon_name)s директно ако имате "
+"прашања за вашиот термин."
 
 msgid "New booking request"
 msgstr "Ново барање за термин"
@@ -796,6 +1004,9 @@ msgid ""
 "request."
 msgstr "Без пораки. Без чекање. Изберете услуга, термин и испратете барање."
 
+msgid "No photo attached"
+msgstr "Нема прикачена слика"
+
 msgid "No price items yet. Add the first one below."
 msgstr "Сè уште нема ставки. Додадете ја првата подолу."
 
@@ -810,6 +1021,9 @@ msgstr "Нема блокирани термини."
 
 msgid "No unavailable blocks."
 msgstr "Нема недостапни блокови."
+
+msgid "No, go back"
+msgstr "Не, врати се назад"
 
 msgid "No-show"
 msgstr "Не се појави"
@@ -859,6 +1073,9 @@ msgstr "Отворено"
 msgid "Open booking page"
 msgstr "Отвори страница за резервации"
 
+msgid "Open full size"
+msgstr "Отвори целосна големина"
+
 msgid "Open now"
 msgstr "Отворено сега"
 
@@ -904,6 +1121,9 @@ msgstr "Барања на чекање"
 msgid "Pending holds slot"
 msgstr "На чекање го држи терминот"
 
+msgid "Pending requests"
+msgstr "Барања на чекање"
+
 msgid "Pending/received message"
 msgstr "Порака за примено барање"
 
@@ -928,8 +1148,32 @@ msgstr "Фото?"
 msgid "Photo required"
 msgstr "Потребна е фотографија"
 
+msgid "Photo uploaded"
+msgstr "Има слика"
+
+msgid "Please complete all required fields before continuing."
+msgstr "Пополнете ги сите задолжителни полиња пред да продолжите."
+
 msgid "Please contact the administrator."
 msgstr "Ве молиме контактирајте го администраторот."
+
+msgid "Please enter a valid email address."
+msgstr "Внесете валидна email адреса."
+
+msgid "Please enter your Instagram username."
+msgstr "Внесете го вашето Instagram корисничко име."
+
+msgid "Please enter your email address."
+msgstr "Внесете ја вашата email адреса."
+
+msgid "Please enter your full name."
+msgstr "Внесете го вашето име и презиме."
+
+msgid "Please enter your phone number."
+msgstr "Внесете го вашиот телефонски број."
+
+msgid "Please upload a reference photo for this service."
+msgstr "Прикачете референтна фотографија за оваа услуга."
 
 msgid "Preferred contact"
 msgstr "Претпочитан контакт"
@@ -973,6 +1217,9 @@ msgstr "Причина (опционално)"
 msgid "Reference photo"
 msgstr "Референтна фотографија"
 
+msgid "Reference photo attached"
+msgstr "Прикачена е референтна фотографија"
+
 msgid "Reference photo required"
 msgstr "Потребна е референтна фотографија"
 
@@ -1015,6 +1262,18 @@ msgstr "Побарајте нов."
 msgid "Request an appointment"
 msgstr "Побарајте термин"
 
+msgid "Request declined."
+msgstr "Барањето е одбиено."
+
+msgid "Request declined. Customer did not provide an email."
+msgstr "Барањето е одбиено. Клиентот нема внесено email."
+
+msgid "Request declined. Email sent to customer."
+msgstr "Барањето е одбиено. Испратен е email до клиентот."
+
+msgid "Request received"
+msgstr "Барањето е примено"
+
 msgid "Request received — %(salon)s"
 msgstr "Барањето е примено — %(salon)s"
 
@@ -1039,6 +1298,12 @@ msgstr "Преглед"
 msgid "Review & Submit"
 msgstr "Преглед и испраќање"
 
+msgid "Review in dashboard:"
+msgstr "Преглед во контролна табла:"
+
+msgid "Review new requests and approve or reject."
+msgstr "Прегледај ги новите барања и одобри или одбиј."
+
 msgid "Review request"
 msgstr "Преглед на барањето"
 
@@ -1050,6 +1315,9 @@ msgstr "Са"
 
 msgid "Salon Scheduler"
 msgstr "Salon Scheduler"
+
+msgid "Salon Scheduler test email"
+msgstr "Тест email од Salon Scheduler"
 
 msgid "Salon Scheduler — Book Online"
 msgstr "Salon Scheduler — Резервирај онлајн"
@@ -1203,6 +1471,28 @@ msgstr "Допри за да прикачиш слика"
 msgid "Th"
 msgstr "Че"
 
+msgid "Thank you for letting us know. The salon has been notified."
+msgstr "Ви благодариме што нè известивте. Салонот е известен."
+
+msgid "The appointment is not confirmed until it is approved."
+msgstr "Терминот не е потврден додека не биде одобрен."
+
+msgid "The appointment is not confirmed until the salon approves it."
+msgstr "Терминот не е потврден додека не биде одобрен."
+
+msgid ""
+"The customer %(name)s cancelled their appointment.\n"
+"\n"
+"Service: %(service)s\n"
+"Date and time: %(date)s at %(time)s\n"
+"Phone: %(phone)s"
+msgstr ""
+"Клиентот %(name)s го откажа терминот.\n"
+"\n"
+"Услуга: %(service)s\n"
+"Датум и време: %(date)s во %(time)s\n"
+"Телефон: %(phone)s"
+
 msgid "The image is too large. Maximum allowed size is %(max)s MB."
 msgstr "Сликата е преголема. Максималната дозволена големина е %(max)s MB."
 
@@ -1215,8 +1505,52 @@ msgstr ""
 msgid "The time %(time)s is no longer available. Please select another slot."
 msgstr "Терминот %(time)s веќе не е достапен. Изберете друг."
 
+msgid "This appointment cannot be cancelled."
+msgstr "Овој термин не може да се откаже."
+
+msgid "This appointment has already passed."
+msgstr "Овој термин веќе помина."
+
+msgid "This appointment is already cancelled."
+msgstr "Овој термин е веќе откажан."
+
+msgid ""
+"This appointment is too close for automatic cancellation (less than "
+"%(hours)s hours). Please contact the salon."
+msgstr ""
+"Овој термин е премногу блиску за автоматско откажување (помалку од %(hours)s"
+" часа). Ве молиме контактирајте го салонот."
+
+msgid ""
+"This appointment is too close for automatic cancellation. Please contact the"
+" salon."
+msgstr ""
+"Овој термин е премногу блиску за автоматско откажување. Ве молиме "
+"контактирајте го салонот."
+
+msgid "This appointment was cancelled."
+msgstr "Овој термин е откажан."
+
+msgid "This appointment was completed."
+msgstr "Овој термин е завршен."
+
+msgid "This appointment was marked as a no-show."
+msgstr "Овој термин е означен како не се појави."
+
+msgid "This booking request was declined by the salon."
+msgstr "Ова барање е одбиено од салонот."
+
 msgid "This is a request only — not confirmed until the salon approves it."
 msgstr "Ова е само барање — не е потврдено додека салонот не одобри."
+
+msgid ""
+"This is a test email from Salon Scheduler.\n"
+"\n"
+"If you received this message, outgoing email is configured correctly."
+msgstr ""
+"Ова е тест email од Salon Scheduler.\n"
+"\n"
+"Ако ја примивте пораката, испраќањето на email е правилно конфигурирано."
 
 msgid "This link expires in 24 hours."
 msgstr "Овој линк истекува за 24 часа."
@@ -1287,8 +1621,14 @@ msgstr "Преку"
 msgid "Viber"
 msgstr "Viber"
 
+msgid "View"
+msgstr "Погледни"
+
 msgid "View & Book"
 msgstr "Погледни и резервирај"
+
+msgid "View / manage booking"
+msgstr "Преглед / управување со термин"
 
 msgid "View all"
 msgstr "Види ги сите"
@@ -1296,11 +1636,23 @@ msgstr "Види ги сите"
 msgid "View and manage your appointment schedule."
 msgstr "Преглед и управување со термините."
 
+msgid "View reference photo"
+msgstr "Погледни референтна слика"
+
 msgid "View services"
 msgstr "Погледни услуги"
 
 msgid "We"
 msgstr "Ср"
+
+msgid "We received your booking request"
+msgstr "Го примивме вашето барање за термин"
+
+msgid ""
+"We sent a confirmation email with a link to view and manage your booking."
+msgstr ""
+"Испративме email за потврда со линк за преглед и управување со вашиот "
+"термин."
 
 msgid "Wednesday"
 msgstr "Среда"
@@ -1310,6 +1662,9 @@ msgstr "Недела"
 
 msgid "Weekly revenue"
 msgstr "Неделен приход"
+
+msgid "Welcome back — %(salon_name)s"
+msgstr "Добредојде — %(salon_name)s"
 
 msgid "What we offer"
 msgstr "Што нудиме"
@@ -1332,17 +1687,56 @@ msgstr "Работно време"
 msgid "Working hours saved."
 msgstr "Работното време е зачувано."
 
+msgid "Yes, cancel appointment"
+msgstr "Да, откажи термин"
+
+msgid "You can cancel this appointment online."
+msgstr "Можете да го откажете терминот онлајн."
+
+msgid ""
+"You have a new booking request.\n"
+"\n"
+"Customer: %(name)s\n"
+"Phone: %(phone)s\n"
+"Service: %(service)s\n"
+"Date and time: %(date)s at %(time)s"
+msgstr ""
+"Имате ново барање за термин.\n"
+"\n"
+"Клиент: %(name)s\n"
+"Телефон: %(phone)s\n"
+"Услуга: %(service)s\n"
+"Датум и време: %(date)s во %(time)s"
+
 msgid "You requested a password reset for your Salon Scheduler owner account."
 msgstr "Побаравте ресетирање на лозинката за вашата Salon Scheduler сметка."
 
 msgid "Your Details"
 msgstr "Ваши податоци"
 
+msgid "Your appointment"
+msgstr "Вашиот термин"
+
+msgid "Your appointment is confirmed"
+msgstr "Вашиот термин е потврден"
+
 msgid "Your appointment is confirmed — %(salon)s"
 msgstr "Вашиот термин е потврден — %(salon)s"
 
+msgid "Your appointment is confirmed."
+msgstr "Вашиот термин е потврден."
+
+msgid "Your appointment request was declined"
+msgstr "Вашето барање за термин е одбиено"
+
+msgid "Your appointment was cancelled"
+msgstr "Вашиот термин е откажан"
+
 msgid "Your appointment was cancelled — %(salon)s"
 msgstr "Вашиот термин е откажан — %(salon)s"
+
+msgid "Your appointment was changed"
+msgstr "Вашиот термин е променет"
 
 msgid "Your appointment was changed — %(salon)s"
 msgstr "Вашиот термин е променет — %(salon)s"
@@ -1356,8 +1750,17 @@ msgstr ""
 "потврден</strong>.<br> %(salon_name)s ќе го прегледа вашето барање и ќе ве "
 "контактира."
 
+msgid "Your booking request was declined."
+msgstr "Вашето барање за термин е одбиено."
+
 msgid "Your password has been set. You can now sign in."
 msgstr "Вашата лозинка е поставена. Сега можете да се најавите."
+
+msgid ""
+"Your request is not confirmed yet. The salon will review it and contact you."
+msgstr ""
+"Вашето барање сè уште не е потврдено. Салонот ќе го прегледа и ќе ве "
+"контактира."
 
 msgid "customer first name"
 msgstr "име на клиент"

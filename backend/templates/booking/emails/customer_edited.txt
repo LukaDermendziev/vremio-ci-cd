@@ -1,0 +1,7 @@
+{% load i18n %}{% blocktrans with name=first_name date=date time=time service=services %}Hello {{ name }},
+
+Your appointment has been changed to {{ date }} at {{ time }}.
+
+Service: {{ service }}
+
+We look forward to seeing you.{% endblocktrans %}

@@ -1,0 +1,11 @@
+{% load i18n %}{% blocktrans with name=first_name date=date time=time service=services manage_url=manage_url %}Hello {{ name }},
+
+We received your booking request.
+
+Service: {{ service }}
+Date and time: {{ date }} at {{ time }}
+
+Your appointment is not confirmed yet. The salon will review your request.
+
+You can track your appointment here:
+{{ manage_url }}{% endblocktrans %}

@@ -52,7 +52,7 @@ class BookingRequestForm(forms.Form):
     full_name = forms.CharField(max_length=160, label=_("Full name"))
     phone_number = forms.CharField(max_length=30, label=_("Phone number"))
     instagram_username = forms.CharField(max_length=80, label=_("Instagram username"))
-    email = forms.EmailField(required=False, label=_("Email (optional)"))
+    email = forms.EmailField(required=True, label=_("Email"))
     preferred_contact_method = forms.ChoiceField(
         choices=Customer.PreferredContactMethod.choices,
         initial=Customer.PreferredContactMethod.VIBER,
@@ -81,12 +81,28 @@ class BookingRequestForm(forms.Form):
         self.salon = salon
         self.fields["service"].queryset = salon.services.filter(is_active=True)
 
-        self.fields["full_name"].widget.attrs["placeholder"] = "Marija Petrovska"
-        self.fields["phone_number"].widget.attrs.update(
-            {"placeholder": "+389 70 123 456", "type": "tel"}
+        self.fields["full_name"].widget.attrs.update(
+            {"placeholder": "Marija Petrovska", "required": "required", "autocomplete": "name"}
         )
-        self.fields["instagram_username"].widget.attrs["placeholder"] = "@username"
-        self.fields["email"].widget.attrs["placeholder"] = "email@example.com"
+        self.fields["phone_number"].widget.attrs.update(
+            {
+                "placeholder": "+389 70 123 456",
+                "type": "tel",
+                "required": "required",
+                "autocomplete": "tel",
+            }
+        )
+        self.fields["instagram_username"].widget.attrs.update(
+            {"placeholder": "@username", "required": "required", "autocomplete": "username"}
+        )
+        self.fields["email"].widget.attrs.update(
+            {
+                "placeholder": "email@example.com",
+                "type": "email",
+                "required": "required",
+                "autocomplete": "email",
+            }
+        )
 
     def clean(self):
         cleaned_data = super().clean()
@@ -378,6 +394,7 @@ class BookingPolicyForm(forms.ModelForm):
             "max_appointments_per_day",
             "slot_interval_minutes",
             "buffer_minutes_between_bookings",
+            "customer_cancellation_notice_hours",
             "salon_rules",
             "msg_approved",
             "msg_rejected",
@@ -399,6 +416,7 @@ class BookingPolicyForm(forms.ModelForm):
             "max_appointments_per_day": _("Max appointments per day"),
             "slot_interval_minutes": _("Slot interval minutes"),
             "buffer_minutes_between_bookings": _("Buffer minutes between bookings"),
+            "customer_cancellation_notice_hours": _("Customer cancellation notice (hours)"),
             "salon_rules": _("Salon rules"),
             "msg_approved": _("Approved message"),
             "msg_rejected": _("Rejected message"),

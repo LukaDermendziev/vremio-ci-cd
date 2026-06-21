@@ -1,0 +1,5 @@
+{% load i18n %}{% blocktrans with name=first_name date=date time=time %}Hello {{ name }},
+
+Your appointment on {{ date }} at {{ time }} has been cancelled.
+
+Thank you for letting us know in time.{% endblocktrans %}

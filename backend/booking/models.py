@@ -1,4 +1,5 @@
 from datetime import timedelta
+import uuid
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -155,6 +156,10 @@ class BookingPolicy(TimeStampedModel):
     max_appointments_per_day = models.PositiveSmallIntegerField(default=5)
     slot_interval_minutes = models.PositiveSmallIntegerField(default=30)
     buffer_minutes_between_bookings = models.PositiveSmallIntegerField(default=0)
+    customer_cancellation_notice_hours = models.PositiveSmallIntegerField(
+        default=24,
+        help_text="Minimum hours before appointment start when customers may cancel online.",
+    )
 
     # ── Salon rules shown to customer before booking ──────────────────────────
     salon_rules = models.TextField(
@@ -404,6 +409,8 @@ class Booking(TimeStampedModel):
     rejection_reason = models.TextField(blank=True)
     reminder_sent_at = models.DateTimeField(null=True, blank=True)
     change_message_generated_at = models.DateTimeField(null=True, blank=True)
+    manage_token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False, db_index=True)
+    cancelled_by_customer = models.BooleanField(default=False)
 
     class Meta:
         ordering = ["start_at"]
@@ -518,6 +525,7 @@ class BookingActivityLog(models.Model):
         APPROVED   = "approved",   _("Approved")
         REJECTED   = "rejected",   _("Rejected")
         CANCELLED  = "cancelled",  _("Cancelled")
+        CUSTOMER_CANCELLED = "customer_cancelled", _("Cancelled by customer")
         EDITED     = "edited",     _("Edited")
         COMPLETED  = "completed",  _("Completed")
         NO_SHOW    = "no_show",    _("No Show")

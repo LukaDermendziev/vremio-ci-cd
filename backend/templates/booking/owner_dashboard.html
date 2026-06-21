@@ -74,51 +74,115 @@
     {% endfor %}
 
     <div class="od-section active" id="od-sec-dashboard">
-      <div class="od-page-top">
+      <div class="od-page-top od-page-top-dashboard">
         <div>
           <div class="od-page-title">{% trans "Overview" %}</div>
-          <p class="od-page-sub">{{ salon.name }}</p>
+          <p class="od-page-sub">{% blocktrans with salon_name=salon.name %}Welcome back — {{ salon_name }}{% endblocktrans %}</p>
         </div>
         <div class="od-page-actions">
-        <button type="button" class="od-btn od-btn-primary" data-add-booking><i class="bi bi-plus-lg"></i> {% trans "Add booking" %}</button>
+          <button type="button" class="od-btn od-btn-primary" data-add-booking><i class="bi bi-plus-lg"></i> {% trans "Add booking" %}</button>
           <a class="od-btn od-btn-ghost" href="{% url 'booking:salon_page' salon.slug %}">{% trans "Open booking page" %}</a>
         </div>
       </div>
 
-      <div class="od-stats">
-        <div class="od-stat"><span class="od-stat-label">{% trans "Pending" %}</span><span class="od-stat-value" data-stat="pending">{{ pending_count }}</span></div>
-        <div class="od-stat"><span class="od-stat-label">{% trans "Today" %}</span><span class="od-stat-value" data-stat="today">{{ today_count }}</span></div>
-        <div class="od-stat"><span class="od-stat-label">{% trans "Upcoming" %}</span><span class="od-stat-value">{{ upcoming_approved_bookings|length }}</span></div>
-        <div class="od-stat"><span class="od-stat-label">{% trans "No-shows" %}</span><span class="od-stat-value">{{ no_show_count }}</span></div>
-       <div class="od-stat"><span class="od-stat-label">{% trans "Completed this week" %}</span><span class="od-stat-value">{{ completed_week_count }}</span></div>
-       <div class="od-stat od-stat-revenue"><span class="od-stat-label">{% trans "Weekly revenue" %}</span><span class="od-stat-value">{{ revenue.weekly_revenue|floatformat:0 }} <small>ден</small></span></div>
-        <div class="od-stat od-stat-revenue"><span class="od-stat-label">{% trans "Total revenue" %}</span><span class="od-stat-value">{{ revenue.total_revenue|floatformat:0 }} <small>ден</small></span></div>
+      <div class="od-quick-actions">
+        <button type="button" class="od-quick-action" data-goto="bookings">
+          <i class="bi bi-hourglass-split"></i>
+          <span>{% trans "Pending requests" %}</span>
+          {% if pending_count %}<em>{{ pending_count }}</em>{% endif %}
+        </button>
+        <button type="button" class="od-quick-action" data-goto="calendar">
+          <i class="bi bi-calendar3"></i>
+          <span>{% trans "Calendar" %}</span>
+        </button>
+        <button type="button" class="od-quick-action" data-add-booking>
+          <i class="bi bi-plus-circle"></i>
+          <span>{% trans "Add booking" %}</span>
+        </button>
+        <a class="od-quick-action" href="{% url 'booking:salon_page' salon.slug %}" target="_blank" rel="noopener">
+          <i class="bi bi-box-arrow-up-right"></i>
+          <span>{% trans "Customer view" %}</span>
+        </a>
       </div>
-      <p class="od-revenue-note">{% trans "Revenue from completed appointments only. No online payments." %}</p>
 
-      <div class="od-card">
-        <div class="od-card-top"><div class="od-card-title">{% trans "Today's appointments" %}</div></div>
+      <div class="od-stats od-stats-modern">
+        <div class="od-stat od-stat-pending">
+          <div class="od-stat-icon-wrap"><i class="bi bi-hourglass-split"></i></div>
+          <span class="od-stat-value" data-stat="pending">{{ pending_count }}</span>
+          <span class="od-stat-label">{% trans "Pending" %}</span>
+        </div>
+        <div class="od-stat od-stat-today">
+          <div class="od-stat-icon-wrap"><i class="bi bi-calendar-check"></i></div>
+          <span class="od-stat-value" data-stat="today">{{ today_count }}</span>
+          <span class="od-stat-label">{% trans "Today" %}</span>
+        </div>
+        <div class="od-stat od-stat-upcoming">
+          <div class="od-stat-icon-wrap"><i class="bi bi-calendar-event"></i></div>
+          <span class="od-stat-value">{{ upcoming_approved_bookings|length }}</span>
+          <span class="od-stat-label">{% trans "Upcoming" %}</span>
+        </div>
+        <div class="od-stat od-stat-noshow">
+          <div class="od-stat-icon-wrap"><i class="bi bi-person-x"></i></div>
+          <span class="od-stat-value">{{ no_show_count }}</span>
+          <span class="od-stat-label">{% trans "No-shows" %}</span>
+        </div>
+        <div class="od-stat od-stat-completed">
+          <div class="od-stat-icon-wrap"><i class="bi bi-check2-circle"></i></div>
+          <span class="od-stat-value">{{ completed_week_count }}</span>
+          <span class="od-stat-label">{% trans "Completed this week" %}</span>
+        </div>
+        <div class="od-stat od-stat-revenue od-stat-revenue-week">
+          <div class="od-stat-icon-wrap"><i class="bi bi-graph-up-arrow"></i></div>
+          <span class="od-stat-value">{{ revenue.weekly_revenue|floatformat:0 }} <small>{% trans "den" %}</small></span>
+          <span class="od-stat-label">{% trans "Weekly revenue" %}</span>
+        </div>
+        <div class="od-stat od-stat-revenue od-stat-revenue-total">
+          <div class="od-stat-icon-wrap"><i class="bi bi-cash-stack"></i></div>
+          <span class="od-stat-value">{{ revenue.total_revenue|floatformat:0 }} <small>{% trans "den" %}</small></span>
+          <span class="od-stat-label">{% trans "Total revenue" %}</span>
+        </div>
+      </div>
+      <p class="od-revenue-note"><i class="bi bi-info-circle"></i> {% trans "Revenue from completed appointments only. No online payments." %}</p>
+
+      <div class="od-dash-grid">
+      <div class="od-card od-card-accent">
+        <div class="od-card-top">
+          <div>
+            <div class="od-card-title"><i class="bi bi-calendar-day"></i> {% trans "Today's appointments" %}</div>
+            <p class="od-card-sub">{% trans "Approved bookings scheduled for today." %}</p>
+          </div>
+        </div>
         {% if todays_appointments %}
           <div class="od-today-list">
             {% for booking in todays_appointments %}
               <div class="od-today-row">
                 <div class="od-today-time"><strong>{{ booking.start_at|date:"H:i" }}</strong><span>{{ booking.end_at|date:"H:i" }}</span></div>
                 <div class="od-today-line"></div>
-                <div style="flex:1">
+                <div class="od-today-body">
                   <div class="od-today-name">{{ booking.customer.full_name }}</div>
                   <div class="od-today-svc">{% for item in booking.booking_services.all %}{{ item.service_name_snapshot }}{% if not forloop.last %}, {% endif %}{% endfor %}</div>
+                  {% if booking.reference_photo %}
+                    <span class="od-today-photo-tag"><i class="bi bi-camera-fill"></i> {% trans "Photo uploaded" %}</span>
+                  {% endif %}
                 </div>
+                <button type="button" class="od-btn od-btn-ghost od-btn-sm" data-edit-booking="{{ booking.id }}">{% trans "View" %}</button>
               </div>
             {% endfor %}
           </div>
         {% else %}
-          <div class="od-empty">{% trans "No approved appointments for today." %}</div>
+          <div class="od-empty od-empty-soft">
+            <i class="bi bi-calendar2-check"></i>
+            <p>{% trans "No approved appointments for today." %}</p>
+          </div>
         {% endif %}
       </div>
 
-      <div class="od-card">
+      <div class="od-card od-card-accent od-card-pending">
         <div class="od-card-top">
-          <div class="od-card-title">{% trans "Pending booking requests" %}</div>
+          <div>
+            <div class="od-card-title"><i class="bi bi-inbox"></i> {% trans "Pending booking requests" %}</div>
+            <p class="od-card-sub">{% trans "Review new requests and approve or reject." %}</p>
+          </div>
           {% if pending_count %}<button class="od-card-link" data-goto="bookings">{% trans "View all" %}</button>{% endif %}
         </div>
         {% if pending_bookings %}
@@ -128,8 +192,12 @@
             {% endfor %}
           </div>
         {% else %}
-          <div class="od-empty">{% trans "All caught up — no pending requests." %}</div>
+          <div class="od-empty od-empty-soft od-empty-success">
+            <i class="bi bi-emoji-smile"></i>
+            <p>{% trans "All caught up — no pending requests." %}</p>
+          </div>
         {% endif %}
+      </div>
       </div>
     </div>
 
@@ -153,8 +221,10 @@
             <button type="button" class="cgrid-view-btn active" id="cal-view-week">{% trans "Week" %}</button>
             <button type="button" class="cgrid-view-btn" id="cal-view-day">{% trans "Day" %}</button>
           </div>
-          <button type="button" class="od-btn od-btn-primary" data-add-booking><i class="bi bi-plus-lg"></i> {% trans "Add" %}</button>
-          <button type="button" class="od-btn od-btn-ghost" data-add-block><i class="bi bi-slash-circle"></i> {% trans "Block" %}</button>
+          <div class="cgrid-action-btns">
+            <button type="button" class="od-btn od-btn-primary od-btn-compact" data-add-booking><i class="bi bi-plus-lg"></i> {% trans "Add" %}</button>
+            <button type="button" class="od-btn od-btn-ghost od-btn-compact" data-add-block><i class="bi bi-slash-circle"></i> {% trans "Block" %}</button>
+          </div>
         </div>
       </div>
 
@@ -506,6 +576,9 @@
               {% with f=policy_form.reminder_hours_before %}
                 <div class="od-field"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% if f.errors %}<span class="od-field-error">{{ f.errors.0 }}</span>{% endif %}</div>
               {% endwith %}
+              {% with f=policy_form.customer_cancellation_notice_hours %}
+                <div class="od-field"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% if f.errors %}<span class="od-field-error">{{ f.errors.0 }}</span>{% endif %}</div>
+              {% endwith %}
             </div>
           </div>
 
@@ -602,6 +675,7 @@
 {% include "booking/partials/owner_customer_modal.html" %}
 {% include "booking/partials/owner_block_modals.html" %}
 {% include "booking/partials/owner_message_modal.html" %}
+{% include "booking/partials/owner_photo_modal.html" %}
 
 {% endif %}
 {% endblock %}
@@ -664,6 +738,7 @@ window.OD_I18N = {
   week: "{% filter escapejs %}{% trans "Week" %}{% endfilter %}",
   day: "{% filter escapejs %}{% trans "Day" %}{% endfilter %}",
   unavailable: "{% filter escapejs %}{% trans "Unavailable" %}{% endfilter %}",
+  photoUploaded: "{% filter escapejs %}{% trans "Photo uploaded" %}{% endfilter %}",
 };
 </script>
 <script>

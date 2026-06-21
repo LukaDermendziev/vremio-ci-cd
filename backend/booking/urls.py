@@ -13,6 +13,8 @@ urlpatterns = [
     path("book/<slug:salon_slug>/request/", views.book_salon, name="book_salon"),
     path("book/<slug:salon_slug>/slots/", views.available_slots, name="available_slots"),
     path("booking/<int:booking_id>/success/", views.booking_success, name="booking_success"),
+    path("booking/manage/<uuid:token>/", views.manage_booking, name="manage_booking"),
+    path("booking/manage/<uuid:token>/cancel/", views.manage_booking_cancel, name="manage_booking_cancel"),
 
     # ── Owner dashboard ─────────────────────────────────────────────────────────
     path("owner/dashboard/", views.owner_dashboard, name="owner_dashboard"),
@@ -22,6 +24,11 @@ urlpatterns = [
         "owner/booking/<int:booking_id>/detail/",
         views.owner_booking_detail,
         name="owner_booking_detail",
+    ),
+    path(
+        "owner/booking/<int:booking_id>/photo/",
+        views.owner_booking_photo,
+        name="owner_booking_photo",
     ),
     path(
         "owner/booking/<int:booking_id>/message/",

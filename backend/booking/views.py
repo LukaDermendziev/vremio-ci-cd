@@ -8,12 +8,12 @@ from django.contrib.auth import logout as auth_logout
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.db.models import Prefetch
-from django.http import JsonResponse
+from django.http import FileResponse, Http404, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_POST
 
 from .forms import (
     BlockedDateForm,
@@ -39,12 +39,15 @@ from .models import (
 from .services import (
     build_contact_links,
     build_prepared_message,
+    can_customer_cancel_booking,
     ensure_default_working_hours,
     get_available_slots,
+    get_manage_booking_url,
     get_revenue_stats,
     get_working_window_for_date,
     log_booking_activity,
     send_booking_notification,
+    send_owner_customer_cancelled_notification,
     send_owner_new_booking_notification,
 )
 
@@ -206,11 +209,12 @@ def owner_dashboard(request):
                     sent, reason = send_booking_notification(booking, "approved")
                     if sent:
                         log_booking_activity(booking, BookingActivityLog.Action.EMAIL_SENT, user=request.user, note="Approval email sent")
-                        messages.success(request, _("Booking approved. Email sent to customer."))
+                        messages.success(request, _("Appointment approved. Email sent to customer."))
                     elif reason == "no_email":
-                        messages.success(request, _("Booking approved. Customer has no email — use prepared message."))
+                        messages.success(request, _("Appointment approved. Customer did not provide an email."))
                     else:
-                        messages.success(request, _("Booking approved. Email could not be sent — use prepared message."))
+                        messages.success(request, _("Appointment approved."))
+                        messages.warning(request, _("Email could not be sent. Prepared message is available."))
             else:
                 booking.status = Booking.Status.REJECTED
                 booking.save()
@@ -218,11 +222,12 @@ def owner_dashboard(request):
                 sent, reason = send_booking_notification(booking, "rejected")
                 if sent:
                     log_booking_activity(booking, BookingActivityLog.Action.EMAIL_SENT, user=request.user, note="Rejection email sent")
-                    messages.success(request, _("Booking rejected. Email sent to customer."))
+                    messages.success(request, _("Request declined. Email sent to customer."))
                 elif reason == "no_email":
-                    messages.success(request, _("Booking rejected. Customer has no email — use prepared message."))
+                    messages.success(request, _("Request declined. Customer did not provide an email."))
                 else:
-                    messages.success(request, _("Booking rejected. Email could not be sent — use prepared message."))
+                    messages.success(request, _("Request declined."))
+                    messages.warning(request, _("Email could not be sent. Prepared message is available."))
 
         elif action == "save_booking":
             is_edit = bool(request.POST.get("booking_id"))
@@ -243,11 +248,12 @@ def owner_dashboard(request):
                             sent, reason = send_booking_notification(saved, "edited")
                             if sent:
                                 log_booking_activity(saved, BookingActivityLog.Action.EMAIL_SENT, user=request.user, note="Edit email sent")
-                            messages.success(
-                                request,
-                                _("Booking updated.")
-                                + (_(" Email sent.") if sent else _(" Use prepared message to notify customer.")),
-                            )
+                                messages.success(request, _("Appointment updated. Email sent to customer."))
+                            elif reason == "no_email":
+                                messages.success(request, _("Appointment updated. Customer did not provide an email."))
+                            else:
+                                messages.success(request, _("Appointment updated."))
+                                messages.warning(request, _("Email could not be sent. Prepared message is available."))
                         else:
                             messages.success(request, _("Booking updated successfully."))
                     else:
@@ -358,11 +364,12 @@ def owner_dashboard(request):
                 sent, reason = send_booking_notification(booking, "cancelled")
                 if sent:
                     log_booking_activity(booking, BookingActivityLog.Action.EMAIL_SENT, user=request.user, note="Cancellation email sent")
-                    messages.success(request, _("Booking cancelled. Email sent to customer."))
+                    messages.success(request, _("Appointment cancelled. Email sent to customer."))
                 elif reason == "no_email":
-                    messages.success(request, _("Booking cancelled. Customer has no email — use prepared message."))
+                    messages.success(request, _("Appointment cancelled. Customer did not provide an email."))
                 else:
-                    messages.success(request, _("Booking cancelled."))
+                    messages.success(request, _("Appointment cancelled."))
+                    messages.warning(request, _("Email could not be sent. Prepared message is available."))
 
         elif action == "delete_booking":
             booking = get_object_or_404(
@@ -635,6 +642,8 @@ def owner_calendar_events(request):
                     "phone": booking.customer.phone_number,
                     "services": services,
                     "duration": booking.total_duration_minutes,
+                    "hasReferencePhoto": bool(booking.reference_photo),
+                    "cancelledByCustomer": booking.cancelled_by_customer,
                 },
             }
         )
@@ -754,16 +763,44 @@ def owner_booking_detail(request, booking_id):
             "duration": booking.total_duration_minutes,
             "status": booking.status,
             "status_label": booking.get_status_display(),
+            "cancelled_by_customer": booking.cancelled_by_customer,
             "source": booking.source,
             "customer_note": booking.customer_note,
             "owner_note": booking.owner_note,
             "has_reference_photo": bool(booking.reference_photo),
-            "reference_photo_url": booking.reference_photo.url if booking.reference_photo else None,
+            "reference_photo_url": (
+                reverse("booking:owner_booking_photo", args=[booking.id])
+                if booking.reference_photo
+                else None
+            ),
             "created_at": booking.created_at.isoformat(),
             "updated_at": booking.updated_at.isoformat(),
             "activity_log": activity,
         }
     )
+
+
+@login_required
+@require_GET
+def owner_booking_photo(request, booking_id):
+    """Serve a booking reference photo only to the salon owner."""
+    salon = _get_owner_salon(request.user)
+    if not salon:
+        return HttpResponseForbidden()
+    booking = get_object_or_404(Booking, pk=booking_id, salon=salon)
+    if not booking.reference_photo:
+        raise Http404
+    try:
+        photo_file = booking.reference_photo.open("rb")
+    except FileNotFoundError as exc:
+        raise Http404 from exc
+    content_type = "image/jpeg"
+    name = booking.reference_photo.name.lower()
+    if name.endswith(".png"):
+        content_type = "image/png"
+    elif name.endswith(".webp"):
+        content_type = "image/webp"
+    return FileResponse(photo_file, content_type=content_type)
 
 
 @login_required
@@ -929,6 +966,13 @@ def book_salon(request, salon_slug):
                 BookingActivityLog.Action.REQUESTED,
                 note="Online booking request",
             )
+            sent, _reason = send_booking_notification(booking, "request_received")
+            if sent:
+                log_booking_activity(
+                    booking,
+                    BookingActivityLog.Action.EMAIL_SENT,
+                    note="Request received email sent to customer",
+                )
             sent, _reason = send_owner_new_booking_notification(booking)
             if sent:
                 log_booking_activity(
@@ -957,11 +1001,110 @@ def book_salon(request, salon_slug):
 
 def booking_success(request, booking_id):
     booking = get_object_or_404(
-        Booking.objects.select_related("salon", "customer"),
+        Booking.objects.select_related("salon", "customer").prefetch_related("booking_services"),
         pk=booking_id,
     )
 
-    return render(request, "booking/booking_success.html", {"booking": booking})
+    return render(
+        request,
+        "booking/booking_success.html",
+        {
+            "booking": booking,
+            "manage_url": get_manage_booking_url(booking),
+        },
+    )
+
+
+def _manage_booking_status_message(booking):
+    messages_map = {
+        Booking.Status.PENDING: _(
+            "Your request is not confirmed yet. The salon will review it and contact you."
+        ),
+        Booking.Status.APPROVED: _("Your appointment is confirmed."),
+        Booking.Status.REJECTED: _("Your booking request was declined."),
+        Booking.Status.CANCELLED: _("This appointment was cancelled."),
+        Booking.Status.COMPLETED: _("This appointment was completed."),
+        Booking.Status.NO_SHOW: _("This appointment was marked as a no-show."),
+    }
+    return messages_map.get(booking.status, "")
+
+
+def manage_booking(request, token):
+    booking = get_object_or_404(
+        Booking.objects.select_related("salon", "customer").prefetch_related("booking_services"),
+        manage_token=token,
+    )
+    policy = getattr(booking.salon, "booking_policy", None)
+    salon_rules = []
+    if policy and policy.salon_rules:
+        salon_rules = [line.strip() for line in policy.salon_rules.splitlines() if line.strip()]
+
+    can_cancel, cancel_reason = can_customer_cancel_booking(booking)
+    notice_hours = 24
+    if policy:
+        notice_hours = policy.customer_cancellation_notice_hours
+
+    return render(
+        request,
+        "booking/manage_booking.html",
+        {
+            "booking": booking,
+            "status_message": _manage_booking_status_message(booking),
+            "can_cancel": can_cancel,
+            "cancel_reason": cancel_reason,
+            "notice_hours": notice_hours,
+            "salon_rules": salon_rules,
+            "just_cancelled": request.GET.get("cancelled") == "1",
+            "show_confirm": request.GET.get("confirm") == "1",
+            "manage_url": get_manage_booking_url(booking),
+        },
+    )
+
+
+@require_POST
+def manage_booking_cancel(request, token):
+    booking = get_object_or_404(
+        Booking.objects.select_related("salon", "customer").prefetch_related("booking_services"),
+        manage_token=token,
+    )
+
+    if request.POST.get("confirm") != "yes":
+        return redirect(reverse("booking:manage_booking", args=[token]))
+
+    allowed, reason = can_customer_cancel_booking(booking)
+    if not allowed:
+        if reason == "too_close":
+            messages.error(
+                request,
+                _(
+                    "This appointment is too close for automatic cancellation. "
+                    "Please contact the salon."
+                ),
+            )
+        elif reason == "past":
+            messages.error(request, _("This appointment has already passed."))
+        else:
+            messages.error(request, _("This appointment cannot be cancelled."))
+        return redirect(reverse("booking:manage_booking", args=[token]))
+
+    booking.status = Booking.Status.CANCELLED
+    booking.cancelled_by_customer = True
+    try:
+        booking.save()
+    except ValidationError as exc:
+        messages.error(request, "; ".join(exc.messages))
+        return redirect(reverse("booking:manage_booking", args=[token]))
+
+    log_booking_activity(
+        booking,
+        BookingActivityLog.Action.CUSTOMER_CANCELLED,
+        note="Cancelled by customer via manage link",
+    )
+
+    send_booking_notification(booking, "customer_cancelled")
+    send_owner_customer_cancelled_notification(booking)
+
+    return redirect(f"{reverse('booking:manage_booking', args=[token])}?cancelled=1")
 
 
 @require_GET

@@ -10,15 +10,21 @@
   data-date="{{ booking.start_at|date:'Y-m-d' }}"
   data-start-time="{{ booking.start_at|date:'H:i' }}"
   data-source="{{ booking.source }}"
-  data-owner-note="{{ booking.owner_note|escape }}">
+  data-owner-note="{{ booking.owner_note|escape }}"
+  {% if booking.reference_photo %}data-has-photo="true" data-photo-url="{% url 'booking:owner_booking_photo' booking.id %}"{% endif %}>
   <div class="od-bk-badges">
     <span class="od-bk-name">{{ booking.customer.full_name }}</span>
     <span class="od-badge od-badge-{{ booking.status }} od-bk-status-badge">{{ booking.get_status_display }}</span>
-    {% if booking.reference_photo %}<span class="od-badge od-badge-photo">{% trans "Photo" %}</span>{% endif %}
+    {% if booking.cancelled_by_customer %}
+      <span class="od-badge od-badge-customer-cancel"><i class="bi bi-person-x"></i> {% trans "Cancelled by customer" %}</span>
+    {% endif %}
+    {% if booking.reference_photo %}
+      <span class="od-badge od-badge-photo"><i class="bi bi-camera-fill"></i> {% trans "Photo uploaded" %}</span>
+    {% endif %}
   </div>
   <div class="od-bk-svc">
     {% for item in booking.booking_services.all %}
-      {{ item.service_name_snapshot }}{% if item.price_snapshot %} · {{ item.price_snapshot|floatformat:0 }} {% trans "ден" %}{% endif %}{% if not forloop.last %}, {% endif %}
+      {{ item.service_name_snapshot }}{% if item.price_snapshot %} · {{ item.price_snapshot|floatformat:0 }} {% trans "den" %}{% endif %}{% if not forloop.last %}, {% endif %}
     {% empty %}—{% endfor %}
   </div>
   <div class="od-bk-meta">
@@ -27,9 +33,14 @@
     <span>{{ booking.total_duration_minutes }} {% trans "min" %}</span>
     <span>{{ booking.customer.phone_number }}</span>
   </div>
+  {% if booking.reference_photo %}
+    <button type="button" class="od-bk-photo-thumb" data-photo-preview="{% url 'booking:owner_booking_photo' booking.id %}">
+      <img src="{% url 'booking:owner_booking_photo' booking.id %}" alt="{% trans 'Reference photo' %}" loading="lazy">
+      <span>{% trans "View reference photo" %}</span>
+    </button>
+  {% endif %}
   {% if show_actions %}
   <div class="od-bk-actions od-bk-actions-live">
-    {# Actions rendered from JS based on current status — see renderBkActions() #}
     {% if booking.status == "pending" %}
       <button class="od-btn od-btn-success od-btn-sm" type="button"
               data-bk-action="approve" data-bk-id="{{ booking.id }}">{% trans "Approve" %}</button>

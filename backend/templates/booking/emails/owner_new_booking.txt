@@ -1,0 +1,8 @@
+{% load i18n %}{% blocktrans with name=customer_name phone=phone service=services date=date time=time %}You have a new booking request.
+
+Customer: {{ name }}
+Phone: {{ phone }}
+Service: {{ service }}
+Date and time: {{ date }} at {{ time }}{% endblocktrans %}
+
+{% trans "Review in dashboard:" %} {{ dashboard_url }}

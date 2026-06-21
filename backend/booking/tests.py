@@ -12,7 +12,9 @@ from django.utils.translation import gettext as _
 from .forms import BookingRequestForm
 from .models import (
     Booking,
+    BookingActivityLog,
     BookingPolicy,
+    BookingService,
     Customer,
     DateWorkingHoursOverride,
     Salon,
@@ -56,6 +58,7 @@ class BookingViewTests(TestCase):
         self.assertContains(response, _("Choose service"))
         self.assertContains(response, "data-slots-url")
         self.assertContains(response, _("Review request"))
+        self.assertContains(response, _("Book appointment"))
 
     def test_owner_dashboard_loads_for_owner(self):
         self.client.login(username="owner", password="password")
@@ -65,6 +68,33 @@ class BookingViewTests(TestCase):
         self.assertContains(response, _("Owner panel"))
         self.assertContains(response, _("Pending booking requests"))
         self.assertContains(response, _("Booking policy"))
+
+    def test_booking_request_requires_email(self):
+        selected_date = timezone.localdate() + timedelta(days=20)
+        if selected_date.weekday() == WorkingHours.Weekday.SUNDAY:
+            selected_date += timedelta(days=1)
+
+        service = self.salon.services.get(name="Manicure")
+        response = self.client.post(
+            "/book/fancy-fingers/request/",
+            {
+                "service": service.id,
+                "date": selected_date.isoformat(),
+                "start_time": "08:00",
+                "full_name": "No Email",
+                "phone_number": "079999888",
+                "instagram_username": "no_email",
+                "email": "",
+                "preferred_contact_method": Customer.PreferredContactMethod.VIBER,
+                "rules_accepted": "on",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "email")
+
+    def test_salon_page_shows_updated_hero(self):
+        response = self.client.get("/book/fancy-fingers/")
+        self.assertContains(response, _("Care, style, and an appointment that suits you."))
 
     def test_booking_request_submission_creates_pending_booking(self):
         selected_date = timezone.localdate() + timedelta(days=20)
@@ -81,7 +111,7 @@ class BookingViewTests(TestCase):
                 "full_name": "New Customer",
                 "phone_number": "071111222",
                 "instagram_username": "new_customer",
-                "email": "",
+                "email": "customer@example.com",
                 "preferred_contact_method": Customer.PreferredContactMethod.VIBER,
                 "rules_accepted": "on",
             },
@@ -115,7 +145,7 @@ class BookingViewTests(TestCase):
                 "full_name": "Price Item Customer",
                 "phone_number": "072222333",
                 "instagram_username": "price_item_test",
-                "email": "",
+                "email": "customer@example.com",
                 "preferred_contact_method": Customer.PreferredContactMethod.VIBER,
                 "rules_accepted": "on",
             },
@@ -474,6 +504,11 @@ class BetaReadinessTests(TestCase):
             total_duration_minutes=120,
             rules_accepted=True,
         )
+        BookingService.objects.create(
+            booking=self.booking_a,
+            service=self.service_a,
+            service_name_snapshot="Manicure",
+        )
 
     def test_owner_dashboard_requires_login(self):
         response = self.client.get("/owner/dashboard/")
@@ -486,6 +521,46 @@ class BetaReadinessTests(TestCase):
             reverse("booking:owner_booking_detail", args=[self.booking_a.pk])
         )
         self.assertEqual(response.status_code, 404)
+
+    def test_owner_can_view_own_booking_photo(self):
+        photo = SimpleUploadedFile(
+            "nail.jpg", b"\xff\xd8\xff\xd8fake-jpeg", content_type="image/jpeg"
+        )
+        self.booking_a.reference_photo = photo
+        self.booking_a.save()
+        self.client.login(username="owner_a", password="pass")
+        response = self.client.get(
+            reverse("booking:owner_booking_photo", args=[self.booking_a.pk])
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("image", response["Content-Type"])
+
+    def test_owner_cannot_view_other_salon_booking_photo(self):
+        photo = SimpleUploadedFile(
+            "nail.jpg", b"\xff\xd8\xff\xd8fake-jpeg", content_type="image/jpeg"
+        )
+        self.booking_a.reference_photo = photo
+        self.booking_a.save()
+        self.client.login(username="owner_b", password="pass")
+        response = self.client.get(
+            reverse("booking:owner_booking_photo", args=[self.booking_a.pk])
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_booking_detail_returns_protected_photo_url(self):
+        photo = SimpleUploadedFile(
+            "nail.jpg", b"\xff\xd8\xff\xd8fake-jpeg", content_type="image/jpeg"
+        )
+        self.booking_a.reference_photo = photo
+        self.booking_a.save()
+        self.client.login(username="owner_a", password="pass")
+        response = self.client.get(
+            reverse("booking:owner_booking_detail", args=[self.booking_a.pk])
+        )
+        data = response.json()
+        self.assertTrue(data["has_reference_photo"])
+        self.assertIn("/owner/booking/", data["reference_photo_url"])
+        self.assertNotIn("/media/", data["reference_photo_url"])
 
     def test_owner_cannot_approve_other_salon_booking(self):
         self.client.login(username="owner_b", password="pass")
@@ -539,6 +614,40 @@ class BetaReadinessTests(TestCase):
         self.assertIn("reference_photo", form.errors)
 
     @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_new_booking_sends_customer_request_email(self):
+        from django.core import mail
+
+        selected_date = timezone.localdate() + timedelta(days=20)
+        if selected_date.weekday() == WorkingHours.Weekday.SUNDAY:
+            selected_date += timedelta(days=1)
+        WorkingHours.objects.create(
+            salon=self.salon_a,
+            weekday=selected_date.weekday(),
+            is_working_day=True,
+            start_time=time(8, 0),
+            end_time=time(18, 0),
+        )
+        response = self.client.post(
+            "/book/salon-a/request/",
+            {
+                "service": self.service_a.id,
+                "date": selected_date.isoformat(),
+                "start_time": "08:00",
+                "full_name": "Email Test",
+                "phone_number": "071234569",
+                "instagram_username": "email_test2",
+                "email": "request@example.com",
+                "preferred_contact_method": Customer.PreferredContactMethod.VIBER,
+                "rules_accepted": "on",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertGreaterEqual(len(mail.outbox), 1)
+        customer_messages = [m for m in mail.outbox if "request@example.com" in m.to]
+        self.assertEqual(len(customer_messages), 1)
+        self.assertIn(_("We received your booking request"), customer_messages[0].subject)
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
     def test_new_booking_sends_owner_email_when_configured(self):
         from django.core import mail
 
@@ -563,15 +672,203 @@ class BetaReadinessTests(TestCase):
                 "full_name": "Email Test",
                 "phone_number": "071234567",
                 "instagram_username": "email_test",
-                "email": "",
+                "email": "customer@example.com",
                 "preferred_contact_method": Customer.PreferredContactMethod.VIBER,
                 "rules_accepted": "on",
             },
         )
         self.assertEqual(response.status_code, 302)
+        self.assertGreaterEqual(len(mail.outbox), 1)
+        owner_messages = [m for m in mail.outbox if "owner_notify@example.com" in m.to]
+        self.assertEqual(len(owner_messages), 1)
+        self.assertIn(_("New booking request"), owner_messages[0].subject)
+
+    @override_settings(
+        EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+        OWNER_NOTIFICATION_EMAIL="override_owner@example.com",
+    )
+    def test_owner_notification_prefers_env_email(self):
+        from django.core import mail
+
+        self.owner_a.email = "owner_a@example.com"
+        self.owner_a.save()
+        selected_date = timezone.localdate() + timedelta(days=20)
+        if selected_date.weekday() == WorkingHours.Weekday.SUNDAY:
+            selected_date += timedelta(days=1)
+        WorkingHours.objects.create(
+            salon=self.salon_a,
+            weekday=selected_date.weekday(),
+            is_working_day=True,
+            start_time=time(8, 0),
+            end_time=time(18, 0),
+        )
+        response = self.client.post(
+            "/book/salon-a/request/",
+            {
+                "service": self.service_a.id,
+                "date": selected_date.isoformat(),
+                "start_time": "08:00",
+                "full_name": "Override Test",
+                "phone_number": "071234568",
+                "instagram_username": "override_test",
+                "email": "customer@example.com",
+                "preferred_contact_method": Customer.PreferredContactMethod.VIBER,
+                "rules_accepted": "on",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        owner_messages = [m for m in mail.outbox if "override_owner@example.com" in m.to]
+        self.assertEqual(len(owner_messages), 1)
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_approve_sends_customer_email_when_email_exists(self):
+        from django.core import mail
+
+        self.customer_a.email = "customer@example.com"
+        self.customer_a.save()
+        self.client.login(username="owner_a", password="pass")
+        response = self.client.post(
+            "/owner/dashboard/",
+            {"action": "approve", "booking_id": self.booking_a.pk},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.booking_a.refresh_from_db()
+        self.assertEqual(self.booking_a.status, Booking.Status.APPROVED)
         self.assertEqual(len(mail.outbox), 1)
-        self.assertIn("owner_notify@example.com", mail.outbox[0].to)
-        self.assertIn(_("New booking request"), mail.outbox[0].subject)
+        self.assertIn("customer@example.com", mail.outbox[0].to)
+        self.assertIn(_("Your appointment is confirmed"), mail.outbox[0].subject)
+        self.assertTrue(mail.outbox[0].reply_to)
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_reject_sends_customer_email_when_email_exists(self):
+        from django.core import mail
+
+        self.customer_a.email = "customer@example.com"
+        self.customer_a.save()
+        self.client.login(username="owner_a", password="pass")
+        response = self.client.post(
+            "/owner/dashboard/",
+            {"action": "reject", "booking_id": self.booking_a.pk},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.booking_a.refresh_from_db()
+        self.assertEqual(self.booking_a.status, Booking.Status.REJECTED)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn("customer@example.com", mail.outbox[0].to)
+        self.assertIn(_("Your appointment request was declined"), mail.outbox[0].subject)
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_approve_without_customer_email_still_succeeds(self):
+        from django.core import mail
+
+        self.client.login(username="owner_a", password="pass")
+        response = self.client.post(
+            "/owner/dashboard/",
+            {"action": "approve", "booking_id": self.booking_a.pk},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.booking_a.refresh_from_db()
+        self.assertEqual(self.booking_a.status, Booking.Status.APPROVED)
+        self.assertEqual(len(mail.outbox), 0)
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_approve_email_failure_does_not_undo_approval(self):
+        from unittest.mock import patch
+
+        self.customer_a.email = "customer@example.com"
+        self.customer_a.save()
+        self.client.login(username="owner_a", password="pass")
+        with patch("booking.email_utils._send_email", return_value=(False, "error")):
+            response = self.client.post(
+                "/owner/dashboard/",
+                {"action": "approve", "booking_id": self.booking_a.pk},
+            )
+        self.assertEqual(response.status_code, 302)
+        self.booking_a.refresh_from_db()
+        self.assertEqual(self.booking_a.status, Booking.Status.APPROVED)
+
+    def test_manage_booking_page_requires_token(self):
+        response = self.client.get(
+            reverse("booking:manage_booking", args=["00000000-0000-0000-0000-000000000000"])
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_manage_booking_page_shows_booking(self):
+        response = self.client.get(
+            reverse("booking:manage_booking", args=[self.booking_a.manage_token])
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.customer_a.full_name)
+        self.assertContains(response, _("Your appointment"))
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_customer_can_cancel_pending_booking(self):
+        from django.core import mail
+
+        self.customer_a.email = "customer@example.com"
+        self.customer_a.save()
+        url = reverse("booking:manage_booking_cancel", args=[self.booking_a.manage_token])
+        response = self.client.post(url, {"confirm": "yes"})
+        self.assertEqual(response.status_code, 302)
+        self.booking_a.refresh_from_db()
+        self.assertEqual(self.booking_a.status, Booking.Status.CANCELLED)
+        self.assertTrue(self.booking_a.cancelled_by_customer)
+        self.assertTrue(
+            BookingActivityLog.objects.filter(
+                booking=self.booking_a,
+                action=BookingActivityLog.Action.CUSTOMER_CANCELLED,
+            ).exists()
+        )
+        self.assertGreaterEqual(len(mail.outbox), 1)
+
+    def test_customer_cannot_cancel_approved_booking_too_close(self):
+        self.booking_a.status = Booking.Status.APPROVED
+        self.booking_a.start_at = timezone.now() + timedelta(hours=6)
+        self.booking_a.end_at = self.booking_a.start_at + timedelta(hours=2)
+        self.booking_a.save()
+        self.salon_a.booking_policy.customer_cancellation_notice_hours = 24
+        self.salon_a.booking_policy.save()
+
+        url = reverse("booking:manage_booking_cancel", args=[self.booking_a.manage_token])
+        response = self.client.post(url, {"confirm": "yes"})
+        self.assertEqual(response.status_code, 302)
+        self.booking_a.refresh_from_db()
+        self.assertEqual(self.booking_a.status, Booking.Status.APPROVED)
+
+    def test_cancelled_booking_does_not_block_availability(self):
+        selected_date = timezone.localdate() + timedelta(days=2)
+        if selected_date.weekday() == WorkingHours.Weekday.SUNDAY:
+            selected_date += timedelta(days=1)
+        WorkingHours.objects.get_or_create(
+            salon=self.salon_a,
+            weekday=selected_date.weekday(),
+            defaults={
+                "is_working_day": True,
+                "start_time": time(8, 0),
+                "end_time": time(18, 0),
+            },
+        )
+        self.booking_a.status = Booking.Status.CANCELLED
+        self.booking_a.start_at = timezone.make_aware(
+            datetime.combine(selected_date, time(10, 0)),
+            timezone.get_current_timezone(),
+        )
+        self.booking_a.end_at = self.booking_a.start_at + timedelta(hours=2)
+        self.booking_a.save()
+
+        slots = get_available_slots(self.salon_a, self.service_a, selected_date)
+        slot_values = [slot["value"] for slot in slots]
+        self.assertIn("10:00", slot_values)
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_test_email_command(self):
+        from django.core import mail
+        from io import StringIO
+
+        out = StringIO()
+        call_command("test_email", "cli-test@example.com", stdout=out)
+        self.assertIn("cli-test@example.com", out.getvalue())
+        self.assertEqual(len(mail.outbox), 1)
 
     def test_sqlite_used_when_no_postgres_env(self):
         engine = connection.settings_dict["ENGINE"]

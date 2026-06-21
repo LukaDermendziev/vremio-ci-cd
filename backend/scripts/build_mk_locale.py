@@ -18,6 +18,14 @@ TRANSLATIONS = {
     "Your Details": "Ваши податоци",
     "Review": "Преглед",
     "Back": "Назад",
+    "Back to salon": "Назад кон салонот",
+    "Please enter your full name.": "Внесете го вашето име и презиме.",
+    "Please enter your phone number.": "Внесете го вашиот телефонски број.",
+    "Please enter your email address.": "Внесете ја вашата email адреса.",
+    "Please enter a valid email address.": "Внесете валидна email адреса.",
+    "Please enter your Instagram username.": "Внесете го вашето Instagram корисничко име.",
+    "Please upload a reference photo for this service.": "Прикачете референтна фотографија за оваа услуга.",
+    "Please complete all required fields before continuing.": "Пополнете ги сите задолжителни полиња пред да продолжите.",
     "Upload your logo here": "Поставете го вашиот лого тука",
     "Request an appointment": "Побарајте термин",
     "Choose service": "Изберете услуга",
@@ -155,7 +163,21 @@ TRANSLATIONS = {
     "your": "вашиот",
     "next appointment?": "следен термин?",
     "Send a request in minutes. We'll review it and contact you to confirm.": "Испратете барање за неколку минути. Ќе го прегледаме и ќе ве контактираме за потврда.",
-    "Book appointment": "Резервирај термин",
+    "Book appointment": "Закажи термин",
+    "Care, style, and an appointment that suits you.": "Нега, стил и термин што ви одговара.",
+    "Choose a service, date and available time. The salon will review your request.": "Избери услуга, датум и слободен термин. Барањето ќе биде прегледано од салонот.",
+    "Choose a service, date and available time. Your request will be reviewed by the salon.": "Изберете услуга, датум и слободен термин. Барањето ќе биде прегледано од салонот.",
+    "The appointment is not confirmed until the salon approves it.": "Терминот не е потврден додека не биде одобрен.",
+    "The appointment is not confirmed until it is approved.": "Терминот не е потврден додека не биде одобрен.",
+    "Photo uploaded": "Има слика",
+    "View reference photo": "Погледни референтна слика",
+    "No photo attached": "Нема прикачена слика",
+    "Open full size": "Отвори целосна големина",
+    "Welcome back — %(salon_name)s": "Добредојде — %(salon_name)s",
+    "Pending requests": "Барања на чекање",
+    "Approved bookings scheduled for today.": "Одобрени термини закажани за денес.",
+    "Review new requests and approve or reject.": "Прегледај ги новите барања и одобри или одбиј.",
+    "View": "Погледни",
     "Online booking, made simple.": "Онлајн резервации, едноставно.",
     "Footer navigation": "Подножје навигација",
     "Made by": "Направено од",
@@ -351,6 +373,123 @@ TRANSLATIONS = {
     "Booking cancelled.": "Терминот е откажан.",
     "Booking deleted.": "Терминот е избришан.",
     "New booking request": "Ново барање за термин",
+    "Appointment approved. Email sent to customer.": "Терминот е одобрен. Испратен е email до клиентот.",
+    "Appointment approved. Customer did not provide an email.": "Терминот е одобрен. Клиентот нема внесено email.",
+    "Appointment approved.": "Терминот е одобрен.",
+    "Email could not be sent. Prepared message is available.": "Email не можеше да се испрати. Подготвената порака е достапна.",
+    "Request declined. Email sent to customer.": "Барањето е одбиено. Испратен е email до клиентот.",
+    "Request declined. Customer did not provide an email.": "Барањето е одбиено. Клиентот нема внесено email.",
+    "Request declined.": "Барањето е одбиено.",
+    "Appointment updated. Email sent to customer.": "Терминот е променет. Испратен е email до клиентот.",
+    "Appointment updated. Customer did not provide an email.": "Терминот е променет. Клиентот нема внесено email.",
+    "Appointment updated.": "Терминот е променет.",
+    "Appointment cancelled. Email sent to customer.": "Терминот е откажан. Испратен е email до клиентот.",
+    "Appointment cancelled. Customer did not provide an email.": "Терминот е откажан. Клиентот нема внесено email.",
+    "Appointment cancelled.": "Терминот е откажан.",
+    "Cancelled by customer": "Откажано од клиент",
+    "Customer cancellation notice (hours)": "Одредба за откажување од клиент (часови)",
+    "We received your booking request": "Го примивме вашето барање за термин",
+    "Customer cancelled appointment": "Клиент откажа термин",
+    "We sent a confirmation email with a link to view and manage your booking.": "Испративме email за потврда со линк за преглед и управување со вашиот термин.",
+    "View / manage booking": "Преглед / управување со термин",
+    "Your appointment": "Вашиот термин",
+    "Your request is not confirmed yet. The salon will review it and contact you.": "Вашето барање сè уште не е потврдено. Салонот ќе го прегледа и ќе ве контактира.",
+    "Your appointment is confirmed.": "Вашиот термин е потврден.",
+    "Your booking request was declined.": "Вашето барање за термин е одбиено.",
+    "This appointment was cancelled.": "Овој термин е откажан.",
+    "This appointment was completed.": "Овој термин е завршен.",
+    "This appointment was marked as a no-show.": "Овој термин е означен како не се појави.",
+    "Appointment cancelled.": "Терминот е откажан.",
+    "Thank you for letting us know. The salon has been notified.": "Ви благодариме што нè известивте. Салонот е известен.",
+    "Cancel appointment?": "Откажи термин?",
+    "Are you sure you want to cancel this appointment?": "Дали сте сигурни дека сакате да го откажете терминот?",
+    "Yes, cancel appointment": "Да, откажи термин",
+    "No, go back": "Не, врати се назад",
+    "Reference photo attached": "Прикачена е референтна фотографија",
+    "Salon rules": "Правила на салонот",
+    "Cancellation": "Откажување",
+    "You can cancel this appointment online.": "Можете да го откажете терминот онлајн.",
+    "This appointment is too close for automatic cancellation (less than %(hours)s hours). Please contact the salon.": "Овој термин е премногу блиску за автоматско откажување (помалку од %(hours)s часа). Ве молиме контактирајте го салонот.",
+    "This appointment is too close for automatic cancellation. Please contact the salon.": "Овој термин е премногу блиску за автоматско откажување. Ве молиме контактирајте го салонот.",
+    "This appointment has already passed.": "Овој термин веќе помина.",
+    "This appointment is already cancelled.": "Овој термин е веќе откажан.",
+    "This booking request was declined by the salon.": "Ова барање е одбиено од салонот.",
+    "This appointment was completed.": "Овој термин е завршен.",
+    "This appointment was marked as a no-show.": "Овој термин е означен како не се појави.",
+    "Cancellation is not available for this appointment.": "Откажувањето не е достапно за овој термин.",
+    "This appointment cannot be cancelled.": "Овој термин не може да се откаже.",
+    "Need help? Contact %(salon_name)s directly if you have questions about your appointment.": "Потребна ви е помош? Контактирајте го %(salon_name)s директно ако имате прашања за вашиот термин.",
+    "Hello %(name)s,\n\nWe received your booking request.\n\nService: %(service)s\nDate and time: %(date)s at %(time)s\n\nYour appointment is not confirmed yet. The salon will review your request.\n\nYou can track your appointment here:\n%(manage_url)s": (
+        "Здраво %(name)s,\n\n"
+        "Го примивме вашето барање за термин.\n\n"
+        "Услуга: %(service)s\n"
+        "Датум и време: %(date)s во %(time)s\n\n"
+        "Терминот сè уште не е потврден. Салонот ќе го прегледа барањето.\n\n"
+        "Вашиот термин можете да го следите тука:\n"
+        "%(manage_url)s"
+    ),
+    "Hello %(name)s,\n\nYour appointment on %(date)s at %(time)s has been cancelled.\n\nThank you for letting us know in time.": (
+        "Здраво %(name)s,\n\n"
+        "Вашиот термин за %(date)s во %(time)s е откажан.\n\n"
+        "Ви благодариме што нè известивте навреме."
+    ),
+    "The customer %(name)s cancelled their appointment.\n\nService: %(service)s\nDate and time: %(date)s at %(time)s\nPhone: %(phone)s": (
+        "Клиентот %(name)s го откажа терминот.\n\n"
+        "Услуга: %(service)s\n"
+        "Датум и време: %(date)s во %(time)s\n"
+        "Телефон: %(phone)s"
+    ),
+    "Salon Scheduler test email": "Тест email од Salon Scheduler",
+    "This is a test email from Salon Scheduler.\n\nIf you received this message, outgoing email is configured correctly.": (
+        "Ова е тест email од Salon Scheduler.\n\n"
+        "Ако ја примивте пораката, испраќањето на email е правилно конфигурирано."
+    ),
+    "Review in dashboard:": "Преглед во контролна табла:",
+    "Missed appointment": "Пропуштен термин",
+    "Request received": "Барањето е примено",
+    "Your appointment is confirmed": "Вашиот термин е потврден",
+    "Your appointment request was declined": "Вашето барање за термин е одбиено",
+    "Your appointment was changed": "Вашиот термин е променет",
+    "Your appointment was cancelled": "Вашиот термин е откажан",
+    "Hello %(name)s,\n\nYour appointment for %(date)s at %(time)s has been confirmed.\n\nService: %(service)s\n\nWe look forward to seeing you.": (
+        "Здраво %(name)s,\n\n"
+        "Вашиот термин за %(date)s во %(time)s е потврден.\n\n"
+        "Услуга: %(service)s\n\n"
+        "Ве очекуваме."
+    ),
+    "Hello %(name)s,\n\nUnfortunately, the requested appointment for %(date)s at %(time)s is not available.\n\nPlease choose another time.": (
+        "Здраво %(name)s,\n\n"
+        "За жал, бараниот термин за %(date)s во %(time)s не е достапен.\n\n"
+        "Ве молиме изберете друг термин."
+    ),
+    "Hello %(name)s,\n\nYour appointment has been changed to %(date)s at %(time)s.\n\nService: %(service)s\n\nWe look forward to seeing you.": (
+        "Здраво %(name)s,\n\n"
+        "Вашиот термин е променет на %(date)s во %(time)s.\n\n"
+        "Услуга: %(service)s\n\n"
+        "Ве очекуваме."
+    ),
+    "Hello %(name)s,\n\nYour appointment on %(date)s at %(time)s has been cancelled.\n\nThank you for your understanding.": (
+        "Здраво %(name)s,\n\n"
+        "Вашиот термин за %(date)s во %(time)s е откажан.\n\n"
+        "Ви благодариме на разбирањето."
+    ),
+    "You have a new booking request.\n\nCustomer: %(name)s\nPhone: %(phone)s\nService: %(service)s\nDate and time: %(date)s at %(time)s": (
+        "Имате ново барање за термин.\n\n"
+        "Клиент: %(name)s\n"
+        "Телефон: %(phone)s\n"
+        "Услуга: %(service)s\n"
+        "Датум и време: %(date)s во %(time)s"
+    ),
+    "Hello %(name)s,\n\nYou did not attend your appointment on %(date)s at %(time)s.\n\nIf you would like to book again, please contact us. — %(salon)s": (
+        "Здраво %(name)s,\n\n"
+        "Не се појавивте на терминот за %(date)s во %(time)s.\n\n"
+        "Ако сакате повторно да закажете, контактирајте нè. — %(salon)s"
+    ),
+    "Hello %(name)s,\n\nYour appointment request for %(date)s at %(time)s has been received.\n\nWe will contact you soon. — %(salon)s": (
+        "Здраво %(name)s,\n\n"
+        "Вашето барање за %(date)s во %(time)s е примено.\n\n"
+        "Ќе ве контактираме наскоро. — %(salon)s"
+    ),
     "Invalid username or password.": "Невалидно корисничко име или лозинка.",
     # dynamic view messages
     "%(field)s: %(error)s": "%(field)s: %(error)s",

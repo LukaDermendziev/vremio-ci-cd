@@ -211,7 +211,47 @@ function initOwnerDashboard(config) {
     bookingForm.querySelector('[name="status"]').value = data.status || "approved";
     bookingForm.querySelector('[name="source"]').value = data.source || "owner_manual";
     bookingForm.querySelector('[name="owner_note"]').value = data.owner_note || "";
+    updateReferencePhotoSection(data);
   }
+
+  function updateReferencePhotoSection(data) {
+    const section = document.getElementById("od-booking-photo-section");
+    const emptyEl = document.getElementById("od-booking-photo-empty");
+    const previewEl = document.getElementById("od-booking-photo-preview");
+    const imgEl = document.getElementById("od-booking-photo-img");
+    const thumbBtn = document.getElementById("od-booking-photo-thumb");
+    if (!section) return;
+    const hasPhoto = data.has_reference_photo && data.reference_photo_url;
+    section.hidden = !data.id;
+    if (!data.id) return;
+    if (hasPhoto) {
+      emptyEl.hidden = true;
+      previewEl.hidden = false;
+      imgEl.src = data.reference_photo_url;
+      thumbBtn.dataset.photoPreview = data.reference_photo_url;
+    } else {
+      emptyEl.hidden = false;
+      previewEl.hidden = true;
+      imgEl.removeAttribute("src");
+    }
+  }
+
+  function openPhotoPreview(url) {
+    if (!url) return;
+    const img = document.getElementById("od-photo-modal-img");
+    const link = document.getElementById("od-photo-modal-open");
+    if (img) img.src = url;
+    if (link) link.href = url;
+    openModal("od-photo-modal");
+  }
+
+  document.addEventListener("click", (e) => {
+    const trigger = e.target.closest("[data-photo-preview]");
+    if (trigger) {
+      e.preventDefault();
+      openPhotoPreview(trigger.dataset.photoPreview);
+    }
+  });
 
   function getCurrentSection() {
     return document.querySelector(".od-section.active")?.id?.replace("od-sec-", "") || "dashboard";
@@ -243,17 +283,23 @@ function initOwnerDashboard(config) {
           status: card.dataset.status,
           source: card.dataset.source,
           owner_note: card.dataset.ownerNote,
+          has_reference_photo: card.dataset.hasPhoto === "true",
+          reference_photo_url: card.dataset.photoUrl || null,
         });
-      } else {
+      }
+      try {
         const res = await fetch(`${config.bookingDetailUrl}${bookingId}/detail/`);
         if (res.ok) fillBookingForm(await res.json());
-      }
+      } catch (_) { /* card fallback above */ }
       bookingDeleteForm.querySelector('[name="booking_id"]').value = bookingId;
     } else if (preset.date) {
       dateInput.value = preset.date;
       if (preset.time) startInput.value = preset.time;
       bookingForm.querySelector('[name="status"]').value = "approved";
       bookingForm.querySelector('[name="source"]').value = "owner_manual";
+      updateReferencePhotoSection({});
+    } else {
+      updateReferencePhotoSection({});
     }
 
     await loadOwnerSlots();
@@ -922,8 +968,9 @@ function initOwnerDashboard(config) {
       </div>`;
     }
     const sc = CG_STATUS[ev.status] || CG_STATUS.pending;
+    const photoIcon = ev.hasReferencePhoto ? `<span class="cgrid-chip-photo" title="${t("photoUploaded", "Photo uploaded")}"><i class="bi bi-camera-fill"></i></span>` : "";
     return `<div class="cgrid-chip ${sc.cls}" data-booking-id="${ev.bookingId||ev.id||''}">
-      <div class="cgrid-chip-name">${ev.customerName||ev.title||''}</div>
+      <div class="cgrid-chip-name">${ev.customerName||ev.title||''}${photoIcon}</div>
       <div class="cgrid-chip-meta">${ev.time||''} · ${ev.duration||''}${t("minSuffix", "min")}</div>
     </div>`;
   }
@@ -1083,6 +1130,7 @@ function initOwnerDashboard(config) {
           title: ev.title||"",
           bookingId: ep.bookingId, blockId: ep.blockId,
           type: ep.type||"booking",
+          hasReferencePhoto: ep.hasReferencePhoto,
         };
       });
     } catch(e) { console.error("cgrid fetch error", e); }

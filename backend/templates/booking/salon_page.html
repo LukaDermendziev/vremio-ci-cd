@@ -13,9 +13,14 @@
   <div class="sp-nav-links">
     <a href="#services">{% trans "Services" %}</a>
     <a href="#hours">{% trans "Hours" %}</a>
-    {% if salon.instagram_username %}<a href="https://instagram.com/{{ salon.instagram_username|cut:'@' }}" target="_blank" rel="noopener">Instagram</a>{% endif %}
   </div>
   <div class="sp-nav-right">
+    {% if salon.instagram_username %}
+    <a class="sp-nav-ig" href="https://instagram.com/{{ salon.instagram_username|cut:'@' }}" target="_blank" rel="noopener" aria-label="Instagram">
+      <i class="bi bi-instagram"></i>
+      <span class="sp-nav-ig-label">Instagram</span>
+    </a>
+    {% endif %}
     <div class="sp-nav-lang">{% include "partials/language_switcher.html" %}</div>
     <a class="sp-nav-cta" href="{% url 'booking:book_salon' salon.slug %}">{% trans "Book now" %}</a>
   </div>
@@ -28,12 +33,19 @@
   {# Left: headline + CTA #}
   <div class="sp-hero-content">
     <p class="sp-eyebrow">{% trans "Professional nail care" %}</p>
-    <h1 class="sp-hero-title">{% trans "Beautiful nails," %}<br><em>{% trans "made just for you." %}</em></h1>
-    <p class="sp-hero-lead">{% trans "Explore our services and book your next appointment online — in just a few minutes." %}</p>
+    <h1 class="sp-hero-title">{% trans "Care, style, and an appointment that suits you." %}</h1>
+    <p class="sp-hero-lead">{% trans "Choose a service, date and available time. Your request will be reviewed by the salon." %}</p>
+    <p class="sp-hero-note"><i class="bi bi-shield-check"></i> {% trans "The appointment is not confirmed until it is approved." %}</p>
     <div class="sp-hero-actions">
       <a class="sp-btn-hero" href="{% url 'booking:book_salon' salon.slug %}">{% trans "Book an appointment" %}</a>
       <a class="sp-btn-hero sp-btn-hero-ghost" href="#services">{% trans "View services" %}</a>
     </div>
+    {% if salon.instagram_username %}
+    <a class="sp-hero-ig" href="https://instagram.com/{{ salon.instagram_username|cut:'@' }}" target="_blank" rel="noopener" aria-label="Instagram">
+      <i class="bi bi-instagram"></i>
+      <span>@{{ salon.instagram_username|cut:'@' }}</span>
+    </a>
+    {% endif %}
   </div>
 
   {# Right: animated masonry gallery — real nail photos #}
@@ -121,14 +133,44 @@
 </section>
 
 <script>
-// Duplicate gallery track items for seamless infinite loop
 (function () {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  function waitForImage(img) {
+    if (img.complete && img.naturalHeight > 0) return Promise.resolve();
+    return new Promise(function (resolve) {
+      img.addEventListener('load', resolve, { once: true });
+      img.addEventListener('error', resolve, { once: true });
+    });
+  }
+
+  function measureLoopDistance(track, originalCount) {
+    var first = track.children[0];
+    var cloneStart = track.children[originalCount];
+    if (!first || !cloneStart) return 0;
+    return cloneStart.getBoundingClientRect().top - first.getBoundingClientRect().top;
+  }
+
   document.querySelectorAll('.sp-gallery-track').forEach(function (track) {
-    var items = Array.from(track.children);
-    items.forEach(function (item) {
-      var clone = item.cloneNode(true);
-      clone.setAttribute('aria-hidden', 'true');
-      track.appendChild(clone);
+    if (track.dataset.loopReady === '1') return;
+
+    var originals = Array.from(track.children);
+    var originalCount = originals.length;
+    if (!originalCount) return;
+
+    Promise.all(originals.map(waitForImage)).then(function () {
+      originals.forEach(function (item) {
+        var clone = item.cloneNode(true);
+        clone.setAttribute('aria-hidden', 'true');
+        track.appendChild(clone);
+      });
+
+      var loopDistance = measureLoopDistance(track, originalCount);
+      if (loopDistance <= 0) return;
+
+      track.style.setProperty('--loop-distance', loopDistance + 'px');
+      track.dataset.loopReady = '1';
+      track.classList.add('sp-track-ready');
     });
   });
 })();
@@ -404,6 +446,10 @@ window.SP_I18N = {
       <a href="#services">{% trans "Services" %}</a>
       <span class="sp-footer-dot"></span>
       <a href="#hours">{% trans "Hours" %}</a>
+      {% if salon.instagram_username %}
+      <span class="sp-footer-dot"></span>
+      <a href="https://instagram.com/{{ salon.instagram_username|cut:'@' }}" target="_blank" rel="noopener"><i class="bi bi-instagram"></i> Instagram</a>
+      {% endif %}
       <span class="sp-footer-dot"></span>
       <a href="{% url 'booking:book_salon' salon.slug %}">{% trans "Book now" %}</a>
     </nav>

@@ -118,8 +118,35 @@ msgstr "Allow same day booking"
 msgid "Appointment"
 msgstr "Appointment"
 
+msgid "Appointment approved."
+msgstr "Appointment approved."
+
+msgid "Appointment approved. Customer did not provide an email."
+msgstr "Appointment approved. Customer did not provide an email."
+
+msgid "Appointment approved. Email sent to customer."
+msgstr "Appointment approved. Email sent to customer."
+
+msgid "Appointment cancelled."
+msgstr "Appointment cancelled."
+
+msgid "Appointment cancelled. Customer did not provide an email."
+msgstr "Appointment cancelled. Customer did not provide an email."
+
+msgid "Appointment cancelled. Email sent to customer."
+msgstr "Appointment cancelled. Email sent to customer."
+
 msgid "Appointment information — %(salon)s"
 msgstr "Appointment information — %(salon)s"
+
+msgid "Appointment updated."
+msgstr "Appointment updated."
+
+msgid "Appointment updated. Customer did not provide an email."
+msgstr "Appointment updated. Customer did not provide an email."
+
+msgid "Appointment updated. Email sent to customer."
+msgstr "Appointment updated. Email sent to customer."
 
 msgid "Approval"
 msgstr "Approval"
@@ -130,6 +157,9 @@ msgstr "Approve"
 msgid "Approved"
 msgstr "Approved"
 
+msgid "Approved bookings scheduled for today."
+msgstr "Approved bookings scheduled for today."
+
 msgid "Approved message"
 msgstr "Approved message"
 
@@ -138,6 +168,9 @@ msgstr "Apr"
 
 msgid "April"
 msgstr "April"
+
+msgid "Are you sure you want to cancel this appointment?"
+msgstr "Are you sure you want to cancel this appointment?"
 
 msgid "Aug"
 msgstr "Aug"
@@ -168,6 +201,9 @@ msgstr "Back to %(salon_name)s"
 
 msgid "Back to login"
 msgstr "Back to login"
+
+msgid "Back to salon"
+msgstr "Back to salon"
 
 msgid "Beautiful nails,"
 msgstr "Beautiful nails,"
@@ -309,14 +345,26 @@ msgstr "Call"
 msgid "Cancel"
 msgstr "Cancel"
 
+msgid "Cancel appointment?"
+msgstr "Cancel appointment?"
+
 msgid "Cancel this booking?"
 msgstr "Cancel this booking?"
+
+msgid "Cancellation"
+msgstr "Cancellation"
+
+msgid "Cancellation is not available for this appointment."
+msgstr "Cancellation is not available for this appointment."
 
 msgid "Cancellations require at least 24–48 hours notice."
 msgstr "Cancellations require at least 24–48 hours notice."
 
 msgid "Cancelled"
 msgstr "Cancelled"
+
+msgid "Cancelled by customer"
+msgstr "Cancelled by customer"
 
 msgid "Cancelled message"
 msgstr "Cancelled message"
@@ -332,6 +380,9 @@ msgid ""
 msgstr ""
 "Cannot delete a customer with existing bookings. Remove bookings first."
 
+msgid "Care, style, and an appointment that suits you."
+msgstr "Care, style, and an appointment that suits you."
+
 msgid "Change Password"
 msgstr "Change Password"
 
@@ -340,6 +391,20 @@ msgstr "Change password"
 
 msgid "Check your inbox"
 msgstr "Check your inbox"
+
+msgid ""
+"Choose a service, date and available time. The salon will review your "
+"request."
+msgstr ""
+"Choose a service, date and available time. The salon will review your "
+"request."
+
+msgid ""
+"Choose a service, date and available time. Your request will be reviewed by "
+"the salon."
+msgstr ""
+"Choose a service, date and available time. Your request will be reviewed by "
+"the salon."
 
 msgid "Choose a strong password for your account."
 msgstr "Choose a strong password for your account."
@@ -415,6 +480,12 @@ msgstr "Could not save working hours. Check the times."
 
 msgid "Customer added successfully."
 msgstr "Customer added successfully."
+
+msgid "Customer cancellation notice (hours)"
+msgstr "Customer cancellation notice (hours)"
+
+msgid "Customer cancelled appointment"
+msgstr "Customer cancelled appointment"
 
 msgid "Customer deleted."
 msgstr "Customer deleted."
@@ -513,6 +584,9 @@ msgstr "Email"
 msgid "Email address"
 msgstr "Email address"
 
+msgid "Email could not be sent. Prepared message is available."
+msgstr "Email could not be sent. Prepared message is available."
+
 msgid "Email sent"
 msgstr "Email sent"
 
@@ -558,6 +632,130 @@ msgstr "Full name"
 
 msgid "Go to login"
 msgstr "Go to login"
+
+msgid ""
+"Hello %(name)s,\n"
+"\n"
+"Unfortunately, the requested appointment for %(date)s at %(time)s is not available.\n"
+"\n"
+"Please choose another time."
+msgstr ""
+"Hello %(name)s,\n"
+"\n"
+"Unfortunately, the requested appointment for %(date)s at %(time)s is not available.\n"
+"\n"
+"Please choose another time."
+
+msgid ""
+"Hello %(name)s,\n"
+"\n"
+"We received your booking request.\n"
+"\n"
+"Service: %(service)s\n"
+"Date and time: %(date)s at %(time)s\n"
+"\n"
+"Your appointment is not confirmed yet. The salon will review your request.\n"
+"\n"
+"You can track your appointment here:\n"
+"%(manage_url)s"
+msgstr ""
+"Hello %(name)s,\n"
+"\n"
+"We received your booking request.\n"
+"\n"
+"Service: %(service)s\n"
+"Date and time: %(date)s at %(time)s\n"
+"\n"
+"Your appointment is not confirmed yet. The salon will review your request.\n"
+"\n"
+"You can track your appointment here:\n"
+"%(manage_url)s"
+
+msgid ""
+"Hello %(name)s,\n"
+"\n"
+"You did not attend your appointment on %(date)s at %(time)s.\n"
+"\n"
+"If you would like to book again, please contact us. — %(salon)s"
+msgstr ""
+"Hello %(name)s,\n"
+"\n"
+"You did not attend your appointment on %(date)s at %(time)s.\n"
+"\n"
+"If you would like to book again, please contact us. — %(salon)s"
+
+msgid ""
+"Hello %(name)s,\n"
+"\n"
+"Your appointment for %(date)s at %(time)s has been confirmed.\n"
+"\n"
+"Service: %(service)s\n"
+"\n"
+"We look forward to seeing you."
+msgstr ""
+"Hello %(name)s,\n"
+"\n"
+"Your appointment for %(date)s at %(time)s has been confirmed.\n"
+"\n"
+"Service: %(service)s\n"
+"\n"
+"We look forward to seeing you."
+
+msgid ""
+"Hello %(name)s,\n"
+"\n"
+"Your appointment has been changed to %(date)s at %(time)s.\n"
+"\n"
+"Service: %(service)s\n"
+"\n"
+"We look forward to seeing you."
+msgstr ""
+"Hello %(name)s,\n"
+"\n"
+"Your appointment has been changed to %(date)s at %(time)s.\n"
+"\n"
+"Service: %(service)s\n"
+"\n"
+"We look forward to seeing you."
+
+msgid ""
+"Hello %(name)s,\n"
+"\n"
+"Your appointment on %(date)s at %(time)s has been cancelled.\n"
+"\n"
+"Thank you for letting us know in time."
+msgstr ""
+"Hello %(name)s,\n"
+"\n"
+"Your appointment on %(date)s at %(time)s has been cancelled.\n"
+"\n"
+"Thank you for letting us know in time."
+
+msgid ""
+"Hello %(name)s,\n"
+"\n"
+"Your appointment on %(date)s at %(time)s has been cancelled.\n"
+"\n"
+"Thank you for your understanding."
+msgstr ""
+"Hello %(name)s,\n"
+"\n"
+"Your appointment on %(date)s at %(time)s has been cancelled.\n"
+"\n"
+"Thank you for your understanding."
+
+msgid ""
+"Hello %(name)s,\n"
+"\n"
+"Your appointment request for %(date)s at %(time)s has been received.\n"
+"\n"
+"We will contact you soon. — %(salon)s"
+msgstr ""
+"Hello %(name)s,\n"
+"\n"
+"Your appointment request for %(date)s at %(time)s has been received.\n"
+"\n"
+"We will contact you soon. — %(salon)s"
 
 msgid ""
 "Hello %(name)s, this is a reminder that you have an appointment on %(date)s "
@@ -722,6 +920,9 @@ msgstr "Minimum booking notice: <strong>%(days)s days</strong>"
 msgid "Minimum notice days"
 msgstr "Minimum notice days"
 
+msgid "Missed appointment"
+msgstr "Missed appointment"
+
 msgid "Missed appointment — %(salon)s"
 msgstr "Missed appointment — %(salon)s"
 
@@ -742,6 +943,13 @@ msgstr "Name"
 
 msgid "Name and price are required."
 msgstr "Name and price are required."
+
+msgid ""
+"Need help? Contact %(salon_name)s directly if you have questions about your "
+"appointment."
+msgstr ""
+"Need help? Contact %(salon_name)s directly if you have questions about your "
+"appointment."
 
 msgid "New booking request"
 msgstr "New booking request"
@@ -792,6 +1000,9 @@ msgstr ""
 "No messages. No waiting. Choose a service, pick a time, and send your "
 "request."
 
+msgid "No photo attached"
+msgstr "No photo attached"
+
 msgid "No price items yet. Add the first one below."
 msgstr "No price items yet. Add the first one below."
 
@@ -806,6 +1017,9 @@ msgstr "No time blocks."
 
 msgid "No unavailable blocks."
 msgstr "No unavailable blocks."
+
+msgid "No, go back"
+msgstr "No, go back"
 
 msgid "No-show"
 msgstr "No-show"
@@ -856,6 +1070,9 @@ msgstr "Open"
 msgid "Open booking page"
 msgstr "Open booking page"
 
+msgid "Open full size"
+msgstr "Open full size"
+
 msgid "Open now"
 msgstr "Open now"
 
@@ -901,6 +1118,9 @@ msgstr "Pending booking requests"
 msgid "Pending holds slot"
 msgstr "Pending holds slot"
 
+msgid "Pending requests"
+msgstr "Pending requests"
+
 msgid "Pending/received message"
 msgstr "Pending/received message"
 
@@ -925,8 +1145,32 @@ msgstr "Photo req."
 msgid "Photo required"
 msgstr "Photo required"
 
+msgid "Photo uploaded"
+msgstr "Photo uploaded"
+
+msgid "Please complete all required fields before continuing."
+msgstr "Please complete all required fields before continuing."
+
 msgid "Please contact the administrator."
 msgstr "Please contact the administrator."
+
+msgid "Please enter a valid email address."
+msgstr "Please enter a valid email address."
+
+msgid "Please enter your Instagram username."
+msgstr "Please enter your Instagram username."
+
+msgid "Please enter your email address."
+msgstr "Please enter your email address."
+
+msgid "Please enter your full name."
+msgstr "Please enter your full name."
+
+msgid "Please enter your phone number."
+msgstr "Please enter your phone number."
+
+msgid "Please upload a reference photo for this service."
+msgstr "Please upload a reference photo for this service."
 
 msgid "Preferred contact"
 msgstr "Preferred contact"
@@ -970,6 +1214,9 @@ msgstr "Reason (optional)"
 msgid "Reference photo"
 msgstr "Reference photo"
 
+msgid "Reference photo attached"
+msgstr "Reference photo attached"
+
 msgid "Reference photo required"
 msgstr "Reference photo required"
 
@@ -1012,6 +1259,18 @@ msgstr "Request a new one."
 msgid "Request an appointment"
 msgstr "Request an appointment"
 
+msgid "Request declined."
+msgstr "Request declined."
+
+msgid "Request declined. Customer did not provide an email."
+msgstr "Request declined. Customer did not provide an email."
+
+msgid "Request declined. Email sent to customer."
+msgstr "Request declined. Email sent to customer."
+
+msgid "Request received"
+msgstr "Request received"
+
 msgid "Request received — %(salon)s"
 msgstr "Request received — %(salon)s"
 
@@ -1036,6 +1295,12 @@ msgstr "Review"
 msgid "Review & Submit"
 msgstr "Review & Submit"
 
+msgid "Review in dashboard:"
+msgstr "Review in dashboard:"
+
+msgid "Review new requests and approve or reject."
+msgstr "Review new requests and approve or reject."
+
 msgid "Review request"
 msgstr "Review request"
 
@@ -1047,6 +1312,9 @@ msgstr "Sa"
 
 msgid "Salon Scheduler"
 msgstr "Salon Scheduler"
+
+msgid "Salon Scheduler test email"
+msgstr "Salon Scheduler test email"
 
 msgid "Salon Scheduler — Book Online"
 msgstr "Salon Scheduler — Book Online"
@@ -1200,6 +1468,28 @@ msgstr "Tap to upload a photo"
 msgid "Th"
 msgstr "Th"
 
+msgid "Thank you for letting us know. The salon has been notified."
+msgstr "Thank you for letting us know. The salon has been notified."
+
+msgid "The appointment is not confirmed until it is approved."
+msgstr "The appointment is not confirmed until it is approved."
+
+msgid "The appointment is not confirmed until the salon approves it."
+msgstr "The appointment is not confirmed until the salon approves it."
+
+msgid ""
+"The customer %(name)s cancelled their appointment.\n"
+"\n"
+"Service: %(service)s\n"
+"Date and time: %(date)s at %(time)s\n"
+"Phone: %(phone)s"
+msgstr ""
+"The customer %(name)s cancelled their appointment.\n"
+"\n"
+"Service: %(service)s\n"
+"Date and time: %(date)s at %(time)s\n"
+"Phone: %(phone)s"
+
 msgid "The image is too large. Maximum allowed size is %(max)s MB."
 msgstr "The image is too large. Maximum allowed size is %(max)s MB."
 
@@ -1211,8 +1501,52 @@ msgstr ""
 msgid "The time %(time)s is no longer available. Please select another slot."
 msgstr "The time %(time)s is no longer available. Please select another slot."
 
+msgid "This appointment cannot be cancelled."
+msgstr "This appointment cannot be cancelled."
+
+msgid "This appointment has already passed."
+msgstr "This appointment has already passed."
+
+msgid "This appointment is already cancelled."
+msgstr "This appointment is already cancelled."
+
+msgid ""
+"This appointment is too close for automatic cancellation (less than "
+"%(hours)s hours). Please contact the salon."
+msgstr ""
+"This appointment is too close for automatic cancellation (less than "
+"%(hours)s hours). Please contact the salon."
+
+msgid ""
+"This appointment is too close for automatic cancellation. Please contact the"
+" salon."
+msgstr ""
+"This appointment is too close for automatic cancellation. Please contact the"
+" salon."
+
+msgid "This appointment was cancelled."
+msgstr "This appointment was cancelled."
+
+msgid "This appointment was completed."
+msgstr "This appointment was completed."
+
+msgid "This appointment was marked as a no-show."
+msgstr "This appointment was marked as a no-show."
+
+msgid "This booking request was declined by the salon."
+msgstr "This booking request was declined by the salon."
+
 msgid "This is a request only — not confirmed until the salon approves it."
 msgstr "This is a request only — not confirmed until the salon approves it."
+
+msgid ""
+"This is a test email from Salon Scheduler.\n"
+"\n"
+"If you received this message, outgoing email is configured correctly."
+msgstr ""
+"This is a test email from Salon Scheduler.\n"
+"\n"
+"If you received this message, outgoing email is configured correctly."
 
 msgid "This link expires in 24 hours."
 msgstr "This link expires in 24 hours."
@@ -1283,8 +1617,14 @@ msgstr "Via"
 msgid "Viber"
 msgstr "Viber"
 
+msgid "View"
+msgstr "View"
+
 msgid "View & Book"
 msgstr "View & Book"
+
+msgid "View / manage booking"
+msgstr "View / manage booking"
 
 msgid "View all"
 msgstr "View all"
@@ -1292,11 +1632,22 @@ msgstr "View all"
 msgid "View and manage your appointment schedule."
 msgstr "View and manage your appointment schedule."
 
+msgid "View reference photo"
+msgstr "View reference photo"
+
 msgid "View services"
 msgstr "View services"
 
 msgid "We"
 msgstr "We"
+
+msgid "We received your booking request"
+msgstr "We received your booking request"
+
+msgid ""
+"We sent a confirmation email with a link to view and manage your booking."
+msgstr ""
+"We sent a confirmation email with a link to view and manage your booking."
 
 msgid "Wednesday"
 msgstr "Wednesday"
@@ -1306,6 +1657,9 @@ msgstr "Week"
 
 msgid "Weekly revenue"
 msgstr "Weekly revenue"
+
+msgid "Welcome back — %(salon_name)s"
+msgstr "Welcome back — %(salon_name)s"
 
 msgid "What we offer"
 msgstr "What we offer"
@@ -1328,6 +1682,27 @@ msgstr "Working hours"
 msgid "Working hours saved."
 msgstr "Working hours saved."
 
+msgid "Yes, cancel appointment"
+msgstr "Yes, cancel appointment"
+
+msgid "You can cancel this appointment online."
+msgstr "You can cancel this appointment online."
+
+msgid ""
+"You have a new booking request.\n"
+"\n"
+"Customer: %(name)s\n"
+"Phone: %(phone)s\n"
+"Service: %(service)s\n"
+"Date and time: %(date)s at %(time)s"
+msgstr ""
+"You have a new booking request.\n"
+"\n"
+"Customer: %(name)s\n"
+"Phone: %(phone)s\n"
+"Service: %(service)s\n"
+"Date and time: %(date)s at %(time)s"
+
 msgid "You requested a password reset for your Salon Scheduler owner account."
 msgstr ""
 "You requested a password reset for your Salon Scheduler owner account."
@@ -1335,11 +1710,29 @@ msgstr ""
 msgid "Your Details"
 msgstr "Your Details"
 
+msgid "Your appointment"
+msgstr "Your appointment"
+
+msgid "Your appointment is confirmed"
+msgstr "Your appointment is confirmed"
+
 msgid "Your appointment is confirmed — %(salon)s"
 msgstr "Your appointment is confirmed — %(salon)s"
 
+msgid "Your appointment is confirmed."
+msgstr "Your appointment is confirmed."
+
+msgid "Your appointment request was declined"
+msgstr "Your appointment request was declined"
+
+msgid "Your appointment was cancelled"
+msgstr "Your appointment was cancelled"
+
 msgid "Your appointment was cancelled — %(salon)s"
 msgstr "Your appointment was cancelled — %(salon)s"
+
+msgid "Your appointment was changed"
+msgstr "Your appointment was changed"
 
 msgid "Your appointment was changed — %(salon)s"
 msgstr "Your appointment was changed — %(salon)s"
@@ -1353,8 +1746,16 @@ msgstr ""
 "confirmed yet</strong>.<br> %(salon_name)s will review your request and "
 "contact you."
 
+msgid "Your booking request was declined."
+msgstr "Your booking request was declined."
+
 msgid "Your password has been set. You can now sign in."
 msgstr "Your password has been set. You can now sign in."
+
+msgid ""
+"Your request is not confirmed yet. The salon will review it and contact you."
+msgstr ""
+"Your request is not confirmed yet. The salon will review it and contact you."
 
 msgid "customer first name"
 msgstr "customer first name"

@@ -1,0 +1,5 @@
+{% load i18n %}{% blocktrans with name=customer_name phone=phone service=services date=date time=time %}The customer {{ name }} cancelled their appointment.
+
+Service: {{ service }}
+Date and time: {{ date }} at {{ time }}
+Phone: {{ phone }}{% endblocktrans %}

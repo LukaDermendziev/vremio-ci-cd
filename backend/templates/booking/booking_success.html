@@ -3,9 +3,7 @@
 {% block title %}{% trans "Request Sent" %} — {{ booking.salon.name }}{% endblock %}
 {% block body_class %}bk-page bk-success-page{% endblock %}
 
-{% block lang_switcher %}
-<div class="bk-lang-wrap">{% include "partials/language_switcher.html" %}</div>
-{% endblock %}
+{% block lang_switcher %}{% endblock %}
 
 {% block content %}
 <div class="bk-success-wrap">
@@ -67,11 +65,15 @@
     </div>
 
     <div class="bk-success-notice">
-      <i class="bi bi-info-circle"></i>
-      {% trans "The salon will contact you to confirm via your preferred contact method." %}
+      <i class="bi bi-envelope-check"></i>
+      {% trans "We sent a confirmation email with a link to view and manage your booking." %}
     </div>
 
-    <a class="bk-btn-primary" href="{% url 'booking:salon_page' booking.salon.slug %}">
+    <a class="bk-btn-primary bk-btn-manage" href="{{ manage_url }}">
+      <i class="bi bi-calendar-check"></i> {% trans "View / manage booking" %}
+    </a>
+
+    <a class="bk-btn-ghost" href="{% url 'booking:salon_page' booking.salon.slug %}">
       {% blocktrans with salon_name=booking.salon.name %}Back to {{ salon_name }}{% endblocktrans %}
     </a>
   </div>

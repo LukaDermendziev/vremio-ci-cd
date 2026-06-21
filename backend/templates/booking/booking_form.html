@@ -3,9 +3,7 @@
 {% block title %}{% trans "Book" %} — {{ salon.name }}{% endblock %}
 {% block body_class %}bk-page{% endblock %}
 
-{% block lang_switcher %}
-<div class="bk-lang-wrap">{% include "partials/language_switcher.html" %}</div>
-{% endblock %}
+{% block lang_switcher %}{% endblock %}
 
 {% block content %}
 <form
@@ -16,6 +14,7 @@
   data-min-date="{{ min_date }}"
   data-max-date="{{ max_date }}"
   data-closed-weekdays="{{ closed_weekdays_js }}"
+  data-salon-url="{% url 'booking:salon_page' salon.slug %}"
   novalidate
 >
   {% csrf_token %}
@@ -45,19 +44,12 @@
 
   {# ── Step 1: Service selection ─────────────────────────────────────────── #}
   <div class="bk-step active" data-step="1">
-    <div class="bk-brand-header">
-      <a href="{% url 'booking:salon_page' salon.slug %}" class="bk-back-site" aria-label="{% trans 'Back' %}">
-        <i class="bi bi-arrow-left"></i>
-      </a>
-      <div class="bk-brand-center">
-        <div class="bk-logo-wrap">
-          {# Replace the div below with: <img src="{% static 'img/logo.png' %}" alt="{{ salon.name }}" class="bk-logo-img"> #}
-          <div class="bk-logo-placeholder" title="{% trans 'Upload your logo here' %}">
-            <i class="bi bi-image"></i>
-          </div>
-        </div>
-        <div class="bk-salon-name">{{ salon.name }}</div>
-        <div class="bk-salon-sub">{% trans "Request an appointment" %}</div>
+    <div class="bk-step-hero">
+      <div class="bk-step-hero-inner">
+        <p class="bk-step-hero-eyebrow">{{ salon.name }}</p>
+        <h1 class="bk-step-hero-title">{% trans "Book appointment" %}</h1>
+        <p class="bk-step-hero-sub">{% trans "Choose a service, date and available time. The salon will review your request." %}</p>
+        <p class="bk-step-hero-note"><i class="bi bi-shield-check"></i> {% trans "The appointment is not confirmed until the salon approves it." %}</p>
       </div>
     </div>
 
@@ -212,24 +204,28 @@
       <div class="bk-field">
         <label class="bk-field-label" for="{{ form.full_name.id_for_label }}">{% trans "Full name" %} <span class="bk-req">*</span></label>
         {{ form.full_name }}
+        <span class="bk-field-error bk-field-live-error" id="bk-err-full_name" hidden></span>
         {% for err in form.full_name.errors %}<span class="bk-field-error">{{ err }}</span>{% endfor %}
       </div>
 
       <div class="bk-field">
         <label class="bk-field-label" for="{{ form.phone_number.id_for_label }}">{% trans "Phone number" %} <span class="bk-req">*</span></label>
         {{ form.phone_number }}
+        <span class="bk-field-error bk-field-live-error" id="bk-err-phone_number" hidden></span>
         {% for err in form.phone_number.errors %}<span class="bk-field-error">{{ err }}</span>{% endfor %}
       </div>
 
       <div class="bk-field">
-        <label class="bk-field-label" for="{{ form.instagram_username.id_for_label }}">{% trans "Instagram username" %}</label>
+        <label class="bk-field-label" for="{{ form.instagram_username.id_for_label }}">{% trans "Instagram username" %} <span class="bk-req">*</span></label>
         {{ form.instagram_username }}
+        <span class="bk-field-error bk-field-live-error" id="bk-err-instagram_username" hidden></span>
         {% for err in form.instagram_username.errors %}<span class="bk-field-error">{{ err }}</span>{% endfor %}
       </div>
 
       <div class="bk-field">
-        <label class="bk-field-label" for="{{ form.email.id_for_label }}">{% trans "Email" %} <span class="bk-opt">({% trans "optional" %})</span></label>
+        <label class="bk-field-label" for="{{ form.email.id_for_label }}">{% trans "Email" %} <span class="bk-req">*</span></label>
         {{ form.email }}
+        <span class="bk-field-error bk-field-live-error" id="bk-err-email" hidden></span>
         {% for err in form.email.errors %}<span class="bk-field-error">{{ err }}</span>{% endfor %}
       </div>
     </div>
@@ -255,6 +251,7 @@
         {{ form.reference_photo }}
       </label>
       {% for err in form.reference_photo.errors %}<span class="bk-field-error">{{ err }}</span>{% endfor %}
+      <span class="bk-field-error bk-field-live-error" id="bk-err-reference_photo" hidden></span>
     </div>
 
     <div class="bk-field">
@@ -343,6 +340,12 @@
     </button>
   </div>
 
+  {# Floating back — step 1: salon page; steps 2–4: previous step (header arrow also available) #}
+  <button type="button" class="bk-step1-back-fab" id="bk-back-fab" aria-label="{% trans 'Back' %}">
+    <span class="bk-step1-back-fab-icon" aria-hidden="true"><i class="bi bi-arrow-left"></i></span>
+    <span class="bk-step1-back-fab-label">{% trans "Back" %}</span>
+  </button>
+
 </form>
 
 <script>
@@ -361,6 +364,13 @@ window.BK_I18N = {
   viaContact: "{% filter escapejs %}{% trans 'Via' %}{% endfilter %}",
   minutes: "{% filter escapejs %}{% trans 'min' %}{% endfilter %}",
   currencyDen: "{% filter escapejs %}{% trans 'den' %}{% endfilter %}",
+  nameRequired: "{% filter escapejs %}{% trans 'Please enter your full name.' %}{% endfilter %}",
+  phoneRequired: "{% filter escapejs %}{% trans 'Please enter your phone number.' %}{% endfilter %}",
+  emailRequired: "{% filter escapejs %}{% trans 'Please enter your email address.' %}{% endfilter %}",
+  emailInvalid: "{% filter escapejs %}{% trans 'Please enter a valid email address.' %}{% endfilter %}",
+  instagramRequired: "{% filter escapejs %}{% trans 'Please enter your Instagram username.' %}{% endfilter %}",
+  photoRequiredError: "{% filter escapejs %}{% trans 'Please upload a reference photo for this service.' %}{% endfilter %}",
+  detailsIncomplete: "{% filter escapejs %}{% trans 'Please complete all required fields before continuing.' %}{% endfilter %}",
   months: [
     "{% filter escapejs %}{% trans 'January' %}{% endfilter %}",
     "{% filter escapejs %}{% trans 'February' %}{% endfilter %}",
@@ -454,7 +464,29 @@ window.BK_I18N = {
       ps.classList.toggle('done', i < n);
     });
     progressLines.forEach((line, idx) => line.classList.toggle('done', idx < n - 1));
+    document.body.classList.remove('bk-step1-confirm-open');
+    if (n !== 1) hideConfirmBar();
+    updateBackFab();
+    updateActiveStepPadding();
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function goBackOneStep() {
+    const targetStep = state.step - 1;
+    if (targetStep < 1) return;
+    goTo(targetStep);
+    if (targetStep === 2) renderCalendar();
+    if (targetStep === 1 && state.priceItem) {
+      const selectedBtn = document.querySelector(
+        `.bk-price-item-btn[data-item-id="${state.priceItem.id}"]`
+      );
+      if (selectedBtn) {
+        closeAllCards();
+        openCard(selectedBtn.closest('.bk-svc-card'));
+        selectedBtn.classList.add('selected');
+      }
+      showConfirmBar(state.service, state.priceItem);
+    }
   }
 
   const todayStr = formatDateStr(new Date());
@@ -634,9 +666,86 @@ window.BK_I18N = {
   }
 
   function canAdvanceFromDetails() {
-    const name  = document.getElementById('id_full_name')?.value.trim();
-    const phone = document.getElementById('id_phone_number')?.value.trim();
-    return Boolean(name && phone);
+    return validateDetailsStep({ focusFirst: false });
+  }
+
+  function isValidEmail(value) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  }
+
+  function setDetailsFieldError(fieldKey, message) {
+    const input = document.getElementById(`id_${fieldKey}`);
+    const errEl = document.getElementById(`bk-err-${fieldKey}`);
+    if (errEl) {
+      errEl.textContent = message || '';
+      errEl.hidden = !message;
+    }
+    input?.closest('.bk-field')?.classList.toggle('bk-field-has-error', Boolean(message));
+    input?.classList.toggle('bk-input-invalid', Boolean(message));
+  }
+
+  function clearDetailsFieldErrors() {
+    ['full_name', 'phone_number', 'email', 'instagram_username', 'reference_photo'].forEach(key => {
+      setDetailsFieldError(key, '');
+    });
+  }
+
+  function photoRequiredForBooking() {
+    return Boolean(
+      state.priceItem?.photoRequired ||
+      state.service?.requiresPhoto
+    );
+  }
+
+  function validateDetailsStep({ focusFirst = true } = {}) {
+    clearDetailsFieldErrors();
+    let firstInvalid = null;
+    let valid = true;
+
+    const name = document.getElementById('id_full_name')?.value.trim() || '';
+    const phone = document.getElementById('id_phone_number')?.value.trim() || '';
+    const email = document.getElementById('id_email')?.value.trim() || '';
+    const instagram = document.getElementById('id_instagram_username')?.value.trim() || '';
+
+    if (!name) {
+      setDetailsFieldError('full_name', I18N.nameRequired);
+      firstInvalid = firstInvalid || document.getElementById('id_full_name');
+      valid = false;
+    }
+    if (!phone) {
+      setDetailsFieldError('phone_number', I18N.phoneRequired);
+      firstInvalid = firstInvalid || document.getElementById('id_phone_number');
+      valid = false;
+    }
+    if (!email) {
+      setDetailsFieldError('email', I18N.emailRequired);
+      firstInvalid = firstInvalid || document.getElementById('id_email');
+      valid = false;
+    } else if (!isValidEmail(email)) {
+      setDetailsFieldError('email', I18N.emailInvalid);
+      firstInvalid = firstInvalid || document.getElementById('id_email');
+      valid = false;
+    }
+    if (!instagram) {
+      setDetailsFieldError('instagram_username', I18N.instagramRequired);
+      firstInvalid = firstInvalid || document.getElementById('id_instagram_username');
+      valid = false;
+    }
+    if (photoRequiredForBooking()) {
+      const photoFile = document.getElementById('id_reference_photo')?.files?.[0];
+      if (!photoFile) {
+        setDetailsFieldError('reference_photo', I18N.photoRequiredError);
+        firstInvalid = firstInvalid || document.getElementById('id_reference_photo');
+        valid = false;
+      }
+    }
+
+    if (!valid && focusFirst && firstInvalid) {
+      firstInvalid.focus({ preventScroll: true });
+      firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      showBkToast(I18N.detailsIncomplete);
+    }
+    return valid;
   }
 
   // ── Confirm bar refs ──────────────────────────────────────────────────────
@@ -644,8 +753,30 @@ window.BK_I18N = {
   const confirmBarName = document.getElementById('bk-confirm-bar-name');
   const confirmBarMeta = document.getElementById('bk-confirm-bar-meta');
   const confirmBarBtn  = document.getElementById('bk-confirm-bar-btn');
+  const backFab        = document.getElementById('bk-back-fab');
+  const salonPageUrl   = form.dataset.salonUrl || '/';
 
-  const _step1El = document.querySelector('.bk-step[data-step="1"]');
+  function updateBackFab() {
+    const visible = state.step >= 1 && state.step <= 4;
+    document.body.classList.toggle('bk-back-fab-visible', visible);
+    if (!backFab) return;
+    backFab.setAttribute(
+      'aria-label',
+      state.step === 1 ? '{% filter escapejs %}{% trans "Back to salon" %}{% endfilter %}' : '{% filter escapejs %}{% trans "Back" %}{% endfilter %}'
+    );
+  }
+
+  function updateActiveStepPadding() {
+    steps.forEach(s => { s.style.paddingBottom = ''; });
+    const active = steps.find(s => +s.dataset.step === state.step);
+    if (!active) return;
+    if (state.step === 1) {
+      const confirmOpen = confirmBar && confirmBar.style.display === 'flex';
+      active.style.paddingBottom = confirmOpen ? '156px' : '76px';
+    } else {
+      active.style.paddingBottom = '76px';
+    }
+  }
 
   function showConfirmBar(service, priceItem) {
     if (!confirmBar) return;
@@ -656,13 +787,14 @@ window.BK_I18N = {
     confirmBarName.textContent = priceItem.name;
     confirmBarMeta.textContent = `${service.name}  ·  ${service.duration} ${I18N.minutes}  ·  ${priceItem.price} ${I18N.currencyDen}`;
     confirmBar.style.display   = 'flex';
-    // Push step content up so the last item isn't hidden behind the fixed bar
-    if (_step1El) _step1El.style.paddingBottom = '88px';
+    document.body.classList.add('bk-step1-confirm-open');
+    updateActiveStepPadding();
   }
 
   function hideConfirmBar() {
     if (confirmBar) confirmBar.style.display = 'none';
-    if (_step1El) _step1El.style.paddingBottom = '';
+    document.body.classList.remove('bk-step1-confirm-open');
+    updateActiveStepPadding();
   }
 
   // ── Toast ─────────────────────────────────────────────────────────────────
@@ -717,6 +849,14 @@ window.BK_I18N = {
     goTo(2);
     renderCalendar();
     refreshStep2UI();
+  });
+
+  backFab?.addEventListener('click', () => {
+    if (state.step === 1) {
+      window.location.href = salonPageUrl;
+      return;
+    }
+    goBackOneStep();
   });
 
   document.addEventListener('click', e => {
@@ -805,22 +945,7 @@ window.BK_I18N = {
     }
 
     if (e.target.closest('[data-prev]')) {
-      const targetStep = state.step - 1;
-      goTo(targetStep);
-      if (targetStep === 2) renderCalendar();
-      // Going back to step 1: restore the visible selected state
-      if (targetStep === 1 && state.priceItem) {
-        const selectedBtn = document.querySelector(
-          `.bk-price-item-btn[data-item-id="${state.priceItem.id}"]`
-        );
-        if (selectedBtn) {
-          closeAllCards();
-          openCard(selectedBtn.closest('.bk-svc-card'));
-          selectedBtn.classList.add('selected');
-        }
-        // Restore confirm bar so the user can continue without re-selecting
-        showConfirmBar(state.service, state.priceItem);
-      }
+      goBackOneStep();
       return;
     }
 
@@ -830,14 +955,7 @@ window.BK_I18N = {
     }
 
     if (e.target === document.getElementById('bk-step3-next')) {
-      if (!canAdvanceFromDetails()) {
-        if (!document.getElementById('id_full_name')?.value.trim()) {
-          document.getElementById('id_full_name')?.focus();
-        } else {
-          document.getElementById('id_phone_number')?.focus();
-        }
-        return;
-      }
+      if (!validateDetailsStep()) return;
       updateReview();
       goTo(4);
       return;
@@ -850,6 +968,13 @@ window.BK_I18N = {
       if (contactInput) contactInput.value = pill.dataset.contact;
       return;
     }
+  });
+
+  ['id_full_name', 'id_phone_number', 'id_email', 'id_instagram_username'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', () => {
+      const key = id.replace('id_', '');
+      setDetailsFieldError(key, '');
+    });
   });
 
   // ── File upload: type + size validation ───────────────────────────────────
@@ -877,6 +1002,7 @@ window.BK_I18N = {
         return;
       }
       if (label) label.textContent = file.name;
+      setDetailsFieldError('reference_photo', '');
     });
   }
 

@@ -68,6 +68,11 @@ class Command(BaseCommand):
             help="Create owner as superuser (dev convenience only)",
         )
         parser.add_argument(
+            "--instagram",
+            default="",
+            help="Salon Instagram username (without @)",
+        )
+        parser.add_argument(
             "--force",
             action="store_true",
             help="Update existing salon/policy/services if they already exist",
@@ -132,6 +137,12 @@ class Command(BaseCommand):
             self.stdout.write(f"Updated salon '{salon_name}'.")
         else:
             self.stdout.write(self.style.SUCCESS(f"Created salon '{salon_name}' ({slug})."))
+
+        instagram = options["instagram"].strip().lstrip("@")
+        if instagram and (options["force"] or salon_created or not salon.instagram_username):
+            salon.instagram_username = instagram
+            salon.save(update_fields=["instagram_username"])
+            self.stdout.write(f"Instagram: @{instagram}")
 
         policy, policy_created = BookingPolicy.objects.get_or_create(salon=salon)
         if options["force"] or policy_created:

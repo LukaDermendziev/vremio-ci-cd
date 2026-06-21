@@ -40,6 +40,12 @@
             {% if booking.owner_note %}
               <div class="od-bk-note">{% trans "Owner note:" %} {{ booking.owner_note }}</div>
             {% endif %}
+            {% if booking.reference_photo %}
+              <button type="button" class="od-bk-photo-thumb" data-photo-preview="{% url 'booking:owner_booking_photo' booking.id %}">
+                <img src="{% url 'booking:owner_booking_photo' booking.id %}" alt="{% trans 'Reference photo' %}" loading="lazy">
+                <span>{% trans "View reference photo" %}</span>
+              </button>
+            {% endif %}
           </div>
         {% endfor %}
       </div>

@@ -1,0 +1,5 @@
+{% load i18n %}{% blocktrans with name=first_name date=date time=time salon=salon.name %}Hello {{ name }},
+
+You did not attend your appointment on {{ date }} at {{ time }}.
+
+If you would like to book again, please contact us. — {{ salon }}{% endblocktrans %}
