@@ -50,10 +50,11 @@
 
   {# Right: animated masonry gallery — real nail photos #}
   <div class="sp-gallery" aria-hidden="true">
+    <div class="sp-gallery-inner">
 
     {# Column 1 — scrolls UP, 22s #}
-    <div class="sp-gallery-col" style="--dur:22s;--delay:-4s">
-      <div class="sp-gallery-track sp-track-up">
+    <div class="sp-gallery-col">
+      <div class="sp-gallery-track sp-track-up" style="--dur:22s">
         <img class="sp-gal-card" src="{% static 'images/gallery/nail-1.jpg' %}" alt="Nail design 1" style="height:240px">
         <img class="sp-gal-card" src="{% static 'images/gallery/nail-5.jpg' %}" alt="Nail design 5" style="height:185px">
         <img class="sp-gal-card" src="{% static 'images/gallery/nail-9.jpg' %}" alt="Nail design 9" style="height:265px">
@@ -65,8 +66,8 @@
     </div>
 
     {# Column 2 — scrolls DOWN, 28s #}
-    <div class="sp-gallery-col" style="--dur:28s;--delay:-12s">
-      <div class="sp-gallery-track sp-track-down">
+    <div class="sp-gallery-col">
+      <div class="sp-gallery-track sp-track-down" style="--dur:28s">
         <img class="sp-gal-card" src="{% static 'images/gallery/nail-4.jpg' %}" alt="Nail design 4" style="height:220px">
         <img class="sp-gal-card" src="{% static 'images/gallery/nail-8.jpg' %}" alt="Nail design 8" style="height:260px">
         <img class="sp-gal-card" src="{% static 'images/gallery/nail-12.jpg' %}" alt="Nail design 12" style="height:195px">
@@ -78,8 +79,8 @@
     </div>
 
     {# Column 3 — scrolls UP, 20s #}
-    <div class="sp-gallery-col" style="--dur:20s;--delay:-7s">
-      <div class="sp-gallery-track sp-track-up">
+    <div class="sp-gallery-col">
+      <div class="sp-gallery-track sp-track-up" style="--dur:20s">
         <img class="sp-gal-card" src="{% static 'images/gallery/nail-7.jpg' %}" alt="Nail design 7" style="height:230px">
         <img class="sp-gal-card" src="{% static 'images/gallery/nail-11.jpg' %}" alt="Nail design 11" style="height:180px">
         <img class="sp-gal-card" src="{% static 'images/gallery/nail-15.jpg' %}" alt="Nail design 15" style="height:250px">
@@ -91,8 +92,8 @@
     </div>
 
     {# Column 4 — scrolls DOWN, 26s #}
-    <div class="sp-gallery-col" style="--dur:26s;--delay:-15s">
-      <div class="sp-gallery-track sp-track-down">
+    <div class="sp-gallery-col">
+      <div class="sp-gallery-track sp-track-down" style="--dur:26s">
         <img class="sp-gal-card" src="{% static 'images/gallery/nail-10.jpg' %}" alt="Nail design 10" style="height:215px">
         <img class="sp-gal-card" src="{% static 'images/gallery/nail-14.jpg' %}" alt="Nail design 14" style="height:255px">
         <img class="sp-gal-card" src="{% static 'images/gallery/nail-18.jpg' %}" alt="Nail design 18" style="height:185px">
@@ -104,8 +105,8 @@
     </div>
 
     {# Column 5 — scrolls UP, 24s #}
-    <div class="sp-gallery-col" style="--dur:24s;--delay:-8s">
-      <div class="sp-gallery-track sp-track-up">
+    <div class="sp-gallery-col">
+      <div class="sp-gallery-track sp-track-up" style="--dur:24s">
         <img class="sp-gal-card" src="{% static 'images/gallery/nail-13.jpg' %}" alt="Nail design 13" style="height:260px">
         <img class="sp-gal-card" src="{% static 'images/gallery/nail-17.jpg' %}" alt="Nail design 17" style="height:200px">
         <img class="sp-gal-card" src="{% static 'images/gallery/nail-21.jpg' %}" alt="Nail design 21" style="height:235px">
@@ -117,8 +118,8 @@
     </div>
 
     {# Column 6 — scrolls DOWN, 18s #}
-    <div class="sp-gallery-col" style="--dur:18s;--delay:-5s">
-      <div class="sp-gallery-track sp-track-down">
+    <div class="sp-gallery-col">
+      <div class="sp-gallery-track sp-track-down" style="--dur:18s">
         <img class="sp-gal-card" src="{% static 'images/gallery/nail-16.jpg' %}" alt="Nail design 16" style="height:225px">
         <img class="sp-gal-card" src="{% static 'images/gallery/nail-20.jpg' %}" alt="Nail design 20" style="height:250px">
         <img class="sp-gal-card" src="{% static 'images/gallery/nail-2.jpg' %}" alt="Nail design 2" style="height:190px">
@@ -129,52 +130,11 @@
       </div>
     </div>
 
+    </div>{# /sp-gallery-inner #}
   </div>{# /sp-gallery #}
 </section>
 
-<script>
-(function () {
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-  function waitForImage(img) {
-    if (img.complete && img.naturalHeight > 0) return Promise.resolve();
-    return new Promise(function (resolve) {
-      img.addEventListener('load', resolve, { once: true });
-      img.addEventListener('error', resolve, { once: true });
-    });
-  }
-
-  function measureLoopDistance(track, originalCount) {
-    var first = track.children[0];
-    var cloneStart = track.children[originalCount];
-    if (!first || !cloneStart) return 0;
-    return cloneStart.getBoundingClientRect().top - first.getBoundingClientRect().top;
-  }
-
-  document.querySelectorAll('.sp-gallery-track').forEach(function (track) {
-    if (track.dataset.loopReady === '1') return;
-
-    var originals = Array.from(track.children);
-    var originalCount = originals.length;
-    if (!originalCount) return;
-
-    Promise.all(originals.map(waitForImage)).then(function () {
-      originals.forEach(function (item) {
-        var clone = item.cloneNode(true);
-        clone.setAttribute('aria-hidden', 'true');
-        track.appendChild(clone);
-      });
-
-      var loopDistance = measureLoopDistance(track, originalCount);
-      if (loopDistance <= 0) return;
-
-      track.style.setProperty('--loop-distance', loopDistance + 'px');
-      track.dataset.loopReady = '1';
-      track.classList.add('sp-track-ready');
-    });
-  });
-})();
-</script>
+<script src="{% static 'js/salon_gallery.js' %}"></script>
 
 {# ── Trust bar ────────────────────────────────────────────────────────────── #}
 <div class="sp-trust-bar">
