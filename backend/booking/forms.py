@@ -3,6 +3,7 @@ from decimal import Decimal, InvalidOperation
 
 from django import forms
 from django.forms import modelformset_factory
+from django.utils.translation import gettext_lazy as _
 
 from .models import (
     Booking,
@@ -48,10 +49,10 @@ class BookingRequestForm(forms.Form):
     )
     date = forms.DateField(widget=forms.HiddenInput())
     start_time = forms.CharField(widget=forms.HiddenInput())
-    full_name = forms.CharField(max_length=160, label="Full Name")
-    phone_number = forms.CharField(max_length=30, label="Phone Number")
-    instagram_username = forms.CharField(max_length=80, label="Instagram Username")
-    email = forms.EmailField(required=False, label="Email (optional)")
+    full_name = forms.CharField(max_length=160, label=_("Full name"))
+    phone_number = forms.CharField(max_length=30, label=_("Phone number"))
+    instagram_username = forms.CharField(max_length=80, label=_("Instagram username"))
+    email = forms.EmailField(required=False, label=_("Email (optional)"))
     preferred_contact_method = forms.ChoiceField(
         choices=Customer.PreferredContactMethod.choices,
         initial=Customer.PreferredContactMethod.VIBER,
@@ -60,7 +61,7 @@ class BookingRequestForm(forms.Form):
     customer_note = forms.CharField(
         widget=forms.Textarea(attrs={"rows": 2, "placeholder": "Any notes for the salon..."}),
         required=False,
-        label="Message to salon (optional)",
+        label=_("Message to salon (optional)"),
     )
     reference_photo = forms.ImageField(
         required=False,
@@ -71,7 +72,7 @@ class BookingRequestForm(forms.Form):
     selected_price_item_id = forms.IntegerField(required=False, widget=forms.HiddenInput())
     rules_accepted = forms.BooleanField(
         required=True,
-        label="I accept the salon rules and understand this is only a request.",
+        label=_("I accept the salon rules and understand this is only a request."),
         widget=forms.CheckboxInput(attrs={"class": "bk-rules-hidden"}),
     )
 
@@ -95,12 +96,12 @@ class BookingRequestForm(forms.Form):
         price_item_id = cleaned_data.get("selected_price_item_id")
 
         if service and service.salon_id != self.salon.id:
-            self.add_error("service", "Choose a valid service for this salon.")
+            self.add_error("service", _("Choose a valid service for this salon."))
 
         # Validate reference photo size (JS guards first, but backend must also check)
         photo = cleaned_data.get("reference_photo")
         if photo and hasattr(photo, "size") and photo.size > 8 * 1024 * 1024:
-            self.add_error("reference_photo", "Image is too large. Maximum allowed size is 8 MB.")
+            self.add_error("reference_photo", _("Image is too large. Maximum allowed size is 8 MB."))
 
         # Validate selected price item belongs to the chosen service
         if price_item_id and service:
@@ -117,14 +118,14 @@ class BookingRequestForm(forms.Form):
             if not slot:
                 self.add_error(
                     "start_time",
-                    "This time is no longer available. Please choose another slot.",
+                    _("This time is no longer available. Please choose another slot."),
                 )
                 return cleaned_data
 
             cleaned_data["start_at"] = slot["start"]
             cleaned_data["end_at"] = slot["end"]
         elif date or service:
-            self.add_error("start_time", "Please choose an available time.")
+            self.add_error("start_time", _("Please choose an available time."))
 
         return cleaned_data
 
@@ -185,28 +186,28 @@ class BookingRequestForm(forms.Form):
 
 class OwnerBookingForm(forms.Form):
     booking_id = forms.IntegerField(required=False, widget=forms.HiddenInput())
-    full_name = forms.CharField(max_length=160, label="Full name")
-    phone_number = forms.CharField(max_length=30, label="Phone")
-    instagram_username = forms.CharField(max_length=80, required=False, label="Instagram")
-    email = forms.EmailField(required=False, label="Email")
+    full_name = forms.CharField(max_length=160, label=_("Full name"))
+    phone_number = forms.CharField(max_length=30, label=_("Phone"))
+    instagram_username = forms.CharField(max_length=80, required=False, label=_("Instagram"))
+    email = forms.EmailField(required=False, label=_("Email"))
     preferred_contact_method = forms.ChoiceField(
         choices=Customer.PreferredContactMethod.choices,
         initial=Customer.PreferredContactMethod.VIBER,
-        label="Preferred contact",
+        label=_("Preferred contact"),
     )
-    service = forms.ModelChoiceField(queryset=Service.objects.none(), label="Service")
-    date = forms.DateField(widget=forms.DateInput(attrs={"type": "date"}), label="Date")
-    start_time = forms.CharField(label="Start time")
-    status = forms.ChoiceField(choices=Booking.Status.choices, label="Status")
+    service = forms.ModelChoiceField(queryset=Service.objects.none(), label=_("Service"))
+    date = forms.DateField(widget=forms.DateInput(attrs={"type": "date"}), label=_("Date"))
+    start_time = forms.CharField(label=_("Start time"))
+    status = forms.ChoiceField(choices=Booking.Status.choices, label=_("Status"))
     source = forms.ChoiceField(
         choices=Booking.Source.choices,
         initial=Booking.Source.OWNER_MANUAL,
-        label="Source",
+        label=_("Source"),
     )
     owner_note = forms.CharField(
         required=False,
         widget=forms.Textarea(attrs={"rows": 2}),
-        label="Owner note",
+        label=_("Owner note"),
     )
 
     def __init__(self, *args, salon, booking=None, **kwargs):
@@ -243,7 +244,7 @@ class OwnerBookingForm(forms.Form):
         exclude_id = cleaned_data.get("booking_id") or None
 
         if service and service.salon_id != self.salon.id:
-            self.add_error("service", "Choose a valid service for this salon.")
+            self.add_error("service", _("Choose a valid service for this salon."))
 
         if service and date and start_time:
             from django.utils import timezone as tz
@@ -254,7 +255,7 @@ class OwnerBookingForm(forms.Form):
                     naive_dt = _dt.datetime.combine(date, _dt.time(hour, minute))
                     aware_dt = tz.make_aware(naive_dt)
                     if aware_dt < tz.now():
-                        self.add_error("start_time", "Cannot create a booking in the past.")
+                        self.add_error("start_time", _("Cannot create a booking in the past."))
                         return cleaned_data
                 except (ValueError, TypeError):
                     pass
@@ -270,7 +271,7 @@ class OwnerBookingForm(forms.Form):
             if not slot:
                 self.add_error(
                     "start_time",
-                    "This time overlaps another booking or is outside working hours.",
+                    _("This time overlaps another booking or is outside working hours."),
                 )
                 return cleaned_data
 
@@ -386,6 +387,27 @@ class BookingPolicyForm(forms.ModelForm):
             "msg_pending",
             "msg_reminder",
         ]
+        labels = {
+            "minimum_notice_days": _("Minimum notice days"),
+            "maximum_booking_window_days": _("Maximum booking window days"),
+            "allow_same_day_booking": _("Allow same day booking"),
+            "allow_next_day_booking": _("Allow next day booking"),
+            "auto_approve_bookings": _("Auto approve bookings"),
+            "late_arrival_limit_minutes": _("Late arrival limit minutes"),
+            "reminder_hours_before": _("Reminder hours before"),
+            "pending_holds_slot": _("Pending holds slot"),
+            "max_appointments_per_day": _("Max appointments per day"),
+            "slot_interval_minutes": _("Slot interval minutes"),
+            "buffer_minutes_between_bookings": _("Buffer minutes between bookings"),
+            "salon_rules": _("Salon rules"),
+            "msg_approved": _("Approved message"),
+            "msg_rejected": _("Rejected message"),
+            "msg_cancelled": _("Cancelled message"),
+            "msg_edited": _("Edited/rescheduled message"),
+            "msg_no_show": _("No-show message"),
+            "msg_pending": _("Pending/received message"),
+            "msg_reminder": _("Reminder message"),
+        }
         widgets = {
             "salon_rules":   forms.Textarea(attrs={"rows": 5}),
             "msg_approved":  forms.Textarea(attrs={"rows": 3}),

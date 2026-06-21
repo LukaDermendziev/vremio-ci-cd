@@ -1,6 +1,11 @@
 {% extends "base.html" %}
-{% block title %}Book — {{ salon.name }}{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Book" %} — {{ salon.name }}{% endblock %}
 {% block body_class %}bk-page{% endblock %}
+
+{% block lang_switcher %}
+<div class="bk-lang-wrap">{% include "partials/language_switcher.html" %}</div>
+{% endblock %}
 
 {% block content %}
 <form
@@ -23,40 +28,40 @@
   {% if form.errors %}
     <div class="bk-error-banner">
       <i class="bi bi-exclamation-circle"></i>
-      Something went wrong. Please check your details and choose an available time.
+      {% trans "Something went wrong. Please check your details and choose an available time." %}
     </div>
   {% endif %}
 
   {# ── Step progress bar ──────────────────────────────────────────────────── #}
   <div class="bk-progress" id="bk-progress">
-    <div class="bk-progress-step active" data-dot="1"><span class="bk-ps-num">1</span><span class="bk-ps-label">Service</span></div>
+    <div class="bk-progress-step active" data-dot="1"><span class="bk-ps-num">1</span><span class="bk-ps-label">{% trans "Service" %}</span></div>
     <div class="bk-progress-line"></div>
-    <div class="bk-progress-step" data-dot="2"><span class="bk-ps-num">2</span><span class="bk-ps-label">Date &amp; Time</span></div>
+    <div class="bk-progress-step" data-dot="2"><span class="bk-ps-num">2</span><span class="bk-ps-label">{% trans "Date & Time" %}</span></div>
     <div class="bk-progress-line"></div>
-    <div class="bk-progress-step" data-dot="3"><span class="bk-ps-num">3</span><span class="bk-ps-label">Your Details</span></div>
+    <div class="bk-progress-step" data-dot="3"><span class="bk-ps-num">3</span><span class="bk-ps-label">{% trans "Your Details" %}</span></div>
     <div class="bk-progress-line"></div>
-    <div class="bk-progress-step" data-dot="4"><span class="bk-ps-num">4</span><span class="bk-ps-label">Review</span></div>
+    <div class="bk-progress-step" data-dot="4"><span class="bk-ps-num">4</span><span class="bk-ps-label">{% trans "Review" %}</span></div>
   </div>
 
   {# ── Step 1: Service selection ─────────────────────────────────────────── #}
   <div class="bk-step active" data-step="1">
     <div class="bk-brand-header">
-      <a href="{% url 'booking:salon_page' salon.slug %}" class="bk-back-site">
+      <a href="{% url 'booking:salon_page' salon.slug %}" class="bk-back-site" aria-label="{% trans 'Back' %}">
         <i class="bi bi-arrow-left"></i>
       </a>
       <div class="bk-brand-center">
         <div class="bk-logo-wrap">
           {# Replace the div below with: <img src="{% static 'img/logo.png' %}" alt="{{ salon.name }}" class="bk-logo-img"> #}
-          <div class="bk-logo-placeholder" title="Upload your logo here">
+          <div class="bk-logo-placeholder" title="{% trans 'Upload your logo here' %}">
             <i class="bi bi-image"></i>
           </div>
         </div>
         <div class="bk-salon-name">{{ salon.name }}</div>
-        <div class="bk-salon-sub">Request an appointment</div>
+        <div class="bk-salon-sub">{% trans "Request an appointment" %}</div>
       </div>
     </div>
 
-    <div class="bk-section-label">Choose service</div>
+    <div class="bk-section-label">{% trans "Choose service" %}</div>
 
     {% for service in services %}
       {% with items=service.price_items.all %}
@@ -74,7 +79,7 @@
             <div class="bk-service-name">{{ service.name }}</div>
             {% if service.description %}<div class="bk-service-desc">{{ service.description }}</div>{% endif %}
             <div class="bk-service-tags">
-              <span class="bk-service-dur"><i class="bi bi-clock"></i> {{ service.duration_minutes }} min</span>
+              <span class="bk-service-dur"><i class="bi bi-clock"></i> {% blocktrans with minutes=service.duration_minutes %}{{ minutes }} min{% endblocktrans %}</span>
               {% if service.extra_duration_note %}<span class="bk-service-note">{{ service.extra_duration_note }}</span>{% endif %}
             </div>
             {# Shows which sub-service is selected when card is collapsed #}
@@ -84,7 +89,7 @@
             </div>
           </div>
           <div class="bk-service-right">
-            {% if service.base_price %}<div class="bk-service-price">од {{ service.base_price|floatformat:0 }} ден</div>{% endif %}
+            {% if service.base_price %}<div class="bk-service-price">{% blocktrans with price=service.base_price|floatformat:0 %}from {{ price }} den{% endblocktrans %}</div>{% endif %}
             <i class="bi bi-chevron-down bk-svc-chevron"></i>
           </div>
         </button>
@@ -105,9 +110,9 @@
                 <span class="bk-pi-check" aria-hidden="true"><i class="bi bi-check-lg"></i></span>
                 <div class="bk-pi-info">
                   <span class="bk-pi-name">{{ item.name }}</span>
-                  {% if item.photo_required %}<span class="bk-photo-badge required">Photo required</span>{% endif %}
+                  {% if item.photo_required %}<span class="bk-photo-badge required">{% trans "Photo required" %}</span>{% endif %}
                 </div>
-                <span class="bk-pi-price">{{ item.price_display }} ден</span>
+                <span class="bk-pi-price">{{ item.price_display }} {% trans "den" %}</span>
               </button>
               {% endfor %}
             {% endfor %}
@@ -130,21 +135,21 @@
           <div class="bk-service-name">{{ service.name }}</div>
           {% if service.description %}<div class="bk-service-desc">{{ service.description }}</div>{% endif %}
           <div class="bk-service-tags">
-            <span class="bk-service-dur"><i class="bi bi-clock"></i> {{ service.duration_minutes }} min</span>
+            <span class="bk-service-dur"><i class="bi bi-clock"></i> {% blocktrans with minutes=service.duration_minutes %}{{ minutes }} min{% endblocktrans %}</span>
             {% if service.extra_duration_note %}<span class="bk-service-note">{{ service.extra_duration_note }}</span>{% endif %}
-            {% if service.requires_photo %}<span class="bk-photo-badge required">Photo required</span>
-            {% elif service.photo_recommended %}<span class="bk-photo-badge">Photo recommended</span>{% endif %}
+            {% if service.requires_photo %}<span class="bk-photo-badge required">{% trans "Photo required" %}</span>
+            {% elif service.photo_recommended %}<span class="bk-photo-badge">{% trans "Photo recommended" %}</span>{% endif %}
           </div>
         </div>
         <div class="bk-service-right">
-          {% if service.base_price %}<div class="bk-service-price">{{ service.base_price|floatformat:0 }} ден</div>{% endif %}
+          {% if service.base_price %}<div class="bk-service-price">{{ service.base_price|floatformat:0 }} {% trans "den" %}</div>{% endif %}
           <i class="bi bi-chevron-right bk-chevron"></i>
         </div>
       </button>
       {% endif %}
       {% endwith %}
     {% empty %}
-      <p class="bk-empty-msg">No active services available yet.</p>
+      <p class="bk-empty-msg">{% trans "No active services available yet." %}</p>
     {% endfor %}
 
     {# ── Confirm bar: appears after tapping a sub-service item ── #}
@@ -154,7 +159,7 @@
         <span class="bk-confirm-bar-meta" id="bk-confirm-bar-meta"></span>
       </div>
       <button type="button" class="bk-confirm-bar-btn" id="bk-confirm-bar-btn">
-        Продолжи <i class="bi bi-arrow-right"></i>
+        {% trans "Continue" %} <i class="bi bi-arrow-right"></i>
       </button>
     </div>
   </div>
@@ -162,28 +167,28 @@
   {# ── Step 2: Date & time ───────────────────────────────────────────────── #}
   <div class="bk-step" data-step="2">
     <div class="bk-step-header">
-      <button type="button" class="bk-back-btn" data-prev aria-label="Back"><i class="bi bi-arrow-left"></i></button>
-      <span class="bk-step-title">Date &amp; Time</span>
+      <button type="button" class="bk-back-btn" data-prev aria-label="{% trans 'Back' %}"><i class="bi bi-arrow-left"></i></button>
+      <span class="bk-step-title">{% trans "Date & Time" %}</span>
     </div>
 
     <div class="bk-selected-service" id="bk-svc-pill" style="display:none"></div>
 
     <div class="bk-cal">
       <div class="bk-cal-nav">
-        <button type="button" class="bk-cal-nav-btn" id="bk-prev-month" aria-label="Previous month"><i class="bi bi-chevron-left"></i></button>
+        <button type="button" class="bk-cal-nav-btn" id="bk-prev-month" aria-label="{% trans 'Previous month' %}"><i class="bi bi-chevron-left"></i></button>
         <span class="bk-cal-month-label" id="bk-month-label"></span>
-        <button type="button" class="bk-cal-nav-btn" id="bk-next-month" aria-label="Next month"><i class="bi bi-chevron-right"></i></button>
+        <button type="button" class="bk-cal-nav-btn" id="bk-next-month" aria-label="{% trans 'Next month' %}"><i class="bi bi-chevron-right"></i></button>
       </div>
       <div class="bk-cal-dow">
-        <span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span><span class="sun">Su</span>
+        <span>{% trans "Mo" %}</span><span>{% trans "Tu" %}</span><span>{% trans "We" %}</span><span>{% trans "Th" %}</span><span>{% trans "Fr" %}</span><span>{% trans "Sa" %}</span><span class="sun">{% trans "Su" %}</span>
       </div>
       <div class="bk-cal-grid" id="bk-cal-grid"></div>
     </div>
 
     <div class="bk-slots-section">
-      <div class="bk-section-label">Available times</div>
+      <div class="bk-section-label">{% trans "Available times" %}</div>
       <div class="bk-slots-grid" id="bk-slots-grid">
-        <span class="bk-slots-hint">Select a date above to see available times.</span>
+        <span class="bk-slots-hint">{% trans "Select a date above to see available times." %}</span>
       </div>
     </div>
 
@@ -193,44 +198,44 @@
       <div class="bk-sum-price" id="bk-sum-price"></div>
     </div>
 
-    <button type="button" class="bk-btn-primary" id="bk-step2-next" disabled>Continue</button>
+    <button type="button" class="bk-btn-primary" id="bk-step2-next" disabled>{% trans "Continue" %}</button>
   </div>
 
   {# ── Step 3: Customer details ──────────────────────────────────────────── #}
   <div class="bk-step" data-step="3">
     <div class="bk-step-header">
-      <button type="button" class="bk-back-btn" data-prev aria-label="Back"><i class="bi bi-arrow-left"></i></button>
-      <span class="bk-step-title">Your Details</span>
+      <button type="button" class="bk-back-btn" data-prev aria-label="{% trans 'Back' %}"><i class="bi bi-arrow-left"></i></button>
+      <span class="bk-step-title">{% trans "Your Details" %}</span>
     </div>
 
     <div class="bk-fields-group">
       <div class="bk-field">
-        <label class="bk-field-label" for="{{ form.full_name.id_for_label }}">Full name <span class="bk-req">*</span></label>
+        <label class="bk-field-label" for="{{ form.full_name.id_for_label }}">{% trans "Full name" %} <span class="bk-req">*</span></label>
         {{ form.full_name }}
         {% for err in form.full_name.errors %}<span class="bk-field-error">{{ err }}</span>{% endfor %}
       </div>
 
       <div class="bk-field">
-        <label class="bk-field-label" for="{{ form.phone_number.id_for_label }}">Phone number <span class="bk-req">*</span></label>
+        <label class="bk-field-label" for="{{ form.phone_number.id_for_label }}">{% trans "Phone number" %} <span class="bk-req">*</span></label>
         {{ form.phone_number }}
         {% for err in form.phone_number.errors %}<span class="bk-field-error">{{ err }}</span>{% endfor %}
       </div>
 
       <div class="bk-field">
-        <label class="bk-field-label" for="{{ form.instagram_username.id_for_label }}">Instagram username</label>
+        <label class="bk-field-label" for="{{ form.instagram_username.id_for_label }}">{% trans "Instagram username" %}</label>
         {{ form.instagram_username }}
         {% for err in form.instagram_username.errors %}<span class="bk-field-error">{{ err }}</span>{% endfor %}
       </div>
 
       <div class="bk-field">
-        <label class="bk-field-label" for="{{ form.email.id_for_label }}">Email <span class="bk-opt">(optional)</span></label>
+        <label class="bk-field-label" for="{{ form.email.id_for_label }}">{% trans "Email" %} <span class="bk-opt">({% trans "optional" %})</span></label>
         {{ form.email }}
         {% for err in form.email.errors %}<span class="bk-field-error">{{ err }}</span>{% endfor %}
       </div>
     </div>
 
     <div class="bk-field">
-      <div class="bk-field-label">Preferred contact method <span class="bk-req">*</span></div>
+      <div class="bk-field-label">{% trans "Preferred contact method" %} <span class="bk-req">*</span></div>
       <div class="bk-contact-pills">
         {% for value, label in form.preferred_contact_method.field.choices %}
           <button
@@ -243,10 +248,10 @@
     </div>
 
     <div class="bk-field" id="bk-photo-section">
-      <div class="bk-field-label">Reference photo <span id="bk-photo-hint" class="bk-opt">(optional)</span></div>
+      <div class="bk-field-label">{% trans "Reference photo" %} <span id="bk-photo-hint" class="bk-opt">({% trans "optional" %})</span></div>
       <label class="bk-upload-zone" for="{{ form.reference_photo.id_for_label }}">
         <i class="bi bi-camera"></i>
-        <span id="bk-upload-label">Tap to upload a photo</span>
+        <span id="bk-upload-label">{% trans "Tap to upload a photo" %}</span>
         {{ form.reference_photo }}
       </label>
       {% for err in form.reference_photo.errors %}<span class="bk-field-error">{{ err }}</span>{% endfor %}
@@ -257,20 +262,20 @@
       {{ form.customer_note }}
     </div>
 
-    <button type="button" class="bk-btn-primary" id="bk-step3-next">Continue</button>
+    <button type="button" class="bk-btn-primary" id="bk-step3-next">{% trans "Continue" %}</button>
   </div>
 
   {# ── Step 4: Review & submit ───────────────────────────────────────────── #}
   <div class="bk-step" data-step="4">
     <div class="bk-step-header">
-      <button type="button" class="bk-back-btn" data-prev aria-label="Back"><i class="bi bi-arrow-left"></i></button>
-      <span class="bk-step-title">Review &amp; Submit</span>
+      <button type="button" class="bk-back-btn" data-prev aria-label="{% trans 'Back' %}"><i class="bi bi-arrow-left"></i></button>
+      <span class="bk-step-title">{% trans "Review & Submit" %}</span>
     </div>
 
-    <p class="bk-section-label" style="margin-top:20px">Review request</p>
+    <p class="bk-section-label" style="margin-top:20px">{% trans "Review request" %}</p>
 
     <div class="bk-review-card">
-      <div class="bk-review-label">Appointment</div>
+      <div class="bk-review-label">{% trans "Appointment" %}</div>
       <div class="bk-review-svc" id="bk-rev-svc"></div>
       <div class="bk-review-row"><i class="bi bi-calendar3"></i><span id="bk-rev-date"></span></div>
       <div class="bk-review-row"><i class="bi bi-clock"></i><span id="bk-rev-dur"></span></div>
@@ -278,20 +283,20 @@
     </div>
 
     <div class="bk-review-card">
-      <div class="bk-review-label">Contact details</div>
+      <div class="bk-review-label">{% trans "Contact details" %}</div>
       <div class="bk-review-row"><i class="bi bi-person"></i><span id="bk-rev-name"></span></div>
       <div class="bk-review-row"><i class="bi bi-telephone"></i><span id="bk-rev-phone"></span></div>
       <div class="bk-review-row"><i class="bi bi-chat-dots"></i><span id="bk-rev-contact"></span></div>
     </div>
 
     <div class="bk-rules-section">
-      <div class="bk-section-label" style="margin-top:0">Salon rules</div>
+      <div class="bk-section-label" style="margin-top:0">{% trans "Salon rules" %}</div>
 
       {# Always-present base rule #}
       <label class="bk-rule-row">
         <input type="checkbox" class="bk-rule-check">
         <span class="bk-rule-box"><i class="bi bi-check"></i></span>
-        <span class="bk-rule-text">This is a request only — not confirmed until the salon approves it.</span>
+        <span class="bk-rule-text">{% trans "This is a request only — not confirmed until the salon approves it." %}</span>
       </label>
 
       {% if booking_policy and booking_policy.salon_rules %}
@@ -310,17 +315,17 @@
         <label class="bk-rule-row">
           <input type="checkbox" class="bk-rule-check">
           <span class="bk-rule-box"><i class="bi bi-check"></i></span>
-          <span class="bk-rule-text">Cancellations require at least 24–48 hours notice.</span>
+          <span class="bk-rule-text">{% trans "Cancellations require at least 24–48 hours notice." %}</span>
         </label>
         <label class="bk-rule-row">
           <input type="checkbox" class="bk-rule-check">
           <span class="bk-rule-box"><i class="bi bi-check"></i></span>
-          <span class="bk-rule-text">Being more than 15 minutes late without notice may result in cancellation.</span>
+          <span class="bk-rule-text">{% trans "Being more than 15 minutes late without notice may result in cancellation." %}</span>
         </label>
         <label class="bk-rule-row">
           <input type="checkbox" class="bk-rule-check">
           <span class="bk-rule-box"><i class="bi bi-check"></i></span>
-          <span class="bk-rule-text">I agree to the selected time and understand it cannot be changed without notice.</span>
+          <span class="bk-rule-text">{% trans "I agree to the selected time and understand it cannot be changed without notice." %}</span>
         </label>
       {% endif %}
 
@@ -330,18 +335,73 @@
 
     <div class="bk-notice">
       <i class="bi bi-info-circle"></i>
-      <span>This is a request only — not confirmed until the salon approves it.</span>
+      <span>{% trans "This is a request only — not confirmed until the salon approves it." %}</span>
     </div>
 
     <button type="submit" class="bk-btn-primary" id="bk-submit" disabled>
-      Submit Request
+      {% trans "Submit Request" %}
     </button>
   </div>
 
 </form>
 
 <script>
+window.BK_I18N = {
+  loading: "{% filter escapejs %}{% trans 'Loading times…' %}{% endfilter %}",
+  noSlots: "{% filter escapejs %}{% trans 'No available times on this date.' %}{% endfilter %}",
+  loadError: "{% filter escapejs %}{% trans 'Could not load times. Please try again.' %}{% endfilter %}",
+  selectDateHint: "{% filter escapejs %}{% trans 'Select a date above to see available times.' %}{% endfilter %}",
+  oneServiceWarning: "{% filter escapejs %}{% trans 'Only one service is allowed per booking. Your previous selection was replaced.' %}{% endfilter %}",
+  tapToUpload: "{% filter escapejs %}{% trans 'Tap to upload a photo' %}{% endfilter %}",
+  fileTypeError: "{% filter escapejs %}{% trans 'Only images are allowed (JPG, PNG, WebP). Choose another format.' %}{% endfilter %}",
+  fileSizeError: "{% filter escapejs %}{% blocktrans with max=8 %}The image is too large. Maximum allowed size is {{ max }} MB.{% endblocktrans %}{% endfilter %}",
+  photoRequired: "{% filter escapejs %}{% trans '(required)' %}{% endfilter %}",
+  photoRecommended: "{% filter escapejs %}{% trans '(recommended)' %}{% endfilter %}",
+  photoOptional: "{% filter escapejs %}{% trans '(optional)' %}{% endfilter %}",
+  viaContact: "{% filter escapejs %}{% trans 'Via' %}{% endfilter %}",
+  minutes: "{% filter escapejs %}{% trans 'min' %}{% endfilter %}",
+  currencyDen: "{% filter escapejs %}{% trans 'den' %}{% endfilter %}",
+  months: [
+    "{% filter escapejs %}{% trans 'January' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'February' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'March' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'April' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'May' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'June' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'July' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'August' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'September' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'October' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'November' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'December' %}{% endfilter %}"
+  ],
+  weekdaysLong: [
+    "{% filter escapejs %}{% trans 'Sunday' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'Monday' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'Tuesday' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'Wednesday' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'Thursday' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'Friday' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'Saturday' %}{% endfilter %}"
+  ],
+  monthsShort: [
+    "{% filter escapejs %}{% trans 'Jan' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'Feb' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'Mar' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'Apr' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'May' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'Jun' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'Jul' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'Aug' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'Sep' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'Oct' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'Nov' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'Dec' %}{% endfilter %}"
+  ]
+};
+
 (() => {
+  const I18N = window.BK_I18N;
   const state = {
     step: 1,
     service: null,
@@ -397,15 +457,12 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  const MONTHS = ['January','February','March','April','May','June',
-                  'July','August','September','October','November','December'];
-
   const todayStr = formatDateStr(new Date());
 
   function renderCalendar() {
     const y = state.calYear;
     const m = state.calMonth;
-    monthLabel.textContent = `${MONTHS[m]} ${y}`;
+    monthLabel.textContent = `${I18N.months[m]} ${y}`;
 
     const startOffset = (new Date(y, m, 1).getDay() + 6) % 7;
     const totalDays   = new Date(y, m + 1, 0).getDate();
@@ -454,14 +511,12 @@
 
   function formatDateDisplay(str) {
     const d = parseLocalDate(str);
-    const days   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    return `${days[d.getDay()]}, ${months[d.getMonth()]} ${d.getDate()}`;
+    return `${I18N.weekdaysLong[d.getDay()]}, ${I18N.monthsShort[d.getMonth()]} ${d.getDate()}`;
   }
 
   async function fetchSlots() {
     if (!state.service || !state.date) return;
-    slotsGrid.innerHTML = '<span class="bk-slots-hint bk-slots-loading"><i class="bi bi-arrow-repeat"></i> Loading times…</span>';
+    slotsGrid.innerHTML = `<span class="bk-slots-hint bk-slots-loading"><i class="bi bi-arrow-repeat"></i> ${I18N.loading}</span>`;
 
     const url = `${slotsUrl}?service=${encodeURIComponent(state.service.id)}&date=${encodeURIComponent(state.date)}`;
     try {
@@ -469,14 +524,14 @@
       const data = await res.json();
       renderSlots(data.slots || []);
     } catch {
-      slotsGrid.innerHTML = '<span class="bk-slots-hint">Could not load times. Please try again.</span>';
+      slotsGrid.innerHTML = `<span class="bk-slots-hint">${I18N.loadError}</span>`;
     }
   }
 
   function renderSlots(slots) {
     slotsGrid.innerHTML = '';
     if (!slots.length) {
-      slotsGrid.innerHTML = '<span class="bk-slots-hint">No available times on this date.</span>';
+      slotsGrid.innerHTML = `<span class="bk-slots-hint">${I18N.noSlots}</span>`;
       return;
     }
     slots.forEach((slot, idx) => {
@@ -516,13 +571,13 @@
     const hint = document.getElementById('bk-photo-hint');
     if (!hint) return;
     if (requiresPhoto) {
-      hint.textContent = '(required)';
+      hint.textContent = I18N.photoRequired;
       hint.className = 'bk-req';
     } else if (photoRecommended) {
-      hint.textContent = '(recommended)';
+      hint.textContent = I18N.photoRecommended;
       hint.className = 'bk-opt';
     } else {
-      hint.textContent = '(optional)';
+      hint.textContent = I18N.photoOptional;
       hint.className = 'bk-opt';
     }
   }
@@ -531,8 +586,8 @@
     const pill = document.getElementById('bk-svc-pill');
     if (state.service) {
       const label = state.priceItem
-        ? `${state.service.name}  ·  ${state.priceItem.name}  ·  ${state.service.duration} min`
-        : `${state.service.name}  ·  ${state.service.duration} min  ·  ${displayPrice()} ден`;
+        ? `${state.service.name}  ·  ${state.priceItem.name}  ·  ${state.service.duration} ${I18N.minutes}`
+        : `${state.service.name}  ·  ${state.service.duration} ${I18N.minutes}  ·  ${displayPrice()} ${I18N.currencyDen}`;
       pill.textContent   = label;
       pill.style.display = 'block';
     }
@@ -543,7 +598,7 @@
     if (state.date && state.slot) {
       document.getElementById('bk-sum-svc').textContent   = displayName();
       document.getElementById('bk-sum-meta').textContent  = `${formatDateDisplay(state.date)}  ·  ${state.slot.label}`;
-      document.getElementById('bk-sum-price').textContent = displayPrice() ? `${displayPrice()} ден` : '';
+      document.getElementById('bk-sum-price').textContent = displayPrice() ? `${displayPrice()} ${I18N.currencyDen}` : '';
       card.style.display = 'block';
       nextBtn.disabled   = false;
     } else {
@@ -561,12 +616,12 @@
 
     document.getElementById('bk-rev-svc').textContent   = displayName();
     document.getElementById('bk-rev-date').textContent  = `${formatDateDisplay(state.date)}  ·  ${state.slot.label}`;
-    document.getElementById('bk-rev-dur').textContent   = `${state.service.duration} min`;
-    const priceText = displayPrice() ? `${displayPrice()} ден` : '';
+    document.getElementById('bk-rev-dur').textContent   = `${state.service.duration} ${I18N.minutes}`;
+    const priceText = displayPrice() ? `${displayPrice()} ${I18N.currencyDen}` : '';
     document.getElementById('bk-rev-price').textContent = priceText;
     document.getElementById('bk-rev-name').textContent  = nameEl?.value || '';
     document.getElementById('bk-rev-phone').textContent = phoneEl?.value || '';
-    document.getElementById('bk-rev-contact').textContent = selectedPill ? `Via ${selectedPill.textContent}` : '';
+    document.getElementById('bk-rev-contact').textContent = selectedPill ? `${I18N.viaContact} ${selectedPill.textContent}` : '';
   }
 
   function refreshSubmit() {
@@ -599,7 +654,7 @@
     void confirmBar.offsetHeight;
     confirmBar.style.animation = '';
     confirmBarName.textContent = priceItem.name;
-    confirmBarMeta.textContent = `${service.name}  ·  ${service.duration} мин  ·  ${priceItem.price} ден`;
+    confirmBarMeta.textContent = `${service.name}  ·  ${service.duration} ${I18N.minutes}  ·  ${priceItem.price} ${I18N.currencyDen}`;
     confirmBar.style.display   = 'flex';
     // Push step content up so the last item isn't hidden behind the fixed bar
     if (_step1El) _step1El.style.paddingBottom = '88px';
@@ -610,7 +665,7 @@
     if (_step1El) _step1El.style.paddingBottom = '';
   }
 
-  // ── Macedonian toast ─────────────────────────────────────────────────────
+  // ── Toast ─────────────────────────────────────────────────────────────────
   function showBkToast(msg, durationMs = 3400) {
     const old = document.getElementById('bk-toast-el');
     if (old) old.remove();
@@ -654,7 +709,6 @@
     });
   }
 
-  // ── "Продолжи" button handler ─────────────────────────────────────────────
   confirmBarBtn?.addEventListener('click', () => {
     if (!state.service) return;
     state.date = null;
@@ -687,7 +741,7 @@
       const prevSvcId = state.service?.id;
       const newSvcId  = card.dataset.serviceId;
       if (prevSvcId && prevSvcId !== newSvcId) {
-        showBkToast('Дозволена е само 1 услуга по резервација. Претходниот избор е заменет.');
+        showBkToast(I18N.oneServiceWarning);
       }
 
       state.service = {
@@ -805,21 +859,21 @@
       const label = document.getElementById('bk-upload-label');
       const file  = fileInput.files?.[0];
       if (!file) {
-        if (label) label.textContent = 'Допри за да прикачиш слика';
+        if (label) label.textContent = I18N.tapToUpload;
         return;
       }
       const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
       if (!allowed.includes(file.type)) {
-        showBkToast('Дозволени се само слики (JPG, PNG, WebP). Одбери друг формат.');
+        showBkToast(I18N.fileTypeError);
         fileInput.value = '';
-        if (label) label.textContent = 'Допри за да прикачиш слика';
+        if (label) label.textContent = I18N.tapToUpload;
         return;
       }
       const maxMB = 8;
       if (file.size > maxMB * 1024 * 1024) {
-        showBkToast(`Сликата е преголема. Максималната дозволена големина е ${maxMB} MB.`);
+        showBkToast(I18N.fileSizeError);
         fileInput.value = '';
-        if (label) label.textContent = 'Допри за да прикачиш слика';
+        if (label) label.textContent = I18N.tapToUpload;
         return;
       }
       if (label) label.textContent = file.name;

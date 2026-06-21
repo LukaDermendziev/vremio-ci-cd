@@ -1,6 +1,18 @@
 /* Owner dashboard: navigation, modals, calendar */
 
 function initOwnerDashboard(config) {
+  const I18N = window.OD_I18N || {};
+  const t = (key, fallback) => (I18N[key] != null && I18N[key] !== "") ? I18N[key] : fallback;
+  const tf = (key, fallback, vars) => {
+    let s = t(key, fallback);
+    if (vars) {
+      Object.entries(vars).forEach(([k, v]) => {
+        s = s.replace(new RegExp(`%\\(${k}\\)s`, "g"), v);
+      });
+    }
+    return s;
+  };
+
   let calendar = null;
   let calendarMeta = { closedDates: [], closedWeekdays: [] };
   let lastDateClick = { time: 0, dateStr: "" };
@@ -133,7 +145,7 @@ function initOwnerDashboard(config) {
         empty = document.createElement("div");
         empty.id = "bk-empty";
         empty.className = "od-empty";
-        empty.textContent = "No bookings in this category.";
+        empty.textContent = t("noBookingsInCategory", "No bookings in this category.");
         document.getElementById("bk-list")?.appendChild(empty);
       }
       if (empty) empty.style.display = shown === 0 ? "block" : "none";
@@ -164,7 +176,7 @@ function initOwnerDashboard(config) {
 
     slotsSelect.innerHTML = slotsAvailable.length
       ? slotsAvailable.map(s => `<option value="${s.value}">${s.label}</option>`).join("")
-      : '<option value="">No slots available</option>';
+      : `<option value="">${t("noSlotsAvailable", "No slots available")}</option>`;
 
     const warning = document.getElementById("od-slots-warning");
     if (prevTime && slotsAvailable.length && slotsAvailable.some(s => s.value === prevTime)) {
@@ -173,7 +185,7 @@ function initOwnerDashboard(config) {
     } else if (prevTime && slotsAvailable.length && !slotsAvailable.some(s => s.value === prevTime)) {
       // Previously selected time is no longer available
       if (warning) {
-        warning.textContent = `The time ${prevTime} is no longer available. Please select another slot.`;
+        warning.textContent = tf("timeNoLongerAvailable", "The time %(time)s is no longer available. Please select another slot.", { time: prevTime });
         warning.style.display = "block";
       }
     } else {
@@ -212,7 +224,7 @@ function initOwnerDashboard(config) {
     const returnSec = getCurrentSection();
     bookingForm.querySelector('[name="return_section"]').value = returnSec;
     bookingDeleteForm.querySelector('[name="return_section"]').value = returnSec;
-    document.getElementById("od-booking-modal-title").textContent = bookingId ? "Edit booking" : "Add booking";
+    document.getElementById("od-booking-modal-title").textContent = bookingId ? t("editBooking", "Edit booking") : t("addBooking", "Add booking");
     bookingDeleteBtn.style.display = bookingId ? "" : "none";
 
     if (bookingId) {
@@ -253,7 +265,7 @@ function initOwnerDashboard(config) {
   });
 
   bookingDeleteBtn?.addEventListener("click", () => {
-    if (confirm("Delete this booking permanently?")) bookingDeleteForm.submit();
+    if (confirm(t("confirmDeleteBooking", "Delete this booking permanently?"))) bookingDeleteForm.submit();
   });
 
   document.querySelectorAll("[data-add-booking]").forEach(btn => {
@@ -269,7 +281,7 @@ function initOwnerDashboard(config) {
     serviceForm.reset();
     serviceForm.querySelector('[name="service_id"]').value = "";
     serviceForm.querySelector('[name="is_active"]').checked = true;
-    document.getElementById("od-service-modal-title").textContent = serviceId ? "Edit service" : "Add service";
+    document.getElementById("od-service-modal-title").textContent = serviceId ? t("editService", "Edit service") : t("addService", "Add service");
     serviceDeleteBtn.style.display = serviceId ? "" : "none";
 
     if (serviceId) {
@@ -294,18 +306,22 @@ function initOwnerDashboard(config) {
   document.querySelectorAll("[data-add-service]").forEach(btn => btn.addEventListener("click", () => openServiceModal(null)));
   document.querySelectorAll("[data-edit-service]").forEach(btn => btn.addEventListener("click", () => openServiceModal(btn.dataset.editService)));
   serviceDeleteBtn?.addEventListener("click", () => {
-    if (confirm("Delete this service?")) serviceDeleteForm.submit();
+    if (confirm(t("confirmDeleteService", "Delete this service?"))) serviceDeleteForm.submit();
   });
 
   // ── AJAX booking status actions (no page reload) ─────────────────────────────
   const STATUS_LABELS = {
-    pending: "Pending", approved: "Approved", rejected: "Rejected",
-    cancelled: "Cancelled", completed: "Completed", no_show: "No Show"
+    pending: t("statusPending", "Pending"),
+    approved: t("statusApproved", "Approved"),
+    rejected: t("statusRejected", "Rejected"),
+    cancelled: t("statusCancelled", "Cancelled"),
+    completed: t("statusCompleted", "Completed"),
+    no_show: t("statusNoShow", "No Show"),
   };
   const CONFIRM_ACTIONS = {
-    reject: "Reject this booking?",
-    cancel: "Cancel this booking?",
-    mark_no_show: "Mark as no-show?",
+    reject: t("confirmRejectBooking", "Reject this booking?"),
+    cancel: t("confirmCancelBooking", "Cancel this booking?"),
+    mark_no_show: t("confirmMarkNoShow", "Mark as no-show?"),
   };
 
   function bkActionButtons(status, bookingId) {
@@ -314,13 +330,13 @@ function initOwnerDashboard(config) {
       `<button class="od-btn ${cls} od-btn-sm" type="button" data-bk-action="${action}" ${b(bookingId)}>${label}</button>`;
     let html = "";
     if (status === "pending") {
-      html += btn("approve", "Approve", "od-btn-success");
-      html += btn("reject",  "Reject",  "od-btn-danger");
+      html += btn("approve", t("approve", "Approve"), "od-btn-success");
+      html += btn("reject",  t("reject", "Reject"),  "od-btn-danger");
     }
     if (status === "approved") {
-      html += btn("mark_completed", "Mark completed", "od-btn-ghost");
-      html += btn("mark_no_show",   "No-show",        "od-btn-ghost");
-      html += btn("cancel",         "Cancel",         "od-btn-ghost");
+      html += btn("mark_completed", t("markCompleted", "Mark completed"), "od-btn-ghost");
+      html += btn("mark_no_show",   t("noShow", "No-show"),        "od-btn-ghost");
+      html += btn("cancel",         t("cancel", "Cancel"),         "od-btn-ghost");
     }
     return html;
   }
@@ -450,7 +466,7 @@ function initOwnerDashboard(config) {
         }, 320);
       });
     } catch (err) {
-      showToast("Something went wrong. Please try again.", "error");
+      showToast(t("somethingWentWrong", "Something went wrong. Please try again."), "error");
       console.error(err);
     }
   }
@@ -529,7 +545,7 @@ function initOwnerDashboard(config) {
     if (priceItemSort)  priceItemSort.value = "0";
     if (priceItemPhoto) priceItemPhoto.checked = false;
     if (priceItemSubmit) {
-      priceItemSubmit.innerHTML = '<i class="bi bi-plus-lg"></i> Add item';
+      priceItemSubmit.innerHTML = `<i class="bi bi-plus-lg"></i> ${t("addItem", "Add item")}`;
     }
   }
 
@@ -566,7 +582,7 @@ function initOwnerDashboard(config) {
       if (priceItemPrice) priceItemPrice.value  = btn.dataset.itemPrice  || "";
       if (priceItemSort)  priceItemSort.value   = btn.dataset.itemSort   || "0";
       if (priceItemPhoto) priceItemPhoto.checked = btn.dataset.itemPhoto === "true";
-      if (priceItemSubmit) priceItemSubmit.innerHTML = '<i class="bi bi-check-lg"></i> Save changes';
+      if (priceItemSubmit) priceItemSubmit.innerHTML = `<i class="bi bi-check-lg"></i> ${t("saveChanges", "Save changes")}`;
       openModal("od-price-modal");
       setTimeout(() => priceItemName?.focus(), 80);
     });
@@ -751,7 +767,7 @@ function initOwnerDashboard(config) {
   function openCustomerModal(customerId) {
     customerForm.reset();
     customerForm.querySelector('[name="customer_id"]').value = "";
-    document.getElementById("od-customer-modal-title").textContent = customerId ? "Edit customer" : "Add customer";
+    document.getElementById("od-customer-modal-title").textContent = customerId ? t("editCustomer", "Edit customer") : t("addCustomer", "Add customer");
     customerDeleteBtn.style.display = customerId ? "" : "none";
 
     if (customerId) {
@@ -772,7 +788,7 @@ function initOwnerDashboard(config) {
   document.querySelectorAll("[data-add-customer]").forEach(btn => btn.addEventListener("click", () => openCustomerModal(null)));
   document.querySelectorAll("[data-edit-customer]").forEach(btn => btn.addEventListener("click", () => openCustomerModal(btn.dataset.editCustomer)));
   customerDeleteBtn?.addEventListener("click", () => {
-    if (confirm("Delete this customer?")) customerDeleteForm.submit();
+    if (confirm(t("confirmDeleteCustomer", "Delete this customer?"))) customerDeleteForm.submit();
   });
 
   // Block modal
@@ -783,7 +799,7 @@ function initOwnerDashboard(config) {
   function openBlockModal(blockId, preset = {}) {
     blockForm.reset();
     blockForm.querySelector('[name="block_id"]').value = "";
-    document.getElementById("od-block-modal-title").textContent = blockId ? "Edit blocked time" : "Block time";
+    document.getElementById("od-block-modal-title").textContent = blockId ? t("editBlockedTime", "Edit blocked time") : t("blockTime", "Block time");
     blockDeleteBtn.style.display = blockId ? "" : "none";
 
     if (blockId) {
@@ -824,12 +840,12 @@ function initOwnerDashboard(config) {
     blockDeleteBtn.style.display = "";
   }));
   blockDeleteBtn?.addEventListener("click", () => {
-    if (confirm("Remove this time block?")) blockDeleteForm.submit();
+    if (confirm(t("confirmRemoveTimeBlock", "Remove this time block?"))) blockDeleteForm.submit();
   });
 
   document.querySelectorAll("[data-delete-blocked-date]").forEach(btn => {
     btn.addEventListener("click", () => {
-      if (confirm("Remove this blocked date?")) btn.closest("form")?.submit();
+      if (confirm(t("confirmRemoveBlockedDate", "Remove this blocked date?"))) btn.closest("form")?.submit();
     });
   });
 
@@ -853,13 +869,13 @@ function initOwnerDashboard(config) {
 
   const CG_HOURS = ["08:00","09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00","18:00"];
   const CG_STATUS = {
-    pending:   { cls: "cgrid-chip-pending",   label: "Pending" },
-    approved:  { cls: "cgrid-chip-approved",  label: "Approved" },
-    completed: { cls: "cgrid-chip-completed", label: "Completed" },
-    rejected:  { cls: "cgrid-chip-rejected",  label: "Rejected" },
-    cancelled: { cls: "cgrid-chip-cancelled", label: "Cancelled" },
-    no_show:   { cls: "cgrid-chip-no_show",   label: "No Show" },
-    block:     { cls: "cgrid-chip-block",     label: "Block" },
+    pending:   { cls: "cgrid-chip-pending",   label: t("statusPending", "Pending") },
+    approved:  { cls: "cgrid-chip-approved",  label: t("statusApproved", "Approved") },
+    completed: { cls: "cgrid-chip-completed", label: t("statusCompleted", "Completed") },
+    rejected:  { cls: "cgrid-chip-rejected",  label: t("statusRejected", "Rejected") },
+    cancelled: { cls: "cgrid-chip-cancelled", label: t("statusCancelled", "Cancelled") },
+    no_show:   { cls: "cgrid-chip-no_show",   label: t("statusNoShow", "No Show") },
+    block:     { cls: "cgrid-chip-block",     label: t("block", "Block") },
   };
 
   let cgView = "week";
@@ -902,13 +918,13 @@ function initOwnerDashboard(config) {
   function cgChipHtml(ev) {
     if (ev.type === "block") {
       return `<div class="cgrid-chip cgrid-chip-block" data-block-id="${ev.blockId||ev.id||''}">
-        <div class="cgrid-chip-block">Blocked ${ev.start_time||ev.time||''}${ev.end_time ? '–'+ev.end_time : ''}</div>
+        <div class="cgrid-chip-block">${tf("blockedRange", "Blocked %(start)s%(end)s", { start: ev.start_time || ev.time || "", end: ev.end_time ? "–" + ev.end_time : "" })}</div>
       </div>`;
     }
     const sc = CG_STATUS[ev.status] || CG_STATUS.pending;
     return `<div class="cgrid-chip ${sc.cls}" data-booking-id="${ev.bookingId||ev.id||''}">
       <div class="cgrid-chip-name">${ev.customerName||ev.title||''}</div>
-      <div class="cgrid-chip-meta">${ev.time||''} · ${ev.duration||''}min</div>
+      <div class="cgrid-chip-meta">${ev.time||''} · ${ev.duration||''}${t("minSuffix", "min")}</div>
     </div>`;
   }
 
@@ -927,7 +943,7 @@ function initOwnerDashboard(config) {
       html += `<div class="cgrid-head-day${isToday?' cgrid-head-today':''}${isClosed?' cgrid-head-closed':''}">
         <div class="cgrid-head-dow">${dow}</div>
         <div class="cgrid-head-num">${d.getDate()}</div>
-        ${isClosed ? '<div class="cgrid-closed-tag">Closed</div>' : ''}
+        ${isClosed ? `<div class="cgrid-closed-tag">${t("closed", "Closed")}</div>` : ""}
       </div>`;
     });
     html += `</div>`;
@@ -973,7 +989,7 @@ function initOwnerDashboard(config) {
     const count = cgEvents.filter(ev => ev.date === ds).length;
     let html = `<div class="cgrid-day-header" style="padding:14px 16px;border-bottom:1px solid #E5E7EB;background:#F9FAFB;">
       <p style="font-size:14px;font-weight:600;color:#111827;margin:0">${dayStr}</p>
-      <p style="font-size:12px;color:#6B7280;margin:4px 0 0">${count} appointment${count!==1?'s':''}</p>
+      <p style="font-size:12px;color:#6B7280;margin:4px 0 0">${count === 1 ? tf("appointmentCountSingular", "%(count)s appointment", { count }) : tf("appointmentCountPlural", "%(count)s appointments", { count })}</p>
     </div>`;
 
     CG_HOURS.forEach(time => {
@@ -988,7 +1004,7 @@ function initOwnerDashboard(config) {
           if (ev.type === "block") {
             html += `<div class="cgrid-day-chip cgrid-chip-block" data-block-id="${ev.blockId||''}"
               style="border-left-color:#7C3AED;background:#EDE9FE;">
-              <div><div class="cgrid-day-chip-name" style="color:#7C3AED">Blocked</div>
+              <div><div class="cgrid-day-chip-name" style="color:#7C3AED">${t("blocked", "Blocked")}</div>
               <div class="cgrid-day-chip-meta">${ev.start_time||ev.time||''}${ev.end_time?'–'+ev.end_time:''}</div></div>
             </div>`;
           } else {
@@ -999,14 +1015,14 @@ function initOwnerDashboard(config) {
               <div>
                 <div class="cgrid-day-chip-name">${ev.customerName||ev.title||''}</div>
                 <div class="cgrid-day-chip-svc">${ev.services||ev.service||''}</div>
-                <div class="cgrid-day-chip-meta">${ev.time||''} · ${ev.duration||''}min</div>
+                <div class="cgrid-day-chip-meta">${ev.time||''} · ${ev.duration||''}${t("minSuffix", "min")}</div>
               </div>
               <span style="font-size:11px;padding:2px 8px;border-radius:99px;background:${dotColor}22;color:${dotColor};font-weight:600">${sc.label}</span>
             </div>`;
           }
         });
       } else {
-        html += `<div class="cgrid-day-empty">— Available</div>`;
+        html += `<div class="cgrid-day-empty">${t("available", "— Available")}</div>`;
       }
       html += `</div></div>`;
     });
@@ -1144,7 +1160,7 @@ function initOwnerDashboard(config) {
           html: `<div class="fc-day-head${closed ? " is-closed" : ""}">
             <span class="fc-day-name">${day}</span>
             <span class="fc-day-num">${num}</span>
-            ${closed ? '<span class="fc-day-closed">Closed</span>' : ""}
+            ${closed ? `<span class="fc-day-closed">${t("closed", "Closed")}</span>` : ""}
           </div>`,
         };
       },
@@ -1165,7 +1181,7 @@ function initOwnerDashboard(config) {
         const now = Date.now();
         if (now - lastDateClick.time < 400 && lastDateClick.dateStr === dateStr + timeStr) {
           if (info.date < new Date()) {
-            showToast("Cannot add bookings in the past.", true);
+            showToast(t("cannotAddPastBooking", "Cannot add bookings in the past."), true);
             lastDateClick = { time: 0, dateStr: "" };
             return;
           }
@@ -1208,11 +1224,11 @@ function initOwnerDashboard(config) {
       const data = await res.json();
       msgText.textContent = data.message;
       msgLinks.innerHTML = `
-        <a class="od-btn od-btn-primary" href="${data.links.viber}" target="_blank" rel="noopener">Viber</a>
-        <a class="od-btn od-btn-primary" href="${data.links.whatsapp}" target="_blank" rel="noopener">WhatsApp</a>
-        <a class="od-btn od-btn-ghost" href="${data.links.sms}">SMS</a>
-        <a class="od-btn od-btn-ghost" href="${data.links.tel}">Call</a>
-        <button type="button" class="od-btn od-btn-ghost" id="od-copy-msg">Copy message</button>`;
+        <a class="od-btn od-btn-primary" href="${data.links.viber}" target="_blank" rel="noopener">${t("viber", "Viber")}</a>
+        <a class="od-btn od-btn-primary" href="${data.links.whatsapp}" target="_blank" rel="noopener">${t("whatsapp", "WhatsApp")}</a>
+        <a class="od-btn od-btn-ghost" href="${data.links.sms}">${t("sms", "SMS")}</a>
+        <a class="od-btn od-btn-ghost" href="${data.links.tel}">${t("call", "Call")}</a>
+        <button type="button" class="od-btn od-btn-ghost" id="od-copy-msg">${t("copyMessage", "Copy message")}</button>`;
       document.getElementById("od-copy-msg")?.addEventListener("click", () => navigator.clipboard.writeText(data.message));
       openModal("od-msg-modal");
     });

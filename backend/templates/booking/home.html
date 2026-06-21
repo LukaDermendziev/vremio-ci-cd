@@ -1,19 +1,25 @@
 {% extends "base.html" %}
-{% block title %}Salon Scheduler — Book Online{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Salon Scheduler — Book Online" %}{% endblock %}
 {% block body_class %}sp-page sp-home{% endblock %}
+
+{% block lang_switcher %}{% endblock %}
 
 {% block content %}
 <nav class="sp-nav">
-  <a class="sp-nav-brand" href="/">Salon Scheduler</a>
+  <a class="sp-nav-brand" href="/">{% trans "Salon Scheduler" %}</a>
   <div class="sp-nav-links"></div>
+  <div class="sp-nav-right">
+    <div class="sp-nav-lang">{% include "partials/language_switcher.html" %}</div>
+  </div>
 </nav>
 
 <section class="sp-home-hero">
   <div class="sp-hero-overlay"></div>
   <div class="sp-home-hero-content">
-    <p class="sp-eyebrow">Online booking</p>
-    <h1 class="sp-hero-title">Book your salon<br><em>appointment online</em></h1>
-    <p class="sp-hero-lead">No messages. No waiting. Choose a service, pick a time, and send your request.</p>
+    <p class="sp-eyebrow">{% trans "Online booking" %}</p>
+    <h1 class="sp-hero-title">{% blocktrans %}Book your salon<br><em>appointment online</em>{% endblocktrans %}</h1>
+    <p class="sp-hero-lead">{% trans "No messages. No waiting. Choose a service, pick a time, and send your request." %}</p>
   </div>
 </section>
 
@@ -21,8 +27,8 @@
   <div class="sp-section-inner">
     {% if salons %}
       <div class="sp-section-heading">
-        <p class="sp-kicker">Choose your salon</p>
-        <h2 class="sp-section-title">Available <em>salons</em></h2>
+        <p class="sp-kicker">{% trans "Choose your salon" %}</p>
+        <h2 class="sp-section-title">{% trans "Available" %} <em>{% trans "salons" %}</em></h2>
       </div>
       <div class="sp-salon-grid">
         {% for salon in salons %}
@@ -32,13 +38,13 @@
               <h3 class="sp-salon-name">{{ salon.name }}</h3>
               {% if salon.address %}<p class="sp-salon-address"><i class="bi bi-geo-alt"></i> {{ salon.address }}</p>{% endif %}
             </div>
-            <a class="sp-btn-small" href="{% url 'booking:salon_page' salon.slug %}">View &amp; Book</a>
+            <a class="sp-btn-small" href="{% url 'booking:salon_page' salon.slug %}">{% trans "View & Book" %}</a>
           </article>
         {% endfor %}
       </div>
     {% else %}
       <div class="sp-empty-state">
-        <p>No active salons available yet.</p>
+        <p>{% trans "No active salons available yet." %}</p>
       </div>
     {% endif %}
   </div>
@@ -46,8 +52,8 @@
 
 <footer class="sp-footer-section">
   <div class="sp-footer-inner">
-    <div class="sp-footer-brand">Salon Scheduler</div>
-    <div class="sp-footer-note">Professional scheduling for beauty businesses</div>
+    <div class="sp-footer-brand">{% trans "Salon Scheduler" %}</div>
+    <div class="sp-footer-note">{% trans "Professional scheduling for beauty businesses" %}</div>
   </div>
 </footer>
 {% endblock %}

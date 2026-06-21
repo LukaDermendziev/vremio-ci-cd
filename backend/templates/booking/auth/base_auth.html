@@ -1,17 +1,18 @@
 <!DOCTYPE html>
-<html lang="en-GB">
+{% load static i18n %}
+<html lang="{{ CURRENT_LANGUAGE|default:'mk' }}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}Owner — Salon Scheduler{% endblock %}</title>
+  <title>{% block title %}{% trans "Owner — Salon Scheduler" %}{% endblock %}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-  {% load static %}
   <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
 <body class="auth-body">
   <div class="auth-wrap">
+    <div class="auth-lang-wrap">{% include "partials/language_switcher.html" %}</div>
     {% block content %}{% endblock %}
   </div>
 </body>

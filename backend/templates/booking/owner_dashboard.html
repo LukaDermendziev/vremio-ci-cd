@@ -1,16 +1,20 @@
 {% extends "base.html" %}
-{% block title %}Dashboard — {{ salon.name|default:"Owner" }}{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Dashboard" %} — {{ salon.name|default:"Owner" }}{% endblock %}
 {% block body_class %}od-page{% endblock %}
+
+{% block lang_switcher %}{% endblock %}
 
 {% block extra_head %}{% endblock %}
 
 {% block content %}
 {% if not salon %}
+  <div class="od-dashboard-lang">{% include "partials/language_switcher.html" %}</div>
   <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;padding:24px;">
     <i class="bi bi-building-x" style="font-size:40px;color:#D1D5DB;"></i>
-    <p style="font-size:15px;color:#6B7280;margin:0;">No active salon is assigned to your account yet.<br>Please contact the administrator.</p>
+    <p style="font-size:15px;color:#6B7280;margin:0;">{% trans "No active salon is assigned to your account yet." %}<br>{% trans "Please contact the administrator." %}</p>
     <a href="{% url 'booking:owner_logout' %}" class="auth-btn" style="display:inline-flex;align-items:center;gap:8px;width:auto;padding:10px 24px;text-decoration:none;">
-      <i class="bi bi-box-arrow-left"></i> Back to login
+      <i class="bi bi-box-arrow-left"></i> {% trans "Back to login" %}
     </a>
   </div>
 {% else %}
@@ -20,10 +24,10 @@
   <aside class="od-sidebar">
     <div class="od-brand">
       <div class="od-brand-header">
-        <button class="od-ham-expand" id="od-ham" aria-label="Expand sidebar">
+        <button class="od-ham-expand" id="od-ham" aria-label="{% trans "Expand sidebar" %}">
           <i class="bi bi-chevron-right"></i>
         </button>
-        <button class="od-ham-close" id="od-ham-close" aria-label="Collapse sidebar">
+        <button class="od-ham-close" id="od-ham-close" aria-label="{% trans "Collapse sidebar" %}">
           <i class="bi bi-chevron-left"></i>
         </button>
       </div>
@@ -31,39 +35,40 @@
         <div class="od-wordmark-initials">{{ salon.name|slice:":2"|upper }}</div>
         <div class="od-wordmark-text">
           <div class="od-brand-name">{{ salon.name }}</div>
-          <div class="od-brand-sub">Owner panel</div>
+          <div class="od-brand-sub">{% trans "Owner panel" %}</div>
         </div>
       </div>
     </div>
 
     <nav class="od-nav">
-      <a href="#dashboard" class="is-active" data-section="dashboard"><i class="bi bi-grid"></i><span>Overview</span></a>
-      <a href="#calendar" data-section="calendar"><i class="bi bi-calendar3"></i><span>Calendar</span></a>
-      <a href="#bookings" data-section="bookings"><i class="bi bi-journal-text"></i><span>Bookings</span></a>
-      <a href="#customers" data-section="customers"><i class="bi bi-people"></i><span>Customers</span></a>
-      <a href="#services" data-section="services"><i class="bi bi-scissors"></i><span>Services</span></a>
-      <a href="#hours" data-section="hours"><i class="bi bi-clock"></i><span>Working hours</span></a>
-      <a href="#availability" data-section="availability"><i class="bi bi-slash-circle"></i><span>Availability</span></a>
-      <a href="#policy" data-section="policy"><i class="bi bi-sliders"></i><span>Booking policy</span></a>
+      <a href="#dashboard" class="is-active" data-section="dashboard"><i class="bi bi-grid"></i><span>{% trans "Overview" %}</span></a>
+      <a href="#calendar" data-section="calendar"><i class="bi bi-calendar3"></i><span>{% trans "Calendar" %}</span></a>
+      <a href="#bookings" data-section="bookings"><i class="bi bi-journal-text"></i><span>{% trans "Bookings" %}</span></a>
+      <a href="#customers" data-section="customers"><i class="bi bi-people"></i><span>{% trans "Customers" %}</span></a>
+      <a href="#services" data-section="services"><i class="bi bi-scissors"></i><span>{% trans "Services" %}</span></a>
+      <a href="#hours" data-section="hours"><i class="bi bi-clock"></i><span>{% trans "Working hours" %}</span></a>
+      <a href="#availability" data-section="availability"><i class="bi bi-slash-circle"></i><span>{% trans "Availability" %}</span></a>
+      <a href="#policy" data-section="policy"><i class="bi bi-sliders"></i><span>{% trans "Booking policy" %}</span></a>
     </nav>
 
     <div class="od-sidebar-foot">
-      <a href="{% url 'booking:salon_page' salon.slug %}"><i class="bi bi-box-arrow-up-right"></i><span>Customer view</span></a>
+      <a href="{% url 'booking:salon_page' salon.slug %}"><i class="bi bi-box-arrow-up-right"></i><span>{% trans "Customer view" %}</span></a>
     </div>
   
         <div class="od-user-footer">
           <div class="od-user-name">{{ request.user.get_full_name|default:request.user.username }}</div>
           <div class="od-user-actions">
-            <a href="{% url 'booking:owner_password_change' %}" class="od-user-action-link"><i class="bi bi-key"></i> Change password</a>
-            <a href="{% url 'booking:owner_logout' %}" class="od-user-action-link"><i class="bi bi-box-arrow-right"></i> Sign out</a>
+            <a href="{% url 'booking:owner_password_change' %}" class="od-user-action-link"><i class="bi bi-key"></i> {% trans "Change password" %}</a>
+            <a href="{% url 'booking:owner_logout' %}" class="od-user-action-link"><i class="bi bi-box-arrow-right"></i> {% trans "Sign out" %}</a>
           </div>
         </div>
-        <button class="od-sidebar-close-bottom" id="od-ham-close-bottom" aria-label="Close sidebar">
-          <i class="bi bi-chevron-right"></i> Close
+        <button class="od-sidebar-close-bottom" id="od-ham-close-bottom" aria-label="{% trans "Close sidebar" %}">
+          <i class="bi bi-chevron-right"></i> {% trans "Close" %}
         </button>
       </aside>
 
   <main class="od-main">
+    <div class="od-dashboard-lang">{% include "partials/language_switcher.html" %}</div>
     {% for message in messages %}
       <div class="od-alert {% if message.tags == 'success' %}od-alert-success{% elif message.tags == 'error' or message.tags == 'danger' %}od-alert-error{% else %}od-alert-warning{% endif %}">{{ message }}</div>
     {% endfor %}
@@ -71,28 +76,28 @@
     <div class="od-section active" id="od-sec-dashboard">
       <div class="od-page-top">
         <div>
-          <div class="od-page-title">Overview</div>
+          <div class="od-page-title">{% trans "Overview" %}</div>
           <p class="od-page-sub">{{ salon.name }}</p>
         </div>
         <div class="od-page-actions">
-        <button type="button" class="od-btn od-btn-primary" data-add-booking><i class="bi bi-plus-lg"></i> Add booking</button>
-          <a class="od-btn od-btn-ghost" href="{% url 'booking:salon_page' salon.slug %}">Open booking page</a>
+        <button type="button" class="od-btn od-btn-primary" data-add-booking><i class="bi bi-plus-lg"></i> {% trans "Add booking" %}</button>
+          <a class="od-btn od-btn-ghost" href="{% url 'booking:salon_page' salon.slug %}">{% trans "Open booking page" %}</a>
         </div>
       </div>
 
       <div class="od-stats">
-        <div class="od-stat"><span class="od-stat-label">Pending</span><span class="od-stat-value" data-stat="pending">{{ pending_count }}</span></div>
-        <div class="od-stat"><span class="od-stat-label">Today</span><span class="od-stat-value" data-stat="today">{{ today_count }}</span></div>
-        <div class="od-stat"><span class="od-stat-label">Upcoming</span><span class="od-stat-value">{{ upcoming_approved_bookings|length }}</span></div>
-        <div class="od-stat"><span class="od-stat-label">No-shows</span><span class="od-stat-value">{{ no_show_count }}</span></div>
-       <div class="od-stat"><span class="od-stat-label">Completed this week</span><span class="od-stat-value">{{ completed_week_count }}</span></div>
-       <div class="od-stat od-stat-revenue"><span class="od-stat-label">Weekly revenue</span><span class="od-stat-value">{{ revenue.weekly_revenue|floatformat:0 }} <small>ден</small></span></div>
-        <div class="od-stat od-stat-revenue"><span class="od-stat-label">Total revenue</span><span class="od-stat-value">{{ revenue.total_revenue|floatformat:0 }} <small>ден</small></span></div>
+        <div class="od-stat"><span class="od-stat-label">{% trans "Pending" %}</span><span class="od-stat-value" data-stat="pending">{{ pending_count }}</span></div>
+        <div class="od-stat"><span class="od-stat-label">{% trans "Today" %}</span><span class="od-stat-value" data-stat="today">{{ today_count }}</span></div>
+        <div class="od-stat"><span class="od-stat-label">{% trans "Upcoming" %}</span><span class="od-stat-value">{{ upcoming_approved_bookings|length }}</span></div>
+        <div class="od-stat"><span class="od-stat-label">{% trans "No-shows" %}</span><span class="od-stat-value">{{ no_show_count }}</span></div>
+       <div class="od-stat"><span class="od-stat-label">{% trans "Completed this week" %}</span><span class="od-stat-value">{{ completed_week_count }}</span></div>
+       <div class="od-stat od-stat-revenue"><span class="od-stat-label">{% trans "Weekly revenue" %}</span><span class="od-stat-value">{{ revenue.weekly_revenue|floatformat:0 }} <small>ден</small></span></div>
+        <div class="od-stat od-stat-revenue"><span class="od-stat-label">{% trans "Total revenue" %}</span><span class="od-stat-value">{{ revenue.total_revenue|floatformat:0 }} <small>ден</small></span></div>
       </div>
-      <p class="od-revenue-note">Revenue from completed appointments only. No online payments.</p>
+      <p class="od-revenue-note">{% trans "Revenue from completed appointments only. No online payments." %}</p>
 
       <div class="od-card">
-        <div class="od-card-top"><div class="od-card-title">Today's appointments</div></div>
+        <div class="od-card-top"><div class="od-card-title">{% trans "Today's appointments" %}</div></div>
         {% if todays_appointments %}
           <div class="od-today-list">
             {% for booking in todays_appointments %}
@@ -107,14 +112,14 @@
             {% endfor %}
           </div>
         {% else %}
-          <div class="od-empty">No approved appointments for today.</div>
+          <div class="od-empty">{% trans "No approved appointments for today." %}</div>
         {% endif %}
       </div>
 
       <div class="od-card">
         <div class="od-card-top">
-          <div class="od-card-title">Pending booking requests</div>
-          {% if pending_count %}<button class="od-card-link" data-goto="bookings">View all</button>{% endif %}
+          <div class="od-card-title">{% trans "Pending booking requests" %}</div>
+          {% if pending_count %}<button class="od-card-link" data-goto="bookings">{% trans "View all" %}</button>{% endif %}
         </div>
         {% if pending_bookings %}
           <div class="od-bk-list">
@@ -123,7 +128,7 @@
             {% endfor %}
           </div>
         {% else %}
-          <div class="od-empty">All caught up — no pending requests.</div>
+          <div class="od-empty">{% trans "All caught up — no pending requests." %}</div>
         {% endif %}
       </div>
     </div>
@@ -131,8 +136,8 @@
     <div class="od-section" id="od-sec-calendar">
       <div class="od-cal-header">
         <div>
-          <div class="od-page-title">Calendar</div>
-          <p class="od-page-sub">View and manage your appointment schedule.</p>
+          <div class="od-page-title">{% trans "Calendar" %}</div>
+          <p class="od-page-sub">{% trans "View and manage your appointment schedule." %}</p>
         </div>
       </div>
 
@@ -141,62 +146,62 @@
           <button type="button" class="cgrid-nav-btn" id="cal-prev"><i class="bi bi-chevron-left"></i></button>
           <span class="cgrid-range" id="cal-range-label">—</span>
           <button type="button" class="cgrid-nav-btn" id="cal-next"><i class="bi bi-chevron-right"></i></button>
-          <button type="button" class="cgrid-today-btn" id="cal-today">Today</button>
+          <button type="button" class="cgrid-today-btn" id="cal-today">{% trans "Today" %}</button>
         </div>
         <div class="cgrid-actions">
           <div class="cgrid-view-toggle">
-            <button type="button" class="cgrid-view-btn active" id="cal-view-week">Week</button>
-            <button type="button" class="cgrid-view-btn" id="cal-view-day">Day</button>
+            <button type="button" class="cgrid-view-btn active" id="cal-view-week">{% trans "Week" %}</button>
+            <button type="button" class="cgrid-view-btn" id="cal-view-day">{% trans "Day" %}</button>
           </div>
-          <button type="button" class="od-btn od-btn-primary" data-add-booking><i class="bi bi-plus-lg"></i> Add</button>
-          <button type="button" class="od-btn od-btn-ghost" data-add-block><i class="bi bi-slash-circle"></i> Block</button>
+          <button type="button" class="od-btn od-btn-primary" data-add-booking><i class="bi bi-plus-lg"></i> {% trans "Add" %}</button>
+          <button type="button" class="od-btn od-btn-ghost" data-add-block><i class="bi bi-slash-circle"></i> {% trans "Block" %}</button>
         </div>
       </div>
 
       <div id="od-calendar-grid" class="cgrid-outer"></div>
 
       <div class="cgrid-legend">
-        <span class="cgrid-legend-item"><span class="cgrid-dot" style="background:#D97706"></span> Pending</span>
-        <span class="cgrid-legend-item"><span class="cgrid-dot" style="background:#059669"></span> Approved</span>
-        <span class="cgrid-legend-item"><span class="cgrid-dot" style="background:#2563EB"></span> Completed</span>
-        <span class="cgrid-legend-item"><span class="cgrid-dot" style="background:#DB2777"></span> Rejected</span>
-        <span class="cgrid-legend-item"><span class="cgrid-dot" style="background:#6B7280"></span> Cancelled</span>
-        <span class="cgrid-legend-item"><span class="cgrid-dot" style="background:#C2410C"></span> No Show</span>
-        <span class="cgrid-legend-item"><span class="cgrid-dot" style="background:#7C3AED"></span> Unavailable</span>
+        <span class="cgrid-legend-item"><span class="cgrid-dot" style="background:#D97706"></span> {% trans "Pending" %}</span>
+        <span class="cgrid-legend-item"><span class="cgrid-dot" style="background:#059669"></span> {% trans "Approved" %}</span>
+        <span class="cgrid-legend-item"><span class="cgrid-dot" style="background:#2563EB"></span> {% trans "Completed" %}</span>
+        <span class="cgrid-legend-item"><span class="cgrid-dot" style="background:#DB2777"></span> {% trans "Rejected" %}</span>
+        <span class="cgrid-legend-item"><span class="cgrid-dot" style="background:#6B7280"></span> {% trans "Cancelled" %}</span>
+        <span class="cgrid-legend-item"><span class="cgrid-dot" style="background:#C2410C"></span> {% trans "No Show" %}</span>
+        <span class="cgrid-legend-item"><span class="cgrid-dot" style="background:#7C3AED"></span> {% trans "Unavailable" %}</span>
       </div>
-      <p class="od-cal-hint">Double-click (or double-tap on mobile) an empty slot to add a booking · Click an appointment to view details</p>
+      <p class="od-cal-hint">{% trans "Double-click (or double-tap on mobile) an empty slot to add a booking · Click an appointment to view details" %}</p>
     </div>
     <div class="od-section" id="od-sec-bookings">
       <div class="od-page-top">
-        <div class="od-page-title">Bookings</div>
-        <button type="button" class="od-btn od-btn-primary" data-add-booking><i class="bi bi-plus-lg"></i> Add booking</button>
+        <div class="od-page-title">{% trans "Bookings" %}</div>
+        <button type="button" class="od-btn od-btn-primary" data-add-booking><i class="bi bi-plus-lg"></i> {% trans "Add booking" %}</button>
       </div>
       <div class="od-tabs" id="bk-tabs">
-        <button class="od-tab active" data-tab="pending">Pending <span class="od-tab-n">{{ pending_count }}</span></button>
-        <button class="od-tab" data-tab="approved">Approved</button>
-        <button class="od-tab" data-tab="cancelled">Cancelled</button>
-        <button class="od-tab" data-tab="completed">Completed</button>
-        <button class="od-tab" data-tab="no_show">No Show</button>
+        <button class="od-tab active" data-tab="pending">{% trans "Pending" %} <span class="od-tab-n">{{ pending_count }}</span></button>
+        <button class="od-tab" data-tab="approved">{% trans "Approved" %}</button>
+        <button class="od-tab" data-tab="cancelled">{% trans "Cancelled" %}</button>
+        <button class="od-tab" data-tab="completed">{% trans "Completed" %}</button>
+        <button class="od-tab" data-tab="no_show">{% trans "No Show" %}</button>
       </div>
       <div class="od-bk-list" id="bk-list">
         {% for booking in booking_management_list %}
           {% include "booking/partials/booking_card.html" with booking=booking show_actions=True show_edit=True %}
         {% empty %}
-          <div class="od-empty">No bookings yet.</div>
+          <div class="od-empty">{% trans "No bookings yet." %}</div>
         {% endfor %}
       </div>
     </div>
 
     <div class="od-section" id="od-sec-customers">
       <div class="od-page-top">
-        <div class="od-page-title">Customers</div>
-        <button type="button" class="od-btn od-btn-primary" data-add-customer><i class="bi bi-plus-lg"></i> Add customer</button>
+        <div class="od-page-title">{% trans "Customers" %}</div>
+        <button type="button" class="od-btn od-btn-primary" data-add-customer><i class="bi bi-plus-lg"></i> {% trans "Add customer" %}</button>
       </div>
       <div class="od-card od-table-card">
         {% if customers %}
           <div class="od-table-wrap">
             <table class="od-table">
-              <thead><tr><th>Name</th><th class="od-col-hide-xs">Phone</th><th class="od-col-hide-sm">Instagram</th><th class="od-col-hide-sm">Contact</th><th></th></tr></thead>
+              <thead><tr><th>{% trans "Name" %}</th><th class="od-col-hide-xs">{% trans "Phone" %}</th><th class="od-col-hide-sm">{% trans "Instagram" %}</th><th class="od-col-hide-sm">{% trans "Contact" %}</th><th></th></tr></thead>
               <tbody>
                 {% for customer in customers %}
                   <tr data-customer-id="{{ customer.id }}"
@@ -213,8 +218,8 @@
                     <td class="od-col-hide-sm">{{ customer.instagram_username }}</td>
                     <td class="od-col-hide-sm">{{ customer.get_preferred_contact_method_display }}</td>
                     <td class="od-row-actions od-actions-wrap">
-                      <a href="{% url 'booking:customer_history' customer.id %}" class="od-btn od-btn-ghost od-btn-sm">History</a>
-                      <button type="button" class="od-btn od-btn-ghost od-btn-sm" data-edit-customer="{{ customer.id }}">Edit</button>
+                      <a href="{% url 'booking:customer_history' customer.id %}" class="od-btn od-btn-ghost od-btn-sm">{% trans "History" %}</a>
+                      <button type="button" class="od-btn od-btn-ghost od-btn-sm" data-edit-customer="{{ customer.id }}">{% trans "Edit" %}</button>
                     </td>
                   </tr>
                 {% endfor %}
@@ -222,15 +227,15 @@
             </table>
           </div>
         {% else %}
-          <div class="od-empty">No customers yet.</div>
+          <div class="od-empty">{% trans "No customers yet." %}</div>
         {% endif %}
       </div>
     </div>
 
     <div class="od-section" id="od-sec-services">
       <div class="od-page-top">
-        <div class="od-page-title">Services</div>
-        <button type="button" class="od-btn od-btn-primary" data-add-service><i class="bi bi-plus-lg"></i> Add service</button>
+        <div class="od-page-title">{% trans "Services" %}</div>
+        <button type="button" class="od-btn od-btn-primary" data-add-service><i class="bi bi-plus-lg"></i> {% trans "Add service" %}</button>
       </div>
 
       {% for service in services %}
@@ -252,39 +257,39 @@
             <div class="od-svc-card-left">
               <div class="od-svc-card-name">
                 {{ service.name }}
-                {% if not service.is_active %}<span class="od-badge od-badge-muted">Inactive</span>{% else %}<span class="od-badge od-badge-active">Active</span>{% endif %}
+                {% if not service.is_active %}<span class="od-badge od-badge-muted">{% trans "Inactive" %}</span>{% else %}<span class="od-badge od-badge-active">{% trans "Active" %}</span>{% endif %}
               </div>
               <div class="od-svc-card-meta">
-                <span><i class="bi bi-clock"></i> {{ service.duration_minutes }} min</span>
+                <span><i class="bi bi-clock"></i> {{ service.duration_minutes }} {% trans "min" %}</span>
                 {% if service.base_price %}<span><i class="bi bi-tag"></i> {{ service.base_price|floatformat:0 }} ден</span>{% endif %}
-                {% if service.requires_photo %}<span class="od-svc-meta-tag od-svc-meta-tag-photo"><i class="bi bi-camera"></i> Photo required</span>{% endif %}
-                {% if service.photo_recommended %}<span class="od-svc-meta-tag"><i class="bi bi-camera"></i> Photo recommended</span>{% endif %}
+                {% if service.requires_photo %}<span class="od-svc-meta-tag od-svc-meta-tag-photo"><i class="bi bi-camera"></i> {% trans "Photo required" %}</span>{% endif %}
+                {% if service.photo_recommended %}<span class="od-svc-meta-tag"><i class="bi bi-camera"></i> {% trans "Photo recommended" %}</span>{% endif %}
               </div>
               {% if service.description %}<div class="od-svc-card-desc">{{ service.description }}</div>{% endif %}
             </div>
             <div class="od-svc-card-actions">
               <button type="button" class="od-btn od-btn-ghost od-btn-sm" data-edit-service="{{ service.id }}">
-                <i class="bi bi-pencil"></i> Edit
+                <i class="bi bi-pencil"></i> {% trans "Edit" %}
               </button>
               <form method="post" style="display:inline"
-                    onsubmit="return confirm('Delete service &quot;{{ service.name }}&quot;? This cannot be undone.')">
+                    onsubmit="return confirm('{% filter escapejs %}{% blocktrans with name=service.name %}Delete service "{{ name }}"? This cannot be undone.{% endblocktrans %}{% endfilter %}')">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="delete_service">
                 <input type="hidden" name="service_id" value="{{ service.id }}">
                 <input type="hidden" name="return_section" value="services">
                 <button type="submit" class="od-btn od-btn-danger-ghost od-btn-sm">
-                  <i class="bi bi-trash"></i> Delete
+                  <i class="bi bi-trash"></i> {% trans "Delete" %}
                 </button>
               </form>
             </div>
           </div>
 
-          {# ── Price list panel ── #}
+          {# ── {% trans "Price list" %} panel ── #}
           <div class="od-svc-price-panel">
             <button type="button" class="od-svc-price-toggle" data-price-toggle="{{ service.id }}">
               <span class="od-svc-price-toggle-label">
                 <i class="bi bi-list-ul"></i>
-                Price list
+                {% trans "Price list" %}
                 {% with cnt=service.price_items.count %}
                   <span class="od-svc-price-count" id="od-price-count-{{ service.id }}">{{ cnt }}</span>
                 {% endwith %}
@@ -299,10 +304,10 @@
                     <thead>
                       <tr>
                         <th class="od-price-col-drag"></th>
-                        <th colspan="2">Name</th>
-                        <th>Price</th>
-                        <th class="od-price-col-photo">Photo req.</th>
-                        <th class="od-price-col-actions">Actions</th>
+                        <th colspan="2">{% trans "Name" %}</th>
+                        <th>{% trans "Price" %}</th>
+                        <th class="od-price-col-photo">{% trans "Photo req." %}</th>
+                        <th class="od-price-col-actions">{% trans "Actions" %}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -327,19 +332,19 @@
                               draggable="true"
                               data-item-id="{{ item.id }}"
                               {% if grp.grouper %}data-group-member="{{ service.id }}-{{ grp|dictsort:'grouper'|first }}"{% endif %}>
-                            <td class="od-price-td-drag"><span class="od-drag-handle" title="Drag to reorder"><i class="bi bi-grip-vertical"></i></span></td>
+                            <td class="od-price-td-drag"><span class="od-drag-handle" title="{% trans "Drag to reorder" %}"><i class="bi bi-grip-vertical"></i></span></td>
                             <td colspan="2" class="od-price-td-name">
                               {{ item.name }}
                               {% if item.photo_required %}
-                                <span class="od-price-photo-note"><i class="bi bi-camera"></i> Photo needed</span>
+                                <span class="od-price-photo-note"><i class="bi bi-camera"></i> {% trans "Photo needed" %}</span>
                               {% endif %}
                             </td>
                             <td class="od-price-td-price">{{ item.price_display }} ден</td>
                             <td class="od-price-col-photo">
                               {% if item.photo_required %}
-                                <span class="od-badge od-badge-photo"><i class="bi bi-camera-fill"></i> Yes</span>
+                                <span class="od-badge od-badge-photo"><i class="bi bi-camera-fill"></i> {% trans "Yes" %}</span>
                               {% else %}
-                                <span class="od-badge od-badge-muted">No</span>
+                                <span class="od-badge od-badge-muted">{% trans "No" %}</span>
                               {% endif %}
                             </td>
                             <td class="od-price-col-actions">
@@ -351,13 +356,13 @@
                                 data-item-price="{{ item.price_display|escapejs }}"
                                 data-item-group="{{ item.group|escapejs }}"
                                 data-item-sort="{{ item.sort_order }}"
-                                data-item-photo="{{ item.photo_required|yesno:'true,false' }}">Edit</button>
-                              <form method="post" style="display:inline" onsubmit="return confirm('Delete this item?')">
+                                data-item-photo="{{ item.photo_required|yesno:'true,false' }}">{% trans "Edit" %}</button>
+                              <form method="post" style="display:inline" onsubmit="return confirm('{% filter escapejs %}{% trans "Delete this item?" %}{% endfilter %}')">
                                 {% csrf_token %}
                                 <input type="hidden" name="action" value="delete_price_item">
                                 <input type="hidden" name="return_section" value="services">
                                 <input type="hidden" name="item_id" value="{{ item.id }}">
-                                <button type="submit" class="od-btn od-btn-danger-ghost od-btn-sm">Delete</button>
+                                <button type="submit" class="od-btn od-btn-danger-ghost od-btn-sm">{% trans "Delete" %}</button>
                               </form>
                             </td>
                           </tr>
@@ -366,14 +371,14 @@
                     </tbody>
                   </table></div>
                 {% else %}
-                  <p class="od-price-empty">No price items yet. Add the first one below.</p>
+                  <p class="od-price-empty">{% trans "No price items yet. Add the first one below." %}</p>
                 {% endif %}
               {% endwith %}
 
               <div class="od-price-add-bar">
                 <button type="button" class="od-btn od-btn-primary od-btn-sm"
                         data-manage-prices="{{ service.id }}" data-service-name="{{ service.name }}">
-                  <i class="bi bi-plus-lg"></i> Add price item
+                  <i class="bi bi-plus-lg"></i> {% trans "Add price item" %}
                 </button>
               </div>
             </div>
@@ -381,13 +386,13 @@
 
         </div>
       {% empty %}
-        <div class="od-card od-empty">No services yet. Add your first service.</div>
+        <div class="od-card od-empty">{% trans "No services yet. Add your first service." %}</div>
       {% endfor %}
 
     </div>
 
     <div class="od-section" id="od-sec-hours">
-      <div class="od-page-top"><div class="od-page-title">Working hours</div></div>
+      <div class="od-page-top"><div class="od-page-title">{% trans "Working hours" %}</div></div>
       <form method="post" class="od-card od-form">
         {% csrf_token %}
         <input type="hidden" name="action" value="save_working_hours">
@@ -397,26 +402,26 @@
           <div class="od-hours-edit-row">
             {{ form.weekday }}
             <div class="od-hours-day">{{ form.instance.get_weekday_display }}</div>
-            <label class="od-check-label">{{ form.is_working_day }} Open</label>
+            <label class="od-check-label">{{ form.is_working_day }} {% trans "Open" %}</label>
             <div class="od-hours-fields">{{ form.start_time }} {{ form.end_time }}</div>
           </div>
         {% endfor %}
-        <button type="submit" class="od-btn od-btn-primary">Save working hours</button>
+        <button type="submit" class="od-btn od-btn-primary">{% trans "Save working hours" %}</button>
       </form>
     </div>
 
     <div class="od-section" id="od-sec-availability">
       <div class="od-page-top">
-        <div class="od-page-title">Availability</div>
+        <div class="od-page-title">{% trans "Availability" %}</div>
         <div class="od-page-actions">
-          <button type="button" class="od-btn od-btn-primary" data-add-blocked-date><i class="bi bi-calendar-x"></i> Block day</button>
-          <button type="button" class="od-btn od-btn-ghost" data-add-block><i class="bi bi-slash-circle"></i> Block time</button>
+          <button type="button" class="od-btn od-btn-primary" data-add-blocked-date><i class="bi bi-calendar-x"></i> {% trans "Block day" %}</button>
+          <button type="button" class="od-btn od-btn-ghost" data-add-block><i class="bi bi-slash-circle"></i> {% trans "Block time" %}</button>
         </div>
       </div>
 
       <div class="od-grid-2">
         <div class="od-card">
-          <div class="od-card-title">Blocked dates</div>
+          <div class="od-card-title">{% trans "Blocked dates" %}</div>
           {% if blocked_dates %}
             <ul class="od-list">
               {% for row in blocked_dates %}
@@ -427,18 +432,18 @@
                     <input type="hidden" name="action" value="delete_blocked_date">
                     <input type="hidden" name="override_id" value="{{ row.id }}">
                     <input type="hidden" name="return_section" value="availability">
-                    <button type="submit" class="od-btn od-btn-danger-ghost od-btn-sm" data-delete-blocked-date>Delete</button>
+                    <button type="submit" class="od-btn od-btn-danger-ghost od-btn-sm" data-delete-blocked-date>{% trans "Delete" %}</button>
                   </form>
                 </li>
               {% endfor %}
             </ul>
           {% else %}
-            <p class="od-muted">No blocked dates.</p>
+            <p class="od-muted">{% trans "No blocked dates." %}</p>
           {% endif %}
         </div>
 
         <div class="od-card">
-          <div class="od-card-title">Unavailable time blocks</div>
+          <div class="od-card-title">{% trans "Unavailable time blocks" %}</div>
           {% if unavailable_blocks %}
             <ul class="od-list">
               {% for block in unavailable_blocks %}
@@ -449,27 +454,27 @@
                       data-block-date="{{ block.date|date:'Y-m-d' }}"
                       data-block-start="{{ block.start_time|time:'H:i' }}"
                       data-block-end="{{ block.end_time|time:'H:i' }}"
-                      data-block-reason="{{ block.reason|escape }}">Edit</button>
+                      data-block-reason="{{ block.reason|escape }}">{% trans "Edit" %}</button>
                     <form method="post" style="display:inline">
                       {% csrf_token %}
                       <input type="hidden" name="action" value="delete_unavailable_block">
                       <input type="hidden" name="block_id" value="{{ block.id }}">
                       <input type="hidden" name="return_section" value="availability">
-                      <button type="submit" class="od-btn od-btn-danger-ghost od-btn-sm">Delete</button>
+                      <button type="submit" class="od-btn od-btn-danger-ghost od-btn-sm">{% trans "Delete" %}</button>
                     </form>
                   </div>
                 </li>
               {% endfor %}
             </ul>
           {% else %}
-            <p class="od-muted">No time blocks.</p>
+            <p class="od-muted">{% trans "No time blocks." %}</p>
           {% endif %}
         </div>
       </div>
     </div>
 
     <div class="od-section" id="od-sec-policy">
-      <div class="od-page-top"><div class="od-page-title">Booking policy</div></div>
+      <div class="od-page-top"><div class="od-page-title">{% trans "Booking policy" %}</div></div>
       {% if policy_form %}
         <form method="post" class="od-form" id="od-policy-form">
           {% csrf_token %}
@@ -478,7 +483,7 @@
 
           {# ── Scheduling rules ── #}
           <div class="od-policy-card">
-            <div class="od-policy-card-title">Scheduling rules</div>
+            <div class="od-policy-card-title">{% trans "Scheduling rules" %}</div>
             <div class="od-form-grid od-form-grid-2">
               {% with f=policy_form.minimum_notice_days %}
                 <div class="od-field"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% if f.errors %}<span class="od-field-error">{{ f.errors.0 }}</span>{% endif %}</div>
@@ -506,7 +511,7 @@
 
           {# ── Toggles ── #}
           <div class="od-policy-card">
-            <div class="od-policy-card-title">Booking settings</div>
+            <div class="od-policy-card-title">{% trans "Booking settings" %}</div>
             <div class="od-policy-toggles">
               {% for f in policy_form %}
                 {% if f.field.widget.input_type == "checkbox" %}
@@ -526,8 +531,8 @@
 
           {# ── Salon rules ── #}
           <div class="od-policy-card">
-            <div class="od-policy-card-title">Salon rules shown to customers</div>
-            <p class="od-policy-hint">Shown on the booking form. Each line is a separate rule.</p>
+            <div class="od-policy-card-title">{% trans "Salon rules shown to customers" %}</div>
+            <p class="od-policy-hint">{% trans "Shown on the booking form. Each line is a separate rule." %}</p>
             {% with f=policy_form.salon_rules %}
               <div class="od-field">{{ f }}{% if f.errors %}<span class="od-field-error">{{ f.errors.0 }}</span>{% endif %}</div>
             {% endwith %}
@@ -535,12 +540,12 @@
 
           {# ── Prepared message templates ── #}
           <div class="od-policy-card">
-            <div class="od-policy-card-title">Prepared messages</div>
+            <div class="od-policy-card-title">{% trans "Prepared messages" %}</div>
             <p class="od-policy-hint">
-              Available variables: <code>{ime}</code> (customer first name) &nbsp;·&nbsp;
-              <code>{datum}</code> (date) &nbsp;·&nbsp;
-              <code>{vreme}</code> (time) &nbsp;·&nbsp;
-              <code>{salon}</code> (salon name)
+              {% trans "Available variables:" %} <code>{ime}</code> ({% trans "customer first name" %}) &nbsp;·&nbsp;
+              <code>{datum}</code> ({% trans "date" %}) &nbsp;·&nbsp;
+              <code>{vreme}</code> ({% trans "time" %}) &nbsp;·&nbsp;
+              <code>{salon}</code> ({% trans "salon name" %})
             </p>
             <div class="od-policy-messages">
               {% for f in policy_form %}
@@ -556,35 +561,35 @@
           </div>
 
           <div class="od-policy-save-bar">
-            <button type="submit" class="od-btn od-btn-primary">Save all policy settings</button>
+            <button type="submit" class="od-btn od-btn-primary">{% trans "Save all policy settings" %}</button>
           </div>
         </form>
       {% else %}
-        <div class="od-empty">No booking policy configured.</div>
+        <div class="od-empty">{% trans "No booking policy configured." %}</div>
       {% endif %}
     </div>
   
   <!-- ── Mobile bottom navigation bar ───────────────────────────────────── -->
   <nav class="od-bottom-nav" id="od-bottom-nav">
-    <button class="od-bn-item" data-bn-section="dashboard" aria-label="Overview">
+    <button class="od-bn-item" data-bn-section="dashboard" aria-label="{% trans "Overview" %}">
       <i class="bi bi-grid-1x2"></i>
-      <span>Overview</span>
+      <span>{% trans "Overview" %}</span>
     </button>
-    <button class="od-bn-item" data-bn-section="bookings" aria-label="Bookings">
+    <button class="od-bn-item" data-bn-section="bookings" aria-label="{% trans "Bookings" %}">
       <i class="bi bi-journal-text"></i>
-      <span>Bookings</span>
+      <span>{% trans "Bookings" %}</span>
     </button>
-    <button class="od-bn-item" data-bn-section="calendar" aria-label="Calendar">
+    <button class="od-bn-item" data-bn-section="calendar" aria-label="{% trans "Calendar" %}">
       <i class="bi bi-calendar3"></i>
-      <span>Calendar</span>
+      <span>{% trans "Calendar" %}</span>
     </button>
-    <button class="od-bn-item" data-bn-section="services" aria-label="Services">
+    <button class="od-bn-item" data-bn-section="services" aria-label="{% trans "Services" %}">
       <i class="bi bi-scissors"></i>
-      <span>Services</span>
+      <span>{% trans "Services" %}</span>
     </button>
-    <button class="od-bn-item od-bn-more" id="od-bn-more" aria-label="More">
+    <button class="od-bn-item od-bn-more" id="od-bn-more" aria-label="{% trans "More" %}">
       <i class="bi bi-list"></i>
-      <span>More</span>
+      <span>{% trans "More" %}</span>
     </button>
   </nav>
 
@@ -603,8 +608,64 @@
 
 {% block extra_js %}
 {% if salon %}
-{% load static %}
+{% load static i18n %}
 <script src="{% static 'js/owner_dashboard.js' %}"></script>
+
+<script>
+window.OD_I18N = {
+  noBookingsInCategory: "{% filter escapejs %}{% trans "No bookings in this category." %}{% endfilter %}",
+  noSlotsAvailable: "{% filter escapejs %}{% trans "No slots available" %}{% endfilter %}",
+  timeNoLongerAvailable: "{% filter escapejs %}{% trans "The time %(time)s is no longer available. Please select another slot." %}{% endfilter %}",
+  addBooking: "{% filter escapejs %}{% trans "Add booking" %}{% endfilter %}",
+  editBooking: "{% filter escapejs %}{% trans "Edit booking" %}{% endfilter %}",
+  confirmDeleteBooking: "{% filter escapejs %}{% trans "Delete this booking permanently?" %}{% endfilter %}",
+  addService: "{% filter escapejs %}{% trans "Add service" %}{% endfilter %}",
+  editService: "{% filter escapejs %}{% trans "Edit service" %}{% endfilter %}",
+  confirmDeleteService: "{% filter escapejs %}{% trans "Delete this service?" %}{% endfilter %}",
+  statusPending: "{% filter escapejs %}{% trans "Pending" %}{% endfilter %}",
+  statusApproved: "{% filter escapejs %}{% trans "Approved" %}{% endfilter %}",
+  statusRejected: "{% filter escapejs %}{% trans "Rejected" %}{% endfilter %}",
+  statusCancelled: "{% filter escapejs %}{% trans "Cancelled" %}{% endfilter %}",
+  statusCompleted: "{% filter escapejs %}{% trans "Completed" %}{% endfilter %}",
+  statusNoShow: "{% filter escapejs %}{% trans "No Show" %}{% endfilter %}",
+  confirmRejectBooking: "{% filter escapejs %}{% trans "Reject this booking?" %}{% endfilter %}",
+  confirmCancelBooking: "{% filter escapejs %}{% trans "Cancel this booking?" %}{% endfilter %}",
+  confirmMarkNoShow: "{% filter escapejs %}{% trans "Mark as no-show?" %}{% endfilter %}",
+  approve: "{% filter escapejs %}{% trans "Approve" %}{% endfilter %}",
+  reject: "{% filter escapejs %}{% trans "Reject" %}{% endfilter %}",
+  markCompleted: "{% filter escapejs %}{% trans "Mark completed" %}{% endfilter %}",
+  noShow: "{% filter escapejs %}{% trans "No-show" %}{% endfilter %}",
+  cancel: "{% filter escapejs %}{% trans "Cancel" %}{% endfilter %}",
+  somethingWentWrong: "{% filter escapejs %}{% trans "Something went wrong. Please try again." %}{% endfilter %}",
+  addItem: "{% filter escapejs %}{% trans "Add item" %}{% endfilter %}",
+  saveChanges: "{% filter escapejs %}{% trans "Save changes" %}{% endfilter %}",
+  addCustomer: "{% filter escapejs %}{% trans "Add customer" %}{% endfilter %}",
+  editCustomer: "{% filter escapejs %}{% trans "Edit customer" %}{% endfilter %}",
+  confirmDeleteCustomer: "{% filter escapejs %}{% trans "Delete this customer?" %}{% endfilter %}",
+  blockTime: "{% filter escapejs %}{% trans "Block time" %}{% endfilter %}",
+  editBlockedTime: "{% filter escapejs %}{% trans "Edit blocked time" %}{% endfilter %}",
+  confirmRemoveTimeBlock: "{% filter escapejs %}{% trans "Remove this time block?" %}{% endfilter %}",
+  confirmRemoveBlockedDate: "{% filter escapejs %}{% trans "Remove this blocked date?" %}{% endfilter %}",
+  block: "{% filter escapejs %}{% trans "Block" %}{% endfilter %}",
+  blocked: "{% filter escapejs %}{% trans "Blocked" %}{% endfilter %}",
+  blockedRange: "{% filter escapejs %}{% trans "Blocked %(start)s%(end)s" %}{% endfilter %}",
+  closed: "{% filter escapejs %}{% trans "Closed" %}{% endfilter %}",
+  available: "{% filter escapejs %}{% trans "— Available" %}{% endfilter %}",
+  minSuffix: "{% filter escapejs %}{% trans "min" %}{% endfilter %}",
+  appointmentCountSingular: "{% filter escapejs %}{% trans "%(count)s appointment" %}{% endfilter %}",
+  appointmentCountPlural: "{% filter escapejs %}{% trans "%(count)s appointments" %}{% endfilter %}",
+  cannotAddPastBooking: "{% filter escapejs %}{% trans "Cannot add bookings in the past." %}{% endfilter %}",
+  viber: "{% filter escapejs %}{% trans "Viber" %}{% endfilter %}",
+  whatsapp: "{% filter escapejs %}{% trans "WhatsApp" %}{% endfilter %}",
+  sms: "{% filter escapejs %}{% trans "SMS" %}{% endfilter %}",
+  call: "{% filter escapejs %}{% trans "Call" %}{% endfilter %}",
+  copyMessage: "{% filter escapejs %}{% trans "Copy message" %}{% endfilter %}",
+  today: "{% filter escapejs %}{% trans "Today" %}{% endfilter %}",
+  week: "{% filter escapejs %}{% trans "Week" %}{% endfilter %}",
+  day: "{% filter escapejs %}{% trans "Day" %}{% endfilter %}",
+  unavailable: "{% filter escapejs %}{% trans "Unavailable" %}{% endfilter %}",
+};
+</script>
 <script>
 initOwnerDashboard({
   eventsUrl: "{% url 'booking:owner_calendar_events' %}",

@@ -1,0 +1,1405 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Salon Scheduler\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-06-21 12:00+0000\n"
+"PO-Revision-Date: 2026-06-21 12:00+0000\n"
+"Last-Translator: Salon Scheduler\n"
+"Language-Team: English\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n % 10 == 1 && n % 100 != 11) ? 0 : 1;\n"
+
+msgid " Email sent."
+msgstr " Email sent."
+
+msgid " Use prepared message to notify customer."
+msgstr " Use prepared message to notify customer."
+
+msgid "%(count)s appointment"
+msgstr "%(count)s appointment"
+
+msgid "%(count)s appointments"
+msgstr "%(count)s appointments"
+
+msgid "%(field)s: %(error)s"
+msgstr "%(field)s: %(error)s"
+
+msgid "%(minutes)s min"
+msgstr "%(minutes)s min"
+
+msgid "(optional)"
+msgstr "(optional)"
+
+msgid "(recommended)"
+msgstr "(recommended)"
+
+msgid "(required)"
+msgstr "(required)"
+
+msgid "24 h before"
+msgstr "24 h before"
+
+msgid ""
+"A new booking request was submitted.\n"
+"\n"
+"Customer: %(customer)s\n"
+"Phone: %(phone)s\n"
+"Instagram: %(instagram)s\n"
+"Service: %(service)s\n"
+"Date: %(date)s\n"
+"Time: %(time)s\n"
+"Status: Pending (awaiting your approval)\n"
+"\n"
+"Review in dashboard: %(dashboard)s\n"
+msgstr ""
+"A new booking request was submitted.\n"
+"\n"
+"Customer: %(customer)s\n"
+"Phone: %(phone)s\n"
+"Instagram: %(instagram)s\n"
+"Service: %(service)s\n"
+"Date: %(date)s\n"
+"Time: %(time)s\n"
+"Status: Pending (awaiting your approval)\n"
+"\n"
+"Review in dashboard: %(dashboard)s\n"
+
+msgid "Actions"
+msgstr "Actions"
+
+msgid "Active"
+msgstr "Active"
+
+msgid "Add"
+msgstr "Add"
+
+msgid "Add blocked date"
+msgstr "Add blocked date"
+
+msgid "Add booking"
+msgstr "Add booking"
+
+msgid "Add customer"
+msgstr "Add customer"
+
+msgid "Add item"
+msgstr "Add item"
+
+msgid "Add price item"
+msgstr "Add price item"
+
+msgid "Add service"
+msgstr "Add service"
+
+msgid "Add time block"
+msgstr "Add time block"
+
+msgid "All caught up — no pending requests."
+msgstr "All caught up — no pending requests."
+
+msgid ""
+"All requests require <strong>salon approval</strong> before confirmation"
+msgstr ""
+"All requests require <strong>salon approval</strong> before confirmation"
+
+msgid "All requests require salon approval before confirmation."
+msgstr "All requests require salon approval before confirmation."
+
+msgid "Allow next day booking"
+msgstr "Allow next day booking"
+
+msgid "Allow same day booking"
+msgstr "Allow same day booking"
+
+msgid "Appointment"
+msgstr "Appointment"
+
+msgid "Appointment information — %(salon)s"
+msgstr "Appointment information — %(salon)s"
+
+msgid "Approval"
+msgstr "Approval"
+
+msgid "Approve"
+msgstr "Approve"
+
+msgid "Approved"
+msgstr "Approved"
+
+msgid "Approved message"
+msgstr "Approved message"
+
+msgid "Apr"
+msgstr "Apr"
+
+msgid "April"
+msgstr "April"
+
+msgid "Aug"
+msgstr "Aug"
+
+msgid "August"
+msgstr "August"
+
+msgid "Auto approve bookings"
+msgstr "Auto approve bookings"
+
+msgid "Availability"
+msgstr "Availability"
+
+msgid "Available"
+msgstr "Available"
+
+msgid "Available times"
+msgstr "Available times"
+
+msgid "Available variables:"
+msgstr "Available variables:"
+
+msgid "Back"
+msgstr "Back"
+
+msgid "Back to %(salon_name)s"
+msgstr "Back to %(salon_name)s"
+
+msgid "Back to login"
+msgstr "Back to login"
+
+msgid "Beautiful nails,"
+msgstr "Beautiful nails,"
+
+msgid "Before you book"
+msgstr "Before you book"
+
+msgid ""
+"Being more than 15 minutes late without notice may result in cancellation."
+msgstr ""
+"Being more than 15 minutes late without notice may result in cancellation."
+
+msgid "Block"
+msgstr "Block"
+
+msgid "Block day"
+msgstr "Block day"
+
+msgid "Block full day"
+msgstr "Block full day"
+
+msgid "Block time"
+msgstr "Block time"
+
+msgid "Blocked"
+msgstr "Blocked"
+
+msgid "Blocked %(start)s%(end)s"
+msgstr "Blocked %(start)s%(end)s"
+
+msgid "Blocked date added."
+msgstr "Blocked date added."
+
+msgid "Blocked date removed."
+msgstr "Blocked date removed."
+
+msgid "Blocked date saved."
+msgstr "Blocked date saved."
+
+msgid "Blocked dates"
+msgstr "Blocked dates"
+
+msgid "Book"
+msgstr "Book"
+
+msgid "Book an appointment"
+msgstr "Book an appointment"
+
+msgid "Book appointment"
+msgstr "Book appointment"
+
+msgid "Book now"
+msgstr "Book now"
+
+msgid "Book this service"
+msgstr "Book this service"
+
+msgid "Book up to <strong>%(days)s days</strong> in advance"
+msgstr "Book up to <strong>%(days)s days</strong> in advance"
+
+msgid "Book your salon<br><em>appointment online</em>"
+msgstr "Book your salon<br><em>appointment online</em>"
+
+msgid "Booking"
+msgstr "Booking"
+
+msgid "Booking added successfully."
+msgstr "Booking added successfully."
+
+msgid "Booking approved. Customer has no email — use prepared message."
+msgstr "Booking approved. Customer has no email — use prepared message."
+
+msgid "Booking approved. Email could not be sent — use prepared message."
+msgstr "Booking approved. Email could not be sent — use prepared message."
+
+msgid "Booking approved. Email sent to customer."
+msgstr "Booking approved. Email sent to customer."
+
+msgid "Booking cancelled."
+msgstr "Booking cancelled."
+
+msgid "Booking cancelled. Customer has no email — use prepared message."
+msgstr "Booking cancelled. Customer has no email — use prepared message."
+
+msgid "Booking cancelled. Email sent to customer."
+msgstr "Booking cancelled. Email sent to customer."
+
+msgid "Booking deleted."
+msgstr "Booking deleted."
+
+msgid "Booking marked as completed."
+msgstr "Booking marked as completed."
+
+msgid "Booking marked as no-show."
+msgstr "Booking marked as no-show."
+
+msgid "Booking policy"
+msgstr "Booking policy"
+
+msgid "Booking policy saved."
+msgstr "Booking policy saved."
+
+msgid "Booking rejected. Customer has no email — use prepared message."
+msgstr "Booking rejected. Customer has no email — use prepared message."
+
+msgid "Booking rejected. Email could not be sent — use prepared message."
+msgstr "Booking rejected. Email could not be sent — use prepared message."
+
+msgid "Booking rejected. Email sent to customer."
+msgstr "Booking rejected. Email sent to customer."
+
+msgid "Booking settings"
+msgstr "Booking settings"
+
+msgid "Booking summary"
+msgstr "Booking summary"
+
+msgid "Booking updated successfully."
+msgstr "Booking updated successfully."
+
+msgid "Booking updated."
+msgstr "Booking updated."
+
+msgid "Booking updated. Email sent."
+msgstr "Booking updated. Email sent."
+
+msgid "Bookings"
+msgstr "Bookings"
+
+msgid "Buffer minutes between bookings"
+msgstr "Buffer minutes between bookings"
+
+msgid "Calendar"
+msgstr "Calendar"
+
+msgid "Call"
+msgstr "Call"
+
+msgid "Cancel"
+msgstr "Cancel"
+
+msgid "Cancel this booking?"
+msgstr "Cancel this booking?"
+
+msgid "Cancellations require at least 24–48 hours notice."
+msgstr "Cancellations require at least 24–48 hours notice."
+
+msgid "Cancelled"
+msgstr "Cancelled"
+
+msgid "Cancelled message"
+msgstr "Cancelled message"
+
+msgid "Cannot add bookings in the past."
+msgstr "Cannot add bookings in the past."
+
+msgid "Cannot cancel a completed or no-show booking."
+msgstr "Cannot cancel a completed or no-show booking."
+
+msgid ""
+"Cannot delete a customer with existing bookings. Remove bookings first."
+msgstr ""
+"Cannot delete a customer with existing bookings. Remove bookings first."
+
+msgid "Change Password"
+msgstr "Change Password"
+
+msgid "Change password"
+msgstr "Change password"
+
+msgid "Check your inbox"
+msgstr "Check your inbox"
+
+msgid "Choose a strong password for your account."
+msgstr "Choose a strong password for your account."
+
+msgid "Choose service"
+msgstr "Choose service"
+
+msgid "Choose your salon"
+msgstr "Choose your salon"
+
+msgid "Clear form"
+msgstr "Clear form"
+
+msgid "Click the link below to set a new password:"
+msgstr "Click the link below to set a new password:"
+
+msgid "Close"
+msgstr "Close"
+
+msgid "Close sidebar"
+msgstr "Close sidebar"
+
+msgid "Closed"
+msgstr "Closed"
+
+msgid "Closed now"
+msgstr "Closed now"
+
+msgid "Closed today"
+msgstr "Closed today"
+
+msgid "Collapse sidebar"
+msgstr "Collapse sidebar"
+
+msgid "Completed"
+msgstr "Completed"
+
+msgid "Completed this week"
+msgstr "Completed this week"
+
+msgid "Contact"
+msgstr "Contact"
+
+msgid "Contact details"
+msgstr "Contact details"
+
+msgid "Continue"
+msgstr "Continue"
+
+msgid "Copy message"
+msgstr "Copy message"
+
+msgid "Could not add unavailable time block."
+msgstr "Could not add unavailable time block."
+
+msgid "Could not load times. Please try again."
+msgstr "Could not load times. Please try again."
+
+msgid "Could not save booking policy."
+msgstr "Could not save booking policy."
+
+msgid "Could not save customer."
+msgstr "Could not save customer."
+
+msgid "Could not save service. Check the form."
+msgstr "Could not save service. Check the form."
+
+msgid "Could not save unavailable time block."
+msgstr "Could not save unavailable time block."
+
+msgid "Could not save working hours. Check the times."
+msgstr "Could not save working hours. Check the times."
+
+msgid "Customer added successfully."
+msgstr "Customer added successfully."
+
+msgid "Customer deleted."
+msgstr "Customer deleted."
+
+msgid "Customer must upload a reference photo when booking this sub-service"
+msgstr "Customer must upload a reference photo when booking this sub-service"
+
+msgid "Customer updated successfully."
+msgstr "Customer updated successfully."
+
+msgid "Customer view"
+msgstr "Customer view"
+
+msgid "Customers"
+msgstr "Customers"
+
+msgid "Dashboard"
+msgstr "Dashboard"
+
+msgid "Date"
+msgstr "Date"
+
+msgid "Date & Time"
+msgstr "Date & Time"
+
+msgid "Day"
+msgstr "Day"
+
+msgid "Dec"
+msgstr "Dec"
+
+msgid "December"
+msgstr "December"
+
+msgid "Delete"
+msgstr "Delete"
+
+msgid "Delete service"
+msgstr "Delete service"
+
+msgid "Delete this booking permanently?"
+msgstr "Delete this booking permanently?"
+
+msgid "Delete this customer?"
+msgstr "Delete this customer?"
+
+msgid "Delete this service?"
+msgstr "Delete this service?"
+
+msgid "Delete this service? This cannot be undone."
+msgstr "Delete this service? This cannot be undone."
+
+msgid "Description"
+msgstr "Description"
+
+msgid ""
+"Double-click (or double-tap on mobile) an empty slot to add a booking · "
+"Click an appointment to view details"
+msgstr ""
+"Double-click (or double-tap on mobile) an empty slot to add a booking · "
+"Click an appointment to view details"
+
+msgid "Drag to reorder"
+msgstr "Drag to reorder"
+
+msgid "Duration"
+msgstr "Duration"
+
+msgid "Duration (min)"
+msgstr "Duration (min)"
+
+msgid "Edit"
+msgstr "Edit"
+
+msgid "Edit blocked time"
+msgstr "Edit blocked time"
+
+msgid "Edit booking"
+msgstr "Edit booking"
+
+msgid "Edit customer"
+msgstr "Edit customer"
+
+msgid "Edit service"
+msgstr "Edit service"
+
+msgid "Edited"
+msgstr "Edited"
+
+msgid "Edited/rescheduled message"
+msgstr "Edited/rescheduled message"
+
+msgid "Email"
+msgstr "Email"
+
+msgid "Email address"
+msgstr "Email address"
+
+msgid "Email sent"
+msgstr "Email sent"
+
+msgid "End"
+msgstr "End"
+
+msgid "Enter your email and we'll send a reset link."
+msgstr "Enter your email and we'll send a reset link."
+
+msgid "Expand sidebar"
+msgstr "Expand sidebar"
+
+msgid ""
+"Explore our services and book your next appointment online — in just a few "
+"minutes."
+msgstr ""
+"Explore our services and book your next appointment online — in just a few "
+"minutes."
+
+msgid "Extra duration note"
+msgstr "Extra duration note"
+
+msgid "Feb"
+msgstr "Feb"
+
+msgid "February"
+msgstr "February"
+
+msgid "Footer navigation"
+msgstr "Footer navigation"
+
+msgid "Forgot password?"
+msgstr "Forgot password?"
+
+msgid "Fr"
+msgstr "Fr"
+
+msgid "Friday"
+msgstr "Friday"
+
+msgid "Full name"
+msgstr "Full name"
+
+msgid "Go to login"
+msgstr "Go to login"
+
+msgid ""
+"Hello %(name)s, this is a reminder that you have an appointment on %(date)s "
+"at %(time)s. We look forward to seeing you! — %(salon)s"
+msgstr ""
+"Hello %(name)s, this is a reminder that you have an appointment on %(date)s "
+"at %(time)s. We look forward to seeing you! — %(salon)s"
+
+msgid ""
+"Hello %(name)s, unfortunately the appointment on %(date)s at %(time)s is not"
+" available. Please choose another time. — %(salon)s"
+msgstr ""
+"Hello %(name)s, unfortunately the appointment on %(date)s at %(time)s is not"
+" available. Please choose another time. — %(salon)s"
+
+msgid ""
+"Hello %(name)s, you did not attend your appointment on %(date)s at %(time)s."
+" If you would like to book again, please contact us. — %(salon)s"
+msgstr ""
+"Hello %(name)s, you did not attend your appointment on %(date)s at %(time)s."
+" If you would like to book again, please contact us. — %(salon)s"
+
+msgid ""
+"Hello %(name)s, your appointment has been changed to %(date)s at %(time)s. "
+"We look forward to seeing you! — %(salon)s"
+msgstr ""
+"Hello %(name)s, your appointment has been changed to %(date)s at %(time)s. "
+"We look forward to seeing you! — %(salon)s"
+
+msgid ""
+"Hello %(name)s, your appointment on %(date)s at %(time)s has been cancelled."
+" Thank you for your understanding. — %(salon)s"
+msgstr ""
+"Hello %(name)s, your appointment on %(date)s at %(time)s has been cancelled."
+" Thank you for your understanding. — %(salon)s"
+
+msgid ""
+"Hello %(name)s, your appointment on %(date)s at %(time)s has been confirmed."
+" We look forward to seeing you! — %(salon)s"
+msgstr ""
+"Hello %(name)s, your appointment on %(date)s at %(time)s has been confirmed."
+" We look forward to seeing you! — %(salon)s"
+
+msgid ""
+"Hello %(name)s, your appointment request for %(date)s at %(time)s has been "
+"received. We will contact you soon. — %(salon)s"
+msgstr ""
+"Hello %(name)s, your appointment request for %(date)s at %(time)s has been "
+"received. We will contact you soon. — %(salon)s"
+
+msgid "Hello,"
+msgstr "Hello,"
+
+msgid "History"
+msgstr "History"
+
+msgid "Hours"
+msgstr "Hours"
+
+msgid ""
+"I agree to the selected time and understand it cannot be changed without "
+"notice."
+msgstr ""
+"I agree to the selected time and understand it cannot be changed without "
+"notice."
+
+msgid ""
+"If an account with that email exists, a password reset link has been sent. "
+"Check your spam folder if you don't see it."
+msgstr ""
+"If an account with that email exists, a password reset link has been sent. "
+"Check your spam folder if you don't see it."
+
+msgid ""
+"If you did not request this, ignore this email — your password will not "
+"change."
+msgstr ""
+"If you did not request this, ignore this email — your password will not "
+"change."
+
+msgid "In person"
+msgstr "In person"
+
+msgid "Inactive"
+msgstr "Inactive"
+
+msgid "Instagram"
+msgstr "Instagram"
+
+msgid "Instagram username"
+msgstr "Instagram username"
+
+msgid "Invalid blocked date."
+msgstr "Invalid blocked date."
+
+msgid "Invalid username or password."
+msgstr "Invalid username or password."
+
+msgid "Jan"
+msgstr "Jan"
+
+msgid "January"
+msgstr "January"
+
+msgid "Jul"
+msgstr "Jul"
+
+msgid "July"
+msgstr "July"
+
+msgid "Jun"
+msgstr "Jun"
+
+msgid "June"
+msgstr "June"
+
+msgid "Late arrival limit minutes"
+msgstr "Late arrival limit minutes"
+
+msgid "Late arrival limit: <strong>%(minutes)s minutes</strong>"
+msgstr "Late arrival limit: <strong>%(minutes)s minutes</strong>"
+
+msgid "Leave blank if not in a group"
+msgstr "Leave blank if not in a group"
+
+msgid "Loading times…"
+msgstr "Loading times…"
+
+msgid "Made by"
+msgstr "Made by"
+
+msgid "Manual review"
+msgstr "Manual review"
+
+msgid "Mar"
+msgstr "Mar"
+
+msgid "March"
+msgstr "March"
+
+msgid "Mark as no-show?"
+msgstr "Mark as no-show?"
+
+msgid "Mark completed"
+msgstr "Mark completed"
+
+msgid "Max appointments per day"
+msgstr "Max appointments per day"
+
+msgid "Maximum booking window days"
+msgstr "Maximum booking window days"
+
+msgid "May"
+msgstr "May"
+
+msgid "Messenger"
+msgstr "Messenger"
+
+msgid "Minimum booking notice: <strong>%(days)s days</strong>"
+msgstr "Minimum booking notice: <strong>%(days)s days</strong>"
+
+msgid "Minimum notice days"
+msgstr "Minimum notice days"
+
+msgid "Missed appointment — %(salon)s"
+msgstr "Missed appointment — %(salon)s"
+
+msgid "Mo"
+msgstr "Mo"
+
+msgid "Mon – Sat"
+msgstr "Mon – Sat"
+
+msgid "Monday"
+msgstr "Monday"
+
+msgid "More"
+msgstr "More"
+
+msgid "Name"
+msgstr "Name"
+
+msgid "Name and price are required."
+msgstr "Name and price are required."
+
+msgid "New booking request"
+msgstr "New booking request"
+
+msgid "New booking request — %(salon)s"
+msgstr "New booking request — %(salon)s"
+
+msgid "Next month"
+msgstr "Next month"
+
+msgid "No Show"
+msgstr "No Show"
+
+msgid "No active salon is assigned to your account yet."
+msgstr "No active salon is assigned to your account yet."
+
+msgid "No active salons available yet."
+msgstr "No active salons available yet."
+
+msgid "No active services available yet."
+msgstr "No active services available yet."
+
+msgid "No approved appointments for today."
+msgstr "No approved appointments for today."
+
+msgid "No available times on this date."
+msgstr "No available times on this date."
+
+msgid "No blocked dates."
+msgstr "No blocked dates."
+
+msgid "No booking policy found for this salon."
+msgstr "No booking policy found for this salon."
+
+msgid "No bookings in this category."
+msgstr "No bookings in this category."
+
+msgid "No bookings yet."
+msgstr "No bookings yet."
+
+msgid "No customers yet."
+msgstr "No customers yet."
+
+msgid ""
+"No messages. No waiting. Choose a service, pick a time, and send your "
+"request."
+msgstr ""
+"No messages. No waiting. Choose a service, pick a time, and send your "
+"request."
+
+msgid "No price items yet. Add the first one below."
+msgstr "No price items yet. Add the first one below."
+
+msgid "No price list items yet."
+msgstr "No price list items yet."
+
+msgid "No slots available"
+msgstr "No slots available"
+
+msgid "No time blocks."
+msgstr "No time blocks."
+
+msgid "No unavailable blocks."
+msgstr "No unavailable blocks."
+
+msgid "No-show"
+msgstr "No-show"
+
+msgid "No-show message"
+msgstr "No-show message"
+
+msgid "No-shows"
+msgstr "No-shows"
+
+msgid "Nov"
+msgstr "Nov"
+
+msgid "November"
+msgstr "November"
+
+msgid "Oct"
+msgstr "Oct"
+
+msgid "October"
+msgstr "October"
+
+msgid "Online"
+msgstr "Online"
+
+msgid "Online booking"
+msgstr "Online booking"
+
+msgid "Online booking, made simple."
+msgstr "Online booking, made simple."
+
+msgid "Only images are allowed (JPG, PNG, WebP). Choose another format."
+msgstr "Only images are allowed (JPG, PNG, WebP). Choose another format."
+
+msgid ""
+"Only one service is allowed per booking. Your previous selection was "
+"replaced."
+msgstr ""
+"Only one service is allowed per booking. Your previous selection was "
+"replaced."
+
+msgid "Only pending bookings can be approved or rejected here."
+msgstr "Only pending bookings can be approved or rejected here."
+
+msgid "Open"
+msgstr "Open"
+
+msgid "Open booking page"
+msgstr "Open booking page"
+
+msgid "Open now"
+msgstr "Open now"
+
+msgid "Our"
+msgstr "Our"
+
+msgid "Overview"
+msgstr "Overview"
+
+msgid "Owner Login"
+msgstr "Owner Login"
+
+msgid "Owner manual"
+msgstr "Owner manual"
+
+msgid "Owner note"
+msgstr "Owner note"
+
+msgid "Owner panel"
+msgstr "Owner panel"
+
+msgid "Owner — Salon Scheduler"
+msgstr "Owner — Salon Scheduler"
+
+msgid "Password"
+msgstr "Password"
+
+msgid "Password Reset Complete"
+msgstr "Password Reset Complete"
+
+msgid "Password updated"
+msgstr "Password updated"
+
+msgid "Pending"
+msgstr "Pending"
+
+msgid "Pending approval"
+msgstr "Pending approval"
+
+msgid "Pending booking requests"
+msgstr "Pending booking requests"
+
+msgid "Pending holds slot"
+msgstr "Pending holds slot"
+
+msgid "Pending/received message"
+msgstr "Pending/received message"
+
+msgid "Phone"
+msgstr "Phone"
+
+msgid "Phone call"
+msgstr "Phone call"
+
+msgid "Phone number"
+msgstr "Phone number"
+
+msgid "Photo needed"
+msgstr "Photo needed"
+
+msgid "Photo recommended"
+msgstr "Photo recommended"
+
+msgid "Photo req."
+msgstr "Photo req."
+
+msgid "Photo required"
+msgstr "Photo required"
+
+msgid "Please contact the administrator."
+msgstr "Please contact the administrator."
+
+msgid "Preferred contact"
+msgstr "Preferred contact"
+
+msgid "Preferred contact method"
+msgstr "Preferred contact method"
+
+msgid "Prepared message"
+msgstr "Prepared message"
+
+msgid "Previous month"
+msgstr "Previous month"
+
+msgid "Price"
+msgstr "Price"
+
+msgid "Price item deleted."
+msgstr "Price item deleted."
+
+msgid "Price item saved."
+msgstr "Price item saved."
+
+msgid "Price item —"
+msgstr "Price item —"
+
+msgid "Price list"
+msgstr "Price list"
+
+msgid "Professional nail care"
+msgstr "Professional nail care"
+
+msgid "Professional scheduling for beauty businesses"
+msgstr "Professional scheduling for beauty businesses"
+
+msgid "Ready for"
+msgstr "Ready for"
+
+msgid "Reason (optional)"
+msgstr "Reason (optional)"
+
+msgid "Reference photo"
+msgstr "Reference photo"
+
+msgid "Reference photo required"
+msgstr "Reference photo required"
+
+msgid "Reject"
+msgstr "Reject"
+
+msgid "Reject this booking?"
+msgstr "Reject this booking?"
+
+msgid "Rejected"
+msgstr "Rejected"
+
+msgid "Rejected message"
+msgstr "Rejected message"
+
+msgid "Reminder"
+msgstr "Reminder"
+
+msgid "Reminder hours before"
+msgstr "Reminder hours before"
+
+msgid "Reminder message"
+msgstr "Reminder message"
+
+msgid "Remove"
+msgstr "Remove"
+
+msgid "Remove this blocked date?"
+msgstr "Remove this blocked date?"
+
+msgid "Remove this time block?"
+msgstr "Remove this time block?"
+
+msgid "Request Sent"
+msgstr "Request Sent"
+
+msgid "Request a new one."
+msgstr "Request a new one."
+
+msgid "Request an appointment"
+msgstr "Request an appointment"
+
+msgid "Request received — %(salon)s"
+msgstr "Request received — %(salon)s"
+
+msgid "Request sent!"
+msgstr "Request sent!"
+
+msgid "Requested"
+msgstr "Requested"
+
+msgid "Reset Link Sent"
+msgstr "Reset Link Sent"
+
+msgid "Reset Password"
+msgstr "Reset Password"
+
+msgid "Revenue from completed appointments only. No online payments."
+msgstr "Revenue from completed appointments only. No online payments."
+
+msgid "Review"
+msgstr "Review"
+
+msgid "Review & Submit"
+msgstr "Review & Submit"
+
+msgid "Review request"
+msgstr "Review request"
+
+msgid "SMS"
+msgstr "SMS"
+
+msgid "Sa"
+msgstr "Sa"
+
+msgid "Salon Scheduler"
+msgstr "Salon Scheduler"
+
+msgid "Salon Scheduler — Book Online"
+msgstr "Salon Scheduler — Book Online"
+
+msgid "Salon rules"
+msgstr "Salon rules"
+
+msgid "Salon rules shown to customers"
+msgstr "Salon rules shown to customers"
+
+msgid "Saturday"
+msgstr "Saturday"
+
+msgid "Save"
+msgstr "Save"
+
+msgid "Save all policy settings"
+msgstr "Save all policy settings"
+
+msgid "Save block"
+msgstr "Save block"
+
+msgid "Save blocked date"
+msgstr "Save blocked date"
+
+msgid "Save booking"
+msgstr "Save booking"
+
+msgid "Save changes"
+msgstr "Save changes"
+
+msgid "Save customer"
+msgstr "Save customer"
+
+msgid "Save policy"
+msgstr "Save policy"
+
+msgid "Save service"
+msgstr "Save service"
+
+msgid "Save working hours"
+msgstr "Save working hours"
+
+msgid "Schedule"
+msgstr "Schedule"
+
+msgid "Scheduling rules"
+msgstr "Scheduling rules"
+
+msgid "Section / Group"
+msgstr "Section / Group"
+
+msgid "Select a date above to see available times."
+msgstr "Select a date above to see available times."
+
+msgid "Send a request in minutes. We'll review it and contact you to confirm."
+msgstr ""
+"Send a request in minutes. We'll review it and contact you to confirm."
+
+msgid "Send reset link"
+msgstr "Send reset link"
+
+msgid "Sep"
+msgstr "Sep"
+
+msgid "September"
+msgstr "September"
+
+msgid "Service"
+msgstr "Service"
+
+msgid "Service added successfully."
+msgstr "Service added successfully."
+
+msgid "Service deleted."
+msgstr "Service deleted."
+
+msgid "Service updated successfully."
+msgstr "Service updated successfully."
+
+msgid "Services"
+msgstr "Services"
+
+msgid "Services will be listed here soon."
+msgstr "Services will be listed here soon."
+
+msgid "Set New Password"
+msgstr "Set New Password"
+
+msgid "Set new password"
+msgstr "Set new password"
+
+msgid "Set password"
+msgstr "Set password"
+
+msgid "Shown on the booking form. Each line is a separate rule."
+msgstr "Shown on the booking form. Each line is a separate rule."
+
+msgid "Sign in"
+msgstr "Sign in"
+
+msgid "Sign in to your salon dashboard"
+msgstr "Sign in to your salon dashboard"
+
+msgid "Sign out"
+msgstr "Sign out"
+
+msgid "Slot interval minutes"
+msgstr "Slot interval minutes"
+
+msgid ""
+"Something went wrong. Please check your details and choose an available "
+"time."
+msgstr ""
+"Something went wrong. Please check your details and choose an available "
+"time."
+
+msgid "Something went wrong. Please try again."
+msgstr "Something went wrong. Please try again."
+
+msgid "Sort order"
+msgstr "Sort order"
+
+msgid "Source"
+msgstr "Source"
+
+msgid "Start"
+msgstr "Start"
+
+msgid "Start time"
+msgstr "Start time"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "Su"
+msgstr "Su"
+
+msgid "Sub-service name"
+msgstr "Sub-service name"
+
+msgid "Submit Request"
+msgstr "Submit Request"
+
+msgid "Sunday"
+msgstr "Sunday"
+
+msgid "Tap to upload a photo"
+msgstr "Tap to upload a photo"
+
+msgid "Th"
+msgstr "Th"
+
+msgid "The image is too large. Maximum allowed size is %(max)s MB."
+msgstr "The image is too large. Maximum allowed size is %(max)s MB."
+
+msgid ""
+"The salon will contact you to confirm via your preferred contact method."
+msgstr ""
+"The salon will contact you to confirm via your preferred contact method."
+
+msgid "The time %(time)s is no longer available. Please select another slot."
+msgstr "The time %(time)s is no longer available. Please select another slot."
+
+msgid "This is a request only — not confirmed until the salon approves it."
+msgstr "This is a request only — not confirmed until the salon approves it."
+
+msgid "This link expires in 24 hours."
+msgstr "This link expires in 24 hours."
+
+msgid "This reset link is invalid or has expired."
+msgstr "This reset link is invalid or has expired."
+
+msgid "Thursday"
+msgstr "Thursday"
+
+msgid "Time block added."
+msgstr "Time block added."
+
+msgid "Time block updated."
+msgstr "Time block updated."
+
+msgid "Today"
+msgstr "Today"
+
+msgid "Today's appointments"
+msgstr "Today's appointments"
+
+msgid "Total revenue"
+msgstr "Total revenue"
+
+msgid "Tu"
+msgstr "Tu"
+
+msgid "Tuesday"
+msgstr "Tuesday"
+
+msgid "Unavailable"
+msgstr "Unavailable"
+
+msgid "Unavailable time block added."
+msgstr "Unavailable time block added."
+
+msgid "Unavailable time block removed."
+msgstr "Unavailable time block removed."
+
+msgid "Unavailable time blocks"
+msgstr "Unavailable time blocks"
+
+msgid "Unfortunately the appointment is unavailable — %(salon)s"
+msgstr "Unfortunately the appointment is unavailable — %(salon)s"
+
+msgid "Unknown action."
+msgstr "Unknown action."
+
+msgid "Upcoming"
+msgstr "Upcoming"
+
+msgid "Update password"
+msgstr "Update password"
+
+msgid "Update your account password."
+msgstr "Update your account password."
+
+msgid "Upload your logo here"
+msgstr "Upload your logo here"
+
+msgid "Username"
+msgstr "Username"
+
+msgid "Via"
+msgstr "Via"
+
+msgid "Viber"
+msgstr "Viber"
+
+msgid "View & Book"
+msgstr "View & Book"
+
+msgid "View all"
+msgstr "View all"
+
+msgid "View and manage your appointment schedule."
+msgstr "View and manage your appointment schedule."
+
+msgid "View services"
+msgstr "View services"
+
+msgid "We"
+msgstr "We"
+
+msgid "Wednesday"
+msgstr "Wednesday"
+
+msgid "Week"
+msgstr "Week"
+
+msgid "Weekly revenue"
+msgstr "Weekly revenue"
+
+msgid "What we offer"
+msgstr "What we offer"
+
+msgid "WhatsApp"
+msgstr "WhatsApp"
+
+msgid "Working"
+msgstr "Working"
+
+msgid "Working Hours"
+msgstr "Working Hours"
+
+msgid "Working days"
+msgstr "Working days"
+
+msgid "Working hours"
+msgstr "Working hours"
+
+msgid "Working hours saved."
+msgstr "Working hours saved."
+
+msgid "You requested a password reset for your Salon Scheduler owner account."
+msgstr ""
+"You requested a password reset for your Salon Scheduler owner account."
+
+msgid "Your Details"
+msgstr "Your Details"
+
+msgid "Your appointment is confirmed — %(salon)s"
+msgstr "Your appointment is confirmed — %(salon)s"
+
+msgid "Your appointment was cancelled — %(salon)s"
+msgstr "Your appointment was cancelled — %(salon)s"
+
+msgid "Your appointment was changed — %(salon)s"
+msgstr "Your appointment was changed — %(salon)s"
+
+msgid ""
+"Your booking request has been submitted.<br> The appointment is <strong>not "
+"confirmed yet</strong>.<br> %(salon_name)s will review your request and "
+"contact you."
+msgstr ""
+"Your booking request has been submitted.<br> The appointment is <strong>not "
+"confirmed yet</strong>.<br> %(salon_name)s will review your request and "
+"contact you."
+
+msgid "Your password has been set. You can now sign in."
+msgstr "Your password has been set. You can now sign in."
+
+msgid "customer first name"
+msgstr "customer first name"
+
+msgid "date"
+msgstr "date"
+
+msgid "den"
+msgstr "den"
+
+msgid "from %(price)s den"
+msgstr "from %(price)s den"
+
+msgid "hours"
+msgstr "hours"
+
+msgid "made just for you."
+msgstr "made just for you."
+
+msgid "min"
+msgstr "min"
+
+msgid "next appointment?"
+msgstr "next appointment?"
+
+msgid "optional"
+msgstr "optional"
+
+msgid "rules"
+msgstr "rules"
+
+msgid "salon name"
+msgstr "salon name"
+
+msgid "salons"
+msgstr "salons"
+
+msgid "services"
+msgstr "services"
+
+msgid "time"
+msgstr "time"
+
+msgid "your"
+msgstr "your"
+
+msgid "— Available"
+msgstr "— Available"

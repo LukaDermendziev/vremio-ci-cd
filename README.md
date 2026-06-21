@@ -108,6 +108,131 @@ Detailed project documents are stored in the `docs/` folder:
 * `owner-interview-summary.md`
 * `requirements-v1.md`
 * `roadmap.md`
+* `beta-deployment.md` — beta/production deployment guide
+
+---
+
+## Developer Setup (Local)
+
+### 1. Clone and create a virtual environment
+
+```bash
+python -m venv .venv
+# Windows
+.venv\Scripts\activate
+# macOS/Linux
+source .venv/bin/activate
+```
+
+### 2. Install dependencies
+
+```bash
+cd backend
+pip install -r requirements.txt
+```
+
+### 3. Configure environment variables
+
+```bash
+# From repo root
+cp .env.example .env
+```
+
+Edit `.env` — for local development the defaults are fine (SQLite + console email).
+
+See [`.env.example`](.env.example) for all supported variables.
+
+### 4. Run migrations
+
+```bash
+cd backend
+python manage.py migrate
+```
+
+### 5. Create a superuser (Django admin)
+
+```bash
+python manage.py createsuperuser
+```
+
+Admin panel: `http://127.0.0.1:8000/admin/`
+
+### 6. Create owner + salon data (beta setup command)
+
+```bash
+python manage.py setup_beta_salon \
+  --username salon_owner \
+  --email owner@example.com \
+  --slug fancy-fingers \
+  --salon-name "Fancy Fingers"
+```
+
+This creates the owner user (no password), salon, booking policy, working hours, and four default services.
+
+**Set the owner password** (never send plain text passwords):
+
+* Option A: `python manage.py changepassword salon_owner`
+* Option B: Owner visits `/owner/password/reset/` and receives an email link
+
+### 7. Run the development server
+
+```bash
+python manage.py runserver
+```
+
+* Customer salon page: `http://127.0.0.1:8000/book/fancy-fingers/`
+* Owner login: `http://127.0.0.1:8000/owner/login/`
+* Owner dashboard: `http://127.0.0.1:8000/owner/dashboard/`
+
+### 8. Run tests
+
+```bash
+python manage.py check
+python manage.py test booking
+```
+
+---
+
+## Environment Variables
+
+| Variable | Purpose |
+|----------|---------|
+| `DJANGO_SECRET_KEY` | Required in production — long random string |
+| `DJANGO_DEBUG` | `True` locally, `False` for beta/production |
+| `DJANGO_ALLOWED_HOSTS` | Comma-separated hostnames |
+| `CSRF_TRUSTED_ORIGINS` | HTTPS origins for CSRF (production) |
+| `SITE_URL` | Public URL for emails (password reset, owner notifications) |
+| `DATABASE_URL` | PostgreSQL connection URL (PaaS providers) |
+| `POSTGRES_*` | Alternative discrete PostgreSQL settings |
+| `EMAIL_*` | SMTP settings for production email |
+| `MEDIA_ROOT` | Optional override for uploaded photos path |
+
+Full list with examples: [`.env.example`](.env.example)
+
+**Database priority:** `DATABASE_URL` → `POSTGRES_DB` → SQLite (local dev fallback).
+
+---
+
+## Beta Deployment Checklist
+
+Before giving the app to a real salon owner:
+
+- [ ] `DJANGO_DEBUG=False`
+- [ ] Strong unique `DJANGO_SECRET_KEY` set
+- [ ] PostgreSQL configured (`DATABASE_URL` or `POSTGRES_*`)
+- [ ] `DJANGO_ALLOWED_HOSTS` includes your domain
+- [ ] `CSRF_TRUSTED_ORIGINS` includes your HTTPS URL
+- [ ] `SITE_URL` set to your public URL
+- [ ] SMTP email configured and tested (password reset + booking emails)
+- [ ] `python manage.py migrate` run on production database
+- [ ] `python manage.py collectstatic` run before deploy
+- [ ] Persistent storage for `MEDIA_ROOT` (customer reference photos)
+- [ ] Owner account created via `setup_beta_salon` + password reset email
+- [ ] Smoke test: customer booking → owner receives email → owner approves
+
+See [`docs/beta-deployment.md`](docs/beta-deployment.md) for provider-neutral deployment steps.
+
+---
 
 ## Development Philosophy
 

@@ -1,3 +1,4 @@
+{% load i18n %}
 <div class="od-bk-card" data-status="{{ booking.status }}"
   data-booking-id="{{ booking.id }}"
   data-full-name="{{ booking.customer.full_name }}"
@@ -13,17 +14,17 @@
   <div class="od-bk-badges">
     <span class="od-bk-name">{{ booking.customer.full_name }}</span>
     <span class="od-badge od-badge-{{ booking.status }} od-bk-status-badge">{{ booking.get_status_display }}</span>
-    {% if booking.reference_photo %}<span class="od-badge od-badge-photo">Photo</span>{% endif %}
+    {% if booking.reference_photo %}<span class="od-badge od-badge-photo">{% trans "Photo" %}</span>{% endif %}
   </div>
   <div class="od-bk-svc">
     {% for item in booking.booking_services.all %}
-      {{ item.service_name_snapshot }}{% if item.price_snapshot %} · {{ item.price_snapshot|floatformat:0 }} ден{% endif %}{% if not forloop.last %}, {% endif %}
+      {{ item.service_name_snapshot }}{% if item.price_snapshot %} · {{ item.price_snapshot|floatformat:0 }} {% trans "ден" %}{% endif %}{% if not forloop.last %}, {% endif %}
     {% empty %}—{% endfor %}
   </div>
   <div class="od-bk-meta">
     <span>{{ booking.start_at|date:"d/m/Y" }}</span>
     <span>{{ booking.start_at|date:"H:i" }} – {{ booking.end_at|date:"H:i" }}</span>
-    <span>{{ booking.total_duration_minutes }} min</span>
+    <span>{{ booking.total_duration_minutes }} {% trans "min" %}</span>
     <span>{{ booking.customer.phone_number }}</span>
   </div>
   {% if show_actions %}
@@ -31,25 +32,25 @@
     {# Actions rendered from JS based on current status — see renderBkActions() #}
     {% if booking.status == "pending" %}
       <button class="od-btn od-btn-success od-btn-sm" type="button"
-              data-bk-action="approve" data-bk-id="{{ booking.id }}">Approve</button>
+              data-bk-action="approve" data-bk-id="{{ booking.id }}">{% trans "Approve" %}</button>
       <button class="od-btn od-btn-danger od-btn-sm" type="button"
-              data-bk-action="reject" data-bk-id="{{ booking.id }}">Reject</button>
+              data-bk-action="reject" data-bk-id="{{ booking.id }}">{% trans "Reject" %}</button>
     {% endif %}
     {% if booking.status == "approved" %}
       <button class="od-btn od-btn-ghost od-btn-sm" type="button"
-              data-bk-action="mark_completed" data-bk-id="{{ booking.id }}">Mark completed</button>
+              data-bk-action="mark_completed" data-bk-id="{{ booking.id }}">{% trans "Mark completed" %}</button>
       <button class="od-btn od-btn-ghost od-btn-sm" type="button"
-              data-bk-action="mark_no_show" data-bk-id="{{ booking.id }}">No-show</button>
+              data-bk-action="mark_no_show" data-bk-id="{{ booking.id }}">{% trans "No-show" %}</button>
       <button class="od-btn od-btn-ghost od-btn-sm" type="button"
-              data-bk-action="cancel" data-bk-id="{{ booking.id }}">Cancel</button>
+              data-bk-action="cancel" data-bk-id="{{ booking.id }}">{% trans "Cancel" %}</button>
     {% endif %}
     {% if show_edit %}
-      <button type="button" class="od-btn od-btn-ghost od-btn-sm" data-edit-booking="{{ booking.id }}">Edit</button>
+      <button type="button" class="od-btn od-btn-ghost od-btn-sm" data-edit-booking="{{ booking.id }}">{% trans "Edit" %}</button>
     {% endif %}
-    <a class="od-btn od-btn-ghost od-btn-sm" href="tel:{{ booking.customer.phone_number }}">Call</a>
+    <a class="od-btn od-btn-ghost od-btn-sm" href="tel:{{ booking.customer.phone_number }}">{% trans "Call" %}</a>
     <button type="button" class="od-btn od-btn-ghost od-btn-sm"
             data-message-booking="{{ booking.id }}"
-            data-message-type="{% if booking.status == 'pending' %}pending{% elif booking.status == 'approved' %}approved{% elif booking.status == 'rejected' or booking.status == 'cancelled' %}rejected{% else %}reminder{% endif %}">Message</button>
+            data-message-type="{% if booking.status == 'pending' %}pending{% elif booking.status == 'approved' %}approved{% elif booking.status == 'rejected' or booking.status == 'cancelled' %}rejected{% else %}reminder{% endif %}">{% trans "Message" %}</button>
   </div>
   {% endif %}
 </div>

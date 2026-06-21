@@ -12,6 +12,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET
 
 from .forms import (
@@ -44,6 +45,7 @@ from .services import (
     get_working_window_for_date,
     log_booking_activity,
     send_booking_notification,
+    send_owner_new_booking_notification,
 )
 
 
@@ -161,7 +163,7 @@ def owner_login(request):
         if user is not None:
             auth_login(request, user)
             return redirect("booking:owner_dashboard")
-        error = "Invalid username or password."
+        error = _("Invalid username or password.")
 
     return render(request, "booking/auth/login.html", {"error": error})
 
@@ -191,7 +193,7 @@ def owner_dashboard(request):
             )
             if booking.status != Booking.Status.PENDING:
                 messages.warning(
-                    request, "Only pending bookings can be approved or rejected here."
+                    request, _("Only pending bookings can be approved or rejected here.")
                 )
             elif action == "approve":
                 booking.status = Booking.Status.APPROVED
@@ -204,11 +206,11 @@ def owner_dashboard(request):
                     sent, reason = send_booking_notification(booking, "approved")
                     if sent:
                         log_booking_activity(booking, BookingActivityLog.Action.EMAIL_SENT, user=request.user, note="Approval email sent")
-                        messages.success(request, "Booking approved. Email sent to customer.")
+                        messages.success(request, _("Booking approved. Email sent to customer."))
                     elif reason == "no_email":
-                        messages.success(request, "Booking approved. Customer has no email — use prepared message.")
+                        messages.success(request, _("Booking approved. Customer has no email — use prepared message."))
                     else:
-                        messages.success(request, "Booking approved. Email could not be sent — use prepared message.")
+                        messages.success(request, _("Booking approved. Email could not be sent — use prepared message."))
             else:
                 booking.status = Booking.Status.REJECTED
                 booking.save()
@@ -216,11 +218,11 @@ def owner_dashboard(request):
                 sent, reason = send_booking_notification(booking, "rejected")
                 if sent:
                     log_booking_activity(booking, BookingActivityLog.Action.EMAIL_SENT, user=request.user, note="Rejection email sent")
-                    messages.success(request, "Booking rejected. Email sent to customer.")
+                    messages.success(request, _("Booking rejected. Email sent to customer."))
                 elif reason == "no_email":
-                    messages.success(request, "Booking rejected. Customer has no email — use prepared message.")
+                    messages.success(request, _("Booking rejected. Customer has no email — use prepared message."))
                 else:
-                    messages.success(request, "Booking rejected. Email could not be sent — use prepared message.")
+                    messages.success(request, _("Booking rejected. Email could not be sent — use prepared message."))
 
         elif action == "save_booking":
             is_edit = bool(request.POST.get("booking_id"))
@@ -241,16 +243,20 @@ def owner_dashboard(request):
                             sent, reason = send_booking_notification(saved, "edited")
                             if sent:
                                 log_booking_activity(saved, BookingActivityLog.Action.EMAIL_SENT, user=request.user, note="Edit email sent")
-                            messages.success(request, "Booking updated." + (" Email sent." if sent else " Use prepared message to notify customer."))
+                            messages.success(
+                                request,
+                                _("Booking updated.")
+                                + (_(" Email sent.") if sent else _(" Use prepared message to notify customer.")),
+                            )
                         else:
-                            messages.success(request, "Booking updated successfully.")
+                            messages.success(request, _("Booking updated successfully."))
                     else:
                         log_booking_activity(saved, BookingActivityLog.Action.REQUESTED, user=request.user, note="Manually added by owner")
-                        messages.success(request, "Booking added successfully.")
+                        messages.success(request, _("Booking added successfully."))
             else:
                 for field, errs in form.errors.items():
                     for err in errs:
-                        messages.error(request, f"{field}: {err}")
+                        messages.error(request, _("%(field)s: %(error)s") % {"field": field, "error": err})
 
         elif action == "save_working_hours":
             formset = WorkingHoursFormSet(
@@ -262,21 +268,21 @@ def owner_dashboard(request):
                 for instance in instances:
                     instance.salon = salon
                     instance.save()
-                messages.success(request, "Working hours saved.")
+                messages.success(request, _("Working hours saved."))
             else:
-                messages.error(request, "Could not save working hours. Check the times.")
+                messages.error(request, _("Could not save working hours. Check the times."))
 
         elif action == "save_policy":
             policy = getattr(salon, "booking_policy", None)
             if not policy:
-                messages.error(request, "No booking policy found for this salon.")
+                messages.error(request, _("No booking policy found for this salon."))
             else:
                 form = BookingPolicyForm(request.POST, instance=policy)
                 if form.is_valid():
                     form.save()
-                    messages.success(request, "Booking policy saved.")
+                    messages.success(request, _("Booking policy saved."))
                 else:
-                    messages.error(request, "Could not save booking policy.")
+                    messages.error(request, _("Could not save booking policy."))
 
         elif action == "add_blocked_date":
             form = BlockedDateForm(request.POST)
@@ -289,9 +295,9 @@ def owner_dashboard(request):
                         "reason": form.cleaned_data.get("reason", ""),
                     },
                 )
-                messages.success(request, "Blocked date added.")
+                messages.success(request, _("Blocked date added."))
             else:
-                messages.error(request, "Invalid blocked date.")
+                messages.error(request, _("Invalid blocked date."))
 
         elif action == "delete_blocked_date":
             override_id = request.POST.get("override_id")
@@ -299,7 +305,7 @@ def owner_dashboard(request):
                 pk=override_id,
                 mode=DateWorkingHoursOverride.Mode.CLOSED,
             ).delete()
-            messages.success(request, "Blocked date removed.")
+            messages.success(request, _("Blocked date removed."))
 
         elif action == "add_unavailable_block":
             form = UnavailableTimeBlockForm(request.POST, salon=salon)
@@ -309,14 +315,14 @@ def owner_dashboard(request):
                 except ValidationError as exc:
                     messages.error(request, _validation_error_to_text(exc))
                 else:
-                    messages.success(request, "Unavailable time block added.")
+                    messages.success(request, _("Unavailable time block added."))
             else:
-                messages.error(request, "Could not add unavailable time block.")
+                messages.error(request, _("Could not add unavailable time block."))
 
         elif action == "delete_unavailable_block":
             block_id = request.POST.get("block_id")
             salon.unavailable_time_blocks.filter(pk=block_id).delete()
-            messages.success(request, "Unavailable time block removed.")
+            messages.success(request, _("Unavailable time block removed."))
 
         elif action == "mark_completed":
             booking = get_object_or_404(
@@ -325,7 +331,7 @@ def owner_dashboard(request):
             booking.status = Booking.Status.COMPLETED
             booking.save()
             log_booking_activity(booking, BookingActivityLog.Action.COMPLETED, user=request.user)
-            messages.success(request, "Booking marked as completed.")
+            messages.success(request, _("Booking marked as completed."))
 
         elif action == "mark_no_show":
             booking = get_object_or_404(
@@ -337,14 +343,14 @@ def owner_dashboard(request):
             sent, reason = send_booking_notification(booking, "no_show")
             if sent:
                 log_booking_activity(booking, BookingActivityLog.Action.EMAIL_SENT, user=request.user, note="No-show email sent")
-            messages.success(request, "Booking marked as no-show.")
+            messages.success(request, _("Booking marked as no-show."))
 
         elif action in ("cancel_booking", "cancel"):
             booking = get_object_or_404(
                 Booking, pk=request.POST.get("booking_id"), salon=salon
             )
             if booking.status in {Booking.Status.COMPLETED, Booking.Status.NO_SHOW}:
-                messages.warning(request, "Cannot cancel a completed or no-show booking.")
+                messages.warning(request, _("Cannot cancel a completed or no-show booking."))
             else:
                 booking.status = Booking.Status.CANCELLED
                 booking.save()
@@ -352,18 +358,18 @@ def owner_dashboard(request):
                 sent, reason = send_booking_notification(booking, "cancelled")
                 if sent:
                     log_booking_activity(booking, BookingActivityLog.Action.EMAIL_SENT, user=request.user, note="Cancellation email sent")
-                    messages.success(request, "Booking cancelled. Email sent to customer.")
+                    messages.success(request, _("Booking cancelled. Email sent to customer."))
                 elif reason == "no_email":
-                    messages.success(request, "Booking cancelled. Customer has no email — use prepared message.")
+                    messages.success(request, _("Booking cancelled. Customer has no email — use prepared message."))
                 else:
-                    messages.success(request, "Booking cancelled.")
+                    messages.success(request, _("Booking cancelled."))
 
         elif action == "delete_booking":
             booking = get_object_or_404(
                 Booking, pk=request.POST.get("booking_id"), salon=salon
             )
             booking.delete()
-            messages.success(request, "Booking deleted.")
+            messages.success(request, _("Booking deleted."))
 
         elif action == "save_service":
             service = None
@@ -376,17 +382,19 @@ def owner_dashboard(request):
             form = ServiceForm(post_data, instance=service, salon=salon)
             if form.is_valid():
                 form.save()
-                label = "updated" if service else "added"
-                messages.success(request, f"Service {label} successfully.")
+                if service:
+                    messages.success(request, _("Service updated successfully."))
+                else:
+                    messages.success(request, _("Service added successfully."))
             else:
-                messages.error(request, "Could not save service. Check the form.")
+                messages.error(request, _("Could not save service. Check the form."))
 
         elif action == "delete_service":
             service = get_object_or_404(
                 Service, pk=request.POST.get("service_id"), salon=salon
             )
             service.delete()
-            messages.success(request, "Service deleted.")
+            messages.success(request, _("Service deleted."))
 
         elif action == "save_price_item":
             service = get_object_or_404(
@@ -413,16 +421,16 @@ def owner_dashboard(request):
                         group=group, sort_order=sort_order,
                         photo_required=photo_required,
                     )
-                messages.success(request, "Price item saved.")
+                messages.success(request, _("Price item saved."))
             else:
-                messages.error(request, "Name and price are required.")
+                messages.error(request, _("Name and price are required."))
 
         elif action == "delete_price_item":
             item = get_object_or_404(
                 ServicePriceItem, pk=request.POST.get("item_id"), service__salon=salon
             )
             item.delete()
-            messages.success(request, "Price item deleted.")
+            messages.success(request, _("Price item deleted."))
 
         elif action == "reorder_price_items":
             raw_ids = request.POST.get("item_ids", "")
@@ -443,10 +451,12 @@ def owner_dashboard(request):
             form = OwnerCustomerForm(request.POST, instance=customer, salon=salon)
             if form.is_valid():
                 form.save()
-                label = "updated" if customer else "added"
-                messages.success(request, f"Customer {label} successfully.")
+                if customer:
+                    messages.success(request, _("Customer updated successfully."))
+                else:
+                    messages.success(request, _("Customer added successfully."))
             else:
-                messages.error(request, "Could not save customer.")
+                messages.error(request, _("Could not save customer."))
 
         elif action == "delete_customer":
             customer = get_object_or_404(
@@ -455,11 +465,11 @@ def owner_dashboard(request):
             if customer.bookings.exists():
                 messages.error(
                     request,
-                    "Cannot delete a customer with existing bookings. Remove bookings first.",
+                    _("Cannot delete a customer with existing bookings. Remove bookings first."),
                 )
             else:
                 customer.delete()
-                messages.success(request, "Customer deleted.")
+                messages.success(request, _("Customer deleted."))
 
         elif action == "save_blocked_date":
             form = BlockedDateForm(request.POST)
@@ -472,9 +482,9 @@ def owner_dashboard(request):
                         "reason": form.cleaned_data.get("reason", ""),
                     },
                 )
-                messages.success(request, "Blocked date saved.")
+                messages.success(request, _("Blocked date saved."))
             else:
-                messages.error(request, "Invalid blocked date.")
+                messages.error(request, _("Invalid blocked date."))
 
         elif action == "save_unavailable_block":
             block = None
@@ -490,13 +500,15 @@ def owner_dashboard(request):
                 except ValidationError as exc:
                     messages.error(request, _validation_error_to_text(exc))
                 else:
-                    label = "updated" if block else "added"
-                    messages.success(request, f"Time block {label}.")
+                    if block:
+                        messages.success(request, _("Time block updated."))
+                    else:
+                        messages.success(request, _("Time block added."))
             else:
-                messages.error(request, "Could not save unavailable time block.")
+                messages.error(request, _("Could not save unavailable time block."))
 
         else:
-            messages.error(request, "Unknown action.")
+            messages.error(request, _("Unknown action."))
 
         # AJAX path: return JSON so JS can update UI without reload
         if request.headers.get("X-Requested-With") == "fetch":
@@ -912,6 +924,18 @@ def book_salon(request, salon_slug):
         form = BookingRequestForm(request.POST, request.FILES, salon=salon)
         if form.is_valid():
             booking = form.save()
+            log_booking_activity(
+                booking,
+                BookingActivityLog.Action.REQUESTED,
+                note="Online booking request",
+            )
+            sent, _reason = send_owner_new_booking_notification(booking)
+            if sent:
+                log_booking_activity(
+                    booking,
+                    BookingActivityLog.Action.EMAIL_SENT,
+                    note="Owner notified of new request",
+                )
             return redirect(reverse("booking:booking_success", args=[booking.pk]))
     else:
         form = BookingRequestForm(salon=salon)

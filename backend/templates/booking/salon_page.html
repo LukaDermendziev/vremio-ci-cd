@@ -1,7 +1,9 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static i18n %}
 {% block title %}{{ salon.name }}{% endblock %}
 {% block body_class %}sp-page{% endblock %}
+
+{% block lang_switcher %}{% endblock %}
 
 {% block content %}
 
@@ -9,11 +11,14 @@
 <nav class="sp-nav">
   <a class="sp-nav-brand" href="{% url 'booking:salon_page' salon.slug %}">{{ salon.name }}</a>
   <div class="sp-nav-links">
-    <a href="#services">Services</a>
-    <a href="#hours">Hours</a>
+    <a href="#services">{% trans "Services" %}</a>
+    <a href="#hours">{% trans "Hours" %}</a>
     {% if salon.instagram_username %}<a href="https://instagram.com/{{ salon.instagram_username|cut:'@' }}" target="_blank" rel="noopener">Instagram</a>{% endif %}
   </div>
-  <a class="sp-nav-cta" href="{% url 'booking:book_salon' salon.slug %}">Book now</a>
+  <div class="sp-nav-right">
+    <div class="sp-nav-lang">{% include "partials/language_switcher.html" %}</div>
+    <a class="sp-nav-cta" href="{% url 'booking:book_salon' salon.slug %}">{% trans "Book now" %}</a>
+  </div>
 </nav>
 
 {# ── Hero ─────────────────────────────────────────────────────────────────── #}
@@ -22,12 +27,12 @@
 
   {# Left: headline + CTA #}
   <div class="sp-hero-content">
-    <p class="sp-eyebrow">Professional nail care</p>
-    <h1 class="sp-hero-title">Beautiful nails,<br><em>made just for you.</em></h1>
-    <p class="sp-hero-lead">Explore our services and book your next appointment online — in just a few minutes.</p>
+    <p class="sp-eyebrow">{% trans "Professional nail care" %}</p>
+    <h1 class="sp-hero-title">{% trans "Beautiful nails," %}<br><em>{% trans "made just for you." %}</em></h1>
+    <p class="sp-hero-lead">{% trans "Explore our services and book your next appointment online — in just a few minutes." %}</p>
     <div class="sp-hero-actions">
-      <a class="sp-btn-hero" href="{% url 'booking:book_salon' salon.slug %}">Book an appointment</a>
-      <a class="sp-btn-hero sp-btn-hero-ghost" href="#services">View services</a>
+      <a class="sp-btn-hero" href="{% url 'booking:book_salon' salon.slug %}">{% trans "Book an appointment" %}</a>
+      <a class="sp-btn-hero sp-btn-hero-ghost" href="#services">{% trans "View services" %}</a>
     </div>
   </div>
 
@@ -131,21 +136,21 @@
 
 {# ── Trust bar ────────────────────────────────────────────────────────────── #}
 <div class="sp-trust-bar">
-  <div class="sp-trust-item"><span class="sp-trust-label">Schedule</span><span>Online booking</span></div>
+  <div class="sp-trust-item"><span class="sp-trust-label">{% trans "Schedule" %}</span><span>{% trans "Online booking" %}</span></div>
   <div class="sp-trust-sep"></div>
-  <div class="sp-trust-item"><span class="sp-trust-label">Approval</span><span>Manual review</span></div>
+  <div class="sp-trust-item"><span class="sp-trust-label">{% trans "Approval" %}</span><span>{% trans "Manual review" %}</span></div>
   <div class="sp-trust-sep"></div>
-  <div class="sp-trust-item"><span class="sp-trust-label">Reminder</span><span>24 h before</span></div>
+  <div class="sp-trust-item"><span class="sp-trust-label">{% trans "Reminder" %}</span><span>{% trans "24 h before" %}</span></div>
   <div class="sp-trust-sep"></div>
-  <div class="sp-trust-item"><span class="sp-trust-label">Working days</span><span>Mon – Sat</span></div>
+  <div class="sp-trust-item"><span class="sp-trust-label">{% trans "Working days" %}</span><span>{% trans "Mon – Sat" %}</span></div>
 </div>
 
 {# ── Services ─────────────────────────────────────────────────────────────── #}
 <section class="sp-content-section" id="services">
   <div class="sp-section-inner">
     <div class="sp-section-heading">
-      <p class="sp-kicker">What we offer</p>
-      <h2 class="sp-section-title">Our <em>services</em></h2>
+      <p class="sp-kicker">{% trans "What we offer" %}</p>
+      <h2 class="sp-section-title">{% trans "Our" %} <em>{% trans "services" %}</em></h2>
     </div>
 
     <div class="sp-services-grid{% if services|length >= 5 %} sp-svcs-compact{% elif services|length >= 3 %} sp-svcs-many{% elif services|length <= 2 %} sp-svcs-centered{% endif %}">
@@ -158,7 +163,7 @@
           <div class="sp-service-header">
             <h3 class="sp-service-name">{{ service.name }}</h3>
             <div class="sp-service-header-right">
-              {% if service.base_price %}<span class="sp-service-price">од {{ service.base_price|floatformat:0 }} ден</span>{% endif %}
+              {% if service.base_price %}<span class="sp-service-price">{% blocktrans with price=service.base_price|floatformat:0 %}from {{ price }} den{% endblocktrans %}</span>{% endif %}
               {% if items %}<span class="sp-expand-icon"><i class="bi bi-chevron-down"></i></span>{% endif %}
             </div>
           </div>
@@ -168,19 +173,19 @@
           {% endif %}
 
           <div class="sp-service-footer">
-            <span class="sp-service-dur"><i class="bi bi-clock"></i> {{ service.duration_minutes }} min</span>
+            <span class="sp-service-dur"><i class="bi bi-clock"></i> {% blocktrans with minutes=service.duration_minutes %}{{ minutes }} min{% endblocktrans %}</span>
             {% if service.extra_duration_note %}<span class="sp-service-note">{{ service.extra_duration_note }}</span>{% endif %}
             {% if service.requires_photo %}
-              <span class="sp-badge sp-badge-required">Photo required</span>
+              <span class="sp-badge sp-badge-required">{% trans "Photo required" %}</span>
             {% elif service.photo_recommended %}
-              <span class="sp-badge sp-badge-soft">Photo recommended</span>
+              <span class="sp-badge sp-badge-soft">{% trans "Photo recommended" %}</span>
             {% endif %}
           </div>
 
           {# Hint shown only on expandable cards before they open #}
           {% if items %}
           <div class="sp-more-hint">
-            <span>Повеќе</span> <i class="bi bi-chevron-down"></i>
+            <span>{% trans "More" %}</span> <i class="bi bi-chevron-down"></i>
           </div>
           {% endif %}
 
@@ -188,7 +193,7 @@
           {% if items %}
           <div class="sp-price-list" aria-hidden="true">
             <div class="sp-price-list-inner">
-              <p class="sp-price-list-label">Price list</p>
+              <p class="sp-price-list-label">{% trans "Price list" %}</p>
               {% regroup items by group as grouped_items %}
               {% for group_entry in grouped_items %}
                 {% if group_entry.grouper %}
@@ -198,27 +203,27 @@
                   {% for item in group_entry.list %}
                     <li class="sp-price-item{% if item.photo_required %} sp-price-item--photo{% endif %}">
                       <span class="sp-price-item-name">{{ item.name }}</span>
-                      <span class="sp-price-item-price">{{ item.price_display }} ден</span>
+                      <span class="sp-price-item-price">{{ item.price_display }} {% trans "den" %}</span>
                       {% if item.photo_required %}
-                        <span class="sp-photo-note">📷 Потребна е референтна фотографија</span>
+                        <span class="sp-photo-note">📷 {% trans "Reference photo required" %}</span>
                       {% endif %}
                     </li>
                   {% endfor %}
                 </ul>
               {% endfor %}
               <a class="sp-btn-hero sp-price-list-cta" href="{% url 'booking:book_salon' salon.slug %}">
-                Book an appointment
+                {% trans "Book an appointment" %}
               </a>
             </div>
           </div>
           {% else %}
-          <a class="sp-service-cta" href="{% url 'booking:book_salon' salon.slug %}">Book this service</a>
+          <a class="sp-service-cta" href="{% url 'booking:book_salon' salon.slug %}">{% trans "Book this service" %}</a>
           {% endif %}
 
         </article>
         {% endwith %}
       {% empty %}
-        <p class="sp-muted-msg">Services will be listed here soon.</p>
+        <p class="sp-muted-msg">{% trans "Services will be listed here soon." %}</p>
       {% endfor %}
     </div>
   </div>
@@ -230,21 +235,21 @@
 
     <div class="sp-info-card">
       <div class="sp-info-card-head">
-        <p class="sp-kicker">Schedule</p>
+        <p class="sp-kicker">{% trans "Schedule" %}</p>
         <span class="sp-open-badge" id="sp-open-badge">
           <span class="sp-open-dot"></span>
           <span class="sp-open-label"></span>
         </span>
       </div>
-      <h3 class="sp-info-title">Working <em>hours</em></h3>
+      <h3 class="sp-info-title">{% trans "Working" %} <em>{% trans "hours" %}</em></h3>
       <ul class="sp-hours-list">
         {% for row in working_hours %}
           <li class="sp-hours-row {% if not row.is_working_day %}sp-hours-closed{% endif %}" data-day="{{ row.weekday }}">
-            <span class="sp-hours-day">{{ row.get_weekday_display }}<span class="sp-today-badge">Today</span></span>
+            <span class="sp-hours-day">{{ row.get_weekday_display }}<span class="sp-today-badge">{% trans "Today" %}</span></span>
             {% if row.is_working_day %}
               <span class="sp-hours-time">{{ row.start_time|time:"H:i" }} – {{ row.end_time|time:"H:i" }}</span>
             {% else %}
-              <span class="sp-closed-label">Closed</span>
+              <span class="sp-closed-label">{% trans "Closed" %}</span>
             {% endif %}
           </li>
         {% endfor %}
@@ -252,28 +257,28 @@
     </div>
 
     <div class="sp-info-card">
-      <p class="sp-kicker">Before you book</p>
-      <h3 class="sp-info-title">Booking <em>rules</em></h3>
+      <p class="sp-kicker">{% trans "Before you book" %}</p>
+      <h3 class="sp-info-title">{% trans "Booking" %} <em>{% trans "rules" %}</em></h3>
       <ul class="sp-rules-list">
         {% if booking_policy %}
           <li>
             <span class="sp-rule-icon">&#x23F0;</span>
-            <span>Minimum booking notice: <strong>{{ booking_policy.minimum_notice_days }} days</strong></span>
+            <span>{% blocktrans with days=booking_policy.minimum_notice_days %}Minimum booking notice: <strong>{{ days }} days</strong>{% endblocktrans %}</span>
           </li>
           <li>
             <span class="sp-rule-icon">&#x1F4C5;</span>
-            <span>Book up to <strong>{{ booking_policy.maximum_booking_window_days }} days</strong> in advance</span>
+            <span>{% blocktrans with days=booking_policy.maximum_booking_window_days %}Book up to <strong>{{ days }} days</strong> in advance{% endblocktrans %}</span>
           </li>
           <li>
             <span class="sp-rule-icon">&#x2714;</span>
-            <span>All requests require <strong>salon approval</strong> before confirmation</span>
+            <span>{% blocktrans trimmed %}All requests require <strong>salon approval</strong> before confirmation{% endblocktrans %}</span>
           </li>
           <li>
             <span class="sp-rule-icon">&#x23F3;</span>
-            <span>Late arrival limit: <strong>{{ booking_policy.late_arrival_limit_minutes }} minutes</strong></span>
+            <span>{% blocktrans with minutes=booking_policy.late_arrival_limit_minutes %}Late arrival limit: <strong>{{ minutes }} minutes</strong>{% endblocktrans %}</span>
           </li>
         {% else %}
-          <li><span class="sp-rule-icon">&#x2714;</span><span>All requests require salon approval before confirmation.</span></li>
+          <li><span class="sp-rule-icon">&#x2714;</span><span>{% trans "All requests require salon approval before confirmation." %}</span></li>
         {% endif %}
       </ul>
     </div>
@@ -282,6 +287,12 @@
 </section>
 
 <script>
+window.SP_I18N = {
+  openNow: "{% filter escapejs %}{% trans 'Open now' %}{% endfilter %}",
+  closedNow: "{% filter escapejs %}{% trans 'Closed now' %}{% endfilter %}",
+  closedToday: "{% filter escapejs %}{% trans 'Closed today' %}{% endfilter %}",
+};
+
 (function () {
   // Highlight today in the hours list
   // Django weekday: 0=Mon … 6=Sun  |  JS getDay(): 0=Sun … 6=Sat
@@ -315,13 +326,13 @@
             var openMin = parse(parts[0]);
             var closeMin = parse(parts[1]);
             if (hhmm >= openMin && hhmm < closeMin) {
-              setCard('Open now', 'sp-open-now');
+              setCard(window.SP_I18N.openNow, 'sp-open-now');
             } else {
-              setCard('Closed now', 'sp-closed-now');
+              setCard(window.SP_I18N.closedNow, 'sp-closed-now');
             }
           }
         } else {
-          setCard('Closed today', 'sp-closed-now');
+          setCard(window.SP_I18N.closedToday, 'sp-closed-now');
         }
       }
     }
@@ -359,9 +370,9 @@
     <img src="{% static 'images/gallery/nail-11.jpg' %}" alt="">
   </div>
   <div class="sp-cta-inner">
-    <h2 class="sp-cta-title">Ready for <em>your</em> next appointment?</h2>
-    <p class="sp-cta-sub">Send a request in minutes. We'll review it and contact you to confirm.</p>
-    <a class="sp-btn-hero" href="{% url 'booking:book_salon' salon.slug %}">Book appointment</a>
+    <h2 class="sp-cta-title">{% trans "Ready for" %} <em>{% trans "your" %}</em> {% trans "next appointment?" %}</h2>
+    <p class="sp-cta-sub">{% trans "Send a request in minutes. We'll review it and contact you to confirm." %}</p>
+    <a class="sp-btn-hero" href="{% url 'booking:book_salon' salon.slug %}">{% trans "Book appointment" %}</a>
   </div>
 </section>
 
@@ -372,7 +383,7 @@
     {# Left — brand + tagline #}
     <div class="sp-footer-col sp-footer-col-brand">
       <div class="sp-footer-brand">{{ salon.name }}</div>
-      <p class="sp-footer-tagline">Online booking, made simple.</p>
+      <p class="sp-footer-tagline">{% trans "Online booking, made simple." %}</p>
     </div>
 
     {# Right — contact links #}
@@ -389,17 +400,17 @@
 
   {# Bottom bar — nav links · copyright · credit #}
   <div class="sp-footer-bottom">
-    <nav class="sp-footer-nav" aria-label="Footer navigation">
-      <a href="#services">Services</a>
+    <nav class="sp-footer-nav" aria-label="{% trans 'Footer navigation' %}">
+      <a href="#services">{% trans "Services" %}</a>
       <span class="sp-footer-dot"></span>
-      <a href="#hours">Hours</a>
+      <a href="#hours">{% trans "Hours" %}</a>
       <span class="sp-footer-dot"></span>
-      <a href="{% url 'booking:book_salon' salon.slug %}">Book now</a>
+      <a href="{% url 'booking:book_salon' salon.slug %}">{% trans "Book now" %}</a>
     </nav>
     <div class="sp-footer-bottom-right">
       <span class="sp-footer-copy">&copy; {% now "Y" %} {{ salon.name }}</span>
       <span class="sp-footer-sep">·</span>
-      <span class="sp-footer-credit">Made by <a href="https://lexilens-mk.netlify.app" target="_blank" rel="noopener">Luka Dermendziev</a></span>
+      <span class="sp-footer-credit">{% trans "Made by" %} <a href="https://lexilens-mk.netlify.app" target="_blank" rel="noopener">Luka Dermendziev</a></span>
     </div>
   </div>
 </footer>

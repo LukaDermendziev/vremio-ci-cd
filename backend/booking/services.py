@@ -9,6 +9,7 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.db.models import Sum
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 from .models import Booking, BookingActivityLog, BookingPolicy, DateWorkingHoursOverride, WorkingHours
 
@@ -325,43 +326,41 @@ def build_prepared_message(booking, message_type):
     except Exception:
         pass  # no policy configured — fall through to hardcoded defaults
 
-    # Hardcoded fallbacks
+    # Hardcoded fallbacks (translated via locale; policy templates stay as stored)
     if message_type == "approved":
-        return (
-            f"Здраво {first_name}, вашиот термин за {date_label} во {time_label} "
-            f"е потврден. Ве очекуваме! — {salon_name}"
-        )
+        return _(
+            "Hello %(name)s, your appointment on %(date)s at %(time)s has been confirmed. "
+            "We look forward to seeing you! — %(salon)s"
+        ) % {"name": first_name, "date": date_label, "time": time_label, "salon": salon_name}
     if message_type == "rejected":
-        return (
-            f"Здраво {first_name}, за жал терминот за {date_label} во {time_label} "
-            f"не е достапен. Ве молиме изберете друг термин. — {salon_name}"
-        )
+        return _(
+            "Hello %(name)s, unfortunately the appointment on %(date)s at %(time)s is not available. "
+            "Please choose another time. — %(salon)s"
+        ) % {"name": first_name, "date": date_label, "time": time_label, "salon": salon_name}
     if message_type == "cancelled":
-        return (
-            f"Здраво {first_name}, вашиот термин за {date_label} во {time_label} "
-            f"е откажан. Ви благодариме на разбирањето. — {salon_name}"
-        )
+        return _(
+            "Hello %(name)s, your appointment on %(date)s at %(time)s has been cancelled. "
+            "Thank you for your understanding. — %(salon)s"
+        ) % {"name": first_name, "date": date_label, "time": time_label, "salon": salon_name}
     if message_type == "edited":
-        return (
-            f"Здраво {first_name}, вашиот термин е променет на {date_label} во {time_label}. "
-            f"Ве очекуваме! — {salon_name}"
-        )
+        return _(
+            "Hello %(name)s, your appointment has been changed to %(date)s at %(time)s. "
+            "We look forward to seeing you! — %(salon)s"
+        ) % {"name": first_name, "date": date_label, "time": time_label, "salon": salon_name}
     if message_type == "no_show":
-        return (
-            f"Здраво {first_name}, не се јавивте на вашиот термин на {date_label} "
-            f"во {time_label}. Доколку сакате да закажете нов термин, контактирајте нè. "
-            f"— {salon_name}"
-        )
+        return _(
+            "Hello %(name)s, you did not attend your appointment on %(date)s at %(time)s. "
+            "If you would like to book again, please contact us. — %(salon)s"
+        ) % {"name": first_name, "date": date_label, "time": time_label, "salon": salon_name}
     if message_type == "pending":
-        return (
-            f"Здраво {first_name}, вашето барање за термин на {date_label} во {time_label} "
-            f"е примено. Ќе ве контактираме наскоро. — {salon_name}"
-        )
-    # fallback: reminder
-    return (
-        f"Здраво {first_name}, ве потсетуваме дека имате термин на {date_label} "
-        f"во {time_label}. Ве очекуваме! — {salon_name}"
-    )
+        return _(
+            "Hello %(name)s, your appointment request for %(date)s at %(time)s has been received. "
+            "We will contact you soon. — %(salon)s"
+        ) % {"name": first_name, "date": date_label, "time": time_label, "salon": salon_name}
+    return _(
+        "Hello %(name)s, this is a reminder that you have an appointment on %(date)s at %(time)s. "
+        "We look forward to seeing you! — %(salon)s"
+    ) % {"name": first_name, "date": date_label, "time": time_label, "salon": salon_name}
 
 
 def send_booking_notification(booking, action, request=None):
@@ -374,14 +373,17 @@ def send_booking_notification(booking, action, request=None):
         return False, "no_email"
 
     subject_map = {
-        "approved":  f"Вашиот термин е потврден — {booking.salon.name}",
-        "rejected":  f"За жал терминот не е достапен — {booking.salon.name}",
-        "cancelled": f"Вашиот термин е откажан — {booking.salon.name}",
-        "edited":    f"Вашиот термин е променет — {booking.salon.name}",
-        "no_show":   f"Пропуштен термин — {booking.salon.name}",
-        "pending":   f"Барањето е примено — {booking.salon.name}",
+        "approved": _("Your appointment is confirmed — %(salon)s") % {"salon": booking.salon.name},
+        "rejected": _("Unfortunately the appointment is unavailable — %(salon)s") % {"salon": booking.salon.name},
+        "cancelled": _("Your appointment was cancelled — %(salon)s") % {"salon": booking.salon.name},
+        "edited": _("Your appointment was changed — %(salon)s") % {"salon": booking.salon.name},
+        "no_show": _("Missed appointment — %(salon)s") % {"salon": booking.salon.name},
+        "pending": _("Request received — %(salon)s") % {"salon": booking.salon.name},
     }
-    subject = subject_map.get(action, f"Информација за термин — {booking.salon.name}")
+    subject = subject_map.get(
+        action,
+        _("Appointment information — %(salon)s") % {"salon": booking.salon.name},
+    )
     body = build_prepared_message(booking, action)
 
     try:
@@ -395,6 +397,58 @@ def send_booking_notification(booking, action, request=None):
         return True, "sent"
     except Exception as exc:
         logger.warning("Could not send booking email to %s: %s", email, exc)
+        return False, "error"
+
+
+def send_owner_new_booking_notification(booking):
+    """
+    Notify the salon owner when a new online booking request arrives.
+    Returns (sent: bool, reason: str). Never raises — booking must always succeed.
+    """
+    owner = booking.salon.owner
+    owner_email = (owner.email or "").strip()
+    if not owner_email:
+        return False, "no_email"
+
+    local_start = timezone.localtime(booking.start_at)
+    services = ", ".join(
+        item.service_name_snapshot for item in booking.booking_services.all()
+    )
+    site_url = getattr(settings, "SITE_URL", "").rstrip("/")
+    dashboard_hint = f"{site_url}/owner/dashboard/" if site_url else "/owner/dashboard/"
+
+    subject = _("New booking request — %(salon)s") % {"salon": booking.salon.name}
+    body = _(
+        "A new booking request was submitted.\n\n"
+        "Customer: %(customer)s\n"
+        "Phone: %(phone)s\n"
+        "Instagram: %(instagram)s\n"
+        "Service: %(service)s\n"
+        "Date: %(date)s\n"
+        "Time: %(time)s\n"
+        "Status: Pending (awaiting your approval)\n\n"
+        "Review in dashboard: %(dashboard)s\n"
+    ) % {
+        "customer": booking.customer.full_name,
+        "phone": booking.customer.phone_number,
+        "instagram": booking.customer.instagram_username or "—",
+        "service": services or "—",
+        "date": local_start.strftime("%d/%m/%Y"),
+        "time": local_start.strftime("%H:%M"),
+        "dashboard": dashboard_hint,
+    }
+
+    try:
+        send_mail(
+            subject=subject,
+            message=body,
+            from_email=getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@salonscheduler.app"),
+            recipient_list=[owner_email],
+            fail_silently=False,
+        )
+        return True, "sent"
+    except Exception as exc:
+        logger.warning("Could not send owner notification to %s: %s", owner_email, exc)
         return False, "error"
 
 

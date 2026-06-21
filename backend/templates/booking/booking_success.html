@@ -1,6 +1,11 @@
 {% extends "base.html" %}
-{% block title %}Request Sent — {{ booking.salon.name }}{% endblock %}
+{% load i18n %}
+{% block title %}{% trans "Request Sent" %} — {{ booking.salon.name }}{% endblock %}
 {% block body_class %}bk-page bk-success-page{% endblock %}
+
+{% block lang_switcher %}
+<div class="bk-lang-wrap">{% include "partials/language_switcher.html" %}</div>
+{% endblock %}
 
 {% block content %}
 <div class="bk-success-wrap">
@@ -19,23 +24,25 @@
       </svg>
     </div>
 
-    <h1 class="bk-success-title">Request sent!</h1>
+    <h1 class="bk-success-title">{% trans "Request sent!" %}</h1>
 
     <p class="bk-success-msg">
+      {% blocktrans with salon_name=booking.salon.name trimmed %}
       Your booking request has been submitted.<br>
       The appointment is <strong>not confirmed yet</strong>.<br>
-      {{ booking.salon.name }} will review your request and contact you.
+      {{ salon_name }} will review your request and contact you.
+      {% endblocktrans %}
     </p>
 
     <div class="bk-success-summary">
-      <div class="bk-ss-label">Booking summary</div>
+      <div class="bk-ss-label">{% trans "Booking summary" %}</div>
 
       <div class="bk-ss-row">
         <i class="bi bi-scissors"></i>
         <span>
           {% for item in booking.booking_services.all %}
             {{ item.service_name_snapshot }}{% if not forloop.last %}, {% endif %}
-          {% empty %}Appointment{% endfor %}
+          {% empty %}{% trans "Appointment" %}{% endfor %}
         </span>
       </div>
 
@@ -55,17 +62,17 @@
       </div>
 
       <div class="bk-ss-status">
-        <span class="bk-status-badge">Pending approval</span>
+        <span class="bk-status-badge">{% trans "Pending approval" %}</span>
       </div>
     </div>
 
     <div class="bk-success-notice">
       <i class="bi bi-info-circle"></i>
-      The salon will contact you to confirm via your preferred contact method.
+      {% trans "The salon will contact you to confirm via your preferred contact method." %}
     </div>
 
     <a class="bk-btn-primary" href="{% url 'booking:salon_page' booking.salon.slug %}">
-      Back to {{ booking.salon.name }}
+      {% blocktrans with salon_name=booking.salon.name %}Back to {{ salon_name }}{% endblocktrans %}
     </a>
   </div>
 
@@ -77,15 +84,8 @@
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
   const colors = ['#C4878A', '#EDE5E1', '#F5ECEB', '#9B6B72', '#D4A9AB', '#FDE8E8'];
-  const wrap   = document.getElementById('bk-check-wrap');
-  const card   = wrap?.closest('.bk-success-card');
-  if (!wrap || !card) return;
-
-  // Position confetti origin at center of check icon
-  const wRect  = wrap.getBoundingClientRect();
-  const cRect  = card.getBoundingClientRect();
-  const ox     = wRect.left - cRect.left + wRect.width  / 2;
-  const oy     = wRect.top  - cRect.top  + wRect.height / 2;
+  const wrap = document.getElementById('bk-check-wrap');
+  if (!wrap) return;
 
   for (let i = 0; i < 38; i++) {
     const dot = document.createElement('div');
@@ -94,8 +94,8 @@
     const tx   = (Math.random() - 0.5) * 200;
     const ty   = -60 - Math.random() * 130;
     dot.style.cssText = [
-      `left:${ox}px`,
-      `top:${oy}px`,
+      `left:50%`,
+      `top:50%`,
       `width:${size}px`,
       `height:${size}px`,
       `background:${colors[Math.floor(Math.random() * colors.length)]}`,
@@ -104,7 +104,7 @@
       `--tx:${tx.toFixed(0)}px`,
       `--ty:${ty.toFixed(0)}px`,
     ].join(';');
-    card.appendChild(dot);
+    wrap.appendChild(dot);
     setTimeout(() => dot.remove(), 2800);
   }
 })();

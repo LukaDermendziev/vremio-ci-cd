@@ -1,12 +1,13 @@
 {% extends "base.html" %}
-{% block title %}{{ customer.full_name }} — History{% endblock %}
+{% load i18n %}
+{% block title %}{{ customer.full_name }} — {% trans "History" %}{% endblock %}
 {% block body_class %}od-page{% endblock %}
 
 {% block content %}
 <div class="od-standalone">
   <div class="od-standalone-top">
     <a href="{% url 'booking:owner_dashboard' %}#customers" class="od-back-link">
-      <i class="bi bi-arrow-left"></i> Back to dashboard
+      <i class="bi bi-arrow-left"></i> {% trans "Back to dashboard" %}
     </a>
     <h1>{{ customer.full_name }}</h1>
     <div class="od-customer-meta">
@@ -19,7 +20,7 @@
   </div>
 
   <div class="od-card">
-    <div class="od-card-title">Appointment history</div>
+    <div class="od-card-title">{% trans "Appointment history" %}</div>
     {% if bookings %}
       <div class="od-bk-list">
         {% for booking in bookings %}
@@ -30,20 +31,20 @@
             </div>
             <div class="od-bk-svc">
               {% for item in booking.booking_services.all %}
-                {{ item.service_name_snapshot }}{% if item.price_snapshot %} ({{ item.price_snapshot|floatformat:0 }} ден){% endif %}{% if not forloop.last %}, {% endif %}
+                {{ item.service_name_snapshot }}{% if item.price_snapshot %} ({{ item.price_snapshot|floatformat:0 }} {% trans "ден" %}){% endif %}{% if not forloop.last %}, {% endif %}
               {% empty %}—{% endfor %}
             </div>
             {% if booking.customer_note %}
-              <div class="od-bk-note">Customer note: {{ booking.customer_note }}</div>
+              <div class="od-bk-note">{% trans "Customer note:" %} {{ booking.customer_note }}</div>
             {% endif %}
             {% if booking.owner_note %}
-              <div class="od-bk-note">Owner note: {{ booking.owner_note }}</div>
+              <div class="od-bk-note">{% trans "Owner note:" %} {{ booking.owner_note }}</div>
             {% endif %}
           </div>
         {% endfor %}
       </div>
     {% else %}
-      <div class="od-empty">No appointments recorded for this customer.</div>
+      <div class="od-empty">{% trans "No appointments recorded for this customer." %}</div>
     {% endif %}
   </div>
 </div>

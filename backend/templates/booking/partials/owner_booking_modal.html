@@ -1,7 +1,8 @@
+{% load i18n %}
 <div class="od-modal-overlay" id="od-booking-modal">
   <div class="od-modal-box od-modal-wide">
     <div class="od-modal-header">
-      <span class="od-modal-title" id="od-booking-modal-title">Add booking</span>
+      <span class="od-modal-title" id="od-booking-modal-title">{% trans "Add booking" %}</span>
       <button type="button" class="od-modal-close" data-close-modal="od-booking-modal">&times;</button>
     </div>
     <form method="post" id="od-booking-form" class="od-form">
@@ -10,12 +11,12 @@
       <input type="hidden" name="return_section" value="calendar">
       <input type="hidden" name="booking_id" value="">
       <div class="od-form-grid od-form-grid-2">
-        <div class="od-field"><label>Full name</label><input type="text" name="full_name" required class="od-input"></div>
-        <div class="od-field"><label>Phone</label><input type="tel" name="phone_number" required class="od-input"></div>
-        <div class="od-field"><label>Instagram</label><input type="text" name="instagram_username" class="od-input"></div>
-        <div class="od-field"><label>Email</label><input type="email" name="email" class="od-input"></div>
+        <div class="od-field"><label>{% trans "Full name" %}</label><input type="text" name="full_name" required class="od-input"></div>
+        <div class="od-field"><label>{% trans "Phone" %}</label><input type="tel" name="phone_number" required class="od-input"></div>
+        <div class="od-field"><label>{% trans "Instagram" %}</label><input type="text" name="instagram_username" class="od-input"></div>
+        <div class="od-field"><label>{% trans "Email" %}</label><input type="email" name="email" class="od-input"></div>
         <div class="od-field">
-          <label>Preferred contact</label>
+          <label>{% trans "Preferred contact" %}</label>
           <select name="preferred_contact_method" class="od-input">
             {% for value, label in owner_booking_form.fields.preferred_contact_method.choices %}
               <option value="{{ value }}">{{ label }}</option>
@@ -23,22 +24,22 @@
           </select>
         </div>
         <div class="od-field">
-          <label>Service</label>
+          <label>{% trans "Service" %}</label>
           <select name="service" required class="od-input" id="od-booking-service">
             {% for service in services %}
-              {% if service.is_active %}<option value="{{ service.id }}">{{ service.name }} ({{ service.duration_minutes }} min)</option>{% endif %}
+              {% if service.is_active %}<option value="{{ service.id }}">{{ service.name }} ({{ service.duration_minutes }} {% trans "min" %})</option>{% endif %}
             {% endfor %}
           </select>
         </div>
-        <div class="od-field"><label>Date</label><input type="date" name="date" required class="od-input" id="od-booking-date"></div>
+        <div class="od-field"><label>{% trans "Date" %}</label><input type="date" name="date" required class="od-input" id="od-booking-date"></div>
         <div class="od-field">
-          <label>Start time</label>
+          <label>{% trans "Start time" %}</label>
           <select id="od-owner-slots" class="od-input"></select>
           <input type="hidden" name="start_time" id="od-booking-start-time" value="">
           <p id="od-slots-warning" style="display:none;color:#DC2626;font-size:12px;margin:4px 0 0 0;line-height:1.4"></p>
         </div>
         <div class="od-field">
-          <label>Status</label>
+          <label>{% trans "Status" %}</label>
           <select name="status" class="od-input">
             {% for value, label in owner_booking_form.fields.status.choices %}
               <option value="{{ value }}">{{ label }}</option>
@@ -46,7 +47,7 @@
           </select>
         </div>
         <div class="od-field">
-          <label>Source</label>
+          <label>{% trans "Source" %}</label>
           <select name="source" class="od-input">
             {% for value, label in owner_booking_form.fields.source.choices %}
               <option value="{{ value }}">{{ label }}</option>
@@ -54,12 +55,12 @@
           </select>
         </div>
       </div>
-      <div class="od-field"><label>Owner note</label><textarea name="owner_note" rows="2" class="od-input"></textarea></div>
+      <div class="od-field"><label>{% trans "Owner note" %}</label><textarea name="owner_note" rows="2" class="od-input"></textarea></div>
       <div class="od-modal-footer od-modal-footer-split">
-        <button type="button" class="od-btn od-btn-danger od-delete-btn" id="od-booking-delete" style="display:none">Delete</button>
+        <button type="button" class="od-btn od-btn-danger od-delete-btn" id="od-booking-delete" style="display:none">{% trans "Delete" %}</button>
         <div class="od-modal-footer-right">
-          <button type="button" class="od-btn od-btn-ghost" data-close-modal="od-booking-modal">Cancel</button>
-          <button type="submit" class="od-btn od-btn-primary">Save booking</button>
+          <button type="button" class="od-btn od-btn-ghost" data-close-modal="od-booking-modal">{% trans "Cancel" %}</button>
+          <button type="submit" class="od-btn od-btn-primary">{% trans "Save booking" %}</button>
         </div>
       </div>
     </form>

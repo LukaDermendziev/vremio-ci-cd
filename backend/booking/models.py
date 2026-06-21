@@ -6,6 +6,7 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 
 class TimeStampedModel(models.Model):
@@ -101,12 +102,12 @@ class ServicePriceItem(models.Model):
 
 class Customer(TimeStampedModel):
     class PreferredContactMethod(models.TextChoices):
-        PHONE = "phone", "Phone call"
-        SMS = "sms", "SMS"
-        VIBER = "viber", "Viber"
-        WHATSAPP = "whatsapp", "WhatsApp"
-        INSTAGRAM = "instagram", "Instagram"
-        EMAIL = "email", "Email"
+        PHONE = "phone", _("Phone call")
+        SMS = "sms", _("SMS")
+        VIBER = "viber", _("Viber")
+        WHATSAPP = "whatsapp", _("WhatsApp")
+        INSTAGRAM = "instagram", _("Instagram")
+        EMAIL = "email", _("Email")
 
     salon = models.ForeignKey(
         Salon,
@@ -237,13 +238,13 @@ class BookingPolicy(TimeStampedModel):
 
 class WorkingHours(TimeStampedModel):
     class Weekday(models.IntegerChoices):
-        MONDAY = 0, "Monday"
-        TUESDAY = 1, "Tuesday"
-        WEDNESDAY = 2, "Wednesday"
-        THURSDAY = 3, "Thursday"
-        FRIDAY = 4, "Friday"
-        SATURDAY = 5, "Saturday"
-        SUNDAY = 6, "Sunday"
+        MONDAY = 0, _("Monday")
+        TUESDAY = 1, _("Tuesday")
+        WEDNESDAY = 2, _("Wednesday")
+        THURSDAY = 3, _("Thursday")
+        FRIDAY = 4, _("Friday")
+        SATURDAY = 5, _("Saturday")
+        SUNDAY = 6, _("Sunday")
 
     salon = models.ForeignKey(
         Salon,
@@ -353,21 +354,21 @@ class UnavailableTimeBlock(TimeStampedModel):
 
 class Booking(TimeStampedModel):
     class Status(models.TextChoices):
-        PENDING = "pending", "Pending"
-        APPROVED = "approved", "Approved"
-        REJECTED = "rejected", "Rejected"
-        CANCELLED = "cancelled", "Cancelled"
-        COMPLETED = "completed", "Completed"
-        NO_SHOW = "no_show", "No Show"
+        PENDING = "pending", _("Pending")
+        APPROVED = "approved", _("Approved")
+        REJECTED = "rejected", _("Rejected")
+        CANCELLED = "cancelled", _("Cancelled")
+        COMPLETED = "completed", _("Completed")
+        NO_SHOW = "no_show", _("No Show")
 
     class Source(models.TextChoices):
-        ONLINE = "online", "Online"
-        OWNER_MANUAL = "owner_manual", "Owner manual"
-        INSTAGRAM = "instagram", "Instagram"
-        MESSENGER = "messenger", "Messenger"
-        VIBER = "viber", "Viber"
-        PHONE = "phone", "Phone"
-        IN_PERSON = "in_person", "In person"
+        ONLINE = "online", _("Online")
+        OWNER_MANUAL = "owner_manual", _("Owner manual")
+        INSTAGRAM = "instagram", _("Instagram")
+        MESSENGER = "messenger", _("Messenger")
+        VIBER = "viber", _("Viber")
+        PHONE = "phone", _("Phone")
+        IN_PERSON = "in_person", _("In person")
 
     salon = models.ForeignKey(
         Salon,
@@ -513,14 +514,14 @@ class BookingService(models.Model):
 
 class BookingActivityLog(models.Model):
     class Action(models.TextChoices):
-        REQUESTED  = "requested",  "Requested"
-        APPROVED   = "approved",   "Approved"
-        REJECTED   = "rejected",   "Rejected"
-        CANCELLED  = "cancelled",  "Cancelled"
-        EDITED     = "edited",     "Edited"
-        COMPLETED  = "completed",  "Completed"
-        NO_SHOW    = "no_show",    "No Show"
-        EMAIL_SENT = "email_sent", "Email sent"
+        REQUESTED  = "requested",  _("Requested")
+        APPROVED   = "approved",   _("Approved")
+        REJECTED   = "rejected",   _("Rejected")
+        CANCELLED  = "cancelled",  _("Cancelled")
+        EDITED     = "edited",     _("Edited")
+        COMPLETED  = "completed",  _("Completed")
+        NO_SHOW    = "no_show",    _("No Show")
+        EMAIL_SENT = "email_sent", _("Email sent")
 
     booking = models.ForeignKey(
         Booking,
