@@ -4,6 +4,7 @@ from decimal import Decimal, InvalidOperation
 from django import forms
 from django.core.exceptions import ValidationError
 from django.forms import modelformset_factory
+from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
 from .anti_abuse import (
@@ -27,6 +28,45 @@ from .models import (
     WorkingHours,
 )
 from .services import is_slot_available
+
+
+class LocalizedDateInput(forms.DateInput):
+    """Text date field (dd/mm/yyyy) with hidden ISO value for Django."""
+
+    input_type = "text"
+
+    def __init__(self, attrs=None, format=None):
+        attrs = dict(attrs or {})
+        attrs.setdefault("class", "od-input od-date-display")
+        super().__init__(attrs=attrs, format=format)
+
+    def render(self, name, value, attrs=None, renderer=None):
+        iso_value = ""
+        if value:
+            if hasattr(value, "strftime"):
+                iso_value = value.strftime("%Y-%m-%d")
+            else:
+                iso_value = str(value)
+        field_id = (attrs or {}).get("id") or f"id_{name}"
+        required = "required" in (attrs or {}) or (self.attrs or {}).get("required")
+        return format_html(
+            '<div class="od-date-wrap" data-od-date-field>'
+            '<div class="od-date-input-row">'
+            '<input type="text" class="od-input od-date-display" placeholder="{placeholder}" '
+            'inputmode="numeric" autocomplete="off" aria-labelledby="{field_id}_label" {req}>'
+            '<button type="button" class="od-date-picker-btn" aria-label="{choose}">'
+            '<i class="bi bi-calendar3"></i></button>'
+            "</div>"
+            '<input type="hidden" name="{name}" id="{field_id}" class="od-date-value" value="{iso}">'
+            '<input type="date" class="od-date-native" tabindex="-1" aria-hidden="true">'
+            "</div>",
+            placeholder=_("dd/mm/yyyy"),
+            choose=_("Choose date"),
+            name=name,
+            field_id=field_id,
+            iso=iso_value,
+            req=format_html("required") if required else "",
+        )
 
 
 def _price_from_display(price_display: str, base_price: Decimal) -> Decimal:
@@ -288,7 +328,7 @@ class OwnerBookingForm(forms.Form):
         label=_("Preferred contact"),
     )
     service = forms.ModelChoiceField(queryset=Service.objects.none(), label=_("Service"))
-    date = forms.DateField(widget=forms.DateInput(attrs={"type": "date"}), label=_("Date"))
+    date = forms.DateField(widget=LocalizedDateInput(), label=_("Date"))
     start_time = forms.CharField(label=_("Start time"))
     status = forms.ChoiceField(choices=Booking.Status.choices, label=_("Status"))
     source = forms.ChoiceField(
@@ -553,7 +593,7 @@ class UnavailableTimeBlockForm(forms.ModelForm):
         model = UnavailableTimeBlock
         fields = ["date", "start_time", "end_time", "reason"]
         widgets = {
-            "date": forms.DateInput(attrs={"type": "date", "class": "od-input"}),
+            "date": LocalizedDateInput(),
             "start_time": forms.TimeInput(attrs={"type": "time", "class": "od-input"}),
             "end_time": forms.TimeInput(attrs={"type": "time", "class": "od-input"}),
             "reason": forms.TextInput(
@@ -585,8 +625,8 @@ class UnavailableTimeBlockForm(forms.ModelForm):
 class BlockedDateForm(forms.Form):
     override_id = forms.IntegerField(required=False, widget=forms.HiddenInput())
     date = forms.DateField(
-        widget=forms.DateInput(attrs={"type": "date", "class": "od-input"}),
-        label="Date",
+        widget=LocalizedDateInput(),
+        label=_("Date"),
     )
     reason = forms.CharField(
         required=False,

@@ -11,7 +11,7 @@
       <input type="hidden" name="return_section" value="calendar">
       <input type="hidden" name="block_id" value="">
       <div class="od-form-grid">
-        <div class="od-field"><label>{% trans "Date" %}</label><input type="date" name="date" required class="od-input"></div>
+        <div class="od-field"><label>{% trans "Date" %}</label>{% include "booking/partials/od_date_input.html" with name="date" required=True %}</div>
         <div class="od-form-grid od-form-grid-2">
           <div class="od-field"><label>{% trans "Start" %}</label><input type="time" name="start_time" required class="od-input"></div>
           <div class="od-field"><label>{% trans "End" %}</label><input type="time" name="end_time" required class="od-input"></div>
@@ -46,7 +46,7 @@
       <input type="hidden" name="action" value="save_blocked_date">
       <input type="hidden" name="return_section" value="availability">
       <div class="od-form-grid">
-        <div class="od-field"><label>{% trans "Date" %}</label><input type="date" name="date" required class="od-input"></div>
+        <div class="od-field"><label>{% trans "Date" %}</label>{% include "booking/partials/od_date_input.html" with name="date" required=True %}</div>
         <div class="od-field"><label>{% trans "Reason (optional)" %}</label><input type="text" name="reason" class="od-input"></div>
       </div>
       <div class="od-modal-footer">

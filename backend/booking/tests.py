@@ -26,7 +26,7 @@ from .models import (
     UnavailableTimeBlock,
     WorkingHours,
 )
-from .services import get_available_slots
+from .services import build_prepared_message, get_available_slots
 
 
 class BookingSmokeTests(TestCase):
@@ -1190,3 +1190,45 @@ class SalonRulesLanguageTests(TestCase):
                 ["MK rule one", "MK rule two"],
             )
 
+
+class PreparedMessageDateTests(TestCase):
+    def setUp(self):
+        User = get_user_model()
+        self.owner = User.objects.create_user(username="owner", password="pass")
+        self.salon = Salon.objects.create(owner=self.owner, name="Salon A", slug="salon-a")
+        BookingPolicy.objects.create(
+            salon=self.salon,
+            msg_approved="Здраво {ime}, вашиот термин за {datum} во {vreme} е потврден. — {salon}",
+        )
+        self.customer = Customer.objects.create(
+            salon=self.salon,
+            full_name="Maria Test",
+            phone_number="070111222",
+        )
+        july_ninth = timezone.make_aware(
+            datetime(2026, 7, 9, 10, 0),
+            timezone.get_current_timezone(),
+        )
+        self.booking = Booking.objects.create(
+            salon=self.salon,
+            customer=self.customer,
+            status=Booking.Status.APPROVED,
+            source=Booking.Source.OWNER_MANUAL,
+            start_at=july_ninth,
+            end_at=july_ninth + timedelta(hours=2),
+            total_duration_minutes=120,
+            rules_accepted=True,
+        )
+
+    def test_macedonian_month_name_in_prepared_message(self):
+        with override("mk"):
+            message = build_prepared_message(self.booking, "approved")
+        self.assertIn("Јули", message)
+        self.assertNotIn("July", message)
+        self.assertIn("9", message)
+
+    def test_english_month_name_in_prepared_message(self):
+        with override("en"):
+            message = build_prepared_message(self.booking, "approved")
+        self.assertIn("July", message)
+        self.assertNotIn("Јули", message)

@@ -31,7 +31,7 @@
             {% endfor %}
           </select>
         </div>
-        <div class="od-field"><label>{% trans "Date" %}</label><input type="date" name="date" required class="od-input" id="od-booking-date"></div>
+        <div class="od-field"><label>{% trans "Date" %}</label>{% include "booking/partials/od_date_input.html" with name="date" id="od-booking-date" required=True %}</div>
         <div class="od-field">
           <label>{% trans "Start time" %}</label>
           <select id="od-owner-slots" class="od-input"></select>

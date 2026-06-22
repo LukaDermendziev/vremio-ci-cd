@@ -13,6 +13,231 @@ function initOwnerDashboard(config) {
     return s;
   };
 
+  function formatDateDigitsInput(value) {
+    const digits = value.replace(/\D/g, "").slice(0, 8);
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+    return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+  }
+
+  function formatDateDisplayInput(value) {
+    if (!value) return "";
+    const sanitized = value.replace(/[^\d/]/g, "");
+    const parts = sanitized.split("/").slice(0, 3);
+    const digits = sanitized.replace(/\D/g, "").slice(0, 8);
+
+    // Single-digit day/month or trailing slash — keep manual dd/m/yyyy entry.
+    const manualEntry =
+      sanitized.endsWith("/") ||
+      (parts[0]?.length === 1 && parts.length > 1) ||
+      (parts[1]?.length === 1 && parts.length > 2);
+
+    if (manualEntry) {
+      const limits = [2, 2, 4];
+      return parts.map((part, index) => part.slice(0, limits[index])).join("/");
+    }
+
+    // Otherwise rebuild from digits so year digits are not trapped in the month segment.
+    return formatDateDigitsInput(digits);
+  }
+
+  function applyDateDisplayMask(input) {
+    const selStart = input.selectionStart ?? input.value.length;
+    const digitsBeforeCaret = input.value.slice(0, selStart).replace(/\D/g, "").length;
+    const formatted = formatDateDisplayInput(input.value);
+    if (formatted === input.value) return;
+
+    input.value = formatted;
+
+    let digitsSeen = 0;
+    let newCaret = formatted.length;
+    for (let i = 0; i < formatted.length; i++) {
+      if (/\d/.test(formatted[i])) {
+        digitsSeen++;
+        if (digitsSeen >= digitsBeforeCaret) {
+          newCaret = i + 1;
+          break;
+        }
+      }
+    }
+    try {
+      input.setSelectionRange(newCaret, newCaret);
+    } catch (_) {
+      /* ignore */
+    }
+  }
+
+  function isoToDisplay(iso) {
+    if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return "";
+    const [y, m, d] = iso.split("-");
+    return `${d}/${m}/${y}`;
+  }
+
+  function displayToIso(display) {
+    if (!display) return "";
+    const match = display.trim().match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})$/);
+    if (!match) return "";
+    const day = match[1].padStart(2, "0");
+    const month = match[2].padStart(2, "0");
+    const year = match[3];
+    const dt = new Date(`${year}-${month}-${day}T12:00:00`);
+    if (Number.isNaN(dt.getTime())) return "";
+    if (dt.getFullYear() !== Number(year) || dt.getMonth() + 1 !== Number(month) || dt.getDate() !== Number(day)) {
+      return "";
+    }
+    return `${year}-${month}-${day}`;
+  }
+
+  function todayIsoLocal() {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, "0");
+    const d = String(now.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+
+  function isBeforeToday(iso) {
+    return !!iso && iso < todayIsoLocal();
+  }
+
+  function validateOwnerDateField(wrap, { report = false } = {}) {
+    const display = wrap?.querySelector(".od-date-display");
+    const hidden = wrap?.querySelector(".od-date-value");
+    if (!display || !hidden) return true;
+
+    const iso = hidden.value || displayToIso(display.value);
+    if (!iso) {
+      display.setCustomValidity("");
+      return true;
+    }
+
+    if (isBeforeToday(iso) && iso !== (wrap.dataset.initialDateIso || "")) {
+      display.setCustomValidity(t("dateInPast", "Choose today or a future date."));
+      if (report) display.reportValidity();
+      return false;
+    }
+
+    display.setCustomValidity("");
+    return true;
+  }
+
+  function refreshNativeDateMins(root = document) {
+    const min = todayIsoLocal();
+    root.querySelectorAll(".od-date-native").forEach(el => {
+      el.min = min;
+    });
+  }
+
+  function setDateFieldInitialIso(wrap, iso) {
+    if (wrap) wrap.dataset.initialDateIso = iso || "";
+  }
+
+  function setDateFieldValue(wrap, iso) {
+    if (!wrap) return;
+    const display = wrap.querySelector(".od-date-display");
+    const hidden = wrap.querySelector(".od-date-value");
+    const native = wrap.querySelector(".od-date-native");
+    const cleanIso = iso || "";
+    if (hidden) hidden.value = cleanIso;
+    if (display) {
+      display.value = cleanIso ? isoToDisplay(cleanIso) : "";
+      display.setCustomValidity("");
+    }
+    if (native) native.value = cleanIso;
+  }
+
+  function initDateField(wrap) {
+    if (!wrap || wrap.dataset.odDateInit) return;
+    wrap.dataset.odDateInit = "1";
+    const display = wrap.querySelector(".od-date-display");
+    const hidden = wrap.querySelector(".od-date-value");
+    const native = wrap.querySelector(".od-date-native");
+    const btn = wrap.querySelector(".od-date-picker-btn");
+    if (!display || !hidden) return;
+
+    if (hidden.value) setDateFieldValue(wrap, hidden.value);
+    if (native) native.min = todayIsoLocal();
+
+    display.addEventListener("blur", () => {
+      if (!display.value.trim()) {
+        display.setCustomValidity("");
+        setDateFieldValue(wrap, "");
+        hidden.dispatchEvent(new Event("change", { bubbles: true }));
+        return;
+      }
+      const iso = displayToIso(display.value);
+      if (!iso) {
+        display.setCustomValidity(t("dateFormatInvalid", "Use dd/mm/yyyy"));
+        display.reportValidity();
+        return;
+      }
+      if (isBeforeToday(iso) && iso !== (wrap.dataset.initialDateIso || "")) {
+        display.setCustomValidity(t("dateInPast", "Choose today or a future date."));
+        display.reportValidity();
+        return;
+      }
+      display.setCustomValidity("");
+      setDateFieldValue(wrap, iso);
+      hidden.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+
+    display.addEventListener("input", () => {
+      display.setCustomValidity("");
+      applyDateDisplayMask(display);
+    });
+
+    native?.addEventListener("change", () => {
+      if (native.value && isBeforeToday(native.value) && native.value !== (wrap.dataset.initialDateIso || "")) {
+        display.setCustomValidity(t("dateInPast", "Choose today or a future date."));
+        display.reportValidity();
+        setDateFieldValue(wrap, "");
+        return;
+      }
+      setDateFieldValue(wrap, native.value);
+      validateOwnerDateField(wrap);
+      hidden.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+
+    btn?.addEventListener("click", () => {
+      if (native?.showPicker) native.showPicker();
+      else native?.focus();
+    });
+  }
+
+  function initDateFields(root = document) {
+    root.querySelectorAll("[data-od-date-field]").forEach(initDateField);
+  }
+
+  function syncAllDateFields(form) {
+    form?.querySelectorAll("[data-od-date-field]").forEach(wrap => {
+      const display = wrap.querySelector(".od-date-display");
+      const iso = display?.value.trim() ? displayToIso(display.value) : "";
+      if (display?.value.trim() && !iso) return;
+      setDateFieldValue(wrap, iso);
+    });
+  }
+
+  initDateFields();
+  refreshNativeDateMins();
+
+  document.querySelectorAll(".od-form").forEach(form => {
+    form.addEventListener("submit", e => {
+      syncAllDateFields(form);
+      let valid = true;
+      let firstInvalidWrap = null;
+      form.querySelectorAll("[data-od-date-field]").forEach(wrap => {
+        if (!validateOwnerDateField(wrap)) {
+          valid = false;
+          if (!firstInvalidWrap) firstInvalidWrap = wrap;
+        }
+      });
+      if (!valid) {
+        firstInvalidWrap?.querySelector(".od-date-display")?.reportValidity();
+        e.preventDefault();
+      }
+    });
+  });
+
   let calendar = null;
   let calendarMeta = { closedDates: [], closedWeekdays: [] };
   let lastDateClick = { time: 0, dateStr: "" };
@@ -100,6 +325,7 @@ function initOwnerDashboard(config) {
 
   document.querySelectorAll(".od-bn-item[data-bn-section]").forEach(btn => {
     btn.addEventListener("click", () => {
+      closeAllModals();
       showSection(btn.dataset.bnSection);
       history.replaceState(null, "", "#" + btn.dataset.bnSection);
       syncBottomNav(btn.dataset.bnSection);
@@ -206,7 +432,9 @@ function initOwnerDashboard(config) {
     bookingForm.querySelector('[name="email"]').value = data.email || "";
     bookingForm.querySelector('[name="preferred_contact_method"]').value = data.preferred_contact_method || "viber";
     if (data.service_id) serviceSelect.value = data.service_id;
-    dateInput.value = data.date || "";
+    const dateWrap = dateInput?.closest("[data-od-date-field]");
+    setDateFieldValue(dateWrap, data.date || "");
+    setDateFieldInitialIso(dateWrap, data.date || "");
     startInput.value = data.start_time || "";
     bookingForm.querySelector('[name="status"]').value = data.status || "approved";
     bookingForm.querySelector('[name="source"]').value = data.source || "owner_manual";
@@ -259,6 +487,9 @@ function initOwnerDashboard(config) {
 
   async function openBookingModal(bookingId, preset = {}) {
     bookingForm.reset();
+    const dateWrap = dateInput?.closest("[data-od-date-field]");
+    setDateFieldValue(dateWrap, "");
+    setDateFieldInitialIso(dateWrap, "");
     bookingForm.querySelector('[name="booking_id"]').value = "";
     // Set return_section dynamically so Save/Delete lands back where the owner is
     const returnSec = getCurrentSection();
@@ -293,7 +524,7 @@ function initOwnerDashboard(config) {
       } catch (_) { /* card fallback above */ }
       bookingDeleteForm.querySelector('[name="booking_id"]').value = bookingId;
     } else if (preset.date) {
-      dateInput.value = preset.date;
+      setDateFieldValue(dateInput?.closest("[data-od-date-field]"), preset.date);
       if (preset.time) startInput.value = preset.time;
       bookingForm.querySelector('[name="status"]').value = "approved";
       bookingForm.querySelector('[name="source"]').value = "owner_manual";
@@ -843,6 +1074,7 @@ function initOwnerDashboard(config) {
 
   function openBlockModal(blockId, preset = {}) {
     blockForm.reset();
+    setDateFieldValue(blockForm.querySelector('[name="date"]')?.closest("[data-od-date-field]"), "");
     blockForm.querySelector('[name="block_id"]').value = "";
     document.getElementById("od-block-modal-title").textContent = blockId ? t("editBlockedTime", "Edit blocked time") : t("blockTime", "Block time");
     blockDeleteBtn.style.display = blockId ? "" : "none";
@@ -855,13 +1087,13 @@ function initOwnerDashboard(config) {
     if (blockId && blockForm.dataset.fromEvent) {
       const p = JSON.parse(blockForm.dataset.fromEvent);
       blockForm.querySelector('[name="block_id"]').value = blockId;
-      blockForm.querySelector('[name="date"]').value = p.date || "";
+      setDateFieldValue(blockForm.querySelector('[name="date"]')?.closest("[data-od-date-field]"), p.date || "");
       blockForm.querySelector('[name="start_time"]').value = p.startTime || "";
       blockForm.querySelector('[name="end_time"]').value = p.endTime || "";
       blockForm.querySelector('[name="reason"]').value = p.reason || "";
       delete blockForm.dataset.fromEvent;
     } else if (preset.date) {
-      blockForm.querySelector('[name="date"]').value = preset.date;
+      setDateFieldValue(blockForm.querySelector('[name="date"]')?.closest("[data-od-date-field]"), preset.date);
       if (preset.startTime) blockForm.querySelector('[name="start_time"]').value = preset.startTime;
       if (preset.endTime) blockForm.querySelector('[name="end_time"]').value = preset.endTime;
     }

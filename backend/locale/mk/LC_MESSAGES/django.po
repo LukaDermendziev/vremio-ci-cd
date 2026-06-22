@@ -430,8 +430,14 @@ msgstr ""
 msgid "Choose a strong password for your account."
 msgstr "Изберете силна лозинка за вашата сметка."
 
+msgid "Choose date"
+msgstr "Изберете датум"
+
 msgid "Choose service"
 msgstr "Изберете услуга"
+
+msgid "Choose today or a future date."
+msgstr "Изберете денес или иден датум."
 
 msgid "Choose your salon"
 msgstr "Изберете салон"
@@ -1668,6 +1674,9 @@ msgstr "Ажурирајте ја лозинката на вашата смет�
 msgid "Upload your logo here"
 msgstr "Поставете го вашиот лого тука"
 
+msgid "Use dd/mm/yyyy"
+msgstr "Користете дд/мм/гггг"
+
 msgid "Username"
 msgstr "Корисничко име"
 
@@ -1847,6 +1856,9 @@ msgstr "име на клиент"
 
 msgid "date"
 msgstr "датум"
+
+msgid "dd/mm/yyyy"
+msgstr "дд/мм/гггг"
 
 msgid "den"
 msgstr "ден"

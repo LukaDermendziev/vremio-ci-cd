@@ -9,6 +9,7 @@ from django.conf import settings
 from django.db.models import Sum
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.formats import date_format
 from django.utils.translation import gettext as _
 
 from .models import Booking, BookingActivityLog, BookingPolicy, DateWorkingHoursOverride, WorkingHours
@@ -298,9 +299,15 @@ def normalize_phone_for_links(phone_number):
     return "389" + digits
 
 
+def format_booking_date_label(dt):
+    """Localized date for prepared messages, e.g. 9 July / 9 Јули 2026."""
+    local_dt = timezone.localtime(dt)
+    return date_format(local_dt, "j F Y")
+
+
 def build_prepared_message(booking, message_type):
     first_name = booking.customer.full_name.split()[0]
-    date_label = timezone.localtime(booking.start_at).strftime("%d %B %Y").lstrip("0")
+    date_label = format_booking_date_label(booking.start_at)
     time_label = timezone.localtime(booking.start_at).strftime("%H:%M")
     salon_name = booking.salon.name
 

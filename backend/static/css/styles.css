@@ -1731,6 +1731,52 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
 .od-field label { font-size: 11.5px; font-weight: 700; color: #4B5563; margin-bottom: 5px; letter-spacing: 0.1px; }
 .od-field-error { font-size: 11px; color: #DB2777; }
 
+/* Owner date field — always dd/mm/yyyy display, ISO in hidden input */
+.od-date-wrap { position: relative; }
+.od-date-input-row {
+  display: flex;
+  align-items: stretch;
+}
+.od-date-input-row .od-date-display {
+  flex: 1;
+  min-width: 0;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.od-date-picker-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid #E5E7EB;
+  border-left: none;
+  border-radius: 0 9px 9px 0;
+  background: #fff;
+  padding: 0 12px;
+  color: #6B7280;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.od-date-input-row:focus-within .od-date-display,
+.od-date-input-row:focus-within .od-date-picker-btn {
+  border-color: #B5848B;
+}
+.od-date-input-row:focus-within .od-date-display {
+  box-shadow: 0 0 0 3px rgba(181,132,139,0.12);
+}
+.od-date-picker-btn:hover { color: #B5848B; }
+.od-date-native {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.od-date-display:user-invalid:not(:focus) {
+  border-color: #DB2777;
+}
+
 /* Empty states */
 .od-empty { padding: 40px 20px; color: #94A3B8; font-size: 13px; }
 
@@ -3651,7 +3697,7 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
   position: absolute;
   right: 0;
   top: 0;
-  bottom: -1px;        /* seal the 1px gap at the section bottom edge */
+  bottom: 1px;        /* seal the 1px gap at the section bottom edge */
   width: 100%;         /* full-width on mobile (behind text) */
   z-index: 1;
   overflow: hidden;

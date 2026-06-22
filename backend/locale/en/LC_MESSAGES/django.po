@@ -424,8 +424,14 @@ msgstr ""
 msgid "Choose a strong password for your account."
 msgstr "Choose a strong password for your account."
 
+msgid "Choose date"
+msgstr "Choose date"
+
 msgid "Choose service"
 msgstr "Choose service"
+
+msgid "Choose today or a future date."
+msgstr "Choose today or a future date."
 
 msgid "Choose your salon"
 msgstr "Choose your salon"
@@ -1663,6 +1669,9 @@ msgstr "Update your account password."
 msgid "Upload your logo here"
 msgstr "Upload your logo here"
 
+msgid "Use dd/mm/yyyy"
+msgstr "Use dd/mm/yyyy"
+
 msgid "Username"
 msgstr "Username"
 
@@ -1839,6 +1848,9 @@ msgstr "customer first name"
 
 msgid "date"
 msgstr "date"
+
+msgid "dd/mm/yyyy"
+msgstr "dd/mm/yyyy"
 
 msgid "den"
 msgstr "den"
