@@ -55,7 +55,7 @@ Customer side:
 * Select service
 * Select date
 * Select available time
-* Enter name, phone number, Instagram, and optional email
+* Enter name, phone number, Instagram, and email (required for manage link and notifications)
 * Choose preferred contact method
 * Upload reference photo if needed
 * Accept salon rules

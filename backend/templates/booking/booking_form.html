@@ -14,6 +14,7 @@
   data-min-date="{{ min_date }}"
   data-max-date="{{ max_date }}"
   data-closed-weekdays="{{ closed_weekdays_js }}"
+  data-closed-dates="{{ closed_dates_js }}"
   data-salon-url="{% url 'booking:salon_page' salon.slug %}"
   data-max-photo-mb="{{ booking_policy.max_reference_photo_size_mb|default:5 }}"
   novalidate
@@ -445,6 +446,10 @@ window.BK_I18N = {
   // Closed weekdays from the backend (JS day numbers: 0=Sun, 1=Mon … 6=Sat)
   let closedWeekdays = [];
   try { closedWeekdays = JSON.parse(form.dataset.closedWeekdays || '[]'); } catch {}
+  let closedDates = new Set();
+  try {
+    (JSON.parse(form.dataset.closedDates || '[]')).forEach(d => closedDates.add(d));
+  } catch {}
 
   function parseLocalDate(str) {
     const [y, m, d] = str.split('-').map(Number);
@@ -516,7 +521,7 @@ window.BK_I18N = {
     for (let d = 1; d <= totalDays; d++) {
       const dt        = new Date(y, m, d);
       const dateStr   = formatDateStr(dt);
-      const isClosed  = closedWeekdays.includes(dt.getDay());
+      const isClosed  = closedWeekdays.includes(dt.getDay()) || closedDates.has(dateStr);
       const isPast    = dt < minDate;
       const isFar     = dt > maxDate;
       const disabled  = isClosed || isPast || isFar;

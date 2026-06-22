@@ -5120,6 +5120,12 @@ body.bk-step1-confirm-open .bk-toast {
   align-items: center;
   gap: 12px;
 }
+.od-bk-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
 .od-bk-actions .od-btn {
   min-width: 0;
   flex-shrink: 1;

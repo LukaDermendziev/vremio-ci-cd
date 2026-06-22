@@ -496,33 +496,18 @@ class Booking(TimeStampedModel):
         super().save(*args, **kwargs)
 
     def _find_conflicting_booking(self):
+        from .services import find_conflicting_booking
+
         if not self.salon_id or not self.start_at or not self.end_at:
             return None
 
-        statuses = [self.Status.APPROVED]
-        if self._pending_holds_slot():
-            statuses.append(self.Status.PENDING)
-
-        if self.status not in statuses:
-            return None
-
-        query = Booking.objects.filter(
-            salon_id=self.salon_id,
-            status__in=statuses,
-            start_at__lt=self.end_at,
-            end_at__gt=self.start_at,
+        return find_conflicting_booking(
+            self.salon,
+            self.start_at,
+            self.end_at,
+            exclude_booking_id=self.pk,
+            booking_status=self.status,
         )
-
-        if self.pk:
-            query = query.exclude(pk=self.pk)
-
-        return query.first()
-
-    def _pending_holds_slot(self):
-        try:
-            return self.salon.booking_policy.pending_holds_slot
-        except BookingPolicy.DoesNotExist:
-            return True
 
 
 class BookingService(models.Model):

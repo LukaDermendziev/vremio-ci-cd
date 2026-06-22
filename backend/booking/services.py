@@ -21,6 +21,106 @@ DEFAULT_START_TIME = time(8, 0)
 DEFAULT_END_TIME = time(18, 0)
 
 
+def get_blocking_booking_statuses(salon):
+    statuses = [Booking.Status.APPROVED]
+    if get_policy_value(salon, "pending_holds_slot", True):
+        statuses.append(Booking.Status.PENDING)
+    return statuses
+
+
+def get_buffer_minutes(salon):
+    return get_policy_value(salon, "buffer_minutes_between_bookings", 0)
+
+
+def get_buffer_timedelta(salon):
+    return timedelta(minutes=get_buffer_minutes(salon))
+
+
+def get_salon_local_today(salon, now=None):
+    if now is None:
+        now = timezone.now()
+    return timezone.localdate(now, get_salon_timezone(salon))
+
+
+def intervals_overlap_with_buffer(existing_start, existing_end, new_start, new_end, buffer):
+    return intervals_overlap(
+        existing_start - buffer,
+        existing_end + buffer,
+        new_start,
+        new_end,
+    )
+
+
+def count_blocking_bookings_on_date(salon, selected_date, exclude_booking_id=None):
+    statuses = get_blocking_booking_statuses(salon)
+    working_interval = get_working_interval_for_date(salon, selected_date)
+    if not working_interval:
+        return 0
+
+    day_start, day_end = working_interval
+    qs = salon.bookings.filter(
+        status__in=statuses,
+        start_at__lt=day_end,
+        end_at__gt=day_start,
+    )
+    if exclude_booking_id:
+        qs = qs.exclude(pk=exclude_booking_id)
+    return qs.count()
+
+
+def is_daily_appointment_limit_reached(salon, selected_date, exclude_booking_id=None):
+    max_per_day = get_policy_value(salon, "max_appointments_per_day", 0)
+    if not max_per_day:
+        return False
+    return count_blocking_bookings_on_date(
+        salon, selected_date, exclude_booking_id=exclude_booking_id
+    ) >= max_per_day
+
+
+def find_conflicting_booking(
+    salon,
+    start_at,
+    end_at,
+    *,
+    exclude_booking_id=None,
+    booking_status=None,
+):
+    if not salon or not start_at or not end_at:
+        return None
+
+    statuses = get_blocking_booking_statuses(salon)
+    if booking_status is not None and booking_status not in statuses:
+        return None
+
+    buffer = get_buffer_timedelta(salon)
+    query = Booking.objects.filter(
+        salon=salon,
+        status__in=statuses,
+        start_at__lt=end_at + buffer,
+        end_at__gt=start_at - buffer,
+    )
+    if exclude_booking_id:
+        query = query.exclude(pk=exclude_booking_id)
+
+    for booking in query:
+        if intervals_overlap_with_buffer(
+            booking.start_at, booking.end_at, start_at, end_at, buffer
+        ):
+            return booking
+    return None
+
+
+def get_unbookable_dates_for_customer(salon, start_date, end_date):
+    """ISO date strings that are closed or have no working window within the booking window."""
+    closed = []
+    current = start_date
+    while current <= end_date:
+        if get_working_window_for_date(salon, current) is None:
+            closed.append(current.isoformat())
+        current += timedelta(days=1)
+    return closed
+
+
 def get_available_slots(
     salon,
     service,
@@ -41,6 +141,11 @@ def get_available_slots(
 
     working_interval = get_working_interval_for_date(salon, selected_date)
     if not working_interval:
+        return []
+
+    if is_daily_appointment_limit_reached(
+        salon, selected_date, exclude_booking_id=exclude_booking_id
+    ):
         return []
 
     working_start, working_end = working_interval
@@ -175,10 +280,8 @@ def get_busy_intervals_for_date(salon, selected_date, exclude_booking_id=None):
         return []
 
     day_start, day_end = working_interval
-    buffer = timedelta(minutes=get_policy_value(salon, "buffer_minutes_between_bookings", 0))
-    status_values = [Booking.Status.APPROVED]
-    if get_policy_value(salon, "pending_holds_slot", True):
-        status_values.append(Booking.Status.PENDING)
+    buffer = get_buffer_timedelta(salon)
+    status_values = get_blocking_booking_statuses(salon)
 
     busy_intervals = []
     bookings = salon.bookings.filter(

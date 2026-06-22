@@ -5,6 +5,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.forms import modelformset_factory
 from django.utils.html import format_html
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from .anti_abuse import (
@@ -27,7 +28,7 @@ from .models import (
     UnavailableTimeBlock,
     WorkingHours,
 )
-from .services import is_slot_available
+from .services import get_salon_timezone, is_slot_available
 
 
 class LocalizedDateInput(forms.DateInput):
@@ -381,14 +382,15 @@ class OwnerBookingForm(forms.Form):
             self.add_error("service", _("Choose a valid service for this salon."))
 
         if service and date and start_time:
-            from django.utils import timezone as tz
             import datetime as _dt
+
             if not exclude_id:
                 try:
                     hour, minute = [int(x) for x in start_time.split(":")]
+                    salon_tz = get_salon_timezone(self.salon)
                     naive_dt = _dt.datetime.combine(date, _dt.time(hour, minute))
-                    aware_dt = tz.make_aware(naive_dt)
-                    if aware_dt < tz.now():
+                    aware_dt = timezone.make_aware(naive_dt, salon_tz)
+                    if aware_dt < timezone.now():
                         self.add_error("start_time", _("Cannot create a booking in the past."))
                         return cleaned_data
                 except (ValueError, TypeError):

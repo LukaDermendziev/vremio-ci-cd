@@ -150,10 +150,13 @@ python manage.py changepassword salon_owner
 | Event | Recipient | When |
 |-------|-----------|------|
 | Password reset | Owner | Owner requests reset at `/owner/password/reset/` |
-| New booking request | Owner | Customer submits booking (if owner email set) |
-| Approved / rejected / edited / cancelled | Customer | Owner action (if customer email provided) |
+| New booking request | Owner | Customer submits booking (owner email or `OWNER_NOTIFICATION_EMAIL`) |
+| Request received | Customer | After online submit (includes manage link) |
+| Approved / rejected / edited / cancelled | Customer | Owner action (requires customer email) |
+| Customer cancel | Owner + customer | Customer cancels via manage link |
+| Pending expiration | — | Policy field exists; cron not yet implemented (post-beta) |
 
-Development uses console email backend (emails print to terminal).
+Development uses console email backend (emails print to terminal). Customer emails use `Reply-To: owner/salon email` when configured.
 
 ## Security Settings (Automatic when DEBUG=False)
 

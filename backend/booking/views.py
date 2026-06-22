@@ -46,6 +46,8 @@ from .services import (
     get_available_slots,
     get_manage_booking_url,
     get_revenue_stats,
+    get_salon_local_today,
+    get_unbookable_dates_for_customer,
     get_working_window_for_date,
     log_booking_activity,
     send_booking_notification,
@@ -957,9 +959,11 @@ def _ensure_booking_device_cookie(response, request):
 def book_salon(request, salon_slug):
     salon = get_object_or_404(Salon, slug=salon_slug, is_active=True)
     policy = getattr(salon, "booking_policy", None)
-    today = date.today()
+    today = get_salon_local_today(salon)
     min_notice = policy.minimum_notice_days if policy else 14
     max_window = policy.maximum_booking_window_days if policy else 60
+    min_date_val = today + timedelta(days=min_notice)
+    max_date_val = today + timedelta(days=max_window)
 
     # Ensure working hours exist so we can derive closed weekdays
     working_hours = salon.working_hours.order_by("weekday")
@@ -1008,10 +1012,13 @@ def book_salon(request, salon_slug):
             "salon": salon,
             "form": form,
             "services": salon.services.filter(is_active=True).prefetch_related("price_items"),
-            "min_date": (today + timedelta(days=min_notice)).isoformat(),
-            "max_date": (today + timedelta(days=max_window)).isoformat(),
+            "min_date": min_date_val.isoformat(),
+            "max_date": max_date_val.isoformat(),
             "booking_policy": policy,
             "closed_weekdays_js": json.dumps(closed_weekdays_js),
+            "closed_dates_js": json.dumps(
+                get_unbookable_dates_for_customer(salon, min_date_val, max_date_val)
+            ),
         },
     )
     return _ensure_booking_device_cookie(response, request)
