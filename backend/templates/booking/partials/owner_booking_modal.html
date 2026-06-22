@@ -23,13 +23,19 @@
             {% endfor %}
           </select>
         </div>
-        <div class="od-field">
-          <label>{% trans "Service" %}</label>
-          <select name="service" required class="od-input" id="od-booking-service">
+        <div class="od-field od-field-span-2">
+          <label>{% trans "Services" %}</label>
+          <div class="od-service-checks" id="od-booking-services">
             {% for service in services %}
-              {% if service.is_active %}<option value="{{ service.id }}">{{ service.name }} ({{ service.duration_minutes }} {% trans "min" %})</option>{% endif %}
+              {% if service.is_active %}
+              <label>
+                <input type="checkbox" name="services" value="{{ service.id }}" data-duration="{{ service.duration_minutes }}">
+                {{ service.name }} ({{ service.duration_minutes }} {% trans "min" %})
+              </label>
+              {% endif %}
             {% endfor %}
-          </select>
+          </div>
+          <p class="od-owner-services-summary" id="od-owner-services-summary"></p>
         </div>
         <div class="od-field"><label>{% trans "Date" %}</label>{% include "booking/partials/od_date_input.html" with name="date" id="od-booking-date" required=True %}</div>
         <div class="od-field">
@@ -56,6 +62,20 @@
         </div>
       </div>
       <div class="od-field"><label>{% trans "Owner note" %}</label><textarea name="owner_note" rows="2" class="od-input"></textarea></div>
+      <div id="od-booking-schedule" class="od-booking-schedule" hidden>
+        <div class="od-field-label">{% trans "Service schedule" %}</div>
+        <table class="od-schedule-table">
+          <thead>
+            <tr>
+              <th>{% trans "Service" %}</th>
+              <th>{% trans "Start" %}</th>
+              <th>{% trans "End" %}</th>
+              <th>{% trans "Duration" %}</th>
+            </tr>
+          </thead>
+          <tbody id="od-booking-schedule-body"></tbody>
+        </table>
+      </div>
       <div class="od-booking-photo-section" id="od-booking-photo-section" hidden>
         <div class="od-field-label">{% trans "Reference photo" %}</div>
         <div class="od-booking-photo-empty" id="od-booking-photo-empty">{% trans "No photo attached" %}</div>

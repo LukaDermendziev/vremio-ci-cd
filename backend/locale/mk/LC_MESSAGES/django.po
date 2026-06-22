@@ -1425,6 +1425,9 @@ msgstr "Секција / група"
 msgid "Select a date above to see available times."
 msgstr "Изберете датум погоре за да ги видите слободните термини."
 
+msgid "Select one or more services to continue."
+msgstr "Изберете една или повеќе услуги за да продолжите."
+
 msgid "Send a request in minutes. We'll review it and contact you to confirm."
 msgstr ""
 "Испратете барање за неколку минути. Ќе го прегледаме и ќе ве контактираме за"
@@ -1447,6 +1450,9 @@ msgstr "Услугата е успешно додадена."
 
 msgid "Service deleted."
 msgstr "Услугата е избришана."
+
+msgid "Service schedule"
+msgstr "Распоред на услуги"
 
 msgid "Service updated successfully."
 msgstr "Услугата е успешно ажурирана."
@@ -1563,6 +1569,13 @@ msgstr ""
 
 msgid "The time %(time)s is no longer available. Please select another slot."
 msgstr "Терминот %(time)s веќе не е достапен. Изберете друг."
+
+msgid ""
+"There is not enough available time for the selected services together. "
+"Please choose another date or book the services separately."
+msgstr ""
+"Нема доволно слободно време за избраните услуги заедно. Ве молиме изберете "
+"друг датум или закажете ги услугите одделно."
 
 msgid "This appointment cannot be cancelled."
 msgstr "Овој термин не може да се откаже."
@@ -1901,3 +1914,6 @@ msgstr "вашиот"
 
 msgid "— Available"
 msgstr "— Достапно"
+
+msgid "— Occupied"
+msgstr "— Зафатено"

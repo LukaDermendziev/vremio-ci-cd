@@ -1,11 +1,15 @@
-{% load i18n %}{% blocktrans with name=first_name date=date time=time service=services manage_url=manage_url %}Hello {{ name }},
+{% load i18n %}{% blocktrans with name=first_name date=date time=time manage_url=manage_url %}Hello {{ name }},
 
-We received your booking request.
+We received your booking request.{% endblocktrans %}
 
-Service: {{ service }}
-Date and time: {{ date }} at {{ time }}
+{% if services_list|length > 1 %}{% trans "Services" %}:
+{% for row in services_list %}• {{ row.name }} ({{ row.start_time }} – {{ row.end_time }})
+{% endfor %}{% blocktrans with minutes=total_duration %}Total duration: {{ minutes }} min{% endblocktrans %}
+{% else %}{% blocktrans with service=services_label %}Service: {{ service }}{% endblocktrans %}
+{% endif %}
+{% blocktrans with date=date time=time %}Date and time: {{ date }} at {{ time }}{% endblocktrans %}
 
-Your appointment is not confirmed yet. The salon will review your request.
+{% trans "Your appointment is not confirmed yet. The salon will review your request." %}
 
-You can track your appointment here:
-{{ manage_url }}{% endblocktrans %}
+{% trans "You can track your appointment here:" %}
+{{ manage_url }}

@@ -1,5 +1,6 @@
 from datetime import timedelta
 from decimal import Decimal, InvalidOperation
+import json
 
 from django import forms
 from django.core.exceptions import ValidationError
@@ -28,7 +29,13 @@ from .models import (
     UnavailableTimeBlock,
     WorkingHours,
 )
-from .services import get_salon_timezone, is_slot_available
+from .services import (
+    MSG_MULTI_SERVICE_NO_FIT,
+    calculate_combined_duration_minutes,
+    get_salon_timezone,
+    is_slot_available,
+    resolve_services_for_salon,
+)
 
 
 class LocalizedDateInput(forms.DateInput):
@@ -98,7 +105,10 @@ class BookingRequestForm(forms.Form):
     service = forms.ModelChoiceField(
         queryset=Service.objects.none(),
         widget=forms.HiddenInput(),
+        required=False,
     )
+    service_ids = forms.CharField(required=False, widget=forms.HiddenInput())
+    service_price_items = forms.CharField(required=False, widget=forms.HiddenInput())
     date = forms.DateField(widget=forms.HiddenInput())
     start_time = forms.CharField(widget=forms.HiddenInput())
     full_name = forms.CharField(max_length=160, label=_("Full name"))
@@ -169,12 +179,43 @@ class BookingRequestForm(forms.Form):
             }
         )
 
+    def _parse_service_ids(self, cleaned_data):
+        raw = (cleaned_data.get("service_ids") or "").strip()
+        if raw:
+            ids = []
+            for part in raw.split(","):
+                part = part.strip()
+                if part.isdigit():
+                    ids.append(int(part))
+            return ids
+        service = cleaned_data.get("service")
+        if service:
+            return [service.pk]
+        return []
+
+    def _parse_price_items_map(self, cleaned_data):
+        raw = (cleaned_data.get("service_price_items") or "").strip()
+        if not raw:
+            price_item_id = cleaned_data.get("selected_price_item_id")
+            service = cleaned_data.get("service")
+            if price_item_id and service:
+                return {str(service.pk): int(price_item_id)}
+            return {}
+        try:
+            data = json.loads(raw)
+        except (json.JSONDecodeError, TypeError, ValueError):
+            return {}
+        if not isinstance(data, dict):
+            return {}
+        return {str(k): v for k, v in data.items() if v}
+
     def clean(self):
         cleaned_data = super().clean()
-        service = cleaned_data.get("service")
+        service_ids = self._parse_service_ids(cleaned_data)
+        services = resolve_services_for_salon(self.salon, service_ids)
+        price_items_map = self._parse_price_items_map(cleaned_data)
         date = cleaned_data.get("date")
         start_time = cleaned_data.get("start_time")
-        price_item_id = cleaned_data.get("selected_price_item_id")
         phone = cleaned_data.get("phone_number", "")
         email = cleaned_data.get("email", "")
         instagram = cleaned_data.get("instagram_username", "")
@@ -208,23 +249,28 @@ class BookingRequestForm(forms.Form):
             device_token,
         )
 
-        if service and service.salon_id != self.salon.id:
-            self.add_error("service", _("Choose a valid service for this salon."))
+        if not services:
+            self.add_error(None, _("Please choose at least one service."))
+            return cleaned_data
 
-        price_item = None
-        if price_item_id and service:
-            try:
-                price_item = ServicePriceItem.objects.get(pk=price_item_id, service=service)
-                cleaned_data["_price_item"] = price_item
-            except ServicePriceItem.DoesNotExist:
-                cleaned_data["_price_item"] = None
-        else:
-            cleaned_data["_price_item"] = None
+        cleaned_data["_services"] = services
+        line_items = []
+        photo_required = False
+        for service in services:
+            price_item = None
+            price_item_id = price_items_map.get(str(service.pk))
+            if price_item_id:
+                try:
+                    price_item = ServicePriceItem.objects.get(pk=int(price_item_id), service=service)
+                except (ServicePriceItem.DoesNotExist, TypeError, ValueError):
+                    self.add_error(None, _("Choose a valid service for this salon."))
+                    return cleaned_data
+            if service.requires_photo or (price_item and price_item.photo_required):
+                photo_required = True
+            line_items.append({"service": service, "price_item": price_item})
+        cleaned_data["_line_items"] = line_items
 
         photo = cleaned_data.get("reference_photo")
-        photo_required = bool(service and service.requires_photo)
-        if price_item and price_item.photo_required:
-            photo_required = True
         if photo_required and not photo:
             self.add_error(
                 "reference_photo",
@@ -239,18 +285,21 @@ class BookingRequestForm(forms.Form):
             else:
                 cleaned_data["_photo_format"] = image_format
 
-        if service and date and start_time:
-            slot = is_slot_available(self.salon, service, date, start_time)
+        if services and date and start_time:
+            slot = is_slot_available(self.salon, services, date, start_time)
             if not slot:
-                self.add_error(
-                    "start_time",
-                    _("This time is no longer available. Please choose another slot."),
-                )
+                if len(services) > 1:
+                    self.add_error("start_time", str(MSG_MULTI_SERVICE_NO_FIT))
+                else:
+                    self.add_error(
+                        "start_time",
+                        _("This time is no longer available. Please choose another slot."),
+                    )
                 return cleaned_data
 
             cleaned_data["start_at"] = slot["start"]
             cleaned_data["end_at"] = slot["end"]
-        elif date or service:
+        elif date or services:
             self.add_error("start_time", _("Please choose an available time."))
 
         return cleaned_data
@@ -268,11 +317,11 @@ class BookingRequestForm(forms.Form):
             },
         )
 
-        service = self.cleaned_data["service"]
-        price_item = self.cleaned_data.get("_price_item")
+        line_items = self.cleaned_data["_line_items"]
+        services = self.cleaned_data["_services"]
         start_at = self.cleaned_data["start_at"]
         end_at = self.cleaned_data.get("end_at") or start_at + timedelta(
-            minutes=service.duration_minutes
+            minutes=calculate_combined_duration_minutes(services, self.salon)
         )
         policy = self.policy
         status = Booking.Status.PENDING
@@ -280,15 +329,13 @@ class BookingRequestForm(forms.Form):
         if policy and policy.auto_approve_bookings:
             status = Booking.Status.APPROVED
 
-        name_snapshot = price_item.name if price_item else service.name
-
         booking = Booking(
             salon=self.salon,
             customer=customer,
             status=status,
             start_at=start_at,
             end_at=end_at,
-            total_duration_minutes=service.duration_minutes,
+            total_duration_minutes=calculate_combined_duration_minutes(services, self.salon),
             source=Booking.Source.ONLINE,
             rules_accepted=self.cleaned_data["rules_accepted"],
             customer_note=self.cleaned_data.get("customer_note", ""),
@@ -302,17 +349,22 @@ class BookingRequestForm(forms.Form):
             booking.reference_photo = prepared
 
         booking.save()
-        price_snap = (
-            _price_from_display(price_item.price_display, service.base_price)
-            if price_item
-            else service.base_price
-        )
-        booking.booking_services.create(
-            service=service,
-            service_name_snapshot=name_snapshot,
-            duration_minutes_snapshot=service.duration_minutes,
-            price_snapshot=price_snap,
-        )
+        for sort_order, line in enumerate(line_items):
+            service = line["service"]
+            price_item = line["price_item"]
+            name_snapshot = price_item.name if price_item else service.name
+            price_snap = (
+                _price_from_display(price_item.price_display, service.base_price)
+                if price_item
+                else service.base_price
+            )
+            booking.booking_services.create(
+                service=service,
+                service_name_snapshot=name_snapshot,
+                duration_minutes_snapshot=service.duration_minutes,
+                price_snapshot=price_snap,
+                sort_order=sort_order,
+            )
 
         return booking
 
@@ -328,7 +380,11 @@ class OwnerBookingForm(forms.Form):
         initial=Customer.PreferredContactMethod.VIBER,
         label=_("Preferred contact"),
     )
-    service = forms.ModelChoiceField(queryset=Service.objects.none(), label=_("Service"))
+    services = forms.ModelMultipleChoiceField(
+        queryset=Service.objects.none(),
+        label=_("Services"),
+        widget=forms.CheckboxSelectMultiple(attrs={"class": "od-service-checks"}),
+    )
     date = forms.DateField(widget=LocalizedDateInput(), label=_("Date"))
     start_time = forms.CharField(label=_("Start time"))
     status = forms.ChoiceField(choices=Booking.Status.choices, label=_("Status"))
@@ -349,7 +405,7 @@ class OwnerBookingForm(forms.Form):
         self.booking = booking
         self.policy = getattr(salon, "booking_policy", None)
         self.customer_warnings = []
-        self.fields["service"].queryset = salon.services.filter(is_active=True)
+        self.fields["services"].queryset = salon.services.filter(is_active=True)
 
         if booking:
             self.fields["booking_id"].initial = booking.pk
@@ -360,9 +416,9 @@ class OwnerBookingForm(forms.Form):
             self.fields["preferred_contact_method"].initial = (
                 booking.customer.preferred_contact_method
             )
-            first_service = booking.booking_services.first()
-            if first_service:
-                self.fields["service"].initial = first_service.service_id
+            self.fields["services"].initial = list(
+                booking.booking_services.values_list("service_id", flat=True)
+            )
             self.fields["date"].initial = timezone_localdate(booking.start_at)
             self.fields["start_time"].initial = timezone_localtime(booking.start_at).strftime(
                 "%H:%M"
@@ -373,15 +429,19 @@ class OwnerBookingForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
-        service = cleaned_data.get("service")
+        services = list(cleaned_data.get("services") or [])
         date = cleaned_data.get("date")
         start_time = cleaned_data.get("start_time")
         exclude_id = cleaned_data.get("booking_id") or None
 
-        if service and service.salon_id != self.salon.id:
-            self.add_error("service", _("Choose a valid service for this salon."))
+        if not services:
+            self.add_error("services", _("Please choose at least one service."))
+            return cleaned_data
 
-        if service and date and start_time:
+        if any(service.salon_id != self.salon.id for service in services):
+            self.add_error("services", _("Choose valid services for this salon."))
+
+        if services and date and start_time:
             import datetime as _dt
 
             if not exclude_id:
@@ -398,21 +458,25 @@ class OwnerBookingForm(forms.Form):
 
             slot = is_slot_available(
                 self.salon,
-                service,
+                services,
                 date,
                 start_time,
                 for_owner=True,
                 exclude_booking_id=exclude_id,
             )
             if not slot:
-                self.add_error(
-                    "start_time",
-                    _("This time overlaps another booking or is outside working hours."),
-                )
+                if len(services) > 1:
+                    self.add_error("start_time", str(MSG_MULTI_SERVICE_NO_FIT))
+                else:
+                    self.add_error(
+                        "start_time",
+                        _("This time overlaps another booking or is outside working hours."),
+                    )
                 return cleaned_data
 
             cleaned_data["start_at"] = slot["start"]
             cleaned_data["end_at"] = slot["end"]
+            cleaned_data["_services"] = services
 
         phone = cleaned_data.get("phone_number", "")
         email = cleaned_data.get("email", "")
@@ -443,9 +507,10 @@ class OwnerBookingForm(forms.Form):
             },
         )
 
-        service = self.cleaned_data["service"]
+        services = self.cleaned_data["_services"]
         start_at = self.cleaned_data["start_at"]
         end_at = self.cleaned_data["end_at"]
+        total_duration = calculate_combined_duration_minutes(services, self.salon)
         booking_id = self.cleaned_data.get("booking_id")
 
         if booking_id:
@@ -454,7 +519,7 @@ class OwnerBookingForm(forms.Form):
             booking.status = self.cleaned_data["status"]
             booking.start_at = start_at
             booking.end_at = end_at
-            booking.total_duration_minutes = service.duration_minutes
+            booking.total_duration_minutes = total_duration
             booking.source = self.cleaned_data["source"]
             booking.owner_note = self.cleaned_data.get("owner_note", "")
             booking.rules_accepted = True
@@ -467,19 +532,21 @@ class OwnerBookingForm(forms.Form):
                 status=self.cleaned_data["status"],
                 start_at=start_at,
                 end_at=end_at,
-                total_duration_minutes=service.duration_minutes,
+                total_duration_minutes=total_duration,
                 source=self.cleaned_data["source"],
                 owner_note=self.cleaned_data.get("owner_note", ""),
                 rules_accepted=True,
             )
             booking.save()
 
-        booking.booking_services.create(
-            service=service,
-            service_name_snapshot=service.name,
-            duration_minutes_snapshot=service.duration_minutes,
-            price_snapshot=service.base_price,
-        )
+        for sort_order, service in enumerate(services):
+            booking.booking_services.create(
+                service=service,
+                service_name_snapshot=service.name,
+                duration_minutes_snapshot=service.duration_minutes,
+                price_snapshot=service.base_price,
+                sort_order=sort_order,
+            )
         return booking
 
 
@@ -529,6 +596,7 @@ class BookingPolicyForm(forms.ModelForm):
             "max_appointments_per_day",
             "slot_interval_minutes",
             "buffer_minutes_between_bookings",
+            "service_gap_minutes",
             "customer_cancellation_notice_hours",
             "max_pending_bookings_per_customer",
             "max_active_future_bookings_per_customer",
@@ -559,6 +627,7 @@ class BookingPolicyForm(forms.ModelForm):
             "max_appointments_per_day": _("Max appointments per day"),
             "slot_interval_minutes": _("Slot interval minutes"),
             "buffer_minutes_between_bookings": _("Buffer minutes between bookings"),
+            "service_gap_minutes": _("Gap between services in same booking (minutes)"),
             "customer_cancellation_notice_hours": _("Customer cancellation notice (hours)"),
             "max_pending_bookings_per_customer": _("Max pending bookings per customer"),
             "max_active_future_bookings_per_customer": _("Max active future bookings per customer"),

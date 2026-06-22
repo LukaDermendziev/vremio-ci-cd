@@ -1,7 +1,11 @@
-{% load i18n %}{% blocktrans with name=first_name date=date time=time service=services %}Hello {{ name }},
+{% load i18n %}{% blocktrans with name=first_name date=date time=time %}Hello {{ name }},
 
-Your appointment for {{ date }} at {{ time }} has been confirmed.
+Your appointment for {{ date }} at {{ time }} has been confirmed.{% endblocktrans %}
 
-Service: {{ service }}
+{% if services_list|length > 1 %}{% trans "Services" %}:
+{% for row in services_list %}• {{ row.name }} ({{ row.start_time }} – {{ row.end_time }})
+{% endfor %}{% blocktrans with minutes=total_duration %}Total duration: {{ minutes }} min{% endblocktrans %}
+{% else %}{% blocktrans with service=services_label %}Service: {{ service }}{% endblocktrans %}
+{% endif %}
 
-We look forward to seeing you.{% endblocktrans %}
+{% trans "We look forward to seeing you." %}

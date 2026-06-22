@@ -56,13 +56,22 @@ def get_owner_reply_to(salon):
 
 
 def _booking_email_context(booking):
-    from .services import get_manage_booking_url
+    from .services import (
+        build_service_schedule,
+        format_services_for_email,
+        format_services_label,
+        get_manage_booking_url,
+    )
 
     local_start = timezone.localtime(booking.start_at)
     local_end = timezone.localtime(booking.end_at)
     customer = booking.customer
     first_name = (customer.full_name or "").split()[0] if customer.full_name else customer.full_name
-    services = ", ".join(item.service_name_snapshot for item in booking.booking_services.all())
+    booking_service_items = list(booking.booking_services.all())
+    service_schedule = build_service_schedule(
+        booking.start_at, booking_service_items, booking.salon
+    )
+    services_text = format_services_for_email(booking)
     site_url = getattr(settings, "SITE_URL", "").rstrip("/")
     return {
         "booking": booking,
@@ -72,7 +81,11 @@ def _booking_email_context(booking):
         "customer_name": customer.full_name,
         "phone": customer.phone_number,
         "instagram": customer.instagram_username or "—",
-        "services": services or "—",
+        "services": services_text or "—",
+        "services_label": format_services_label(booking),
+        "services_list": service_schedule,
+        "service_schedule": service_schedule,
+        "total_duration": booking.total_duration_minutes,
         "date": local_start.strftime("%d/%m/%Y"),
         "time": local_start.strftime("%H:%M"),
         "end_time": local_end.strftime("%H:%M"),

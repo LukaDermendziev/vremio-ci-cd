@@ -1422,6 +1422,9 @@ msgstr "Section / Group"
 msgid "Select a date above to see available times."
 msgstr "Select a date above to see available times."
 
+msgid "Select one or more services to continue."
+msgstr "Select one or more services to continue."
+
 msgid "Send a request in minutes. We'll review it and contact you to confirm."
 msgstr ""
 "Send a request in minutes. We'll review it and contact you to confirm."
@@ -1443,6 +1446,9 @@ msgstr "Service added successfully."
 
 msgid "Service deleted."
 msgstr "Service deleted."
+
+msgid "Service schedule"
+msgstr "Service schedule"
 
 msgid "Service updated successfully."
 msgstr "Service updated successfully."
@@ -1558,6 +1564,13 @@ msgstr ""
 
 msgid "The time %(time)s is no longer available. Please select another slot."
 msgstr "The time %(time)s is no longer available. Please select another slot."
+
+msgid ""
+"There is not enough available time for the selected services together. "
+"Please choose another date or book the services separately."
+msgstr ""
+"There is not enough available time for the selected services together. "
+"Please choose another date or book the services separately."
 
 msgid "This appointment cannot be cancelled."
 msgstr "This appointment cannot be cancelled."
@@ -1893,3 +1906,6 @@ msgstr "your"
 
 msgid "— Available"
 msgstr "— Available"
+
+msgid "— Occupied"
+msgstr "— Occupied"

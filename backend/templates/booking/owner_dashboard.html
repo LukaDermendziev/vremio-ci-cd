@@ -570,6 +570,9 @@
               {% with f=policy_form.buffer_minutes_between_bookings %}
                 <div class="od-field"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% if f.errors %}<span class="od-field-error">{{ f.errors.0 }}</span>{% endif %}</div>
               {% endwith %}
+              {% with f=policy_form.service_gap_minutes %}
+                <div class="od-field"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% if f.errors %}<span class="od-field-error">{{ f.errors.0 }}</span>{% endif %}</div>
+              {% endwith %}
               {% with f=policy_form.late_arrival_limit_minutes %}
                 <div class="od-field"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% if f.errors %}<span class="od-field-error">{{ f.errors.0 }}</span>{% endif %}</div>
               {% endwith %}
@@ -755,6 +758,7 @@ window.OD_I18N = {
   blockedRange: "{% filter escapejs %}{% trans "Blocked %(start)s%(end)s" %}{% endfilter %}",
   closed: "{% filter escapejs %}{% trans "Closed" %}{% endfilter %}",
   available: "{% filter escapejs %}{% trans "— Available" %}{% endfilter %}",
+  occupied: "{% filter escapejs %}{% trans "— Occupied" %}{% endfilter %}",
   minSuffix: "{% filter escapejs %}{% trans "min" %}{% endfilter %}",
   appointmentCountSingular: "{% filter escapejs %}{% trans "%(count)s appointment" %}{% endfilter %}",
   appointmentCountPlural: "{% filter escapejs %}{% trans "%(count)s appointments" %}{% endfilter %}",
@@ -773,7 +777,9 @@ window.OD_I18N = {
 </script>
 <script>
 initOwnerDashboard({
+  locale: "{{ LANGUAGE_CODE }}",
   eventsUrl: "{% url 'booking:owner_calendar_events' %}",
+  serviceGapMinutes: {{ booking_policy.service_gap_minutes|default:30 }},
   slotsUrl: "{% url 'booking:owner_available_slots' %}",
   bookingDetailUrl: "/owner/booking/",
   messageUrlBase: "/owner/booking/",

@@ -34,6 +34,14 @@
     <p class="bk-manage-lead">{% trans "Are you sure you want to cancel this appointment?" %}</p>
     <div class="bk-manage-summary">
       <div class="bk-ss-row"><i class="bi bi-scissors"></i><span>{% for item in booking.booking_services.all %}{{ item.service_name_snapshot }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</span></div>
+      {% if service_schedule|length > 1 %}
+      <div class="bk-ss-schedule">
+        {% for row in service_schedule %}
+        <div class="bk-ss-schedule-row">{{ row.name }} · {{ row.start_time }} – {{ row.end_time }}</div>
+        {% endfor %}
+        <div class="bk-ss-schedule-total">{% blocktrans with minutes=total_duration %}Total duration: {{ minutes }} min{% endblocktrans %}</div>
+      </div>
+      {% endif %}
       <div class="bk-ss-row"><i class="bi bi-calendar3"></i><span>{{ booking.start_at|date:"d/m/Y" }}</span></div>
       <div class="bk-ss-row"><i class="bi bi-clock"></i><span>{{ booking.start_at|date:"H:i" }} – {{ booking.end_at|date:"H:i" }}</span></div>
     </div>
@@ -58,6 +66,14 @@
       <div class="bk-ss-label">{% trans "Booking summary" %}</div>
       <div class="bk-ss-row"><i class="bi bi-person"></i><span>{{ booking.customer.full_name }}</span></div>
       <div class="bk-ss-row"><i class="bi bi-scissors"></i><span>{% for item in booking.booking_services.all %}{{ item.service_name_snapshot }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</span></div>
+      {% if service_schedule|length > 1 %}
+      <div class="bk-ss-schedule">
+        {% for row in service_schedule %}
+        <div class="bk-ss-schedule-row">{{ row.name }} · {{ row.start_time }} – {{ row.end_time }}</div>
+        {% endfor %}
+        <div class="bk-ss-schedule-total">{% blocktrans with minutes=total_duration %}Total duration: {{ minutes }} min{% endblocktrans %}</div>
+      </div>
+      {% endif %}
       <div class="bk-ss-row"><i class="bi bi-calendar3"></i><span>{{ booking.start_at|date:"d/m/Y" }}</span></div>
       <div class="bk-ss-row"><i class="bi bi-clock"></i><span>{{ booking.start_at|date:"H:i" }} – {{ booking.end_at|date:"H:i" }}</span></div>
       {% if booking.reference_photo %}

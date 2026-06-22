@@ -17,10 +17,13 @@
   data-closed-dates="{{ closed_dates_js }}"
   data-salon-url="{% url 'booking:salon_page' salon.slug %}"
   data-max-photo-mb="{{ booking_policy.max_reference_photo_size_mb|default:5 }}"
+  data-service-gap="{{ booking_policy.service_gap_minutes|default:30 }}"
   novalidate
 >
   {% csrf_token %}
   {{ form.service }}
+  {{ form.service_ids }}
+  {{ form.service_price_items }}
   {{ form.start_time }}
   {{ form.date }}
   {{ form.preferred_contact_method }}
@@ -153,15 +156,10 @@
     {% endfor %}
 
     {# ── Confirm bar: appears after tapping a sub-service item ── #}
-    <div class="bk-confirm-bar" id="bk-confirm-bar" style="display:none">
-      <div class="bk-confirm-bar-info">
-        <span class="bk-confirm-bar-name" id="bk-confirm-bar-name"></span>
-        <span class="bk-confirm-bar-meta" id="bk-confirm-bar-meta"></span>
-      </div>
-      <button type="button" class="bk-confirm-bar-btn" id="bk-confirm-bar-btn">
-        {% trans "Continue" %} <i class="bi bi-arrow-right"></i>
-      </button>
-    </div>
+    <div class="bk-multi-summary" id="bk-multi-summary" style="display:none"></div>
+    <button type="button" class="bk-btn-primary bk-step1-continue" id="bk-step1-next" style="display:none">
+      {% trans "Continue" %} <i class="bi bi-arrow-right"></i>
+    </button>
   </div>
 
   {# ── Step 2: Date & time ───────────────────────────────────────────────── #}
@@ -361,6 +359,8 @@ window.BK_I18N = {
   noSlots: "{% filter escapejs %}{% trans 'No available times on this date.' %}{% endfilter %}",
   loadError: "{% filter escapejs %}{% trans 'Could not load times. Please try again.' %}{% endfilter %}",
   selectDateHint: "{% filter escapejs %}{% trans 'Select a date above to see available times.' %}{% endfilter %}",
+  noMultiFit: "{% filter escapejs %}{{ multi_service_no_fit_message }}{% endfilter %}",
+  selectServiceHint: "{% filter escapejs %}{% trans 'Select one or more services to continue.' %}{% endfilter %}",
   oneServiceWarning: "{% filter escapejs %}{% trans 'Only one service is allowed per booking. Your previous selection was replaced.' %}{% endfilter %}",
   tapToUpload: "{% filter escapejs %}{% trans 'Tap to upload a photo' %}{% endfilter %}",
   fileTypeError: "{% filter escapejs %}{% trans 'Only images are allowed (JPG, PNG, WebP). Choose another format.' %}{% endfilter %}",
@@ -370,6 +370,7 @@ window.BK_I18N = {
   photoOptional: "{% filter escapejs %}{% trans '(optional)' %}{% endfilter %}",
   viaContact: "{% filter escapejs %}{% trans 'Via' %}{% endfilter %}",
   minutes: "{% filter escapejs %}{% trans 'min' %}{% endfilter %}",
+  totalLabel: "{% filter escapejs %}{% trans 'Total' %}{% endfilter %}",
   currencyDen: "{% filter escapejs %}{% trans 'den' %}{% endfilter %}",
   nameRequired: "{% filter escapejs %}{% trans 'Please enter your full name.' %}{% endfilter %}",
   phoneRequired: "{% filter escapejs %}{% trans 'Please enter your phone number.' %}{% endfilter %}",
@@ -421,8 +422,7 @@ window.BK_I18N = {
   const I18N = window.BK_I18N;
   const state = {
     step: 1,
-    service: null,
-    priceItem: null,
+    selections: [],
     date: null,
     slot: null,
     calYear: 0,
@@ -434,7 +434,11 @@ window.BK_I18N = {
   const progressSteps  = [...document.querySelectorAll('[data-dot]')];
   const progressLines  = [...document.querySelectorAll('.bk-progress-line')];
   const svcInput       = document.getElementById('id_service');
-  const priceItemInput = document.getElementById('id_selected_price_item_id');
+  const svcIdsInput      = document.getElementById('id_service_ids');
+  const priceItemsInput  = document.getElementById('id_service_price_items');
+  const priceItemInput   = document.getElementById('id_selected_price_item_id');
+  const step1NextBtn     = document.getElementById('bk-step1-next');
+  const multiSummary     = document.getElementById('bk-multi-summary');
   const dateInput      = document.getElementById('id_date');
   const timeInput      = document.getElementById('id_start_time');
   const contactInput   = document.getElementById('id_preferred_contact_method');
@@ -462,9 +466,93 @@ window.BK_I18N = {
   state.calYear  = minDate.getFullYear();
   state.calMonth = minDate.getMonth();
 
-  // ── Display name / price helpers ──────────────────────────────────────────
-  function displayName()  { return state.priceItem ? state.priceItem.name  : state.service?.name  || ''; }
-  function displayPrice() { return state.priceItem ? state.priceItem.price : state.service?.price || ''; }
+  // ── Multi-service helpers ─────────────────────────────────────────────────
+  const serviceGapMin = Number(form.dataset.serviceGap || 30);
+
+  function serviceFromRow(el) {
+    return {
+      id: el.dataset.serviceId,
+      name: el.dataset.serviceName,
+      duration: Number(el.dataset.serviceDuration),
+      price: el.dataset.servicePrice,
+      requiresPhoto: el.dataset.requiresPhoto === 'true',
+      photoRecommended: el.dataset.photoRecommended === 'true',
+    };
+  }
+
+  function totalDurationMinutes() {
+    if (!state.selections.length) return 0;
+    const sum = state.selections.reduce((acc, s) => acc + Number(s.service.duration), 0);
+    return sum + serviceGapMin * Math.max(0, state.selections.length - 1);
+  }
+
+  function totalPriceDisplay() {
+    let total = 0;
+    let hasPrice = false;
+    state.selections.forEach(s => {
+      const p = s.priceItem ? s.priceItem.price : s.service.price;
+      const n = parseFloat(String(p).replace(/[^0-9.+-]/g, '').split(/[+\/-]/)[0]);
+      if (!isNaN(n)) { total += n; hasPrice = true; }
+    });
+    return hasPrice ? String(Math.round(total)) : '';
+  }
+
+  function displayName() {
+    return state.selections.map(s => s.priceItem ? s.priceItem.name : s.service.name).join(' + ');
+  }
+
+  function displayPrice() { return totalPriceDisplay(); }
+
+  function syncHiddenFields() {
+    const ids = state.selections.map(s => s.service.id);
+    if (svcIdsInput) svcIdsInput.value = ids.join(',');
+    if (svcInput) svcInput.value = ids.length === 1 ? ids[0] : '';
+    const map = {};
+    state.selections.forEach(s => { if (s.priceItem) map[s.service.id] = s.priceItem.id; });
+    if (priceItemsInput) priceItemsInput.value = JSON.stringify(map);
+    if (priceItemInput) {
+      priceItemInput.value = (state.selections.length === 1 && state.selections[0].priceItem)
+        ? state.selections[0].priceItem.id : '';
+    }
+  }
+
+  function refreshStep1UI() {
+    syncHiddenFields();
+    const n = state.selections.length;
+    if (step1NextBtn) step1NextBtn.style.display = n ? '' : 'none';
+    if (!multiSummary) return;
+    if (!n) { multiSummary.style.display = 'none'; return; }
+    multiSummary.style.display = 'block';
+    multiSummary.innerHTML = state.selections.map(s => {
+      const label = s.priceItem ? s.priceItem.name : s.service.name;
+      const price = s.priceItem ? s.priceItem.price : s.service.price;
+      return `<div class="bk-multi-line"><strong>${label}</strong> · ${s.service.duration} ${I18N.minutes}${price ? ' · ' + price + ' ' + I18N.currencyDen : ''}</div>`;
+    }).join('') + `<div class="bk-multi-total">${I18N.totalLabel}: ${totalDurationMinutes()} ${I18N.minutes}${displayPrice() ? ' · ' + displayPrice() + ' ' + I18N.currencyDen : ''}</div>`;
+    updatePhotoHintForSelections();
+  }
+
+  function updatePhotoHintForSelections() {
+    let required = false;
+    let recommended = false;
+    state.selections.forEach(s => {
+      if (s.priceItem?.photoRequired || s.service.requiresPhoto) required = true;
+      if (s.service.photoRecommended) recommended = true;
+    });
+    updatePhotoHint(required, recommended);
+  }
+
+  function toggleFlatService(row) {
+    const id = row.dataset.serviceId;
+    const idx = state.selections.findIndex(s => s.service.id === id);
+    if (idx >= 0) {
+      state.selections.splice(idx, 1);
+      row.classList.remove('selected');
+    } else {
+      state.selections.push({ service: serviceFromRow(row), priceItem: null });
+      row.classList.add('selected');
+    }
+    refreshStep1UI();
+  }
 
   function goTo(n) {
     state.step = n;
@@ -487,17 +575,7 @@ window.BK_I18N = {
     if (targetStep < 1) return;
     goTo(targetStep);
     if (targetStep === 2) renderCalendar();
-    if (targetStep === 1 && state.priceItem) {
-      const selectedBtn = document.querySelector(
-        `.bk-price-item-btn[data-item-id="${state.priceItem.id}"]`
-      );
-      if (selectedBtn) {
-        closeAllCards();
-        openCard(selectedBtn.closest('.bk-svc-card'));
-        selectedBtn.classList.add('selected');
-      }
-      showConfirmBar(state.service, state.priceItem);
-    }
+    if (targetStep === 1) refreshStep1UI();
   }
 
   const todayStr = formatDateStr(new Date());
@@ -558,10 +636,10 @@ window.BK_I18N = {
   }
 
   async function fetchSlots() {
-    if (!state.service || !state.date) return;
+    if (!state.selections.length || !state.date) return;
     slotsGrid.innerHTML = `<span class="bk-slots-hint bk-slots-loading"><i class="bi bi-arrow-repeat"></i> ${I18N.loading}</span>`;
-
-    const url = `${slotsUrl}?service=${encodeURIComponent(state.service.id)}&date=${encodeURIComponent(state.date)}`;
+    const ids = state.selections.map(s => s.service.id).join(',');
+    const url = `${slotsUrl}?services=${encodeURIComponent(ids)}&date=${encodeURIComponent(state.date)}`;
     try {
       const res  = await fetch(url);
       const data = await res.json();
@@ -574,7 +652,8 @@ window.BK_I18N = {
   function renderSlots(slots) {
     slotsGrid.innerHTML = '';
     if (!slots.length) {
-      slotsGrid.innerHTML = `<span class="bk-slots-hint">${I18N.noSlots}</span>`;
+      const msg = state.selections.length > 1 ? I18N.noMultiFit : I18N.noSlots;
+      slotsGrid.innerHTML = `<span class="bk-slots-hint">${msg}</span>`;
       return;
     }
     slots.forEach((slot, idx) => {
@@ -627,11 +706,8 @@ window.BK_I18N = {
 
   function refreshStep2UI() {
     const pill = document.getElementById('bk-svc-pill');
-    if (state.service) {
-      const label = state.priceItem
-        ? `${state.service.name}  ·  ${state.priceItem.name}  ·  ${state.service.duration} ${I18N.minutes}`
-        : `${state.service.name}  ·  ${state.service.duration} ${I18N.minutes}  ·  ${displayPrice()} ${I18N.currencyDen}`;
-      pill.textContent   = label;
+    if (state.selections.length) {
+      pill.textContent   = displayName() + ' · ' + totalDurationMinutes() + ' ' + I18N.minutes;
       pill.style.display = 'block';
     }
 
@@ -641,7 +717,11 @@ window.BK_I18N = {
     if (state.date && state.slot) {
       document.getElementById('bk-sum-svc').textContent   = displayName();
       document.getElementById('bk-sum-meta').textContent  = `${formatDateDisplay(state.date)}  ·  ${state.slot.label}`;
-      document.getElementById('bk-sum-price').textContent = displayPrice() ? `${displayPrice()} ${I18N.currencyDen}` : '';
+      document.getElementById('bk-sum-svc').innerHTML = state.selections.map(s => {
+        const n = s.priceItem ? s.priceItem.name : s.service.name;
+        return `<div>${n} · ${s.service.duration} ${I18N.minutes}</div>`;
+      }).join('');
+      document.getElementById('bk-sum-price').textContent = displayPrice() ? `${I18N.totalLabel}: ${displayPrice()} ${I18N.currencyDen}` : '';
       card.style.display = 'block';
       nextBtn.disabled   = false;
     } else {
@@ -651,15 +731,18 @@ window.BK_I18N = {
   }
 
   function updateReview() {
-    if (!state.service || !state.date || !state.slot) return;
+    if (!state.selections.length || !state.date || !state.slot) return;
 
     const nameEl       = document.getElementById('id_full_name');
     const phoneEl      = document.getElementById('id_phone_number');
     const selectedPill = document.querySelector('.bk-contact-pill.selected');
 
-    document.getElementById('bk-rev-svc').textContent   = displayName();
+    document.getElementById('bk-rev-svc').innerHTML   = state.selections.map(s => {
+      const n = s.priceItem ? s.priceItem.name : s.service.name;
+      return `<div>${n} · ${s.service.duration} ${I18N.minutes}</div>`;
+    }).join('');
     document.getElementById('bk-rev-date').textContent  = `${formatDateDisplay(state.date)}  ·  ${state.slot.label}`;
-    document.getElementById('bk-rev-dur').textContent   = `${state.service.duration} ${I18N.minutes}`;
+    document.getElementById('bk-rev-dur').textContent   = `${I18N.totalLabel}: ${totalDurationMinutes()} ${I18N.minutes}`;
     const priceText = displayPrice() ? `${displayPrice()} ${I18N.currencyDen}` : '';
     document.getElementById('bk-rev-price').textContent = priceText;
     document.getElementById('bk-rev-name').textContent  = nameEl?.value || '';
@@ -702,10 +785,7 @@ window.BK_I18N = {
   }
 
   function photoRequiredForBooking() {
-    return Boolean(
-      state.priceItem?.photoRequired ||
-      state.service?.requiresPhoto
-    );
+    return state.selections.some(s => s.priceItem?.photoRequired || s.service.requiresPhoto);
   }
 
   function validateDetailsStep({ focusFirst = true } = {}) {
@@ -852,8 +932,8 @@ window.BK_I18N = {
     });
   }
 
-  confirmBarBtn?.addEventListener('click', () => {
-    if (!state.service) return;
+  step1NextBtn?.addEventListener('click', () => {
+    if (!state.selections.length) return;
     state.date = null;
     state.slot = null;
     timeInput.value = '';
@@ -888,70 +968,34 @@ window.BK_I18N = {
     if (priceItemBtn) {
       const card = priceItemBtn.closest('.bk-svc-card');
 
-      // Toast when switching to a different service
-      const prevSvcId = state.service?.id;
-      const newSvcId  = card.dataset.serviceId;
-      if (prevSvcId && prevSvcId !== newSvcId) {
-        showBkToast(I18N.oneServiceWarning);
-      }
-
-      state.service = {
-        id:              card.dataset.serviceId,
-        name:            card.dataset.serviceName,
-        duration:        card.dataset.serviceDuration,
-        price:           card.dataset.servicePrice,
-        requiresPhoto:   card.dataset.requiresPhoto === 'true',
-        photoRecommended: card.dataset.photoRecommended === 'true',
-      };
-      state.priceItem = {
-        id:            priceItemBtn.dataset.itemId,
-        name:          priceItemBtn.dataset.itemName,
-        price:         priceItemBtn.dataset.price,
+      const service = serviceFromRow(card);
+      const priceItem = {
+        id: priceItemBtn.dataset.itemId,
+        name: priceItemBtn.dataset.itemName,
+        price: priceItemBtn.dataset.price,
         photoRequired: priceItemBtn.dataset.photoRequired === 'true',
       };
-      svcInput.value = state.service.id;
-      if (priceItemInput) priceItemInput.value = state.priceItem.id;
-
-      // Visually mark selected button; clear all others
-      document.querySelectorAll('.bk-price-item-btn').forEach(b => b.classList.remove('selected'));
-      priceItemBtn.classList.add('selected');
-
-      // Update card summary; clear other cards' summaries
-      setCardSummary(card, state.priceItem.name);
-
-      updatePhotoHint(
-        state.priceItem.photoRequired || state.service.requiresPhoto,
-        state.service.photoRecommended
-      );
-
-      // Show confirm bar — do NOT navigate yet so the user sees the selection
-      showConfirmBar(state.service, state.priceItem);
+      const idx = state.selections.findIndex(s => s.service.id === service.id);
+      if (idx >= 0 && state.selections[idx].priceItem?.id === priceItem.id) {
+        state.selections.splice(idx, 1);
+        priceItemBtn.classList.remove('selected');
+        card.classList.remove('has-selection');
+      } else {
+        if (idx >= 0) state.selections[idx] = { service, priceItem };
+        else state.selections.push({ service, priceItem });
+        card.querySelectorAll('.bk-price-item-btn').forEach(b => b.classList.remove('selected'));
+        priceItemBtn.classList.add('selected');
+        card.classList.add('has-selection');
+        setCardSummary(card, priceItem.name);
+      }
+      refreshStep1UI();
       return;
     }
 
     // ── Flat service row (no sub-items) — navigate immediately ──
     const svcRow = e.target.closest('.bk-service-row');
     if (svcRow) {
-      state.service = {
-        id:              svcRow.dataset.serviceId,
-        name:            svcRow.dataset.serviceName,
-        duration:        svcRow.dataset.serviceDuration,
-        price:           svcRow.dataset.servicePrice,
-        requiresPhoto:   svcRow.dataset.requiresPhoto === 'true',
-        photoRecommended: svcRow.dataset.photoRecommended === 'true',
-      };
-      state.priceItem = null;
-      svcInput.value = state.service.id;
-      if (priceItemInput) priceItemInput.value = '';
-      state.date = null;
-      state.slot = null;
-      timeInput.value = '';
-      // Confirm bar is inside step 1 which hides on goTo(2)
-      hideConfirmBar();
-      updatePhotoHint(state.service.requiresPhoto, state.service.photoRecommended);
-      goTo(2);
-      renderCalendar();
-      refreshStep2UI();
+      toggleFlatService(svcRow);
       return;
     }
 

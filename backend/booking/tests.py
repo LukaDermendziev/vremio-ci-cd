@@ -27,7 +27,15 @@ from .models import (
     UnavailableTimeBlock,
     WorkingHours,
 )
-from .services import build_prepared_message, find_conflicting_booking, get_available_slots
+from .services import (
+    build_prepared_message,
+    build_service_schedule,
+    calculate_combined_duration_minutes,
+    find_conflicting_booking,
+    format_services_for_email,
+    get_available_slots,
+    is_slot_available,
+)
 
 
 class BookingSmokeTests(TestCase):
@@ -1150,7 +1158,7 @@ class AntiAbuseTests(TestCase):
                 "instagram_username": "manual",
                 "email": "owner@example.com",
                 "preferred_contact_method": Customer.PreferredContactMethod.VIBER,
-                "service": self.service.id,
+                "services": [self.service.id],
                 "date": selected.isoformat(),
                 "start_time": "14:00",
                 "status": Booking.Status.APPROVED,
@@ -1186,7 +1194,7 @@ class AntiAbuseTests(TestCase):
                 "instagram_username": "manual2",
                 "email": "manual2@example.com",
                 "preferred_contact_method": Customer.PreferredContactMethod.VIBER,
-                "service": self.service.id,
+                "services": [self.service.id],
                 "date": selected.isoformat(),
                 "start_time": "10:00",
                 "status": Booking.Status.APPROVED,
@@ -1376,3 +1384,360 @@ class PreparedMessageDateTests(TestCase):
             message = build_prepared_message(self.booking, "approved")
         self.assertIn("July", message)
         self.assertNotIn("Јули", message)
+
+
+class MultiServiceBookingTests(TestCase):
+    def setUp(self):
+        cache.clear()
+        User = get_user_model()
+        self.owner = User.objects.create_user(username="owner", password="pass")
+        self.salon = Salon.objects.create(owner=self.owner, name="Salon A", slug="salon-a")
+        self.policy = BookingPolicy.objects.create(
+            salon=self.salon,
+            minimum_notice_days=0,
+            service_gap_minutes=30,
+        )
+        self.manicure = Service.objects.create(
+            salon=self.salon,
+            name="Manicure",
+            duration_minutes=120,
+            base_price=600,
+        )
+        self.pedicure = Service.objects.create(
+            salon=self.salon,
+            name="Pedicure",
+            duration_minutes=120,
+            base_price=800,
+        )
+        for weekday in range(6):
+            WorkingHours.objects.create(
+                salon=self.salon,
+                weekday=weekday,
+                is_working_day=True,
+                start_time=time(8, 0),
+                end_time=time(18, 0),
+            )
+
+    def _future_date(self, days=20):
+        selected = timezone.localdate() + timedelta(days=days)
+        while selected.weekday() == WorkingHours.Weekday.SUNDAY:
+            selected += timedelta(days=1)
+        return selected
+
+    def test_calculate_combined_duration_minutes(self):
+        total = calculate_combined_duration_minutes(
+            [self.manicure, self.pedicure],
+            self.salon,
+        )
+        self.assertEqual(total, 270)
+
+    def test_build_service_schedule_example(self):
+        selected = self._future_date()
+        start = timezone.make_aware(
+            datetime.combine(selected, time(8, 0)),
+            timezone.get_current_timezone(),
+        )
+        schedule = build_service_schedule(
+            start,
+            [self.manicure, self.pedicure],
+            self.salon,
+        )
+        self.assertEqual(schedule[0]["start_time"], "08:00")
+        self.assertEqual(schedule[0]["end_time"], "10:00")
+        self.assertEqual(schedule[1]["start_time"], "10:30")
+        self.assertEqual(schedule[1]["end_time"], "12:30")
+
+    def test_multi_service_slots_available(self):
+        selected = self._future_date()
+        slots = get_available_slots(
+            self.salon,
+            [self.manicure, self.pedicure],
+            selected,
+        )
+        values = {slot["value"] for slot in slots}
+        self.assertIn("08:00", values)
+
+    def test_multi_service_no_slots_when_day_full(self):
+        selected = self._future_date()
+        customer = Customer.objects.create(
+            salon=self.salon,
+            full_name="Blocked",
+            phone_number="070999111",
+            instagram_username="blocked",
+        )
+        start = timezone.make_aware(
+            datetime.combine(selected, time(8, 0)),
+            timezone.get_current_timezone(),
+        )
+        booking = Booking.objects.create(
+            salon=self.salon,
+            customer=customer,
+            status=Booking.Status.APPROVED,
+            source=Booking.Source.OWNER_MANUAL,
+            start_at=start,
+            end_at=start + timedelta(minutes=600),
+            total_duration_minutes=600,
+        )
+        BookingService.objects.create(
+            booking=booking,
+            service=self.manicure,
+            service_name_snapshot="Manicure",
+        )
+        slots = get_available_slots(
+            self.salon,
+            [self.manicure, self.pedicure],
+            selected,
+        )
+        self.assertEqual(slots, [])
+
+    def test_customer_post_two_services_creates_rows(self):
+        selected = self._future_date()
+        response = self.client.post(
+            "/book/salon-a/request/",
+            {
+                "service_ids": f"{self.manicure.id},{self.pedicure.id}",
+                "date": selected.isoformat(),
+                "start_time": "08:00",
+                "full_name": "Multi Customer",
+                "phone_number": "071222333",
+                "instagram_username": "multi",
+                "email": "multi@example.com",
+                "preferred_contact_method": Customer.PreferredContactMethod.VIBER,
+                "rules_accepted": "on",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        booking = Booking.objects.get(customer__phone_number="071222333")
+        self.assertEqual(booking.booking_services.count(), 2)
+        self.assertEqual(booking.total_duration_minutes, 270)
+
+    def test_invalid_service_id_rejected(self):
+        selected = self._future_date()
+        response = self.client.post(
+            "/book/salon-a/request/",
+            {
+                "service_ids": f"{self.manicure.id},99999",
+                "date": selected.isoformat(),
+                "start_time": "08:00",
+                "full_name": "Bad Customer",
+                "phone_number": "071333444",
+                "instagram_username": "bad",
+                "email": "bad@example.com",
+                "preferred_contact_method": Customer.PreferredContactMethod.VIBER,
+                "rules_accepted": "on",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(
+            Booking.objects.filter(customer__phone_number="071333444").exists()
+        )
+
+    def test_approved_multi_service_blocks_full_range(self):
+        selected = self._future_date()
+        customer = Customer.objects.create(
+            salon=self.salon,
+            full_name="Booked",
+            phone_number="070888777",
+            instagram_username="booked",
+        )
+        start = timezone.make_aware(
+            datetime.combine(selected, time(8, 0)),
+            timezone.get_current_timezone(),
+        )
+        booking = Booking.objects.create(
+            salon=self.salon,
+            customer=customer,
+            status=Booking.Status.APPROVED,
+            source=Booking.Source.ONLINE,
+            start_at=start,
+            end_at=start + timedelta(minutes=270),
+            total_duration_minutes=270,
+            rules_accepted=True,
+        )
+        BookingService.objects.create(
+            booking=booking,
+            service=self.manicure,
+            service_name_snapshot="Manicure",
+            sort_order=0,
+        )
+        BookingService.objects.create(
+            booking=booking,
+            service=self.pedicure,
+            service_name_snapshot="Pedicure",
+            sort_order=1,
+        )
+        self.assertIsNone(
+            is_slot_available(
+                self.salon,
+                [self.manicure, self.pedicure],
+                selected,
+                "08:00",
+            )
+        )
+        single_slots = get_available_slots(self.salon, self.manicure, selected)
+        values = {slot["value"] for slot in single_slots}
+        self.assertTrue(values)
+        self.assertNotIn("08:00", values)
+
+    def test_owner_manual_two_services(self):
+        self.client.login(username="owner", password="pass")
+        selected = self._future_date()
+        response = self.client.post(
+            "/owner/dashboard/",
+            {
+                "action": "save_booking",
+                "full_name": "Owner Multi",
+                "phone_number": "070444555",
+                "instagram_username": "owner_multi",
+                "email": "owner_multi@example.com",
+                "preferred_contact_method": Customer.PreferredContactMethod.VIBER,
+                "services": [self.manicure.id, self.pedicure.id],
+                "date": selected.isoformat(),
+                "start_time": "08:00",
+                "status": Booking.Status.APPROVED,
+                "source": Booking.Source.OWNER_MANUAL,
+            },
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        booking = Booking.objects.get(customer__phone_number="070444555")
+        self.assertEqual(booking.booking_services.count(), 2)
+        self.assertEqual(booking.total_duration_minutes, 270)
+
+    def test_owner_slots_api_with_services_param(self):
+        self.client.login(username="owner", password="pass")
+        selected = self._future_date()
+        response = self.client.get(
+            reverse("booking:owner_available_slots"),
+            {"services": f"{self.manicure.id},{self.pedicure.id}", "date": selected.isoformat()},
+        )
+        data = response.json()
+        values = {slot["value"] for slot in data["slots"]}
+        self.assertIn("08:00", values)
+
+    def test_owner_booking_detail_returns_service_ids(self):
+        selected = self._future_date()
+        customer = Customer.objects.create(
+            salon=self.salon,
+            full_name="Detail",
+            phone_number="070666777",
+            instagram_username="detail",
+        )
+        start = timezone.make_aware(
+            datetime.combine(selected, time(8, 0)),
+            timezone.get_current_timezone(),
+        )
+        booking = Booking.objects.create(
+            salon=self.salon,
+            customer=customer,
+            status=Booking.Status.APPROVED,
+            source=Booking.Source.OWNER_MANUAL,
+            start_at=start,
+            end_at=start + timedelta(minutes=270),
+            total_duration_minutes=270,
+        )
+        BookingService.objects.create(
+            booking=booking,
+            service=self.manicure,
+            service_name_snapshot="Manicure",
+            sort_order=0,
+        )
+        BookingService.objects.create(
+            booking=booking,
+            service=self.pedicure,
+            service_name_snapshot="Pedicure",
+            sort_order=1,
+        )
+        self.client.login(username="owner", password="pass")
+        response = self.client.get(
+            reverse("booking:owner_booking_detail", args=[booking.pk])
+        )
+        data = response.json()
+        self.assertEqual(data["service_ids"], [self.manicure.id, self.pedicure.id])
+        self.assertEqual(len(data["service_schedule"]), 2)
+
+    @override_settings(
+        EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+        DEFAULT_FROM_EMAIL="noreply@test.local",
+    )
+    def test_email_contains_both_service_names(self):
+        from django.core import mail
+
+        selected = self._future_date()
+        customer = Customer.objects.create(
+            salon=self.salon,
+            full_name="Email Customer",
+            phone_number="070777888",
+            instagram_username="email",
+            email="email@example.com",
+        )
+        start = timezone.make_aware(
+            datetime.combine(selected, time(8, 0)),
+            timezone.get_current_timezone(),
+        )
+        booking = Booking.objects.create(
+            salon=self.salon,
+            customer=customer,
+            status=Booking.Status.APPROVED,
+            source=Booking.Source.ONLINE,
+            start_at=start,
+            end_at=start + timedelta(minutes=270),
+            total_duration_minutes=270,
+            rules_accepted=True,
+        )
+        BookingService.objects.create(
+            booking=booking,
+            service=self.manicure,
+            service_name_snapshot="Manicure",
+            sort_order=0,
+        )
+        BookingService.objects.create(
+            booking=booking,
+            service=self.pedicure,
+            service_name_snapshot="Pedicure",
+            sort_order=1,
+        )
+        from .email_utils import send_booking_approved_email
+
+        sent, reason = send_booking_approved_email(booking)
+        self.assertTrue(sent, reason)
+        self.assertEqual(len(mail.outbox), 1)
+        body = mail.outbox[0].body
+        self.assertIn("Manicure", body)
+        self.assertIn("Pedicure", body)
+
+    def test_format_services_for_email_multi(self):
+        selected = self._future_date()
+        customer = Customer.objects.create(
+            salon=self.salon,
+            full_name="Format",
+            phone_number="070111999",
+            instagram_username="format",
+        )
+        start = timezone.make_aware(
+            datetime.combine(selected, time(8, 0)),
+            timezone.get_current_timezone(),
+        )
+        booking = Booking.objects.create(
+            salon=self.salon,
+            customer=customer,
+            status=Booking.Status.APPROVED,
+            source=Booking.Source.OWNER_MANUAL,
+            start_at=start,
+            end_at=start + timedelta(minutes=270),
+            total_duration_minutes=270,
+        )
+        BookingService.objects.create(
+            booking=booking,
+            service=self.manicure,
+            service_name_snapshot="Manicure",
+        )
+        BookingService.objects.create(
+            booking=booking,
+            service=self.pedicure,
+            service_name_snapshot="Pedicure",
+        )
+        text = format_services_for_email(booking)
+        self.assertIn("Manicure", text)
+        self.assertIn("Pedicure", text)
+        self.assertIn("•", text)

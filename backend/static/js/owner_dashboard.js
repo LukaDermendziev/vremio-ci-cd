@@ -2,6 +2,7 @@
 
 function initOwnerDashboard(config) {
   const I18N = window.OD_I18N || {};
+  const CG_LOCALE = config.locale || document.documentElement.lang || "mk";
   const t = (key, fallback) => (I18N[key] != null && I18N[key] !== "") ? I18N[key] : fallback;
   const tf = (key, fallback, vars) => {
     let s = t(key, fallback);
@@ -382,17 +383,76 @@ function initOwnerDashboard(config) {
   // Booking modal
   const bookingModal = "od-booking-modal";
   const bookingForm = document.getElementById("od-booking-form");
-  const serviceSelect = document.getElementById("od-booking-service");
+  const servicesContainer = document.getElementById("od-booking-services");
+  const servicesSummary = document.getElementById("od-owner-services-summary");
+  const scheduleSection = document.getElementById("od-booking-schedule");
+  const scheduleBody = document.getElementById("od-booking-schedule-body");
   const dateInput = document.getElementById("od-booking-date");
   const startInput = document.getElementById("od-booking-start-time");
   const slotsSelect = document.getElementById("od-owner-slots");
   const bookingDeleteBtn = document.getElementById("od-booking-delete");
   const bookingDeleteForm = document.getElementById("od-booking-delete-form");
 
+  function getSelectedServiceIds() {
+    return [...(servicesContainer?.querySelectorAll('input[name="services"]:checked') || [])]
+      .map(el => el.value);
+  }
+
+  function setSelectedServices(serviceIds) {
+    if (!servicesContainer) return;
+    const idSet = new Set((serviceIds || []).map(String));
+    servicesContainer.querySelectorAll('input[name="services"]').forEach(cb => {
+      cb.checked = idSet.has(cb.value);
+    });
+    updateOwnerServicesSummary();
+  }
+
+  function updateOwnerServicesSummary() {
+    const checked = [...(servicesContainer?.querySelectorAll('input[name="services"]:checked') || [])];
+    if (!servicesSummary) return;
+    if (!checked.length) {
+      servicesSummary.textContent = "";
+      return;
+    }
+    const gap = parseInt(config.serviceGapMinutes || 30, 10);
+    let total = checked.reduce((sum, el) => sum + parseInt(el.dataset.duration || "0", 10), 0);
+    if (checked.length > 1) total += gap * (checked.length - 1);
+    const names = checked.map(el => {
+      const label = el.closest("label");
+      return label ? label.textContent.trim() : "";
+    }).filter(Boolean);
+    servicesSummary.textContent = `${names.join(" + ")} · ${total} ${t("minSuffix", "min")}`;
+  }
+
+  function renderBookingSchedule(data) {
+    if (!scheduleSection || !scheduleBody) return;
+    const rows = data?.service_schedule || [];
+    if (!rows.length) {
+      scheduleSection.hidden = true;
+      scheduleBody.innerHTML = "";
+      return;
+    }
+    scheduleSection.hidden = false;
+    scheduleBody.innerHTML = rows.map(row => `
+      <tr>
+        <td>${row.name || ""}</td>
+        <td>${row.start_time || ""}</td>
+        <td>${row.end_time || ""}</td>
+        <td>${row.duration_minutes || ""} ${t("minSuffix", "min")}</td>
+      </tr>
+    `).join("");
+  }
+
   async function loadOwnerSlots() {
-    if (!serviceSelect?.value || !dateInput?.value) return;
+    const warning = document.getElementById("od-slots-warning");
+    const serviceIds = getSelectedServiceIds();
+    if (!serviceIds.length || !dateInput?.value) {
+      if (warning) warning.style.display = "none";
+      return;
+    }
     const exclude = bookingForm.querySelector('[name="booking_id"]')?.value || "";
-    const url = `${config.slotsUrl}?service=${serviceSelect.value}&date=${dateInput.value}&exclude=${exclude}`;
+    const isEdit = Boolean(exclude);
+    const url = `${config.slotsUrl}?services=${serviceIds.join(",")}&date=${dateInput.value}&exclude=${exclude}`;
     const res = await fetch(url);
     const data = await res.json();
     if (!slotsSelect) return;
@@ -404,24 +464,29 @@ function initOwnerDashboard(config) {
       ? slotsAvailable.map(s => `<option value="${s.value}">${s.label}</option>`).join("")
       : `<option value="">${t("noSlotsAvailable", "No slots available")}</option>`;
 
-    const warning = document.getElementById("od-slots-warning");
     if (prevTime && slotsAvailable.length && slotsAvailable.some(s => s.value === prevTime)) {
       slotsSelect.value = prevTime;
       if (warning) warning.style.display = "none";
-    } else if (prevTime && slotsAvailable.length && !slotsAvailable.some(s => s.value === prevTime)) {
-      // Previously selected time is no longer available
+    } else if (isEdit && prevTime && slotsAvailable.length && !slotsAvailable.some(s => s.value === prevTime)) {
       if (warning) {
         warning.textContent = tf("timeNoLongerAvailable", "The time %(time)s is no longer available. Please select another slot.", { time: prevTime });
         warning.style.display = "block";
       }
     } else {
       if (warning) warning.style.display = "none";
+      if (slotsAvailable.length) {
+        slotsSelect.value = slotsAvailable[0].value;
+      }
     }
 
     startInput.value = slotsSelect.value || "";
   }
 
-  [serviceSelect, dateInput].forEach(el => el?.addEventListener("change", loadOwnerSlots));
+  servicesContainer?.addEventListener("change", () => {
+    updateOwnerServicesSummary();
+    loadOwnerSlots();
+  });
+  dateInput?.addEventListener("change", loadOwnerSlots);
   slotsSelect?.addEventListener("change", () => { startInput.value = slotsSelect.value; });
 
   function fillBookingForm(data) {
@@ -431,7 +496,9 @@ function initOwnerDashboard(config) {
     bookingForm.querySelector('[name="instagram_username"]').value = data.instagram_username || "";
     bookingForm.querySelector('[name="email"]').value = data.email || "";
     bookingForm.querySelector('[name="preferred_contact_method"]').value = data.preferred_contact_method || "viber";
-    if (data.service_id) serviceSelect.value = data.service_id;
+    if (data.service_ids?.length) setSelectedServices(data.service_ids);
+    else if (data.service_id) setSelectedServices([data.service_id]);
+    else setSelectedServices([]);
     const dateWrap = dateInput?.closest("[data-od-date-field]");
     setDateFieldValue(dateWrap, data.date || "");
     setDateFieldInitialIso(dateWrap, data.date || "");
@@ -440,6 +507,7 @@ function initOwnerDashboard(config) {
     bookingForm.querySelector('[name="source"]').value = data.source || "owner_manual";
     bookingForm.querySelector('[name="owner_note"]').value = data.owner_note || "";
     updateReferencePhotoSection(data);
+    renderBookingSchedule(data);
   }
 
   function updateReferencePhotoSection(data) {
@@ -487,6 +555,11 @@ function initOwnerDashboard(config) {
 
   async function openBookingModal(bookingId, preset = {}) {
     bookingForm.reset();
+    const warning = document.getElementById("od-slots-warning");
+    if (warning) {
+      warning.style.display = "none";
+      warning.textContent = "";
+    }
     const dateWrap = dateInput?.closest("[data-od-date-field]");
     setDateFieldValue(dateWrap, "");
     setDateFieldInitialIso(dateWrap, "");
@@ -508,7 +581,7 @@ function initOwnerDashboard(config) {
           instagram_username: card.dataset.instagram,
           email: card.dataset.email,
           preferred_contact_method: card.dataset.contact,
-          service_id: card.dataset.serviceId,
+          service_ids: (card.dataset.serviceIds || "").split(",").filter(Boolean).map(Number),
           date: card.dataset.date,
           start_time: card.dataset.startTime,
           status: card.dataset.status,
@@ -529,8 +602,10 @@ function initOwnerDashboard(config) {
       bookingForm.querySelector('[name="status"]').value = "approved";
       bookingForm.querySelector('[name="source"]').value = "owner_manual";
       updateReferencePhotoSection({});
+      renderBookingSchedule({});
     } else {
       updateReferencePhotoSection({});
+      renderBookingSchedule({});
     }
 
     await loadOwnerSlots();
@@ -1145,6 +1220,7 @@ function initOwnerDashboard(config) {
   const cgRangeLabel = document.getElementById("cal-range-label");
 
   const CG_HOURS = ["08:00","09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00","18:00"];
+  const CG_ROW_H = 68;
   const CG_STATUS = {
     pending:   { cls: "cgrid-chip-pending",   label: t("statusPending", "Pending") },
     approved:  { cls: "cgrid-chip-approved",  label: t("statusApproved", "Approved") },
@@ -1180,36 +1256,132 @@ function initOwnerDashboard(config) {
   }
   function cgFmtWeekRange(mon) {
     const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
-    const fmtS = mon.toLocaleDateString("en-GB", { day:"numeric", month:"short" });
-    const fmtE = sun.toLocaleDateString("en-GB", { day:"numeric", month:"short", year:"numeric" });
+    const fmtS = mon.toLocaleDateString(CG_LOCALE, { day:"numeric", month:"short" });
+    const fmtE = sun.toLocaleDateString(CG_LOCALE, { day:"numeric", month:"short", year:"numeric" });
     return `${fmtS} – ${fmtE}`;
   }
-  function cgEventsAt(ds, hour) {
-    return cgEvents.filter(ev => {
-      if (ev.date !== ds) return false;
-      const h = parseInt((ev.time || ev.start_time || "").split(":")[0]);
-      return h === hour;
+  function cgFormatDayLong(d) {
+    return d.toLocaleDateString(CG_LOCALE, { weekday:"long", day:"numeric", month:"long", year:"numeric" });
+  }
+  function cgFormatWeekdayShort(d) {
+    return d.toLocaleDateString(CG_LOCALE, { weekday:"short" }).toUpperCase();
+  }
+  function cgParseTimeMinutes(t) {
+    if (!t) return null;
+    const parts = String(t).split(":");
+    const h = parseInt(parts[0], 10);
+    const m = parseInt(parts[1] || "0", 10);
+    if (Number.isNaN(h)) return null;
+    return h * 60 + m;
+  }
+  function cgEventSpan(ev) {
+    const startMin = cgParseTimeMinutes(ev.time || ev.start_time);
+    if (startMin == null) return null;
+    let endMin = cgParseTimeMinutes(ev.end_time);
+    if (endMin == null && ev.duration) {
+      endMin = startMin + parseInt(ev.duration, 10);
+    }
+    if (endMin == null) endMin = startMin + 60;
+    return { startMin, endMin };
+  }
+  function cgHourOverlapsEvent(ev, hour) {
+    const span = cgEventSpan(ev);
+    if (!span) return false;
+    const hourStart = hour * 60;
+    const hourEnd = hourStart + 60;
+    return span.startMin < hourEnd && span.endMin > hourStart;
+  }
+
+  function cgEventsForDate(ds) {
+    return cgEvents.filter(ev => ev.date === ds);
+  }
+  function cgSpanStyle(ev, rowH = CG_ROW_H) {
+    const span = cgEventSpan(ev);
+    const gridStart = cgParseTimeMinutes(CG_HOURS[0]) || 480;
+    if (!span) return { top: 0, height: rowH };
+    const top = ((span.startMin - gridStart) / 60) * rowH;
+    const height = ((span.endMin - span.startMin) / 60) * rowH;
+    return { top: Math.max(top, 0), height: Math.max(height, 24) };
+  }
+  function cgSlotIsBusy(ds, time) {
+    const hour = parseInt(time, 10);
+    return cgEvents.some(ev => ev.date === ds && cgHourOverlapsEvent(ev, hour));
+  }
+  function cgCountBookingsOnDate(ds) {
+    return cgEvents.filter(ev => ev.date === ds && ev.type === "booking").length;
+  }
+
+  function cgChipContent(ev) {
+    if (ev.type === "block") {
+      return `<div class="cgrid-chip-block">${tf("blockedRange", "Blocked %(start)s%(end)s", { start: ev.start_time || ev.time || "", end: ev.end_time ? "–" + ev.end_time : "" })}</div>`;
+    }
+    const photoIcon = ev.hasReferencePhoto ? `<span class="cgrid-chip-photo" title="${t("photoUploaded", "Photo uploaded")}"><i class="bi bi-camera-fill"></i></span>` : "";
+    const svcLabel = ev.servicesLabel || ev.services || "";
+    const timeRange = ev.end_time ? `${ev.time || ""} – ${ev.end_time}` : (ev.time || "");
+    const meta = `${timeRange} · ${ev.duration || ""}${t("minSuffix", "min")}`;
+    return `
+      <div class="cgrid-chip-name">${ev.customerName || ev.title || ""}${photoIcon}</div>
+      ${svcLabel ? `<div class="cgrid-chip-svc">${svcLabel}</div>` : ""}
+      <div class="cgrid-chip-meta">${meta}</div>
+    `;
+  }
+
+  function cgSpanEventHtml(ev, rowH, variant = "week") {
+    const { top, height } = cgSpanStyle(ev, rowH);
+    if (ev.type === "block") {
+      return `<div class="cgrid-span-event cgrid-span-block" data-block-id="${ev.blockId || ev.id || ""}" style="top:${top}px;height:${height}px">
+        <div class="cgrid-chip cgrid-chip-block">${cgChipContent(ev)}</div>
+      </div>`;
+    }
+    const sc = CG_STATUS[ev.status] || CG_STATUS.pending;
+    const dotColor = {"pending":"#D97706","approved":"#059669","completed":"#2563EB","rejected":"#DB2777","cancelled":"#6B7280","no_show":"#C2410C"}[ev.status] || "#D97706";
+    const svcLabel = ev.servicesLabel || ev.services || "";
+    const timeRange = ev.end_time ? `${ev.time || ""} – ${ev.end_time}` : (ev.time || "");
+    if (variant === "day") {
+      return `<div class="cgrid-span-event" data-booking-id="${ev.bookingId || ev.id || ""}" style="top:${top}px;height:${height}px">
+        <div class="cgrid-day-chip ${sc.cls}">
+          <div class="cgrid-day-chip-body">
+            <div class="cgrid-day-chip-name">${ev.customerName || ev.title || ""}</div>
+            ${svcLabel ? `<div class="cgrid-day-chip-svc">${svcLabel}</div>` : ""}
+            <div class="cgrid-day-chip-meta">${timeRange} · ${ev.duration || ""}${t("minSuffix", "min")}</div>
+          </div>
+          <span class="cgrid-day-chip-status" style="background:${dotColor}22;color:${dotColor}">${sc.label}</span>
+        </div>
+      </div>`;
+    }
+    return `<div class="cgrid-span-event" data-booking-id="${ev.bookingId || ev.id || ""}" style="top:${top}px;height:${height}px">
+      <div class="cgrid-chip ${sc.cls}">${cgChipContent(ev)}</div>
+    </div>`;
+  }
+
+  function cgBindCalendarInteractions(slotSelector) {
+    cgridEl.querySelectorAll(".cgrid-span-event[data-booking-id]").forEach(chip => {
+      chip.addEventListener("click", e => { e.stopPropagation(); openBookingModal(chip.dataset.bookingId); });
+    });
+    cgridEl.querySelectorAll(".cgrid-span-event[data-block-id]").forEach(chip => {
+      chip.addEventListener("click", e => { e.stopPropagation(); openBlockModal(chip.dataset.blockId); });
+    });
+    cgridEl.querySelectorAll(slotSelector).forEach(slot => {
+      onDoubleTap(slot, () => {
+        if (slot.classList.contains("cgrid-slot-closed") || slot.classList.contains("cgrid-slot-past")) return;
+        openBookingModal(null, { date: slot.dataset.date, time: slot.dataset.time });
+      });
     });
   }
 
   function cgChipHtml(ev) {
     if (ev.type === "block") {
-      return `<div class="cgrid-chip cgrid-chip-block" data-block-id="${ev.blockId||ev.id||''}">
-        <div class="cgrid-chip-block">${tf("blockedRange", "Blocked %(start)s%(end)s", { start: ev.start_time || ev.time || "", end: ev.end_time ? "–" + ev.end_time : "" })}</div>
-      </div>`;
+      return `<div class="cgrid-chip cgrid-chip-block" data-block-id="${ev.blockId||ev.id||''}">${cgChipContent(ev)}</div>`;
     }
     const sc = CG_STATUS[ev.status] || CG_STATUS.pending;
-    const photoIcon = ev.hasReferencePhoto ? `<span class="cgrid-chip-photo" title="${t("photoUploaded", "Photo uploaded")}"><i class="bi bi-camera-fill"></i></span>` : "";
-    return `<div class="cgrid-chip ${sc.cls}" data-booking-id="${ev.bookingId||ev.id||''}">
-      <div class="cgrid-chip-name">${ev.customerName||ev.title||''}${photoIcon}</div>
-      <div class="cgrid-chip-meta">${ev.time||''} · ${ev.duration||''}${t("minSuffix", "min")}</div>
-    </div>`;
+    return `<div class="cgrid-chip ${sc.cls}" data-booking-id="${ev.bookingId||ev.id||''}">${cgChipContent(ev)}</div>`;
   }
 
   function cgRenderWeek() {
     const days = Array.from({length:7}, (_,i) => { const d=new Date(cgWeekStart); d.setDate(d.getDate()+i); return d; });
     const today = cgIso(new Date());
     const cols = `68px repeat(7, 1fr)`;
+    const totalH = CG_HOURS.length * CG_ROW_H;
 
     let html = `<div class="cgrid-head" style="grid-template-columns:${cols}">`;
     html += `<div class="cgrid-head-time"></div>`;
@@ -1217,7 +1389,7 @@ function initOwnerDashboard(config) {
       const ds = cgIso(d);
       const isToday = ds === today;
       const isClosed = cgIsClosedDay(d);
-      const dow = d.toLocaleDateString("en-GB",{weekday:"short"}).toUpperCase();
+      const dow = cgFormatWeekdayShort(d);
       html += `<div class="cgrid-head-day${isToday?' cgrid-head-today':''}${isClosed?' cgrid-head-closed':''}">
         <div class="cgrid-head-dow">${dow}</div>
         <div class="cgrid-head-num">${d.getDate()}</div>
@@ -1226,98 +1398,70 @@ function initOwnerDashboard(config) {
     });
     html += `</div>`;
 
+    html += `<div class="cgrid-body" style="grid-template-columns:${cols}">`;
+    html += `<div class="cgrid-times">`;
     CG_HOURS.forEach(time => {
-      const hour = parseInt(time);
-      html += `<div class="cgrid-row" style="grid-template-columns:${cols}">`;
-      html += `<div class="cgrid-time-label">${time}</div>`;
-      days.forEach(d => {
-        const ds = cgIso(d);
-        const isClosed = cgIsClosedDay(d);
+      html += `<div class="cgrid-time-label" style="height:${CG_ROW_H}px">${time}</div>`;
+    });
+    html += `</div>`;
+
+    days.forEach(d => {
+      const ds = cgIso(d);
+      const isClosed = cgIsClosedDay(d);
+      html += `<div class="cgrid-col${isClosed ? " cgrid-col-closed" : ""}" data-date="${ds}">`;
+      html += `<div class="cgrid-col-slots" style="height:${totalH}px">`;
+      CG_HOURS.forEach(time => {
         const isPast = cgIsPast(ds, time);
-        let cls = "cgrid-cell";
-        if (isClosed) cls += " cgrid-cell-closed";
-        else if (isPast) cls += " cgrid-cell-past";
-        const evs = cgEventsAt(ds, hour);
-        html += `<div class="${cls}" data-date="${ds}" data-time="${time}">`;
-        evs.forEach(ev => { html += cgChipHtml(ev); });
-        html += `</div>`;
+        let slotCls = "cgrid-slot";
+        if (isClosed) slotCls += " cgrid-slot-closed";
+        else if (isPast) slotCls += " cgrid-slot-past";
+        else if (cgSlotIsBusy(ds, time)) slotCls += " cgrid-slot-busy";
+        html += `<div class="${slotCls}" data-date="${ds}" data-time="${time}" style="height:${CG_ROW_H}px"></div>`;
       });
       html += `</div>`;
+      html += `<div class="cgrid-col-events" style="height:${totalH}px">`;
+      if (!isClosed) cgEventsForDate(ds).forEach(ev => { html += cgSpanEventHtml(ev, CG_ROW_H, "week"); });
+      html += `</div></div>`;
     });
+    html += `</div>`;
 
     cgridEl.innerHTML = html;
-
-    // Click handlers
-    cgridEl.querySelectorAll(".cgrid-chip[data-booking-id]").forEach(chip => {
-      chip.addEventListener("click", e => { e.stopPropagation(); openBookingModal(chip.dataset.bookingId); });
-    });
-    cgridEl.querySelectorAll(".cgrid-chip[data-block-id]").forEach(chip => {
-      chip.addEventListener("click", e => { e.stopPropagation(); openBlockModal(chip.dataset.blockId); });
-    });
-    cgridEl.querySelectorAll(".cgrid-cell:not(.cgrid-cell-closed):not(.cgrid-cell-past)").forEach(cell => {
-      onDoubleTap(cell, () => {
-        openBookingModal(null, { date: cell.dataset.date, time: cell.dataset.time });
-      });
-    });
+    cgBindCalendarInteractions(".cgrid-slot:not(.cgrid-slot-closed):not(.cgrid-slot-past):not(.cgrid-slot-busy)");
   }
 
   function cgRenderDay() {
     const ds = cgIso(cgDayDate);
-    const dayStr = cgDayDate.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
-    const count = cgEvents.filter(ev => ev.date === ds).length;
+    const dayStr = cgFormatDayLong(cgDayDate);
+    const count = cgCountBookingsOnDate(ds);
+    const totalH = CG_HOURS.length * CG_ROW_H;
+
     let html = `<div class="cgrid-day-header" style="padding:14px 16px;border-bottom:1px solid #E5E7EB;background:#F9FAFB;">
       <p style="font-size:14px;font-weight:600;color:#111827;margin:0">${dayStr}</p>
       <p style="font-size:12px;color:#6B7280;margin:4px 0 0">${count === 1 ? tf("appointmentCountSingular", "%(count)s appointment", { count }) : tf("appointmentCountPlural", "%(count)s appointments", { count })}</p>
     </div>`;
 
+    html += `<div class="cgrid-day-timeline">`;
+    html += `<div class="cgrid-day-times">`;
     CG_HOURS.forEach(time => {
-      const hour = parseInt(time);
-      const isPast = cgIsPast(ds, time);
-      const evs = cgEventsAt(ds, hour);
-      html += `<div class="cgrid-day-row${isPast?' cgrid-cell-past':''}" data-date="${ds}" data-time="${time}">
-        <div class="cgrid-day-time">${time}</div>
-        <div class="cgrid-day-content">`;
-      if (evs.length) {
-        evs.forEach(ev => {
-          if (ev.type === "block") {
-            html += `<div class="cgrid-day-chip cgrid-chip-block" data-block-id="${ev.blockId||''}"
-              style="border-left-color:#7C3AED;background:#EDE9FE;">
-              <div><div class="cgrid-day-chip-name" style="color:#7C3AED">${t("blocked", "Blocked")}</div>
-              <div class="cgrid-day-chip-meta">${ev.start_time||ev.time||''}${ev.end_time?'–'+ev.end_time:''}</div></div>
-            </div>`;
-          } else {
-            const sc = CG_STATUS[ev.status] || CG_STATUS.pending;
-            const dotColor = {"pending":"#D97706","approved":"#059669","completed":"#2563EB","rejected":"#DB2777","cancelled":"#6B7280","no_show":"#C2410C"}[ev.status]||"#D97706";
-            html += `<div class="cgrid-day-chip ${sc.cls}" data-booking-id="${ev.bookingId||ev.id||''}"
-              style="cursor:pointer;">
-              <div>
-                <div class="cgrid-day-chip-name">${ev.customerName||ev.title||''}</div>
-                <div class="cgrid-day-chip-svc">${ev.services||ev.service||''}</div>
-                <div class="cgrid-day-chip-meta">${ev.time||''} · ${ev.duration||''}${t("minSuffix", "min")}</div>
-              </div>
-              <span style="font-size:11px;padding:2px 8px;border-radius:99px;background:${dotColor}22;color:${dotColor};font-weight:600">${sc.label}</span>
-            </div>`;
-          }
-        });
-      } else {
-        html += `<div class="cgrid-day-empty">${t("available", "— Available")}</div>`;
-      }
-      html += `</div></div>`;
+      html += `<div class="cgrid-day-time" style="height:${CG_ROW_H}px">${time}</div>`;
     });
+    html += `</div>`;
+    html += `<div class="cgrid-day-track" style="height:${totalH}px">`;
+    html += `<div class="cgrid-day-slots">`;
+    CG_HOURS.forEach(time => {
+      const isPast = cgIsPast(ds, time);
+      let slotCls = "cgrid-slot cgrid-day-slot";
+      if (isPast) slotCls += " cgrid-slot-past";
+      else if (cgSlotIsBusy(ds, time)) slotCls += " cgrid-slot-busy";
+      html += `<div class="${slotCls}" data-date="${ds}" data-time="${time}" style="height:${CG_ROW_H}px"></div>`;
+    });
+    html += `</div>`;
+    html += `<div class="cgrid-col-events cgrid-day-events">`;
+    cgEventsForDate(ds).forEach(ev => { html += cgSpanEventHtml(ev, CG_ROW_H, "day"); });
+    html += `</div></div></div>`;
 
     cgridEl.innerHTML = html;
-
-    cgridEl.querySelectorAll(".cgrid-day-chip[data-booking-id]").forEach(c => {
-      c.addEventListener("click", () => openBookingModal(c.dataset.bookingId));
-    });
-    cgridEl.querySelectorAll(".cgrid-day-chip[data-block-id]").forEach(c => {
-      c.addEventListener("click", () => openBlockModal(c.dataset.blockId));
-    });
-    cgridEl.querySelectorAll(".cgrid-day-row:not(.cgrid-cell-past)").forEach(row => {
-      onDoubleTap(row, () => {
-        openBookingModal(null, { date: row.dataset.date, time: row.dataset.time });
-      });
-    });
+    cgBindCalendarInteractions(".cgrid-day-slot:not(.cgrid-slot-past):not(.cgrid-slot-busy)");
   }
 
   function cgRender() {
@@ -1326,7 +1470,7 @@ function initOwnerDashboard(config) {
       cgRangeLabel && (cgRangeLabel.textContent = cgFmtWeekRange(cgWeekStart));
       cgRenderWeek();
     } else {
-      cgRangeLabel && (cgRangeLabel.textContent = cgDayDate.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"}));
+      cgRangeLabel && (cgRangeLabel.textContent = cgFormatDayLong(cgDayDate));
       cgRenderDay();
     }
     document.querySelectorAll(".cgrid-view-btn").forEach(b => b.classList.remove("active"));
@@ -1362,6 +1506,8 @@ function initOwnerDashboard(config) {
           bookingId: ep.bookingId, blockId: ep.blockId,
           type: ep.type||"booking",
           hasReferencePhoto: ep.hasReferencePhoto,
+          services: ep.services || "",
+          servicesLabel: ep.servicesLabel || "",
         };
       });
     } catch(e) { console.error("cgrid fetch error", e); }

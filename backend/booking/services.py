@@ -12,13 +12,131 @@ from django.utils import timezone
 from django.utils.formats import date_format
 from django.utils.translation import gettext as _
 
-from .models import Booking, BookingActivityLog, BookingPolicy, DateWorkingHoursOverride, WorkingHours
+from .models import Booking, BookingActivityLog, BookingPolicy, DateWorkingHoursOverride, Service, WorkingHours
 
 logger = logging.getLogger(__name__)
 
 
 DEFAULT_START_TIME = time(8, 0)
 DEFAULT_END_TIME = time(18, 0)
+
+
+MSG_MULTI_SERVICE_NO_FIT = _(
+    "There is not enough available time for the selected services together. "
+    "Please choose another date or book the services separately."
+)
+
+
+def normalize_services(services):
+    if not services:
+        return []
+    if isinstance(services, Service):
+        return [services]
+    return list(services)
+
+
+def parse_service_ids_param(value):
+    if not value:
+        return []
+    if isinstance(value, (list, tuple)):
+        parts = value
+    else:
+        parts = str(value).split(",")
+    ids = []
+    for part in parts:
+        part = str(part).strip()
+        if part.isdigit():
+            ids.append(int(part))
+    return ids
+
+
+def resolve_services_for_salon(salon, service_ids):
+    if not service_ids:
+        return None
+    seen = set()
+    ordered_ids = []
+    for sid in service_ids:
+        if sid not in seen:
+            seen.add(sid)
+            ordered_ids.append(sid)
+    services = list(salon.services.filter(id__in=ordered_ids, is_active=True))
+    by_id = {service.id: service for service in services}
+    if len(by_id) != len(ordered_ids):
+        return None
+    return [by_id[sid] for sid in ordered_ids]
+
+
+def get_service_gap_minutes(salon):
+    return get_policy_value(salon, "service_gap_minutes", 30)
+
+
+def calculate_combined_duration_minutes(services, salon):
+    services = normalize_services(services)
+    if not services:
+        return 0
+    total = sum(service.duration_minutes for service in services)
+    if len(services) > 1:
+        total += get_service_gap_minutes(salon) * (len(services) - 1)
+    return total
+
+
+def build_service_schedule(start_at, items, salon):
+    gap = timedelta(minutes=get_service_gap_minutes(salon))
+    current = start_at
+    schedule = []
+    for index, item in enumerate(items):
+        duration = getattr(item, "duration_minutes_snapshot", None)
+        if duration is None:
+            duration = getattr(item, "duration_minutes", 0)
+        name = getattr(item, "service_name_snapshot", None) or getattr(item, "name", "")
+        end = current + timedelta(minutes=duration)
+        local_start = timezone.localtime(current)
+        local_end = timezone.localtime(end)
+        schedule.append(
+            {
+                "name": name,
+                "start": current,
+                "end": end,
+                "duration_minutes": duration,
+                "start_time": local_start.strftime("%H:%M"),
+                "end_time": local_end.strftime("%H:%M"),
+            }
+        )
+        current = end
+        if index < len(items) - 1:
+            current += gap
+    return schedule
+
+
+def format_services_label(booking, max_length=40):
+    names = [item.service_name_snapshot for item in booking.booking_services.all()]
+    if not names:
+        return "—"
+    if len(names) == 1:
+        return names[0]
+    joined = " + ".join(names)
+    if len(joined) <= max_length:
+        return joined
+    return _("%(count)s services") % {"count": len(names)}
+
+
+def format_services_for_email(booking):
+    items = list(booking.booking_services.all())
+    if not items:
+        return "—"
+    if len(items) == 1:
+        return items[0].service_name_snapshot
+    return "\n".join(f"• {item.service_name_snapshot}" for item in items)
+
+
+def get_booking_total_price_display(booking):
+    items = list(booking.booking_services.all())
+    if not items:
+        return ""
+    total = sum((item.price_snapshot for item in items), Decimal("0"))
+    if len(items) == 1:
+        return f"{items[0].price_snapshot:.0f}"
+    return f"{total:.0f}"
 
 
 def get_blocking_booking_statuses(salon):
@@ -123,7 +241,7 @@ def get_unbookable_dates_for_customer(salon, start_date, end_date):
 
 def get_available_slots(
     salon,
-    service,
+    services,
     selected_date,
     now=None,
     *,
@@ -133,7 +251,8 @@ def get_available_slots(
     if now is None:
         now = timezone.now()
 
-    if not service or service.salon_id != salon.id:
+    services = normalize_services(services)
+    if not services or any(service.salon_id != salon.id for service in services):
         return []
 
     if not for_owner and not is_date_allowed(salon, selected_date, now=now):
@@ -149,7 +268,8 @@ def get_available_slots(
         return []
 
     working_start, working_end = working_interval
-    service_duration = timedelta(minutes=service.duration_minutes)
+    combined_minutes = calculate_combined_duration_minutes(services, salon)
+    service_duration = timedelta(minutes=combined_minutes)
     slot_interval = timedelta(minutes=get_policy_value(salon, "slot_interval_minutes", 30))
     if slot_interval.total_seconds() <= 0:
         slot_interval = timedelta(minutes=30)
@@ -189,8 +309,8 @@ def get_available_slots(
     return slots
 
 
-def calculate_available_slots(salon, service, selected_date, now=None):
-    return get_available_slots(salon, service, selected_date, now=now)
+def calculate_available_slots(salon, services, selected_date, now=None):
+    return get_available_slots(salon, services, selected_date, now=now)
 
 
 def get_policy_value(salon, field_name, default):
@@ -338,7 +458,7 @@ def generate_candidate_slots(working_start, working_end, duration, slot_interval
 
 def is_slot_available(
     salon,
-    service,
+    services,
     selected_date,
     start_time_value,
     *,
@@ -347,7 +467,7 @@ def is_slot_available(
 ):
     slots = get_available_slots(
         salon,
-        service,
+        services,
         selected_date,
         for_owner=for_owner,
         exclude_booking_id=exclude_booking_id,
@@ -414,7 +534,13 @@ def build_prepared_message(booking, message_type):
     time_label = timezone.localtime(booking.start_at).strftime("%H:%M")
     salon_name = booking.salon.name
 
-    vars_ = {"ime": first_name, "datum": date_label, "vreme": time_label, "salon": salon_name}
+    vars_ = {
+        "ime": first_name,
+        "datum": date_label,
+        "vreme": time_label,
+        "salon": salon_name,
+        "uslugi": format_services_label(booking),
+    }
 
     # Try custom template from BookingPolicy first
     try:

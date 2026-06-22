@@ -6,7 +6,7 @@
   data-instagram="{{ booking.customer.instagram_username }}"
   data-email="{{ booking.customer.email }}"
   data-contact="{{ booking.customer.preferred_contact_method }}"
-  data-service-id="{% with s=booking.booking_services.first %}{{ s.service_id|default:'' }}{% endwith %}"
+  data-service-ids="{% for item in booking.booking_services.all %}{{ item.service_id }}{% if not forloop.last %},{% endif %}{% empty %}{% endfor %}"
   data-date="{{ booking.start_at|date:'Y-m-d' }}"
   data-start-time="{{ booking.start_at|date:'H:i' }}"
   data-source="{{ booking.source }}"

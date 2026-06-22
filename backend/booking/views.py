@@ -41,19 +41,46 @@ from .models import (
 from .services import (
     build_contact_links,
     build_prepared_message,
+    build_service_schedule,
     can_customer_cancel_booking,
     ensure_default_working_hours,
+    format_services_label,
     get_available_slots,
+    get_booking_total_price_display,
     get_manage_booking_url,
     get_revenue_stats,
     get_salon_local_today,
     get_unbookable_dates_for_customer,
     get_working_window_for_date,
     log_booking_activity,
+    MSG_MULTI_SERVICE_NO_FIT,
+    parse_service_ids_param,
+    resolve_services_for_salon,
     send_booking_notification,
     send_owner_customer_cancelled_notification,
     send_owner_new_booking_notification,
 )
+
+
+def _services_from_request(request, salon):
+    raw = request.GET.get("services") or request.GET.get("service")
+    service_ids = parse_service_ids_param(raw)
+    return resolve_services_for_salon(salon, service_ids) or []
+
+
+def _slots_json(slots):
+    return JsonResponse(
+        {
+            "slots": [
+                {
+                    "value": slot["value"],
+                    "label": slot["label"],
+                    "end": slot["end"].strftime("%H:%M"),
+                }
+                for slot in slots
+            ]
+        }
+    )
 
 
 def home(request):
@@ -627,13 +654,17 @@ def owner_calendar_events(request):
         services = ", ".join(
             item.service_name_snapshot for item in booking.booking_services.all()
         )
+        services_label = format_services_label(booking)
         style = status_styles.get(booking.status, status_styles[Booking.Status.APPROVED])
         local_start = timezone.localtime(booking.start_at)
         local_end   = timezone.localtime(booking.end_at)
+        title = booking.customer.full_name
+        if services_label:
+            title = f"{booking.customer.full_name} — {services_label}"
         events.append(
             {
                 "id": f"booking-{booking.id}",
-                "title": booking.customer.full_name,
+                "title": title,
                 "start": local_start.isoformat(),
                 "end": local_end.isoformat(),
                 "backgroundColor": style["bg"],
@@ -647,6 +678,7 @@ def owner_calendar_events(request):
                     "customerName": booking.customer.full_name,
                     "phone": booking.customer.phone_number,
                     "services": services,
+                    "servicesLabel": services_label,
                     "duration": booking.total_duration_minutes,
                     "hasReferencePhoto": bool(booking.reference_photo),
                     "cancelledByCustomer": booking.cancelled_by_customer,
@@ -731,14 +763,19 @@ def owner_booking_detail(request, booking_id):
     first_service = booking.booking_services.first()
     local_start = timezone.localtime(booking.start_at)
     local_end   = timezone.localtime(booking.end_at)
+    booking_service_items = list(booking.booking_services.all())
+    schedule = build_service_schedule(booking.start_at, booking_service_items, salon)
 
     services_list = [
         {
+            "service_id": bs.service_id,
             "name": bs.service_name_snapshot,
             "duration": bs.duration_minutes_snapshot,
             "price": str(bs.price_snapshot),
+            "start_time": schedule[index]["start_time"] if index < len(schedule) else "",
+            "end_time": schedule[index]["end_time"] if index < len(schedule) else "",
         }
-        for bs in booking.booking_services.all()
+        for index, bs in enumerate(booking_service_items)
     ]
 
     activity = [
@@ -761,7 +798,11 @@ def owner_booking_detail(request, booking_id):
             "email": booking.customer.email,
             "preferred_contact_method": booking.customer.preferred_contact_method,
             "service_id": first_service.service_id if first_service else None,
+            "service_ids": [bs.service_id for bs in booking_service_items],
             "services": services_list,
+            "service_schedule": schedule,
+            "services_label": format_services_label(booking),
+            "total_price_display": get_booking_total_price_display(booking),
             "date": local_start.strftime("%Y-%m-%d"),
             "date_display": local_start.strftime("%d/%m/%Y"),
             "start_time": local_start.strftime("%H:%M"),
@@ -889,14 +930,13 @@ def owner_available_slots(request):
     if not salon:
         return JsonResponse({"slots": []})
 
-    service_id = request.GET.get("service")
     date_value = request.GET.get("date")
     exclude_id = request.GET.get("exclude")
+    services = _services_from_request(request, salon)
 
-    if not service_id or not date_value:
+    if not services or not date_value:
         return JsonResponse({"slots": []})
 
-    service = get_object_or_404(Service, pk=service_id, salon=salon, is_active=True)
     try:
         selected_date = datetime.strptime(date_value, "%Y-%m-%d").date()
     except ValueError:
@@ -904,23 +944,12 @@ def owner_available_slots(request):
 
     slots = get_available_slots(
         salon,
-        service,
+        services,
         selected_date,
         for_owner=True,
         exclude_booking_id=exclude_id or None,
     )
-    return JsonResponse(
-        {
-            "slots": [
-                {
-                    "value": slot["value"],
-                    "label": slot["label"],
-                    "end": slot["end"].strftime("%H:%M"),
-                }
-                for slot in slots
-            ]
-        }
-    )
+    return _slots_json(slots)
 
 
 def salon_page(request, salon_slug):
@@ -1019,6 +1048,7 @@ def book_salon(request, salon_slug):
             "closed_dates_js": json.dumps(
                 get_unbookable_dates_for_customer(salon, min_date_val, max_date_val)
             ),
+            "multi_service_no_fit_message": str(MSG_MULTI_SERVICE_NO_FIT),
         },
     )
     return _ensure_booking_device_cookie(response, request)
@@ -1067,6 +1097,11 @@ def manage_booking(request, token):
     if policy:
         notice_hours = policy.customer_cancellation_notice_hours
 
+    booking_service_items = list(booking.booking_services.all())
+    service_schedule = build_service_schedule(
+        booking.start_at, booking_service_items, booking.salon
+    )
+
     return render(
         request,
         "booking/manage_booking.html",
@@ -1080,6 +1115,8 @@ def manage_booking(request, token):
             "just_cancelled": request.GET.get("cancelled") == "1",
             "show_confirm": request.GET.get("confirm") == "1",
             "manage_url": get_manage_booking_url(booking),
+            "service_schedule": service_schedule,
+            "total_duration": booking.total_duration_minutes,
         },
     )
 
@@ -1133,30 +1170,16 @@ def manage_booking_cancel(request, token):
 @require_GET
 def available_slots(request, salon_slug):
     salon = get_object_or_404(Salon, slug=salon_slug, is_active=True)
-    service_id = request.GET.get("service")
     date_value = request.GET.get("date")
+    services = _services_from_request(request, salon)
 
-    if not service_id or not date_value:
+    if not services or not date_value:
         return JsonResponse({"slots": []})
-
-    service = get_object_or_404(Service, pk=service_id, salon=salon, is_active=True)
 
     try:
         selected_date = datetime.strptime(date_value, "%Y-%m-%d").date()
     except ValueError:
         return JsonResponse({"slots": []})
 
-    slots = get_available_slots(salon, service, selected_date)
-
-    return JsonResponse(
-        {
-            "slots": [
-                {
-                    "value": slot["value"],
-                    "label": slot["label"],
-                    "end": slot["end"].strftime("%H:%M"),
-                }
-                for slot in slots
-            ]
-        }
-    )
+    slots = get_available_slots(salon, services, selected_date)
+    return _slots_json(slots)

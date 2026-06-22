@@ -158,6 +158,10 @@ class BookingPolicy(TimeStampedModel):
     max_appointments_per_day = models.PositiveSmallIntegerField(default=5)
     slot_interval_minutes = models.PositiveSmallIntegerField(default=30)
     buffer_minutes_between_bookings = models.PositiveSmallIntegerField(default=0)
+    service_gap_minutes = models.PositiveSmallIntegerField(
+        default=30,
+        help_text="Gap between consecutive services within the same booking.",
+    )
     customer_cancellation_notice_hours = models.PositiveSmallIntegerField(
         default=24,
         help_text="Minimum hours before appointment start when customers may cancel online.",
