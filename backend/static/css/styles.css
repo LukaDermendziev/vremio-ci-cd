@@ -1127,6 +1127,39 @@ button { font-family: inherit; cursor: pointer; }
 .od-stat-revenue .od-stat-value small { font-size: 12px; font-weight: 500; opacity: 0.7; }
 .od-revenue-note { font-size: 12px; color: var(--od-muted); margin: -8px 0 20px; }
 .od-modal-wide { max-width: 640px; }
+
+/* Booking modal: constrain height on desktop so long forms stay on screen */
+#od-booking-modal .od-modal-box {
+  max-height: min(90vh, 860px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+}
+#od-booking-modal .od-modal-header {
+  flex-shrink: 0;
+  margin-bottom: 0;
+  padding: 20px 24px 14px;
+  border-bottom: 1px solid #F3F4F6;
+}
+#od-booking-modal .od-modal-box > form {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px 24px 8px;
+}
+#od-booking-modal .od-modal-footer {
+  flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+  border-top: 1px solid #F3F4F6;
+  padding: 14px 0 0;
+  margin-top: 12px;
+  z-index: 2;
+}
+
 .od-modal-links { display: flex; flex-wrap: wrap; gap: 8px; }
 .od-form-grid { display: grid; gap: 12px; }
 .od-form-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -5007,6 +5040,54 @@ body.bk-step1-confirm-open .bk-toast {
 }
 
 /* ── Owner reference photos ───────────────────────────────────────────────── */
+.od-photo-thumb-wrap {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.od-photo-blurred {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 8px;
+  filter: blur(8px);
+  pointer-events: none;
+  user-select: none;
+  flex-shrink: 0;
+  border: 1px solid #E5E7EB;
+}
+.od-photo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.od-photo-none {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #94A3B8;
+}
+.od-photo-controls { margin-top: 8px; }
+.bk-photo-abuse-note {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #6B7280;
+}
+.bk-verify-email-icon,
+.bk-verify-failed-icon {
+  font-size: 48px;
+  color: #C4878A;
+}
+.bk-verify-failed-icon { color: #DC2626; }
+.bk-verify-note {
+  margin-top: 16px;
+  font-size: 13px;
+  color: #6B7280;
+  line-height: 1.5;
+}
 .od-bk-photo-thumb {
   display: inline-flex;
   align-items: center;

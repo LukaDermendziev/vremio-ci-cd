@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n static %}
 {% block title %}{{ customer.full_name }} — {% trans "History" %}{% endblock %}
 {% block body_class %}od-page{% endblock %}
 
@@ -24,7 +24,7 @@
     {% if bookings %}
       <div class="od-bk-list">
         {% for booking in bookings %}
-          <div class="od-bk-card">
+          <div class="od-bk-card" data-booking-id="{{ booking.id }}">
             <div class="od-bk-badges">
               <span class="od-bk-name">{{ booking.start_at|date:"d/m/Y" }} · {{ booking.start_at|date:"H:i" }}</span>
               <span class="od-badge od-badge-{{ booking.status }}">{{ booking.get_status_display }}</span>
@@ -40,12 +40,7 @@
             {% if booking.owner_note %}
               <div class="od-bk-note">{% trans "Owner note:" %} {{ booking.owner_note }}</div>
             {% endif %}
-            {% if booking.reference_photo %}
-              <button type="button" class="od-bk-photo-thumb" data-photo-preview="{% url 'booking:owner_booking_photo' booking.id %}">
-                <img src="{% url 'booking:owner_booking_photo' booking.id %}" alt="{% trans 'Reference photo' %}" loading="lazy">
-                <span>{% trans "View reference photo" %}</span>
-              </button>
-            {% endif %}
+            {% include "booking/partials/owner_reference_photo_controls.html" %}
           </div>
         {% endfor %}
       </div>
@@ -54,4 +49,21 @@
     {% endif %}
   </div>
 </div>
+
+<form id="od-history-csrf" style="display:none">{% csrf_token %}</form>
+{% include "booking/partials/owner_photo_modal.html" %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+window.OD_I18N = window.OD_I18N || {
+  confirmDeletePhoto: "{% filter escapejs %}{% trans 'Delete this reference photo?' %}{% endfilter %}",
+  confirmBlockCustomer: "{% filter escapejs %}{% trans 'Block this customer from booking?' %}{% endfilter %}",
+  noPhotoAttached: "{% filter escapejs %}{% trans 'No photo attached.' %}{% endfilter %}",
+  photoRemoved: "{% filter escapejs %}{% trans 'Photo removed.' %}{% endfilter %}",
+  customerBlocked: "{% filter escapejs %}{% trans 'Customer blocked.' %}{% endfilter %}",
+  somethingWentWrong: "{% filter escapejs %}{% trans 'Something went wrong. Please try again.' %}{% endfilter %}",
+};
+</script>
+<script src="{% static 'js/owner_photo_tools.js' %}"></script>
 {% endblock %}

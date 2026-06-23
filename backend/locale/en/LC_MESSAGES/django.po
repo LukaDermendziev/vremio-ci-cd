@@ -199,6 +199,9 @@ msgstr "Available times"
 msgid "Available variables:"
 msgstr "Available variables:"
 
+msgid "Awaiting email verification"
+msgstr "Awaiting email verification"
+
 msgid "Back"
 msgstr "Back"
 
@@ -224,6 +227,9 @@ msgstr ""
 
 msgid "Block"
 msgstr "Block"
+
+msgid "Block customer"
+msgstr "Block customer"
 
 msgid "Block day"
 msgstr "Block day"
@@ -360,6 +366,9 @@ msgstr "Call"
 msgid "Cancel"
 msgstr "Cancel"
 
+msgid "Cancel appointment"
+msgstr "Cancel appointment"
+
 msgid "Cancel appointment?"
 msgstr "Cancel appointment?"
 
@@ -403,6 +412,9 @@ msgstr "Change Password"
 
 msgid "Change password"
 msgstr "Change password"
+
+msgid "Check your email"
+msgstr "Check your email"
 
 msgid "Check your inbox"
 msgstr "Check your inbox"
@@ -465,6 +477,9 @@ msgstr "Completed"
 
 msgid "Completed this week"
 msgstr "Completed this week"
+
+msgid "Confirm your email to complete your booking request"
+msgstr "Confirm your email to complete your booking request"
 
 msgid "Contact"
 msgstr "Contact"
@@ -544,6 +559,9 @@ msgstr "December"
 msgid "Delete"
 msgstr "Delete"
 
+msgid "Delete photo"
+msgstr "Delete photo"
+
 msgid "Delete service"
 msgstr "Delete service"
 
@@ -617,6 +635,9 @@ msgstr "Email could not be sent. Prepared message is available."
 
 msgid "Email sent"
 msgstr "Email sent"
+
+msgid "Email verification link expiry (minutes)"
+msgstr "Email verification link expiry (minutes)"
 
 msgid "Enable honeypot protection"
 msgstr "Enable honeypot protection"
@@ -870,6 +891,13 @@ msgstr ""
 "If you did not request this, ignore this email — your password will not "
 "change."
 
+msgid ""
+"If you do not see the email within a few minutes, check your spam or junk "
+"folder."
+msgstr ""
+"If you do not see the email within a few minutes, check your spam or junk "
+"folder."
+
 msgid "In person"
 msgstr "In person"
 
@@ -1049,6 +1077,9 @@ msgstr ""
 msgid "No photo attached"
 msgstr "No photo attached"
 
+msgid "No photo attached."
+msgstr "No photo attached."
+
 msgid "No price items yet. Add the first one below."
 msgstr "No price items yet. Add the first one below."
 
@@ -1179,11 +1210,17 @@ msgstr "Phone call"
 msgid "Phone number"
 msgstr "Phone number"
 
+msgid "Photo attached"
+msgstr "Photo attached"
+
 msgid "Photo needed"
 msgstr "Photo needed"
 
 msgid "Photo recommended"
 msgstr "Photo recommended"
+
+msgid "Photo removed."
+msgstr "Photo removed."
 
 msgid "Photo req."
 msgstr "Photo req."
@@ -1325,6 +1362,9 @@ msgstr "Request sent!"
 
 msgid "Requested"
 msgstr "Requested"
+
+msgid "Require email verification for online bookings"
+msgstr "Require email verification for online bookings"
 
 msgid "Reset Link Sent"
 msgstr "Reset Link Sent"
@@ -1468,6 +1508,9 @@ msgstr "Set new password"
 msgid "Set password"
 msgstr "Set password"
 
+msgid "Show photo"
+msgstr "Show photo"
+
 msgid "Shown on the booking form. Each line is a separate rule."
 msgstr "Shown on the booking form. Each line is a separate rule."
 
@@ -1489,6 +1532,9 @@ msgid ""
 msgstr ""
 "Something went wrong. Please check your details and choose an available "
 "time."
+
+msgid "Something went wrong. Please submit a new booking request."
+msgstr "Something went wrong. Please submit a new booking request."
 
 msgid "Something went wrong. Please try again."
 msgstr "Something went wrong. Please try again."
@@ -1562,8 +1608,18 @@ msgid ""
 msgstr ""
 "The salon will contact you to confirm via your preferred contact method."
 
+msgid ""
+"The selected time slot is no longer available. Please choose another time."
+msgstr ""
+"The selected time slot is no longer available. Please choose another time."
+
 msgid "The time %(time)s is no longer available. Please select another slot."
 msgstr "The time %(time)s is no longer available. Please select another slot."
+
+msgid ""
+"The verification link has expired. Please submit a new booking request."
+msgstr ""
+"The verification link has expired. Please submit a new booking request."
 
 msgid ""
 "There is not enough available time for the selected services together. "
@@ -1628,6 +1684,9 @@ msgstr "This link expires in 24 hours."
 msgid "This reset link is invalid or has expired."
 msgstr "This reset link is invalid or has expired."
 
+msgid "This verification link is invalid or has already been used."
+msgstr "This verification link is invalid or has already been used."
+
 msgid "Thursday"
 msgstr "Thursday"
 
@@ -1642,6 +1701,9 @@ msgstr "Today"
 
 msgid "Today's appointments"
 msgstr "Today's appointments"
+
+msgid "Total duration: %(minutes)s min"
+msgstr "Total duration: %(minutes)s min"
 
 msgid "Total revenue"
 msgstr "Total revenue"
@@ -1679,6 +1741,13 @@ msgstr "Update password"
 msgid "Update your account password."
 msgstr "Update your account password."
 
+msgid ""
+"Upload only a photo related to the service. Inappropriate images will be "
+"removed and the customer may be blocked."
+msgstr ""
+"Upload only a photo related to the service. Inappropriate images will be "
+"removed and the customer may be blocked."
+
 msgid "Upload your logo here"
 msgstr "Upload your logo here"
 
@@ -1687,6 +1756,9 @@ msgstr "Use dd/mm/yyyy"
 
 msgid "Username"
 msgstr "Username"
+
+msgid "Verification failed"
+msgstr "Verification failed"
 
 msgid "Via"
 msgstr "Via"
@@ -1725,6 +1797,11 @@ msgid ""
 "We sent a confirmation email with a link to view and manage your booking."
 msgstr ""
 "We sent a confirmation email with a link to view and manage your booking."
+
+msgid ""
+"We sent you a verification link. Click it to complete your booking request."
+msgstr ""
+"We sent you a verification link. Click it to complete your booking request."
 
 msgid "Wednesday"
 msgstr "Wednesday"
@@ -1817,6 +1894,13 @@ msgstr "Your appointment is confirmed — %(salon)s"
 
 msgid "Your appointment is confirmed."
 msgstr "Your appointment is confirmed."
+
+msgid ""
+"Your appointment is not confirmed yet. The salon will review your request "
+"after you verify your email."
+msgstr ""
+"Your appointment is not confirmed yet. The salon will review your request "
+"after you verify your email."
 
 msgid "Your appointment request was declined"
 msgstr "Your appointment request was declined"

@@ -1,6 +1,7 @@
 from datetime import timedelta
 from decimal import Decimal, InvalidOperation
 import json
+import uuid
 
 from django import forms
 from django.core.exceptions import ValidationError
@@ -18,6 +19,7 @@ from .anti_abuse import (
     normalize_phone,
     record_booking_attempt,
 )
+from .image_moderation import moderate_reference_photo
 from .image_utils import FORMAT_TO_EXT, prepare_reference_photo, validate_reference_photo
 from .models import (
     Booking,
@@ -324,10 +326,13 @@ class BookingRequestForm(forms.Form):
             minutes=calculate_combined_duration_minutes(services, self.salon)
         )
         policy = self.policy
-        status = Booking.Status.PENDING
-
-        if policy and policy.auto_approve_bookings:
-            status = Booking.Status.APPROVED
+        needs_verification = bool(policy and policy.email_verification_required)
+        if needs_verification:
+            status = Booking.Status.UNVERIFIED
+        else:
+            status = Booking.Status.PENDING
+            if policy and policy.auto_approve_bookings:
+                status = Booking.Status.APPROVED
 
         booking = Booking(
             salon=self.salon,
@@ -341,12 +346,22 @@ class BookingRequestForm(forms.Form):
             customer_note=self.cleaned_data.get("customer_note", ""),
         )
 
+        if needs_verification:
+            booking.email_verification_token = uuid.uuid4()
+            booking.verification_expires_at = timezone.now() + timedelta(
+                minutes=policy.email_verification_expiration_minutes
+            )
+
         photo = self.cleaned_data.get("reference_photo")
         photo_format = self.cleaned_data.get("_photo_format")
         if photo and photo_format:
+            moderation = moderate_reference_photo(photo)
+            if not moderation.allowed:
+                raise ValidationError({"reference_photo": moderation.message})
             prepared = prepare_reference_photo(photo, photo_format)
             booking._reference_photo_ext = FORMAT_TO_EXT.get(photo_format, "jpg")
             booking.reference_photo = prepared
+            booking.reference_photo_status = Booking.ReferencePhotoStatus.UNREVIEWED
 
         booking.save()
         for sort_order, line in enumerate(line_items):
@@ -366,6 +381,7 @@ class BookingRequestForm(forms.Form):
                 sort_order=sort_order,
             )
 
+        self.verification_required = needs_verification
         return booking
 
 
@@ -605,6 +621,8 @@ class BookingPolicyForm(forms.ModelForm):
             "booking_rate_limit_per_phone_per_day",
             "enable_honeypot_protection",
             "max_reference_photo_size_mb",
+            "email_verification_required",
+            "email_verification_expiration_minutes",
             "salon_rules",
             "salon_rules_en",
             "msg_approved",
@@ -636,6 +654,8 @@ class BookingPolicyForm(forms.ModelForm):
             "booking_rate_limit_per_phone_per_day": _("Booking rate limit per phone per day"),
             "enable_honeypot_protection": _("Enable honeypot protection"),
             "max_reference_photo_size_mb": _("Max reference photo size (MB)"),
+            "email_verification_required": _("Require email verification for online bookings"),
+            "email_verification_expiration_minutes": _("Email verification link expiry (minutes)"),
             "salon_rules": _("Salon rules (Macedonian)"),
             "salon_rules_en": _("Salon rules (English)"),
             "msg_approved": _("Approved message"),

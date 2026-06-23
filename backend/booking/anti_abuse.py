@@ -224,7 +224,16 @@ def check_public_booking_allowed(
     max_active = _policy_value(policy, "max_active_future_bookings_per_customer", 2)
 
     active_qs = _active_future_bookings(salon, phone, email)
-    pending_count = active_qs.filter(status=Booking.Status.PENDING).count()
+    customer_ids = get_matching_customer_ids(salon, phone, email)
+    unverified_count = 0
+    if customer_ids:
+        unverified_count = Booking.objects.filter(
+            salon=salon,
+            customer_id__in=customer_ids,
+            status=Booking.Status.UNVERIFIED,
+        ).count()
+
+    pending_count = active_qs.filter(status=Booking.Status.PENDING).count() + unverified_count
     active_count = active_qs.count()
 
     if max_pending and pending_count >= max_pending:

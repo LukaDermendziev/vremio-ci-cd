@@ -29,6 +29,11 @@ REQUEST_RECEIVED_TEMPLATES = (
     "booking/emails/customer_request_received.txt",
 )
 
+VERIFY_BOOKING_TEMPLATES = (
+    "booking/emails/subject_verify_booking.txt",
+    "booking/emails/customer_verify_booking.txt",
+)
+
 CUSTOMER_CANCELLATION_CONFIRMED_TEMPLATES = (
     "booking/emails/subject_customer_cancellation_confirmed.txt",
     "booking/emails/customer_cancellation_confirmed.txt",
@@ -177,6 +182,33 @@ def send_owner_new_booking_email(booking):
 def send_booking_request_received_email(booking):
     """Send customer confirmation with manage link after online request."""
     return _send_customer_templated_email(booking, REQUEST_RECEIVED_TEMPLATES)
+
+
+def send_booking_verification_email(booking):
+    """Send email verification link before a booking request is submitted."""
+    email = (booking.customer.email or "").strip()
+    if not email or not booking.email_verification_token:
+        return False, "no_email"
+
+    policy = getattr(booking.salon, "booking_policy", None)
+    expiration_minutes = 60
+    if policy:
+        expiration_minutes = policy.email_verification_expiration_minutes
+
+    site_url = getattr(settings, "SITE_URL", "").rstrip("/")
+    verify_url = f"{site_url}/booking/verify/{booking.email_verification_token}/"
+    context = _booking_email_context(booking)
+    context.update({
+        "verify_url": verify_url,
+        "expiration_minutes": expiration_minutes,
+    })
+    subject, body = _render_email_parts(*VERIFY_BOOKING_TEMPLATES, context)
+    return _send_email(
+        subject=subject,
+        body=body,
+        to_email=email,
+        reply_to=get_owner_reply_to(booking.salon),
+    )
 
 
 def send_customer_cancellation_confirmation_email(booking):

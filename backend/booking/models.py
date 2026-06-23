@@ -175,6 +175,11 @@ class BookingPolicy(TimeStampedModel):
     booking_rate_limit_per_phone_per_day = models.PositiveSmallIntegerField(default=3)
     enable_honeypot_protection = models.BooleanField(default=True)
     max_reference_photo_size_mb = models.PositiveSmallIntegerField(default=5)
+    email_verification_required = models.BooleanField(
+        default=True,
+        help_text="Online bookings require email verification before becoming pending.",
+    )
+    email_verification_expiration_minutes = models.PositiveSmallIntegerField(default=60)
 
     # ── Salon rules shown to customer before booking ──────────────────────────
     DEFAULT_SALON_RULES_MK = (
@@ -403,12 +408,17 @@ class UnavailableTimeBlock(TimeStampedModel):
 
 class Booking(TimeStampedModel):
     class Status(models.TextChoices):
+        UNVERIFIED = "unverified", _("Awaiting email verification")
         PENDING = "pending", _("Pending")
         APPROVED = "approved", _("Approved")
         REJECTED = "rejected", _("Rejected")
         CANCELLED = "cancelled", _("Cancelled")
         COMPLETED = "completed", _("Completed")
         NO_SHOW = "no_show", _("No Show")
+
+    class ReferencePhotoStatus(models.TextChoices):
+        UNREVIEWED = "unreviewed", _("Unreviewed")
+        REMOVED = "removed", _("Removed")
 
     class Source(models.TextChoices):
         ONLINE = "online", _("Online")
@@ -448,6 +458,21 @@ class Booking(TimeStampedModel):
     customer_note = models.TextField(blank=True)
     owner_note = models.TextField(blank=True)
     reference_photo = models.ImageField(upload_to=booking_photo_upload_to, blank=True)
+    reference_photo_status = models.CharField(
+        max_length=20,
+        choices=ReferencePhotoStatus.choices,
+        blank=True,
+        default="",
+    )
+    email_verification_token = models.UUIDField(
+        null=True,
+        blank=True,
+        unique=True,
+        editable=False,
+        db_index=True,
+    )
+    email_verified_at = models.DateTimeField(null=True, blank=True)
+    verification_expires_at = models.DateTimeField(null=True, blank=True)
     rules_accepted = models.BooleanField(default=False)
     rules_accepted_at = models.DateTimeField(null=True, blank=True)
     rejection_reason = models.TextField(blank=True)
@@ -551,6 +576,9 @@ class BookingService(models.Model):
 class BookingActivityLog(models.Model):
     class Action(models.TextChoices):
         REQUESTED  = "requested",  _("Requested")
+        VERIFICATION_SENT = "verification_sent", _("Verification sent")
+        EMAIL_VERIFIED = "email_verified", _("Email verified")
+        VERIFICATION_EXPIRED = "verification_expired", _("Verification expired")
         APPROVED   = "approved",   _("Approved")
         REJECTED   = "rejected",   _("Rejected")
         CANCELLED  = "cancelled",  _("Cancelled")
@@ -559,6 +587,8 @@ class BookingActivityLog(models.Model):
         COMPLETED  = "completed",  _("Completed")
         NO_SHOW    = "no_show",    _("No Show")
         EMAIL_SENT = "email_sent", _("Email sent")
+        PHOTO_REMOVED = "photo_removed", _("Photo removed")
+        CUSTOMER_BLOCKED = "customer_blocked", _("Customer blocked")
 
     booking = models.ForeignKey(
         Booking,

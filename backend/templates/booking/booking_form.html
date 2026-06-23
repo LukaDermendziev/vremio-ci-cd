@@ -258,6 +258,7 @@
       </label>
       {% for err in form.reference_photo.errors %}<span class="bk-field-error">{{ err }}</span>{% endfor %}
       <span class="bk-field-error bk-field-live-error" id="bk-err-reference_photo" hidden></span>
+      <p class="bk-photo-abuse-note">{% trans "Upload only a photo related to the service. Inappropriate images will be removed and the customer may be blocked." %}</p>
     </div>
 
     <div class="bk-field">

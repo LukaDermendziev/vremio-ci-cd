@@ -1,0 +1,36 @@
+{% load i18n %}
+{% if booking.reference_photo %}
+<div class="od-photo-controls" data-booking-id="{{ booking.id }}">
+  <span class="od-badge od-badge-photo"><i class="bi bi-camera-fill"></i> {% trans "Photo attached" %}</span>
+  <div class="od-photo-thumb-wrap">
+    <img
+      class="od-photo-blurred"
+      src="{% url 'booking:owner_booking_photo' booking.id %}"
+      alt=""
+      loading="lazy"
+      aria-hidden="true"
+    >
+    <div class="od-photo-actions">
+      <button
+        type="button"
+        class="od-btn od-btn-ghost od-btn-sm"
+        data-photo-preview="{% url 'booking:owner_booking_photo' booking.id %}"
+      >{% trans "Show photo" %}</button>
+      <button
+        type="button"
+        class="od-btn od-btn-ghost od-btn-sm"
+        data-bk-action="delete_reference_photo"
+        data-bk-id="{{ booking.id }}"
+      >{% trans "Delete photo" %}</button>
+      <button
+        type="button"
+        class="od-btn od-btn-danger od-btn-sm"
+        data-bk-action="block_customer"
+        data-bk-id="{{ booking.id }}"
+      >{% trans "Block customer" %}</button>
+    </div>
+  </div>
+</div>
+{% else %}
+<p class="od-photo-none">{% trans "No photo attached." %}</p>
+{% endif %}

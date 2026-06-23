@@ -515,7 +515,9 @@ function initOwnerDashboard(config) {
     const emptyEl = document.getElementById("od-booking-photo-empty");
     const previewEl = document.getElementById("od-booking-photo-preview");
     const imgEl = document.getElementById("od-booking-photo-img");
-    const thumbBtn = document.getElementById("od-booking-photo-thumb");
+    const showBtn = document.getElementById("od-booking-photo-show");
+    const deleteBtn = document.getElementById("od-booking-photo-delete");
+    const blockBtn = document.getElementById("od-booking-photo-block");
     if (!section) return;
     const hasPhoto = data.has_reference_photo && data.reference_photo_url;
     section.hidden = !data.id;
@@ -524,7 +526,17 @@ function initOwnerDashboard(config) {
       emptyEl.hidden = true;
       previewEl.hidden = false;
       imgEl.src = data.reference_photo_url;
-      thumbBtn.dataset.photoPreview = data.reference_photo_url;
+      if (showBtn) {
+        showBtn.onclick = () => openPhotoPreview(data.reference_photo_url);
+      }
+      [deleteBtn, blockBtn].forEach(btn => {
+        if (!btn) return;
+        btn.dataset.bkId = String(data.id);
+        if (!btn._photoActionBound) {
+          btn._photoActionBound = true;
+          bindBkAction(btn);
+        }
+      });
     } else {
       emptyEl.hidden = false;
       previewEl.hidden = true;
@@ -674,6 +686,8 @@ function initOwnerDashboard(config) {
     reject: t("confirmRejectBooking", "Reject this booking?"),
     cancel: t("confirmCancelBooking", "Cancel this booking?"),
     mark_no_show: t("confirmMarkNoShow", "Mark as no-show?"),
+    delete_reference_photo: t("confirmDeletePhoto", "Delete this reference photo?"),
+    block_customer: t("confirmBlockCustomer", "Block this customer from booking?"),
   };
 
   function bkActionButtons(status, bookingId) {
@@ -708,7 +722,7 @@ function initOwnerDashboard(config) {
     const csrf = document.querySelector("[name=csrfmiddlewaretoken]")?.value;
     const body = new URLSearchParams({ action, booking_id: bookingId, return_section: "bookings" });
     try {
-      const resp = await fetch(window.location.pathname, {
+      const resp = await fetch("/owner/dashboard/", {
         method: "POST",
         headers: { "X-CSRFToken": csrf, "X-Requested-With": "fetch",
                    "Content-Type": "application/x-www-form-urlencoded" },
@@ -717,6 +731,31 @@ function initOwnerDashboard(config) {
       if (!resp.ok) throw new Error("Server error");
       const data = await resp.json();
       if (!data.ok) throw new Error("Action failed");
+
+      if (action === "delete_reference_photo") {
+        if (card) {
+          const photoControls = card.querySelector(".od-photo-controls");
+          if (photoControls) {
+            photoControls.outerHTML = `<p class="od-photo-none">${t("noPhotoAttached", "No photo attached.")}</p>`;
+          }
+          card.dataset.hasPhoto = "false";
+          delete card.dataset.photoUrl;
+        }
+        updateReferencePhotoSection({
+          id: bookingId,
+          has_reference_photo: false,
+          reference_photo_url: null,
+        });
+        const msg = (data.messages || []).find(m => m[0] === "success");
+        showToast(msg ? msg[1] : t("photoRemoved", "Photo removed."));
+        return;
+      }
+
+      if (action === "block_customer") {
+        const msg = (data.messages || []).find(m => m[0] === "success");
+        showToast(msg ? msg[1] : t("customerBlocked", "Customer blocked."));
+        return;
+      }
 
       // Infer the new status from the action name — don't depend solely on server response
       // so the UI always updates correctly even if new_status is missing from JSON
@@ -840,7 +879,8 @@ function initOwnerDashboard(config) {
       const action = btn.dataset.bkAction;
       const bookingId = btn.dataset.bkId;
       const card = btn.closest(".od-bk-card");
-      if (!card) return;
+      const cardlessActions = ["delete_reference_photo", "block_customer"];
+      if (!card && !cardlessActions.includes(action)) return;
       if (CONFIRM_ACTIONS[action]) {
         if (!confirm(CONFIRM_ACTIONS[action])) return;
       }

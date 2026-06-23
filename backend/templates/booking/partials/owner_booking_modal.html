@@ -78,12 +78,16 @@
       </div>
       <div class="od-booking-photo-section" id="od-booking-photo-section" hidden>
         <div class="od-field-label">{% trans "Reference photo" %}</div>
-        <div class="od-booking-photo-empty" id="od-booking-photo-empty">{% trans "No photo attached" %}</div>
+        <div class="od-booking-photo-empty" id="od-booking-photo-empty">{% trans "No photo attached." %}</div>
         <div class="od-booking-photo-preview" id="od-booking-photo-preview" hidden>
-          <button type="button" class="od-bk-photo-thumb od-bk-photo-thumb-lg" id="od-booking-photo-thumb">
-            <img id="od-booking-photo-img" src="" alt="{% trans 'Reference photo' %}">
-            <span>{% trans "View reference photo" %}</span>
-          </button>
+          <div class="od-photo-thumb-wrap">
+            <img class="od-photo-blurred" id="od-booking-photo-img" src="" alt="" loading="lazy" aria-hidden="true">
+            <div class="od-photo-actions" id="od-booking-photo-actions">
+              <button type="button" class="od-btn od-btn-ghost od-btn-sm" id="od-booking-photo-show">{% trans "Show photo" %}</button>
+              <button type="button" class="od-btn od-btn-ghost od-btn-sm" id="od-booking-photo-delete">{% trans "Delete photo" %}</button>
+              <button type="button" class="od-btn od-btn-danger od-btn-sm" id="od-booking-photo-block">{% trans "Block customer" %}</button>
+            </div>
+          </div>
         </div>
       </div>
       <div class="od-modal-footer od-modal-footer-split">

@@ -679,6 +679,58 @@ def send_owner_customer_cancelled_notification(booking):
     return email_utils.send_owner_customer_cancelled_email(booking)
 
 
+def resolve_services_from_booking(booking):
+    return [
+        item.service
+        for item in booking.booking_services.select_related("service").order_by("sort_order")
+    ]
+
+
+def delete_unverified_booking(booking):
+    """Remove an unverified booking and its reference photo file."""
+    if booking.reference_photo:
+        booking.reference_photo.delete(save=False)
+    booking.delete()
+
+
+def complete_email_verification(booking):
+    """
+    Promote UNVERIFIED booking to PENDING/APPROVED after email verification.
+    Returns (success: bool, reason: str).
+    """
+    if booking.status != Booking.Status.UNVERIFIED:
+        return False, "invalid_status"
+
+    if booking.verification_expires_at and booking.verification_expires_at < timezone.now():
+        return False, "expired"
+
+    services = resolve_services_from_booking(booking)
+    if not services:
+        return False, "no_services"
+
+    local_start = timezone.localtime(booking.start_at)
+    slot = is_slot_available(
+        booking.salon,
+        services,
+        local_start.date(),
+        local_start.strftime("%H:%M"),
+    )
+    if not slot:
+        return False, "slot_unavailable"
+
+    policy = getattr(booking.salon, "booking_policy", None)
+    status = Booking.Status.PENDING
+    if policy and policy.auto_approve_bookings:
+        status = Booking.Status.APPROVED
+
+    booking.status = status
+    booking.email_verified_at = timezone.now()
+    booking.email_verification_token = None
+    booking.verification_expires_at = None
+    booking.save()
+    return True, "verified"
+
+
 def log_booking_activity(booking, action, user=None, note=""):
     """Create a BookingActivityLog entry for a booking action."""
     BookingActivityLog.objects.create(

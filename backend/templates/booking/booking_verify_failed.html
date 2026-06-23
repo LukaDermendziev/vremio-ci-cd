@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Verification failed" %}{% endblock %}
+{% block body_class %}bk-page bk-success-page{% endblock %}
+
+{% block lang_switcher %}{% endblock %}
+
+{% block content %}
+<div class="bk-success-wrap">
+  <div class="bk-success-card bk-verify-failed-card">
+    <div class="bk-success-icon-wrap">
+      <i class="bi bi-exclamation-circle bk-verify-failed-icon" aria-hidden="true"></i>
+    </div>
+
+    <h1 class="bk-success-title">{% trans "Verification failed" %}</h1>
+
+    <p class="bk-success-msg">{{ message }}</p>
+
+    <a class="bk-btn-primary" href="{% url 'booking:home' %}">
+      {% trans "Back to home" %}
+    </a>
+  </div>
+</div>
+{% endblock %}

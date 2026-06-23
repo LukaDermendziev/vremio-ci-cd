@@ -18,9 +18,9 @@
     {% if booking.cancelled_by_customer %}
       <span class="od-badge od-badge-customer-cancel"><i class="bi bi-person-x"></i> {% trans "Cancelled by customer" %}</span>
     {% endif %}
-    {% if booking.reference_photo %}
-      <span class="od-badge od-badge-photo"><i class="bi bi-camera-fill"></i> {% trans "Photo uploaded" %}</span>
-    {% endif %}
+  {% if booking.reference_photo %}
+    <span class="od-badge od-badge-photo"><i class="bi bi-camera-fill"></i> {% trans "Photo attached" %}</span>
+  {% endif %}
   </div>
   <div class="od-bk-svc">
     {% for item in booking.booking_services.all %}
@@ -33,12 +33,7 @@
     <span>{{ booking.total_duration_minutes }} {% trans "min" %}</span>
     <span>{{ booking.customer.phone_number }}</span>
   </div>
-  {% if booking.reference_photo %}
-    <button type="button" class="od-bk-photo-thumb" data-photo-preview="{% url 'booking:owner_booking_photo' booking.id %}">
-      <img src="{% url 'booking:owner_booking_photo' booking.id %}" alt="{% trans 'Reference photo' %}" loading="lazy">
-      <span>{% trans "View reference photo" %}</span>
-    </button>
-  {% endif %}
+  {% include "booking/partials/owner_reference_photo_controls.html" %}
   {% if show_actions %}
   <div class="od-bk-actions od-bk-actions-live">
     {% if booking.status == "pending" %}

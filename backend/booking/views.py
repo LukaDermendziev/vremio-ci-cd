@@ -16,7 +16,8 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET, require_POST
 
-from .anti_abuse import DEVICE_COOKIE_MAX_AGE, DEVICE_COOKIE_NAME
+from .anti_abuse import DEVICE_COOKIE_MAX_AGE, DEVICE_COOKIE_NAME, normalize_phone
+from .email_utils import send_booking_verification_email
 from .forms import (
     BlockedDateForm,
     BookingPolicyForm,
@@ -31,6 +32,7 @@ from .models import (
     Booking,
     BookingActivityLog,
     Customer,
+    CustomerBlocklist,
     DateWorkingHoursOverride,
     Service,
     ServicePriceItem,
@@ -43,6 +45,8 @@ from .services import (
     build_prepared_message,
     build_service_schedule,
     can_customer_cancel_booking,
+    complete_email_verification,
+    delete_unverified_booking,
     ensure_default_working_hours,
     format_services_label,
     get_available_slots,
@@ -411,6 +415,55 @@ def owner_dashboard(request):
             booking.delete()
             messages.success(request, _("Booking deleted."))
 
+        elif action == "delete_reference_photo":
+            booking = get_object_or_404(
+                Booking, pk=request.POST.get("booking_id"), salon=salon
+            )
+            if booking.reference_photo:
+                booking.reference_photo.delete(save=False)
+                booking.reference_photo_status = Booking.ReferencePhotoStatus.REMOVED
+                booking.save(update_fields=["reference_photo", "reference_photo_status"])
+                log_booking_activity(
+                    booking,
+                    BookingActivityLog.Action.PHOTO_REMOVED,
+                    user=request.user,
+                )
+                messages.success(request, _("Photo removed."))
+            else:
+                messages.info(request, _("No photo attached to this booking."))
+
+        elif action == "block_customer":
+            booking = get_object_or_404(
+                Booking.objects.select_related("customer"),
+                pk=request.POST.get("booking_id"),
+                salon=salon,
+            )
+            customer = booking.customer
+            reason = (request.POST.get("block_reason") or "").strip()
+            phone = normalize_phone(customer.phone_number)
+            entry, created = CustomerBlocklist.objects.get_or_create(
+                salon=salon,
+                phone_number=phone,
+                defaults={
+                    "email": customer.email or "",
+                    "instagram_username": customer.instagram_username or "",
+                    "reason": reason,
+                    "is_active": True,
+                },
+            )
+            if not created:
+                entry.is_active = True
+                if reason:
+                    entry.reason = reason
+                entry.save()
+            log_booking_activity(
+                booking,
+                BookingActivityLog.Action.CUSTOMER_BLOCKED,
+                user=request.user,
+                note=reason or phone,
+            )
+            messages.success(request, _("Customer blocked."))
+
         elif action == "save_service":
             service = None
             service_id = request.POST.get("service_id")
@@ -553,7 +606,16 @@ def owner_dashboard(request):
         # AJAX path: return JSON so JS can update UI without reload
         if request.headers.get("X-Requested-With") == "fetch":
             booking_obj = None
-            if action in ("approve", "reject", "mark_completed", "mark_no_show", "cancel", "cancel_booking"):
+            if action in (
+                "approve",
+                "reject",
+                "mark_completed",
+                "mark_no_show",
+                "cancel",
+                "cancel_booking",
+                "delete_reference_photo",
+                "block_customer",
+            ):
                 try:
                     booking_obj = Booking.objects.get(
                         pk=request.POST.get("booking_id"), salon=salon
@@ -566,6 +628,7 @@ def owner_dashboard(request):
                     "booking_id": booking_obj.id,
                     "new_status": booking_obj.status,
                     "new_status_display": booking_obj.get_status_display(),
+                    "has_reference_photo": bool(booking_obj.reference_photo),
                 })
             # Fresh counts so the UI can update overview stats without reload
             today_date = timezone.localdate()
@@ -648,6 +711,8 @@ def owner_calendar_events(request):
     bookings = salon.bookings.filter(
         start_at__lt=range_end,
         end_at__gt=range_start,
+    ).exclude(
+        status=Booking.Status.UNVERIFIED,
     ).select_related("customer").prefetch_related("booking_services")
 
     for booking in bookings:
@@ -847,7 +912,14 @@ def owner_booking_photo(request, booking_id):
         content_type = "image/png"
     elif name.endswith(".webp"):
         content_type = "image/webp"
-    return FileResponse(photo_file, content_type=content_type)
+    return FileResponse(
+        photo_file,
+        content_type=content_type,
+        headers={
+            "Cache-Control": "private, no-store",
+            "X-Content-Type-Options": "nosniff",
+        },
+    )
 
 
 @login_required
@@ -1010,26 +1082,41 @@ def book_salon(request, salon_slug):
         form = BookingRequestForm(request.POST, request.FILES, salon=salon, request=request)
         if form.is_valid():
             booking = form.save()
-            log_booking_activity(
-                booking,
-                BookingActivityLog.Action.REQUESTED,
-                note="Online booking request",
-            )
-            sent, _reason = send_booking_notification(booking, "request_received")
-            if sent:
+            if getattr(form, "verification_required", False):
                 log_booking_activity(
                     booking,
-                    BookingActivityLog.Action.EMAIL_SENT,
-                    note="Request received email sent to customer",
+                    BookingActivityLog.Action.VERIFICATION_SENT,
+                    note="Email verification sent",
                 )
-            sent, _reason = send_owner_new_booking_notification(booking)
-            if sent:
+                sent, _reason = send_booking_verification_email(booking)
+                if sent:
+                    log_booking_activity(
+                        booking,
+                        BookingActivityLog.Action.EMAIL_SENT,
+                        note="Verification email sent to customer",
+                    )
+                response = redirect(reverse("booking:booking_verify_email_sent"))
+            else:
                 log_booking_activity(
                     booking,
-                    BookingActivityLog.Action.EMAIL_SENT,
-                    note="Owner notified of new request",
+                    BookingActivityLog.Action.REQUESTED,
+                    note="Online booking request",
                 )
-            response = redirect(reverse("booking:booking_success", args=[booking.pk]))
+                sent, _reason = send_booking_notification(booking, "request_received")
+                if sent:
+                    log_booking_activity(
+                        booking,
+                        BookingActivityLog.Action.EMAIL_SENT,
+                        note="Request received email sent to customer",
+                    )
+                sent, _reason = send_owner_new_booking_notification(booking)
+                if sent:
+                    log_booking_activity(
+                        booking,
+                        BookingActivityLog.Action.EMAIL_SENT,
+                        note="Owner notified of new request",
+                    )
+                response = redirect(reverse("booking:booking_success", args=[booking.pk]))
             return _ensure_booking_device_cookie(response, request)
     else:
         form = BookingRequestForm(salon=salon, request=request)
@@ -1059,10 +1146,115 @@ def booking_success(request, booking_id):
         Booking.objects.select_related("salon", "customer").prefetch_related("booking_services"),
         pk=booking_id,
     )
+    if booking.status == Booking.Status.UNVERIFIED:
+        raise Http404
 
     return render(
         request,
         "booking/booking_success.html",
+        {
+            "booking": booking,
+            "manage_url": get_manage_booking_url(booking),
+        },
+    )
+
+
+def booking_verify_email_sent(request):
+    return render(request, "booking/booking_verify_email_sent.html")
+
+
+def verify_booking_email(request, token):
+    booking = (
+        Booking.objects.filter(
+            email_verification_token=token,
+            status=Booking.Status.UNVERIFIED,
+        )
+        .select_related("salon", "customer")
+        .prefetch_related("booking_services")
+        .first()
+    )
+
+    if not booking:
+        return render(
+            request,
+            "booking/booking_verify_failed.html",
+            {
+                "reason": "invalid",
+                "message": _("This verification link is invalid or has already been used."),
+            },
+        )
+
+    if booking.verification_expires_at and booking.verification_expires_at < timezone.now():
+        log_booking_activity(
+            booking,
+            BookingActivityLog.Action.VERIFICATION_EXPIRED,
+            note="Verification link expired",
+        )
+        delete_unverified_booking(booking)
+        return render(
+            request,
+            "booking/booking_verify_failed.html",
+            {
+                "reason": "expired",
+                "message": _(
+                    "The verification link has expired. Please submit a new booking request."
+                ),
+            },
+        )
+
+    success, reason = complete_email_verification(booking)
+    if not success:
+        if reason == "slot_unavailable":
+            delete_unverified_booking(booking)
+            return render(
+                request,
+                "booking/booking_verify_failed.html",
+                {
+                    "reason": "slot_unavailable",
+                    "message": _(
+                        "The selected time slot is no longer available. Please choose another time."
+                    ),
+                },
+            )
+        delete_unverified_booking(booking)
+        return render(
+            request,
+            "booking/booking_verify_failed.html",
+            {
+                "reason": reason,
+                "message": _("Something went wrong. Please submit a new booking request."),
+            },
+        )
+
+    booking.refresh_from_db()
+    log_booking_activity(
+        booking,
+        BookingActivityLog.Action.EMAIL_VERIFIED,
+        note="Email verified — booking request submitted",
+    )
+    log_booking_activity(
+        booking,
+        BookingActivityLog.Action.REQUESTED,
+        note="Online booking request",
+    )
+    sent, _reason = send_booking_notification(booking, "request_received")
+    if sent:
+        log_booking_activity(
+            booking,
+            BookingActivityLog.Action.EMAIL_SENT,
+            note="Request received email sent to customer",
+        )
+    sent, _reason = send_owner_new_booking_notification(booking)
+    if sent:
+        log_booking_activity(
+            booking,
+            BookingActivityLog.Action.EMAIL_SENT,
+            note="Owner notified of new request",
+        )
+
+    return render(
+        request,
+        "booking/booking_verify_success.html",
         {
             "booking": booking,
             "manage_url": get_manage_booking_url(booking),

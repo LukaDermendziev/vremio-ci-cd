@@ -60,6 +60,7 @@ Customer side:
 * Upload reference photo if needed
 * Accept salon rules
 * Submit booking request
+* Verify email (when enabled) before the request is sent to the salon
 * See pending confirmation message
 
 Owner side:
@@ -95,6 +96,7 @@ Owner side:
 Appointments can have these statuses:
 
 * Pending
+* Awaiting email verification (online only — not shown to owner until verified)
 * Approved
 * Rejected
 * Cancelled
@@ -191,6 +193,30 @@ python manage.py check
 python manage.py test booking
 ```
 
+### Email verification (online bookings)
+
+When `email_verification_required` is enabled on the salon booking policy (default):
+
+1. Customer submits the booking form → booking is saved as **Unverified** (slot is **not** held).
+2. Customer receives a verification email with a time-limited link (default 60 minutes).
+3. After clicking the link, the system re-checks slot availability and promotes the booking to **Pending** (or **Approved** if auto-approve is on).
+4. Only then are the customer “request received” and owner notification emails sent.
+
+Run this periodically (cron / scheduled task) to remove expired unverified bookings and their photos:
+
+```bash
+python manage.py cleanup_unverified_bookings
+python manage.py cleanup_unverified_bookings --dry-run
+```
+
+Recommended interval: every 15–30 minutes.
+
+### Reference photo safety
+
+- Uploads are validated (format, size, EXIF strip) but **file validation is not content moderation**.
+- Owners see blurred thumbnails first and can reveal, delete, or block customers.
+- Optional hook: set `IMAGE_MODERATION_ENABLED=True` and `IMAGE_MODERATION_PROVIDER` for a future external moderation service (stub only today).
+
 ---
 
 ## Environment Variables
@@ -206,6 +232,8 @@ python manage.py test booking
 | `POSTGRES_*` | Alternative discrete PostgreSQL settings |
 | `EMAIL_*` | SMTP settings for production email |
 | `MEDIA_ROOT` | Optional override for uploaded photos path |
+| `IMAGE_MODERATION_ENABLED` | `True` to enable optional moderation hook (default `False`) |
+| `IMAGE_MODERATION_PROVIDER` | Provider name when moderation is enabled |
 
 Full list with examples: [`.env.example`](.env.example)
 

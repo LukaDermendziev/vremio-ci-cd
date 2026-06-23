@@ -44,6 +44,21 @@ class BookingSmokeTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
 
+    def test_first_visit_uses_macedonian_despite_english_browser(self):
+        response = self.client.get(
+            "/",
+            HTTP_ACCEPT_LANGUAGE="en-US,en;q=0.9",
+        )
+        self.assertContains(response, 'lang="mk"')
+
+    def test_explicit_english_cookie_is_respected(self):
+        self.client.cookies["django_language"] = "en"
+        response = self.client.get(
+            "/",
+            HTTP_ACCEPT_LANGUAGE="en-US,en;q=0.9",
+        )
+        self.assertContains(response, 'lang="en"')
+
 
 class BookingViewTests(TestCase):
     def setUp(self):
@@ -63,7 +78,7 @@ class BookingViewTests(TestCase):
             duration_minutes=120,
             base_price=1000,
         )
-        BookingPolicy.objects.create(salon=self.salon)
+        BookingPolicy.objects.create(salon=self.salon, email_verification_required=False)
 
     def test_booking_page_loads_step_flow(self):
         response = self.client.get("/book/fancy-fingers/request/")
@@ -209,6 +224,7 @@ class AvailabilityTests(TestCase):
             pending_holds_slot=True,
             slot_interval_minutes=30,
             buffer_minutes_between_bookings=0,
+            email_verification_required=False,
         )
         self.selected_date = timezone.localdate() + timedelta(days=7)
         self.now = timezone.make_aware(
@@ -516,8 +532,8 @@ class BetaReadinessTests(TestCase):
         self.salon_b = Salon.objects.create(
             owner=self.owner_b, name="Salon B", slug="salon-b"
         )
-        BookingPolicy.objects.create(salon=self.salon_a, minimum_notice_days=0)
-        BookingPolicy.objects.create(salon=self.salon_b, minimum_notice_days=0)
+        BookingPolicy.objects.create(salon=self.salon_a, minimum_notice_days=0, email_verification_required=False)
+        BookingPolicy.objects.create(salon=self.salon_b, minimum_notice_days=0, email_verification_required=False)
         self.service_a = Service.objects.create(
             salon=self.salon_a, name="Manicure", duration_minutes=120, base_price=600
         )
@@ -999,6 +1015,7 @@ class AntiAbuseTests(TestCase):
             booking_rate_limit_per_email_per_day=3,
             booking_rate_limit_per_phone_per_day=3,
             max_reference_photo_size_mb=5,
+            email_verification_required=False,
         )
         self.service = Service.objects.create(
             salon=self.salon,
@@ -1227,7 +1244,12 @@ class PhotoValidationTests(TestCase):
         User = get_user_model()
         self.owner = User.objects.create_user(username="owner", password="pass")
         self.salon = Salon.objects.create(owner=self.owner, name="Salon A", slug="salon-a")
-        BookingPolicy.objects.create(salon=self.salon, minimum_notice_days=0, max_reference_photo_size_mb=5)
+        BookingPolicy.objects.create(
+            salon=self.salon,
+            minimum_notice_days=0,
+            max_reference_photo_size_mb=5,
+            email_verification_required=False,
+        )
         self.service = Service.objects.create(
             salon=self.salon,
             name="Manicure",
@@ -1396,6 +1418,7 @@ class MultiServiceBookingTests(TestCase):
             salon=self.salon,
             minimum_notice_days=0,
             service_gap_minutes=30,
+            email_verification_required=False,
         )
         self.manicure = Service.objects.create(
             salon=self.salon,
@@ -1741,3 +1764,305 @@ class MultiServiceBookingTests(TestCase):
         self.assertIn("Manicure", text)
         self.assertIn("Pedicure", text)
         self.assertIn("•", text)
+
+
+class EmailVerificationTests(TestCase):
+    def setUp(self):
+        cache.clear()
+        User = get_user_model()
+        self.owner = User.objects.create_user(
+            username="owner_verify",
+            email="owner_verify@example.com",
+            password="pass",
+        )
+        self.salon = Salon.objects.create(owner=self.owner, name="Salon V", slug="salon-v")
+        self.policy = BookingPolicy.objects.create(
+            salon=self.salon,
+            minimum_notice_days=0,
+            email_verification_required=True,
+            email_verification_expiration_minutes=60,
+        )
+        self.service = Service.objects.create(
+            salon=self.salon,
+            name="Manicure",
+            duration_minutes=120,
+            base_price=600,
+        )
+        for weekday in range(6):
+            WorkingHours.objects.create(
+                salon=self.salon,
+                weekday=weekday,
+                is_working_day=True,
+                start_time=time(8, 0),
+                end_time=time(18, 0),
+            )
+
+    def _future_date(self):
+        selected = timezone.localdate() + timedelta(days=20)
+        while selected.weekday() == WorkingHours.Weekday.SUNDAY:
+            selected += timedelta(days=1)
+        return selected
+
+    def _booking_post_data(self, **extra):
+        data = {
+            "service": self.service.id,
+            "date": self._future_date().isoformat(),
+            "start_time": "08:00",
+            "full_name": "Verify Customer",
+            "phone_number": "070555111",
+            "instagram_username": "verify_me",
+            "email": "verify@example.com",
+            "preferred_contact_method": Customer.PreferredContactMethod.VIBER,
+            "rules_accepted": "on",
+        }
+        data.update(extra)
+        return data
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_post_sends_verification_email_not_owner_email(self):
+        from django.core import mail
+
+        response = self.client.post("/book/salon-v/request/", self._booking_post_data())
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse("booking:booking_verify_email_sent"))
+        booking = Booking.objects.get(customer__email="verify@example.com")
+        self.assertEqual(booking.status, Booking.Status.UNVERIFIED)
+        customer_messages = [m for m in mail.outbox if "verify@example.com" in m.to]
+        owner_messages = [m for m in mail.outbox if "owner_verify@example.com" in m.to]
+        self.assertEqual(len(customer_messages), 1)
+        self.assertIn("verify", customer_messages[0].body.lower())
+        self.assertEqual(len(owner_messages), 0)
+
+    def test_unverified_not_in_owner_pending(self):
+        self.client.post("/book/salon-v/request/", self._booking_post_data())
+        self.client.login(username="owner_verify", password="pass")
+        response = self.client.get("/owner/dashboard/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            Booking.objects.filter(salon=self.salon, status=Booking.Status.PENDING).count(),
+            0,
+        )
+
+    def test_unverified_does_not_block_slots(self):
+        self.client.post("/book/salon-v/request/", self._booking_post_data())
+        slots = get_available_slots(self.salon, [self.service], self._future_date())
+        values = [slot["value"] for slot in slots]
+        self.assertIn("08:00", values)
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_valid_token_promotes_to_pending_and_sends_emails(self):
+        from django.core import mail
+
+        self.client.post("/book/salon-v/request/", self._booking_post_data(phone_number="070555112"))
+        booking = Booking.objects.get(customer__phone_number="070555112")
+        token = booking.email_verification_token
+        self.assertIsNotNone(token)
+        response = self.client.get(reverse("booking:verify_booking_email", args=[token]))
+        self.assertEqual(response.status_code, 200)
+        booking.refresh_from_db()
+        self.assertEqual(booking.status, Booking.Status.PENDING)
+        self.assertIsNotNone(booking.email_verified_at)
+        self.assertIsNone(booking.email_verification_token)
+        customer_messages = [m for m in mail.outbox if "verify@example.com" in m.to]
+        self.assertGreaterEqual(len(customer_messages), 2)
+        owner_messages = [m for m in mail.outbox if "owner_verify@example.com" in m.to]
+        self.assertEqual(len(owner_messages), 1)
+
+    def test_expired_token_shows_message_and_removes_booking(self):
+        self.client.post("/book/salon-v/request/", self._booking_post_data(phone_number="070555113"))
+        booking = Booking.objects.get(customer__phone_number="070555113")
+        token = booking.email_verification_token
+        Booking.objects.filter(pk=booking.pk).update(
+            verification_expires_at=timezone.now() - timedelta(minutes=1)
+        )
+        response = self.client.get(reverse("booking:verify_booking_email", args=[token]))
+        self.assertContains(
+            response,
+            _("The verification link has expired. Please submit a new booking request."),
+        )
+        self.assertFalse(Booking.objects.filter(pk=booking.pk).exists())
+
+    def test_token_after_slot_taken_shows_unavailable_message(self):
+        self.client.post("/book/salon-v/request/", self._booking_post_data(phone_number="070555114"))
+        booking = Booking.objects.get(customer__phone_number="070555114")
+        token = booking.email_verification_token
+        other = Customer.objects.create(
+            salon=self.salon,
+            full_name="Other",
+            phone_number="070555115",
+            instagram_username="other",
+        )
+        start = booking.start_at
+        Booking.objects.create(
+            salon=self.salon,
+            customer=other,
+            status=Booking.Status.APPROVED,
+            source=Booking.Source.OWNER_MANUAL,
+            start_at=start,
+            end_at=start + timedelta(minutes=120),
+            total_duration_minutes=120,
+            rules_accepted=True,
+        )
+        response = self.client.get(reverse("booking:verify_booking_email", args=[token]))
+        self.assertContains(
+            response,
+            _("The selected time slot is no longer available. Please choose another time."),
+        )
+        self.assertFalse(Booking.objects.filter(email_verification_token=token).exists())
+
+    def test_verification_token_is_uuid_not_sequential_id(self):
+        self.client.post("/book/salon-v/request/", self._booking_post_data(phone_number="070555116"))
+        booking = Booking.objects.get(customer__phone_number="070555116")
+        self.assertIsNotNone(booking.email_verification_token)
+        self.assertNotEqual(str(booking.email_verification_token), str(booking.pk))
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_photo_preserved_after_successful_verify(self):
+        data = self._booking_post_data(phone_number="070555117")
+        data["reference_photo"] = _make_test_image("JPEG", "nail.jpg")
+        self.client.post("/book/salon-v/request/", data)
+        booking = Booking.objects.get(customer__phone_number="070555117")
+        photo_name = booking.reference_photo.name
+        self.assertTrue(photo_name)
+        token = booking.email_verification_token
+        self.client.get(reverse("booking:verify_booking_email", args=[token]))
+        booking.refresh_from_db()
+        self.assertEqual(booking.reference_photo.name, photo_name)
+
+    def test_cleanup_command_removes_expired_unverified_and_photo(self):
+        data = self._booking_post_data(phone_number="070555118")
+        data["reference_photo"] = _make_test_image("JPEG", "cleanup.jpg")
+        self.client.post("/book/salon-v/request/", data)
+        booking = Booking.objects.get(customer__phone_number="070555118")
+        photo_name = booking.reference_photo.name
+        Booking.objects.filter(pk=booking.pk).update(
+            verification_expires_at=timezone.now() - timedelta(minutes=5)
+        )
+        call_command("cleanup_unverified_bookings")
+        self.assertFalse(Booking.objects.filter(pk=booking.pk).exists())
+        from django.core.files.storage import default_storage
+
+        self.assertFalse(default_storage.exists(photo_name))
+
+    def test_unverified_counts_toward_pending_limit(self):
+        self.client.post("/book/salon-v/request/", self._booking_post_data(phone_number="070555119"))
+        response = self.client.post(
+            "/book/salon-v/request/",
+            self._booking_post_data(phone_number="070555119", email="verify2@example.com"),
+        )
+        self.assertEqual(response.status_code, 200)
+
+
+class PhotoSecurityTests(TestCase):
+    def setUp(self):
+        cache.clear()
+        User = get_user_model()
+        self.owner_a = User.objects.create_user(username="owner_a_sec", password="pass")
+        self.owner_b = User.objects.create_user(username="owner_b_sec", password="pass")
+        self.salon_a = Salon.objects.create(owner=self.owner_a, name="Salon A", slug="salon-a-sec")
+        self.salon_b = Salon.objects.create(owner=self.owner_b, name="Salon B", slug="salon-b-sec")
+        BookingPolicy.objects.create(
+            salon=self.salon_a,
+            minimum_notice_days=0,
+            email_verification_required=False,
+        )
+        self.service = Service.objects.create(
+            salon=self.salon_a,
+            name="Manicure",
+            duration_minutes=120,
+            base_price=600,
+        )
+        self.customer = Customer.objects.create(
+            salon=self.salon_a,
+            full_name="Photo Customer",
+            phone_number="070444111",
+            instagram_username="photo_sec",
+            email="photo_sec@example.com",
+        )
+        selected = timezone.localdate() + timedelta(days=20)
+        if selected.weekday() == WorkingHours.Weekday.SUNDAY:
+            selected += timedelta(days=1)
+        start = timezone.make_aware(
+            datetime.combine(selected, time(10, 0)),
+            timezone.get_current_timezone(),
+        )
+        self.booking = Booking.objects.create(
+            salon=self.salon_a,
+            customer=self.customer,
+            status=Booking.Status.PENDING,
+            source=Booking.Source.ONLINE,
+            start_at=start,
+            end_at=start + timedelta(minutes=120),
+            total_duration_minutes=120,
+            rules_accepted=True,
+        )
+        BookingService.objects.create(
+            booking=self.booking,
+            service=self.service,
+            service_name_snapshot="Manicure",
+        )
+        self.booking.reference_photo.save(
+            "test.jpg",
+            _make_test_image("JPEG", "test.jpg"),
+            save=True,
+        )
+
+    def test_anonymous_photo_request_redirects_or_forbidden(self):
+        response = self.client.get(
+            reverse("booking:owner_booking_photo", args=[self.booking.id])
+        )
+        self.assertIn(response.status_code, (302, 403))
+
+    def test_cross_salon_owner_gets_404(self):
+        self.client.login(username="owner_b_sec", password="pass")
+        response = self.client.get(
+            reverse("booking:owner_booking_photo", args=[self.booking.id])
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_owner_can_view_own_booking_photo_with_security_headers(self):
+        self.client.login(username="owner_a_sec", password="pass")
+        response = self.client.get(
+            reverse("booking:owner_booking_photo", args=[self.booking.id])
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers.get("Cache-Control"), "private, no-store")
+        self.assertEqual(response.headers.get("X-Content-Type-Options"), "nosniff")
+
+    def test_owner_delete_photo_clears_field_and_file(self):
+        from django.core.files.storage import default_storage
+
+        photo_name = self.booking.reference_photo.name
+        self.client.login(username="owner_a_sec", password="pass")
+        response = self.client.post(
+            "/owner/dashboard/",
+            {
+                "action": "delete_reference_photo",
+                "booking_id": self.booking.id,
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        self.booking.refresh_from_db()
+        self.assertFalse(self.booking.reference_photo)
+        self.assertEqual(
+            self.booking.reference_photo_status,
+            Booking.ReferencePhotoStatus.REMOVED,
+        )
+        self.assertFalse(default_storage.exists(photo_name))
+
+    def test_manage_page_does_not_expose_photo_url(self):
+        response = self.client.get(
+            reverse("booking:manage_booking", args=[self.booking.manage_token])
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "owner/booking/")
+        self.assertNotContains(response, "booking_photos")
+
+    def test_booking_form_shows_upload_warning(self):
+        response = self.client.get("/book/salon-a-sec/request/")
+        self.assertContains(
+            response,
+            _(
+                "Upload only a photo related to the service. Inappropriate images will be removed and the customer may be blocked."
+            ),
+        )

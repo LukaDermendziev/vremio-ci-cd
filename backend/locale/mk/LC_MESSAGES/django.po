@@ -199,6 +199,9 @@ msgstr "Слободни термини"
 msgid "Available variables:"
 msgstr "Достапни променливи:"
 
+msgid "Awaiting email verification"
+msgstr "Се чека email потврда"
+
 msgid "Back"
 msgstr "Назад"
 
@@ -224,6 +227,9 @@ msgstr ""
 
 msgid "Block"
 msgstr "Блокирај"
+
+msgid "Block customer"
+msgstr "Блокирај клиент"
 
 msgid "Block day"
 msgstr "Блокирај ден"
@@ -365,6 +371,9 @@ msgstr "Повикај"
 msgid "Cancel"
 msgstr "Откажи"
 
+msgid "Cancel appointment"
+msgstr "Откажи термин"
+
 msgid "Cancel appointment?"
 msgstr "Откажи термин?"
 
@@ -409,6 +418,9 @@ msgstr "Промени лозинка"
 
 msgid "Change password"
 msgstr "Промени лозинка"
+
+msgid "Check your email"
+msgstr "Проверете го вашиот email"
 
 msgid "Check your inbox"
 msgstr "Проверете ја вашата поштенска сандуче"
@@ -471,6 +483,9 @@ msgstr "Завршено"
 
 msgid "Completed this week"
 msgstr "Завршени оваа недела"
+
+msgid "Confirm your email to complete your booking request"
+msgstr "Потврдете го вашиот email за да го завршите барањето за термин"
 
 msgid "Contact"
 msgstr "Контакт"
@@ -550,6 +565,9 @@ msgstr "Декември"
 msgid "Delete"
 msgstr "Избриши"
 
+msgid "Delete photo"
+msgstr "Избриши слика"
+
 msgid "Delete service"
 msgstr "Избриши услуга"
 
@@ -623,6 +641,9 @@ msgstr "Email не можеше да се испрати. Подготвенат
 
 msgid "Email sent"
 msgstr "Е-пошта испратена"
+
+msgid "Email verification link expiry (minutes)"
+msgstr "Важност на линкот за потврда (минути)"
 
 msgid "Enable honeypot protection"
 msgstr "Honeypot заштита"
@@ -876,6 +897,12 @@ msgstr ""
 "Ако не сте го побарале ова, игнорирајте ја пораката — вашата лозинка нема да"
 " се промени."
 
+msgid ""
+"If you do not see the email within a few minutes, check your spam or junk "
+"folder."
+msgstr ""
+"Ако не ја гледате пораката во неколку минути, проверете ја папката за спам."
+
 msgid "In person"
 msgstr "Лично"
 
@@ -1053,6 +1080,9 @@ msgstr "Без пораки. Без чекање. Изберете услуга,
 msgid "No photo attached"
 msgstr "Нема прикачена слика"
 
+msgid "No photo attached."
+msgstr "Нема прикачена слика."
+
 msgid "No price items yet. Add the first one below."
 msgstr "Сè уште нема ставки. Додадете ја првата подолу."
 
@@ -1182,11 +1212,17 @@ msgstr "Телефонски повик"
 msgid "Phone number"
 msgstr "Телефонски број"
 
+msgid "Photo attached"
+msgstr "Има прикачена слика"
+
 msgid "Photo needed"
 msgstr "Потребна фотографија"
 
 msgid "Photo recommended"
 msgstr "Препорачана е фотографија"
+
+msgid "Photo removed."
+msgstr "Сликата е отстранета."
 
 msgid "Photo req."
 msgstr "Фото?"
@@ -1328,6 +1364,9 @@ msgstr "Барањето е испратено!"
 
 msgid "Requested"
 msgstr "Побарано"
+
+msgid "Require email verification for online bookings"
+msgstr "Задолжителна email потврда за онлајн резервации"
 
 msgid "Reset Link Sent"
 msgstr "Линкот е испратен"
@@ -1472,6 +1511,9 @@ msgstr "Постави нова лозинка"
 msgid "Set password"
 msgstr "Постави лозинка"
 
+msgid "Show photo"
+msgstr "Прикажи слика"
+
 msgid "Shown on the booking form. Each line is a separate rule."
 msgstr ""
 "Се прикажуваат на формата за резервација. Секој ред е посебно правило."
@@ -1493,6 +1535,9 @@ msgid ""
 "time."
 msgstr ""
 "Нешто тргна наопаку. Проверете ги податоците и изберете слободен термин."
+
+msgid "Something went wrong. Please submit a new booking request."
+msgstr "Нешто тргна наопаку. Ве молиме испратете ново барање за термин."
 
 msgid "Something went wrong. Please try again."
 msgstr "Нешто тргна наопаку. Обидете се повторно."
@@ -1567,8 +1612,18 @@ msgstr ""
 "Салонот ќе ве контактира за потврда преку вашиот претпочитан начин на "
 "контакт."
 
+msgid ""
+"The selected time slot is no longer available. Please choose another time."
+msgstr ""
+"Избраниот термин повеќе не е достапен. Ве молиме изберете друг термин."
+
 msgid "The time %(time)s is no longer available. Please select another slot."
 msgstr "Терминот %(time)s веќе не е достапен. Изберете друг."
+
+msgid ""
+"The verification link has expired. Please submit a new booking request."
+msgstr ""
+"Линкот за потврда е истечен. Ве молиме испратете ново барање за термин."
 
 msgid ""
 "There is not enough available time for the selected services together. "
@@ -1633,6 +1688,9 @@ msgstr "Овој линк истекува за 24 часа."
 msgid "This reset link is invalid or has expired."
 msgstr "Овој линк за ресетирање е неважечки или истечен."
 
+msgid "This verification link is invalid or has already been used."
+msgstr "Овој линк за потврда е неважечки или веќе е искористен."
+
 msgid "Thursday"
 msgstr "Четврток"
 
@@ -1647,6 +1705,9 @@ msgstr "Денес"
 
 msgid "Today's appointments"
 msgstr "Денешни термини"
+
+msgid "Total duration: %(minutes)s min"
+msgstr "Вкупно време: %(minutes)s мин"
 
 msgid "Total revenue"
 msgstr "Вкупен приход"
@@ -1684,6 +1745,13 @@ msgstr "Ажурирај лозинка"
 msgid "Update your account password."
 msgstr "Ажурирајте ја лозинката на вашата сметка."
 
+msgid ""
+"Upload only a photo related to the service. Inappropriate images will be "
+"removed and the customer may be blocked."
+msgstr ""
+"Прикачете само слика поврзана со услугата. Непримерни слики ќе бидат "
+"отстранети и клиентот може да биде блокиран."
+
 msgid "Upload your logo here"
 msgstr "Поставете го вашиот лого тука"
 
@@ -1692,6 +1760,9 @@ msgstr "Користете дд/мм/гггг"
 
 msgid "Username"
 msgstr "Корисничко име"
+
+msgid "Verification failed"
+msgstr "Потврдата не успеа"
 
 msgid "Via"
 msgstr "Преку"
@@ -1731,6 +1802,12 @@ msgid ""
 msgstr ""
 "Испративме email за потврда со линк за преглед и управување со вашиот "
 "термин."
+
+msgid ""
+"We sent you a verification link. Click it to complete your booking request."
+msgstr ""
+"Ви испративме линк за потврда. Кликнете на него за да го завршите барањето "
+"за термин."
 
 msgid "Wednesday"
 msgstr "Среда"
@@ -1823,6 +1900,13 @@ msgstr "Вашиот термин е потврден — %(salon)s"
 
 msgid "Your appointment is confirmed."
 msgstr "Вашиот термин е потврден."
+
+msgid ""
+"Your appointment is not confirmed yet. The salon will review your request "
+"after you verify your email."
+msgstr ""
+"Терминот сè уште не е потврден. Салонот ќе го прегледа барањето откако ќе ја"
+" потврдите email адресата."
 
 msgid "Your appointment request was declined"
 msgstr "Вашето барање за термин е одбиено"

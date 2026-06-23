@@ -1,0 +1,30 @@
+<script>
+(function () {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  const colors = ['#C4878A', '#EDE5E1', '#F5ECEB', '#9B6B72', '#D4A9AB', '#FDE8E8'];
+  const wrap = document.getElementById('bk-check-wrap');
+  if (!wrap) return;
+
+  for (let i = 0; i < 38; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'bk-confetti-dot';
+    const size = 4 + Math.random() * 6;
+    const tx   = (Math.random() - 0.5) * 200;
+    const ty   = -60 - Math.random() * 130;
+    dot.style.cssText = [
+      'left:50%',
+      'top:50%',
+      `width:${size}px`,
+      `height:${size}px`,
+      `background:${colors[Math.floor(Math.random() * colors.length)]}`,
+      `border-radius:${Math.random() > 0.5 ? '50%' : '3px'}`,
+      `animation-delay:${(0.5 + Math.random() * 0.5).toFixed(2)}s`,
+      `--tx:${tx.toFixed(0)}px`,
+      `--ty:${ty.toFixed(0)}px`,
+    ].join(';');
+    wrap.appendChild(dot);
+    setTimeout(() => dot.remove(), 2800);
+  }
+})();
+</script>

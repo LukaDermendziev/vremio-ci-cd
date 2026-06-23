@@ -1,0 +1,1 @@
+{% load i18n %}{% trans "Confirm your email to complete your booking request" %}
