@@ -28,6 +28,7 @@ from .models import (
     WorkingHours,
 )
 from .services import (
+    build_contact_links,
     build_prepared_message,
     build_service_schedule,
     calculate_combined_duration_minutes,
@@ -1406,6 +1407,20 @@ class PreparedMessageDateTests(TestCase):
             message = build_prepared_message(self.booking, "approved")
         self.assertIn("July", message)
         self.assertNotIn("Јули", message)
+
+
+class ContactLinksTests(TestCase):
+    def test_viber_link_uses_draft_parameter(self):
+        links = build_contact_links("070123456", "Здраво Maria")
+        self.assertIn("draft=", links["viber"])
+        self.assertNotIn("&text=", links["viber"])
+        self.assertIn("%2B38970123456", links["viber"])
+
+    def test_whatsapp_link_uses_api_send_with_prefilled_text(self):
+        links = build_contact_links("070123456", "Hello there")
+        self.assertTrue(links["whatsapp"].startswith("https://api.whatsapp.com/send?"))
+        self.assertIn("phone=38970123456", links["whatsapp"])
+        self.assertIn("text=Hello", links["whatsapp"])
 
 
 class MultiServiceBookingTests(TestCase):

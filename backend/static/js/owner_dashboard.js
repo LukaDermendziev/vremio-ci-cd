@@ -245,10 +245,14 @@ function initOwnerDashboard(config) {
 
   function openModal(id) {
     document.getElementById(id)?.classList.add("open");
+    document.body.classList.add("od-modal-open");
   }
 
   function closeModal(id) {
     document.getElementById(id)?.classList.remove("open");
+    if (!document.querySelector(".od-modal-overlay.open")) {
+      document.body.classList.remove("od-modal-open");
+    }
   }
 
   function showToast(msg, isError = false) {
@@ -268,6 +272,7 @@ function initOwnerDashboard(config) {
 
   function closeAllModals() {
     document.querySelectorAll(".od-modal-overlay.open").forEach(m => m.classList.remove("open"));
+    document.body.classList.remove("od-modal-open");
   }
 
   document.querySelectorAll("[data-close-modal]").forEach(btn => {
@@ -291,20 +296,41 @@ function initOwnerDashboard(config) {
   }
 
   // ── Mobile sidebar + bottom nav ──────────────────────────────────────────
+  let savedScrollY = 0;
+
   const sidebar    = document.querySelector(".od-sidebar");
   const backdrop   = document.getElementById("od-backdrop");
   const hamClose   = document.getElementById("od-ham-close");
   const bnMoreBtn  = document.getElementById("od-bn-more");
 
+  function lockPageScroll() {
+    savedScrollY = window.scrollY || document.documentElement.scrollTop || 0;
+    document.body.style.top = `-${savedScrollY}px`;
+    document.body.style.position = "fixed";
+    document.body.style.width = "100%";
+  }
+
+  function unlockPageScroll() {
+    document.body.style.position = "";
+    document.body.style.top = "";
+    document.body.style.width = "";
+    window.scrollTo(0, savedScrollY);
+  }
+
   function openSidebar() {
+    if (sidebar?.classList.contains("is-open")) return;
+    lockPageScroll();
     sidebar?.classList.add("is-open");
     backdrop?.classList.add("is-visible");
-    document.body.style.overflow = "hidden";
+    document.body.classList.add("od-sidebar-open");
   }
+
   function closeSidebar() {
+    if (!sidebar?.classList.contains("is-open")) return;
     sidebar?.classList.remove("is-open");
     backdrop?.classList.remove("is-visible");
-    document.body.style.overflow = "";
+    document.body.classList.remove("od-sidebar-open");
+    unlockPageScroll();
   }
 
   hamClose?.addEventListener("click", closeSidebar);
@@ -874,6 +900,65 @@ function initOwnerDashboard(config) {
     toast._t = setTimeout(() => toast.classList.remove("od-toast-show"), 3200);
   }
 
+  async function copyToClipboard(text) {
+    if (!text) return false;
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch (_) {
+      /* fall through to execCommand */
+    }
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.left = "-9999px";
+    ta.style.top = "0";
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+    let ok = false;
+    try {
+      ok = document.execCommand("copy");
+    } catch (_) {
+      ok = false;
+    }
+    document.body.removeChild(ta);
+    return ok;
+  }
+
+  function appendMessageLink(container, href, label, className) {
+    if (!href) return;
+    const a = document.createElement("a");
+    a.className = `od-btn ${className}`;
+    a.href = href;
+    a.textContent = label;
+    container.appendChild(a);
+  }
+
+  function renderMessageLinks(data) {
+    msgLinks.innerHTML = "";
+    appendMessageLink(msgLinks, data.links.viber, t("viber", "Viber"), "od-btn-primary");
+    appendMessageLink(msgLinks, data.links.whatsapp, t("whatsapp", "WhatsApp"), "od-btn-primary");
+    appendMessageLink(msgLinks, data.links.sms, t("sms", "SMS"), "od-btn-ghost");
+    appendMessageLink(msgLinks, data.links.tel, t("call", "Call"), "od-btn-ghost");
+    const copyBtn = document.createElement("button");
+    copyBtn.type = "button";
+    copyBtn.className = "od-btn od-btn-ghost";
+    copyBtn.textContent = t("copyMessage", "Copy message");
+    copyBtn.addEventListener("click", async () => {
+      const ok = await copyToClipboard(data.message);
+      showToast(
+        ok ? t("messageCopied", "Message copied.") : t("copyFailed", "Could not copy. Long-press the message to copy."),
+        ok ? "success" : "error",
+      );
+    });
+    msgLinks.appendChild(copyBtn);
+  }
+
   function bindBkAction(btn) {
     btn.addEventListener("click", async () => {
       const action = btn.dataset.bkAction;
@@ -908,11 +993,8 @@ function initOwnerDashboard(config) {
       const existing = document.querySelector(`[data-message-booking="${id}"]`);
       if (existing && existing !== btn) { existing.click(); return; }
       // Fallback: just open the modal directly
-      const msgModal = document.getElementById("od-message-modal");
-      if (msgModal) {
-        msgModal.querySelector?.('[name="booking_id"]') && (msgModal.querySelector('[name="booking_id"]').value = id);
-        openModal("od-message-modal");
-      }
+      const msgModal = document.getElementById("od-msg-modal");
+      if (msgModal) openModal("od-msg-modal");
     });
   }
 
@@ -1688,13 +1770,7 @@ function initOwnerDashboard(config) {
       const res = await fetch(`${config.messageUrlBase}${id}/message/?type=${type}`);
       const data = await res.json();
       msgText.textContent = data.message;
-      msgLinks.innerHTML = `
-        <a class="od-btn od-btn-primary" href="${data.links.viber}" target="_blank" rel="noopener">${t("viber", "Viber")}</a>
-        <a class="od-btn od-btn-primary" href="${data.links.whatsapp}" target="_blank" rel="noopener">${t("whatsapp", "WhatsApp")}</a>
-        <a class="od-btn od-btn-ghost" href="${data.links.sms}">${t("sms", "SMS")}</a>
-        <a class="od-btn od-btn-ghost" href="${data.links.tel}">${t("call", "Call")}</a>
-        <button type="button" class="od-btn od-btn-ghost" id="od-copy-msg">${t("copyMessage", "Copy message")}</button>`;
-      document.getElementById("od-copy-msg")?.addEventListener("click", () => navigator.clipboard.writeText(data.message));
+      renderMessageLinks(data);
       openModal("od-msg-modal");
     });
   });

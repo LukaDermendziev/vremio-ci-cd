@@ -237,6 +237,9 @@ msgstr "Block day"
 msgid "Block full day"
 msgstr "Block full day"
 
+msgid "Block this customer from booking?"
+msgstr "Block this customer from booking?"
+
 msgid "Block time"
 msgstr "Block time"
 
@@ -496,6 +499,9 @@ msgstr "Copy message"
 msgid "Could not add unavailable time block."
 msgstr "Could not add unavailable time block."
 
+msgid "Could not copy. Long-press the message to copy."
+msgstr "Could not copy. Long-press the message to copy."
+
 msgid "Could not load times. Please try again."
 msgstr "Could not load times. Please try again."
 
@@ -516,6 +522,9 @@ msgstr "Could not save working hours. Check the times."
 
 msgid "Customer added successfully."
 msgstr "Customer added successfully."
+
+msgid "Customer blocked."
+msgstr "Customer blocked."
 
 msgid "Customer cancellation notice (hours)"
 msgstr "Customer cancellation notice (hours)"
@@ -570,6 +579,9 @@ msgstr "Delete this booking permanently?"
 
 msgid "Delete this customer?"
 msgstr "Delete this customer?"
+
+msgid "Delete this reference photo?"
+msgstr "Delete this reference photo?"
 
 msgid "Delete this service?"
 msgstr "Delete this service?"
@@ -984,6 +996,9 @@ msgstr "Maximum booking window days"
 
 msgid "May"
 msgstr "May"
+
+msgid "Message copied."
+msgstr "Message copied."
 
 msgid "Messenger"
 msgstr "Messenger"

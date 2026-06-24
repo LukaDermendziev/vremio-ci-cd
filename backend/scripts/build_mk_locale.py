@@ -355,6 +355,8 @@ TRANSLATIONS = {
     "%(count)s appointments": "%(count)s термини",
     "Cannot add bookings in the past.": "Не може да се додаваат термини во минатото.",
     "Copy message": "Копирај порака",
+    "Message copied.": "Пораката е копирана.",
+    "Could not copy. Long-press the message to copy.": "Не можеше да се копира. Долго притиснете на пораката за да ја копирате.",
     "Call": "Повикај",
     "Save": "Зачувај",
     "Price": "Цена",

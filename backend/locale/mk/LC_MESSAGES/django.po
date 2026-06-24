@@ -237,6 +237,9 @@ msgstr "Блокирај ден"
 msgid "Block full day"
 msgstr "Блокирај цел ден"
 
+msgid "Block this customer from booking?"
+msgstr "Дали да се блокира овој клиент од закажување?"
+
 msgid "Block time"
 msgstr "Блокирај време"
 
@@ -502,6 +505,10 @@ msgstr "Копирај порака"
 msgid "Could not add unavailable time block."
 msgstr "Не можеше да се додаде блокот."
 
+msgid "Could not copy. Long-press the message to copy."
+msgstr ""
+"Не можеше да се копира. Долго притиснете на пораката за да ја копирате."
+
 msgid "Could not load times. Please try again."
 msgstr "Не можеше да се вчитаат термините. Обидете се повторно."
 
@@ -522,6 +529,9 @@ msgstr "Не можеше да се зачува работното време. 
 
 msgid "Customer added successfully."
 msgstr "Клиентот е успешно додаден."
+
+msgid "Customer blocked."
+msgstr "Клиентот е блокиран."
 
 msgid "Customer cancellation notice (hours)"
 msgstr "Одредба за откажување од клиент (часови)"
@@ -576,6 +586,9 @@ msgstr "Трајно избриши го терминот?"
 
 msgid "Delete this customer?"
 msgstr "Избриши го клиентот?"
+
+msgid "Delete this reference photo?"
+msgstr "Дали да се избрише референтната слика?"
 
 msgid "Delete this service?"
 msgstr "Избриши ја услугата?"
@@ -989,6 +1002,9 @@ msgstr "Максимален прозорец (дена)"
 
 msgid "May"
 msgstr "Мај"
+
+msgid "Message copied."
+msgstr "Пораката е копирана."
 
 msgid "Messenger"
 msgstr "Messenger"

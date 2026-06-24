@@ -557,7 +557,18 @@ button { font-family: inherit; cursor: pointer; }
   top: 0;
   align-self: flex-start;
   height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+.od-sidebar-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
+}
+.od-sidebar-bottom {
+  flex-shrink: 0;
 }
 .od-brand {
   display: flex;
@@ -965,12 +976,19 @@ button { font-family: inherit; cursor: pointer; }
 .od-modal-overlay {
   position: fixed;
   inset: 0;
+  /* dvh tracks mobile browser chrome (Brave/Chrome address bar show/hide) */
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
   background: rgba(0,0,0,0.5);
-  z-index: 50;
+  z-index: 900;
   display: none;
   align-items: center;
   justify-content: center;
   padding: 16px;
+  padding-top: max(16px, env(safe-area-inset-top, 0px));
+  padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
+  overflow: hidden;
 }
 .od-modal-overlay.open { display: flex; }
 .od-modal-box {
@@ -1131,6 +1149,7 @@ button { font-family: inherit; cursor: pointer; }
 /* Booking modal: constrain height on desktop so long forms stay on screen */
 #od-booking-modal .od-modal-box {
   max-height: min(90vh, 860px);
+  max-height: min(90dvh, 860px);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -1160,7 +1179,70 @@ button { font-family: inherit; cursor: pointer; }
   z-index: 2;
 }
 
-.od-modal-links { display: flex; flex-wrap: wrap; gap: 8px; }
+.od-modal-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.od-modal-links .od-btn {
+  flex: 1 1 calc(50% - 5px);
+  justify-content: center;
+  min-height: 46px;
+  padding: 12px 14px;
+  font-size: 14px;
+}
+
+/* Prepared message modal — scrollable body on small screens */
+#od-msg-modal .od-modal-box {
+  display: flex;
+  flex-direction: column;
+  max-height: min(88vh, 520px);
+  max-height: min(88dvh, 520px);
+  overflow: hidden;
+  padding: 0;
+}
+#od-msg-modal .od-modal-header {
+  flex-shrink: 0;
+  margin-bottom: 0;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid #F3F4F6;
+}
+#od-msg-modal .od-modal-msg {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 0;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+}
+  #od-msg-modal .od-modal-links {
+    flex-shrink: 0;
+    padding: 14px 16px max(18px, env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid #F3F4F6;
+    background: #fff;
+  }
+  #od-msg-modal .od-modal-links .od-btn {
+    min-height: 50px;
+    padding: 14px 16px;
+    font-size: 15px;
+  }
+
+/* Hide floating lang switcher while a modal or mobile sidebar is open */
+body.od-modal-open .od-dashboard-lang,
+body.od-sidebar-open .od-dashboard-lang {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+body.od-modal-open,
+body.od-sidebar-open {
+  overflow: hidden;
+  touch-action: none;
+  overscroll-behavior: none;
+}
+
 .od-form-grid { display: grid; gap: 12px; }
 .od-form-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .od-field label { display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 4px; }
@@ -1484,6 +1566,8 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
 .od-backdrop {
   display: none;
   position: fixed; inset: 0;
+  height: 100vh;
+  height: 100dvh;
   background: rgba(0,0,0,0.45);
   z-index: 950;
   backdrop-filter: blur(2px);
@@ -1505,14 +1589,43 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
 @media (max-width: 600px) {
   .od-sidebar {
     position: fixed;
-    top: 0; right: 0; bottom: 0;
-    left: unset;
-    width: 240px !important;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: auto;
+    width: min(240px, 88vw) !important;
+    height: auto;
+    max-height: none;
     z-index: 1000;
     transform: translateX(100%);
     transition: transform 0.25s ease;
+    overflow: hidden;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    padding-top: env(safe-area-inset-top, 0px);
   }
   .od-sidebar.is-open { transform: translateX(0); }
+
+  /* Scrollable top section — nav links scroll, account block stays pinned */
+  .od-sidebar-main {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  .od-sidebar-bottom {
+    flex-shrink: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    background: #141B27;
+    padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  }
+  .od-sidebar-bottom .od-user-footer {
+    margin-top: 0;
+    padding-top: 12px;
+    border-top: none;
+  }
 
   /* show close button inside sidebar */
   .od-brand-header { display: flex; justify-content: flex-end; padding-right: 4px; }
@@ -1530,6 +1643,12 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
   .od-nav a { padding: 9px 12px !important; justify-content: flex-start !important; }
   .od-nav-icon { font-size: 15px !important; }
   .od-sidebar-foot a span { display: inline !important; }
+
+  /* Hide app bottom nav while sidebar overlay is open */
+  body.od-sidebar-open .od-bottom-nav {
+    visibility: hidden;
+    pointer-events: none;
+  }
 
   .od-main { padding: 20px 14px; padding-bottom: 74px; }
 }
@@ -1821,19 +1940,24 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
 @media (max-width: 640px) {
   .od-modal-overlay {
     padding: 0;
-    /* Lift modal above the fixed bottom nav (60px) + a little breathing room */
-    padding-bottom: 64px;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
     align-items: flex-end;
   }
   .od-modal-box {
     border-radius: 20px 20px 0 0;
-    /* clamp height so it never overlaps the bottom nav */
-    max-height: calc(92vh - 64px);
+    max-height: min(94dvh, calc(100dvh - env(safe-area-inset-top, 0px)));
     width: 100% !important;
     max-width: 100% !important;
     display: flex;
     flex-direction: column;
     overflow: hidden;
+  }
+  #od-booking-modal .od-modal-box {
+    max-height: min(94dvh, calc(100dvh - env(safe-area-inset-top, 0px)));
+  }
+  #od-msg-modal .od-modal-box {
+    max-height: min(92dvh, calc(100dvh - env(safe-area-inset-top, 0px)));
   }
   /* Header: never scrolls away, always shows X */
   .od-modal-header {
@@ -1848,10 +1972,11 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
   .od-modal-box > form,
   .od-modal-box > .od-modal-scroll {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    /* extra bottom space so footer doesn't cover last field */
-    padding-bottom: 0;
+    overscroll-behavior: contain;
+    padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
   }
   /* Footer: pinned to bottom inside the scrollable area */
   .od-modal-footer {
@@ -3787,7 +3912,6 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
   height: 100%;
   overflow: hidden;
   position: relative;
-  contain: layout paint;
   -webkit-transform: translateZ(0);
   transform: translateZ(0);
 }
@@ -3812,16 +3936,23 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
   flex-direction: column;
   gap: 10px;
   will-change: transform;
+  -webkit-transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0);
   /* Wait until loop distance is measured — avoids jump on load */
   animation: none;
+  -webkit-animation: none;
 }
 
 .sp-gallery-track.sp-track-ready.sp-track-up {
+  -webkit-animation: sp-scroll-up var(--dur, 24s) var(--delay, 0s) linear infinite;
   animation: sp-scroll-up var(--dur, 24s) var(--delay, 0s) linear infinite;
+  -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
 }
 .sp-gallery-track.sp-track-ready.sp-track-down {
+  -webkit-animation: sp-scroll-up var(--dur, 24s) var(--delay, 0s) linear infinite reverse;
   animation: sp-scroll-up var(--dur, 24s) var(--delay, 0s) linear infinite reverse;
+  -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
 }
 
@@ -3832,14 +3963,18 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
   /* class marker only — animation applied when .sp-track-ready */
 }
 
+@-webkit-keyframes sp-scroll-up {
+  from { -webkit-transform: translate3d(0, 0, 0); transform: translate3d(0, 0, 0); }
+  to   { -webkit-transform: translate3d(0, calc(-1 * var(--loop-distance, 50%)), 0); transform: translate3d(0, calc(-1 * var(--loop-distance, 50%)), 0); }
+}
 @keyframes sp-scroll-up {
-  from { transform: translate3d(0, 0, 0); }
-  to   { transform: translate3d(0, calc(-1 * var(--loop-distance, 50%)), 0); }
+  from { -webkit-transform: translate3d(0, 0, 0); transform: translate3d(0, 0, 0); }
+  to   { -webkit-transform: translate3d(0, calc(-1 * var(--loop-distance, 50%)), 0); transform: translate3d(0, calc(-1 * var(--loop-distance, 50%)), 0); }
 }
 
 /* Honour prefers-reduced-motion */
 @media (prefers-reduced-motion: reduce) {
-  .sp-gallery-track { animation: none !important; }
+  .sp-gallery-track { animation: none !important; -webkit-animation: none !important; }
 }
 
 /* ── Individual card (now <img> tags with real photos) ───────────────────── */
@@ -4231,7 +4366,6 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
 .od-user-footer {
   border-top: 1px solid rgba(255,255,255,.08);
   padding: 14px 16px 10px;
-  margin-top: auto;
 }
 .od-user-name { font-size: 13px; font-weight: 600; color: #F9FAFB; margin-bottom: 6px; }
 .od-user-actions { display: flex; flex-direction: column; gap: 4px; }

@@ -743,15 +743,21 @@ def log_booking_activity(booking, action, user=None, note=""):
 
 def build_contact_links(phone_number, message):
     digits = normalize_phone_for_links(phone_number)
-    encoded_message = quote(message)
+    encoded_message = quote(message, safe="")
     links = {
         "tel": f"tel:{phone_number}",
-        "sms": f"sms:+{digits}?body={encoded_message}" if digits else "",
-        "viber": (
-            f"viber://chat?number=%2B{digits}&text={encoded_message}" if digits else ""
-        ),
-        "whatsapp": f"https://wa.me/{digits}?text={encoded_message}" if digits else "",
+        "sms": "",
+        "viber": "",
+        "whatsapp": "",
     }
+    if not digits:
+        return links
+
+    links["sms"] = f"sms:+{digits}?body={encoded_message}"
+    # WhatsApp: api.whatsapp.com pre-fills reliably on mobile (wa.me often drops ?text=).
+    links["whatsapp"] = f"https://api.whatsapp.com/send?phone={digits}&text={encoded_message}"
+    # Viber mobile expects draft=, not text=, for a pre-filled message in the chat field.
+    links["viber"] = f"viber://chat?number=%2B{digits}&draft={encoded_message}"
     return links
 
 

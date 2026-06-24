@@ -22,6 +22,7 @@
 <div class="od-layout">
   <div class="od-backdrop" id="od-backdrop"></div>
   <aside class="od-sidebar">
+    <div class="od-sidebar-main">
     <div class="od-brand">
       <div class="od-brand-header">
         <button class="od-ham-expand" id="od-ham" aria-label="{% trans "Expand sidebar" %}">
@@ -54,7 +55,9 @@
     <div class="od-sidebar-foot">
       <a href="{% url 'booking:salon_page' salon.slug %}"><i class="bi bi-box-arrow-up-right"></i><span>{% trans "Customer view" %}</span></a>
     </div>
-  
+    </div>
+
+    <div class="od-sidebar-bottom">
         <div class="od-user-footer">
           <div class="od-user-name">{{ request.user.get_full_name|default:request.user.username }}</div>
           <div class="od-user-actions">
@@ -65,6 +68,7 @@
         <button class="od-sidebar-close-bottom" id="od-ham-close-bottom" aria-label="{% trans "Close sidebar" %}">
           <i class="bi bi-chevron-right"></i> {% trans "Close" %}
         </button>
+    </div>
       </aside>
 
   <main class="od-main">
@@ -768,6 +772,8 @@ window.OD_I18N = {
   sms: "{% filter escapejs %}{% trans "SMS" %}{% endfilter %}",
   call: "{% filter escapejs %}{% trans "Call" %}{% endfilter %}",
   copyMessage: "{% filter escapejs %}{% trans "Copy message" %}{% endfilter %}",
+  messageCopied: "{% filter escapejs %}{% trans "Message copied." %}{% endfilter %}",
+  copyFailed: "{% filter escapejs %}{% trans "Could not copy. Long-press the message to copy." %}{% endfilter %}",
   today: "{% filter escapejs %}{% trans "Today" %}{% endfilter %}",
   week: "{% filter escapejs %}{% trans "Week" %}{% endfilter %}",
   day: "{% filter escapejs %}{% trans "Day" %}{% endfilter %}",
