@@ -322,6 +322,64 @@ def get_policy_value(salon, field_name, default):
     return getattr(policy, field_name, default)
 
 
+CALENDAR_TERMINAL_STATUSES = frozenset({
+    Booking.Status.COMPLETED,
+    Booking.Status.CANCELLED,
+    Booking.Status.REJECTED,
+    Booking.Status.NO_SHOW,
+})
+
+
+def get_calendar_history_days(salon):
+    """Days of past terminal-status bookings to keep visible on the owner calendar."""
+    return get_policy_value(salon, "calendar_history_days", 365)
+
+
+def get_calendar_history_cutoff_date(salon, *, on_date=None):
+    on_date = on_date or timezone.localdate()
+    return on_date - timedelta(days=get_calendar_history_days(salon))
+
+
+def booking_visible_on_calendar(booking, cutoff_date):
+    if booking.status not in CALENDAR_TERMINAL_STATUSES:
+        return True
+    local_start = timezone.localtime(booking.start_at).date()
+    return local_start >= cutoff_date
+
+
+def auto_complete_past_bookings(*, salon=None, dry_run=False):
+    """
+    Mark approved bookings as completed once end_at + policy grace hours has passed.
+    Returns the number of bookings updated (or that would be updated when dry_run=True).
+    """
+    now = timezone.now()
+    qs = Booking.objects.filter(status=Booking.Status.APPROVED).select_related(
+        "salon", "salon__booking_policy"
+    )
+    if salon is not None:
+        qs = qs.filter(salon=salon)
+
+    updated = 0
+    for booking in qs:
+        grace_hours = get_policy_value(booking.salon, "auto_complete_hours_after_end", 4)
+        if grace_hours <= 0:
+            continue
+        if now < booking.end_at + timedelta(hours=grace_hours):
+            continue
+        updated += 1
+        if dry_run:
+            continue
+        booking.status = Booking.Status.COMPLETED
+        booking.save(update_fields=["status"])
+        log_booking_activity(
+            booking,
+            BookingActivityLog.Action.COMPLETED,
+            note="Auto-completed after appointment ended",
+        )
+
+    return updated
+
+
 def get_salon_timezone(salon):
     try:
         return ZoneInfo(salon.timezone)

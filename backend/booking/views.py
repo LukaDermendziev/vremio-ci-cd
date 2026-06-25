@@ -41,6 +41,7 @@ from .models import (
     WorkingHours,
 )
 from .services import (
+    booking_visible_on_calendar,
     build_contact_links,
     build_prepared_message,
     build_service_schedule,
@@ -51,6 +52,7 @@ from .services import (
     format_services_label,
     get_available_slots,
     get_booking_total_price_display,
+    get_calendar_history_cutoff_date,
     get_manage_booking_url,
     get_revenue_stats,
     get_salon_local_today,
@@ -707,6 +709,8 @@ def owner_calendar_events(request):
         Booking.Status.NO_SHOW:   {"bg": "#FEE0CC", "border": "#C2410C", "text": "#7C2D12"},
     }
 
+    calendar_cutoff = get_calendar_history_cutoff_date(salon)
+
     events = []
     bookings = salon.bookings.filter(
         start_at__lt=range_end,
@@ -716,6 +720,8 @@ def owner_calendar_events(request):
     ).select_related("customer").prefetch_related("booking_services")
 
     for booking in bookings:
+        if not booking_visible_on_calendar(booking, calendar_cutoff):
+            continue
         services = ", ".join(
             item.service_name_snapshot for item in booking.booking_services.all()
         )

@@ -180,6 +180,14 @@ class BookingPolicy(TimeStampedModel):
         help_text="Online bookings require email verification before becoming pending.",
     )
     email_verification_expiration_minutes = models.PositiveSmallIntegerField(default=60)
+    auto_complete_hours_after_end = models.PositiveSmallIntegerField(
+        default=4,
+        help_text="Hours after appointment end to auto-mark approved bookings as completed (0 = disabled).",
+    )
+    calendar_history_days = models.PositiveSmallIntegerField(
+        default=365,
+        help_text="Max days to show completed/cancelled bookings on the owner calendar.",
+    )
 
     # ── Salon rules shown to customer before booking ──────────────────────────
     DEFAULT_SALON_RULES_MK = (

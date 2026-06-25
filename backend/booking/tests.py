@@ -28,6 +28,8 @@ from .models import (
     WorkingHours,
 )
 from .services import (
+    auto_complete_past_bookings,
+    booking_visible_on_calendar,
     build_contact_links,
     build_prepared_message,
     build_service_schedule,
@@ -35,6 +37,8 @@ from .services import (
     find_conflicting_booking,
     format_services_for_email,
     get_available_slots,
+    get_calendar_history_cutoff_date,
+    get_calendar_history_days,
     is_slot_available,
 )
 
@@ -2080,4 +2084,125 @@ class PhotoSecurityTests(TestCase):
             _(
                 "Upload only a photo related to the service. Inappropriate images will be removed and the customer may be blocked."
             ),
+        )
+
+
+class AutoCompleteAndCalendarHistoryTests(TestCase):
+    def setUp(self):
+        cache.clear()
+        User = get_user_model()
+        self.owner = User.objects.create_user(
+            username="owner_auto",
+            email="owner_auto@example.com",
+            password="pass",
+        )
+        self.client.login(username="owner_auto", password="pass")
+        self.salon = Salon.objects.create(owner=self.owner, name="Auto Salon", slug="auto-salon")
+        self.policy = BookingPolicy.objects.create(
+            salon=self.salon,
+            maximum_booking_window_days=60,
+            calendar_history_days=365,
+            auto_complete_hours_after_end=4,
+        )
+        self.customer = Customer.objects.create(
+            salon=self.salon,
+            full_name="Past Client",
+            phone_number="070999888",
+            instagram_username="past",
+            email="past@example.com",
+        )
+        self.service = Service.objects.create(
+            salon=self.salon,
+            name="Manicure",
+            duration_minutes=120,
+            base_price=600,
+        )
+
+    def _make_booking(self, *, days_ago, status=Booking.Status.APPROVED, hours=2):
+        start = timezone.now() - timedelta(days=days_ago, hours=4)
+        end = start + timedelta(hours=hours)
+        booking = Booking.objects.create(
+            salon=self.salon,
+            customer=self.customer,
+            status=status,
+            source=Booking.Source.OWNER_MANUAL,
+            start_at=start,
+            end_at=end,
+            total_duration_minutes=int(hours * 60),
+        )
+        BookingService.objects.create(
+            booking=booking,
+            service=self.service,
+            service_name_snapshot=self.service.name,
+            duration_minutes_snapshot=self.service.duration_minutes,
+            price_snapshot=self.service.base_price,
+        )
+        return booking
+
+    def test_calendar_history_uses_policy_default(self):
+        self.assertEqual(get_calendar_history_days(self.salon), 365)
+
+    def test_auto_complete_marks_past_approved_booking(self):
+        booking = self._make_booking(days_ago=1, status=Booking.Status.APPROVED)
+        updated = auto_complete_past_bookings(salon=self.salon)
+        self.assertEqual(updated, 1)
+        booking.refresh_from_db()
+        self.assertEqual(booking.status, Booking.Status.COMPLETED)
+        self.assertTrue(
+            BookingActivityLog.objects.filter(
+                booking=booking,
+                action=BookingActivityLog.Action.COMPLETED,
+                note__icontains="Auto-completed",
+            ).exists()
+        )
+
+    def test_auto_complete_skips_when_grace_not_passed(self):
+        start = timezone.now() - timedelta(hours=1)
+        booking = Booking.objects.create(
+            salon=self.salon,
+            customer=self.customer,
+            status=Booking.Status.APPROVED,
+            source=Booking.Source.OWNER_MANUAL,
+            start_at=start,
+            end_at=start + timedelta(hours=2),
+            total_duration_minutes=120,
+        )
+        updated = auto_complete_past_bookings(salon=self.salon)
+        self.assertEqual(updated, 0)
+        booking.refresh_from_db()
+        self.assertEqual(booking.status, Booking.Status.APPROVED)
+
+    def test_auto_complete_disabled_when_grace_hours_zero(self):
+        self.policy.auto_complete_hours_after_end = 0
+        self.policy.save()
+        booking = self._make_booking(days_ago=2, status=Booking.Status.APPROVED)
+        updated = auto_complete_past_bookings(salon=self.salon)
+        self.assertEqual(updated, 0)
+        booking.refresh_from_db()
+        self.assertEqual(booking.status, Booking.Status.APPROVED)
+
+    def test_old_completed_booking_hidden_from_calendar_api(self):
+        old = self._make_booking(days_ago=400, status=Booking.Status.COMPLETED)
+        recent = self._make_booking(days_ago=130, status=Booking.Status.COMPLETED)
+        cutoff = get_calendar_history_cutoff_date(self.salon)
+        self.assertFalse(booking_visible_on_calendar(old, cutoff))
+        self.assertTrue(booking_visible_on_calendar(recent, cutoff))
+
+        range_start = (timezone.now() - timedelta(days=450)).isoformat()
+        range_end = (timezone.now() + timedelta(days=7)).isoformat()
+        response = self.client.get(
+            reverse("booking:owner_calendar_events"),
+            {"start": range_start, "end": range_end},
+        )
+        self.assertEqual(response.status_code, 200)
+        ids = {event["extendedProps"]["bookingId"] for event in response.json()["events"]}
+        self.assertNotIn(old.id, ids)
+        self.assertIn(recent.id, ids)
+
+    def test_management_command_auto_completes(self):
+        self._make_booking(days_ago=1, status=Booking.Status.APPROVED)
+        call_command("auto_complete_past_bookings")
+        self.assertEqual(
+            Booking.objects.filter(salon=self.salon, status=Booking.Status.COMPLETED).count(),
+            1,
         )

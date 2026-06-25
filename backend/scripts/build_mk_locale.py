@@ -591,6 +591,7 @@ TRANSLATIONS = {
     "Max appointments per day": "Макс. термини дневно",
     "Slot interval minutes": "Интервал на термини (минути)",
     "Buffer minutes between bookings": "Бафер меѓу термини (минути)",
+    "Gap between services in same booking (minutes)": "Пауза меѓу услуги во иста резервација (минути)",
     "Salon rules": "Правила на салонот",
     "I understand:": "Разбирам дека:",
     "Approved message": "Порака за одобрување",

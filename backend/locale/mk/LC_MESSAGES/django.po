@@ -701,6 +701,9 @@ msgstr "Петок"
 msgid "Full name"
 msgstr "Име и презиме"
 
+msgid "Gap between services in same booking (minutes)"
+msgstr "Пауза меѓу услуги во иста резервација (минути)"
+
 msgid "Go to login"
 msgstr "Оди на најава"
 

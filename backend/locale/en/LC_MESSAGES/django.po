@@ -694,6 +694,9 @@ msgstr "Friday"
 msgid "Full name"
 msgstr "Full name"
 
+msgid "Gap between services in same booking (minutes)"
+msgstr "Gap between services in same booking (minutes)"
+
 msgid "Go to login"
 msgstr "Go to login"
 

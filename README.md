@@ -209,7 +209,16 @@ python manage.py cleanup_unverified_bookings
 python manage.py cleanup_unverified_bookings --dry-run
 ```
 
-Recommended interval: every 15–30 minutes.
+Auto-complete approved bookings after their end time (default: 4 hours later):
+
+```bash
+python manage.py auto_complete_past_bookings
+python manage.py auto_complete_past_bookings --dry-run
+```
+
+Recommended interval: every 15–30 minutes for cleanup; hourly for auto-complete.
+
+Completed/cancelled bookings stay on the owner calendar for up to one year (default 365 days, configurable per salon). Older bookings remain in the database for history and revenue but drop off the calendar.
 
 ### Reference photo safety
 
