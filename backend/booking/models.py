@@ -21,6 +21,14 @@ class TimeStampedModel(models.Model):
 
 
 class Salon(TimeStampedModel):
+    class BusinessCategory(models.TextChoices):
+        SALON = "salon", _("Beauty salon")
+        BARBER = "barber", _("Barbershop")
+        SPORTS = "sports", _("Sports venue")
+        FITNESS = "fitness", _("Fitness / gym")
+        SERVICES = "services", _("Services")
+        OTHER = "other", _("Other")
+
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -31,6 +39,14 @@ class Salon(TimeStampedModel):
     phone_number = models.CharField(max_length=30, blank=True)
     instagram_username = models.CharField(max_length=80, blank=True)
     address = models.CharField(max_length=255, blank=True)
+    city = models.CharField(max_length=80, blank=True)
+    short_description = models.CharField(max_length=255, blank=True)
+    business_category = models.CharField(
+        max_length=20,
+        choices=BusinessCategory.choices,
+        default=BusinessCategory.SALON,
+        db_index=True,
+    )
     timezone = models.CharField(max_length=64, default="Europe/Skopje")
     is_active = models.BooleanField(default=True)
 

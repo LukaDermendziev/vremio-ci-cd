@@ -65,6 +65,60 @@ class BookingSmokeTests(TestCase):
         self.assertContains(response, 'lang="en"')
 
 
+class HomePageTests(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            username="homeowner",
+            password="password",
+        )
+        self.salon = Salon.objects.create(
+            owner=self.user,
+            name="Fancy Fingers",
+            slug="fancy-fingers",
+            city="Скопје",
+            short_description="Nail salon",
+            business_category=Salon.BusinessCategory.SALON,
+            is_active=True,
+        )
+        Salon.objects.create(
+            owner=self.user,
+            name="City Barbers",
+            slug="city-barbers",
+            business_category=Salon.BusinessCategory.BARBER,
+            is_active=True,
+        )
+
+    def test_home_shows_vremio_branding(self):
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Vremio")
+        self.assertNotContains(response, "Salon Scheduler")
+
+    def test_home_lists_active_business(self):
+        response = self.client.get("/")
+        self.assertContains(response, "Fancy Fingers")
+        self.assertContains(response, reverse("booking:salon_page", args=["fancy-fingers"]))
+
+    def test_home_search_by_name(self):
+        response = self.client.get("/?q=fancy")
+        self.assertContains(response, "Fancy Fingers")
+        self.assertNotContains(response, "City Barbers")
+
+    def test_home_category_filter(self):
+        response = self.client.get("/?category=barber")
+        self.assertNotContains(response, "Fancy Fingers")
+        self.assertContains(response, "City Barbers")
+
+    def test_home_empty_search_message(self):
+        response = self.client.get("/?q=nonexistent-xyz")
+        self.assertContains(response, _("We couldn't find a business matching your search."))
+
+    @override_settings(VREMIO_CONTACT_EMAIL="hello@vremio.test")
+    def test_home_contact_email_from_settings(self):
+        response = self.client.get("/")
+        self.assertContains(response, "hello@vremio.test")
+
+
 class BookingViewTests(TestCase):
     def setUp(self):
         cache.clear()

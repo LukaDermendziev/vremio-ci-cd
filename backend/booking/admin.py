@@ -23,10 +23,45 @@ class BookingServiceInline(admin.TabularInline):
 
 @admin.register(Salon)
 class SalonAdmin(admin.ModelAdmin):
-    list_display = ("name", "owner", "phone_number", "is_active", "created_at")
-    list_filter = ("is_active",)
-    search_fields = ("name", "phone_number", "instagram_username")
+    list_display = (
+        "name",
+        "business_category",
+        "city",
+        "owner",
+        "phone_number",
+        "is_active",
+        "created_at",
+    )
+    list_filter = ("is_active", "business_category")
+    search_fields = ("name", "phone_number", "instagram_username", "city")
     prepopulated_fields = {"slug": ("name",)}
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": (
+                    "owner",
+                    "name",
+                    "slug",
+                    "business_category",
+                    "short_description",
+                    "is_active",
+                )
+            },
+        ),
+        (
+            "Contact & location",
+            {
+                "fields": (
+                    "phone_number",
+                    "instagram_username",
+                    "city",
+                    "address",
+                    "timezone",
+                )
+            },
+        ),
+    )
 
 
 class ServicePriceItemInline(admin.TabularInline):

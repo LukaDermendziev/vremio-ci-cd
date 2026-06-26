@@ -1,59 +1,205 @@
 {% extends "base.html" %}
-{% load i18n %}
-{% block title %}{% trans "Salon Scheduler — Book Online" %}{% endblock %}
-{% block body_class %}sp-page sp-home{% endblock %}
+{% load static i18n %}
+{% block title %}{% trans "Vremio — Bookings & Reservations" %}{% endblock %}
+{% block body_class %}vm-page vm-home{% endblock %}
 
 {% block lang_switcher %}{% endblock %}
 
 {% block content %}
-<nav class="sp-nav">
-  <a class="sp-nav-brand" href="/">{% trans "Salon Scheduler" %}</a>
-  <div class="sp-nav-links"></div>
-  <div class="sp-nav-right">
-    <div class="sp-nav-lang">{% include "partials/language_switcher.html" %}</div>
+<header class="vm-nav" id="vm-top">
+  <div class="vm-nav-inner">
+    <a class="vm-brand" href="/">Vremio</a>
+    <button type="button" class="vm-nav-toggle" id="vm-nav-toggle" aria-expanded="false" aria-controls="vm-nav-menu" aria-label="{% trans 'Menu' %}">
+      <i class="bi bi-list"></i>
+    </button>
+    <nav class="vm-nav-menu" id="vm-nav-menu">
+      <a class="vm-nav-link" href="#businesses">{% trans "Browse businesses" %}</a>
+      <a class="vm-nav-link" href="#contact">{% trans "For business owners" %}</a>
+      <a class="vm-nav-link vm-nav-link--outline" href="{% url 'booking:owner_login' %}">{% trans "Owner sign in" %}</a>
+      <div class="vm-nav-lang">{% include "partials/language_switcher.html" %}</div>
+    </nav>
   </div>
-</nav>
+</header>
 
-<section class="sp-home-hero">
-  <div class="sp-hero-overlay"></div>
-  <div class="sp-home-hero-content">
-    <p class="sp-eyebrow">{% trans "Online booking" %}</p>
-    <h1 class="sp-hero-title">{% blocktrans %}Book your salon<br><em>appointment online</em>{% endblocktrans %}</h1>
-    <p class="sp-hero-lead">{% trans "No messages. No waiting. Choose a service, pick a time, and send your request." %}</p>
+<section class="vm-hero">
+  <div class="vm-hero-bg" aria-hidden="true"></div>
+  <div class="vm-hero-inner">
+    <p class="vm-eyebrow">{% trans "Booking platform" %}</p>
+    <h1 class="vm-hero-title">{% trans "Vremio — appointments and reservations in one place" %}</h1>
+    <p class="vm-hero-lead">{% trans "Find a service, choose an available time slot, and send a booking request. Vremio helps local businesses manage appointments quickly, clearly, and professionally." %}</p>
+    <div class="vm-hero-actions">
+      <a class="vm-btn vm-btn-primary" href="#businesses">{% trans "Browse businesses" %}</a>
+      <a class="vm-btn vm-btn-secondary" href="#businesses">{% trans "Book appointment" %}</a>
+      <a class="vm-btn vm-btn-ghost" href="#contact">{% trans "I have a business" %}</a>
+    </div>
   </div>
 </section>
 
-<section class="sp-content-section">
-  <div class="sp-section-inner">
-    {% if salons %}
-      <div class="sp-section-heading">
-        <p class="sp-kicker">{% trans "Choose your salon" %}</p>
-        <h2 class="sp-section-title">{% trans "Available" %} <em>{% trans "salons" %}</em></h2>
+<section class="vm-section" id="businesses">
+  <div class="vm-container">
+    <div class="vm-section-head">
+      <p class="vm-kicker">{% trans "Directory" %}</p>
+      <h2 class="vm-section-title">{% trans "Businesses on Vremio" %}</h2>
+      <p class="vm-section-sub">{% trans "Search and book appointments at local businesses." %}</p>
+    </div>
+
+    <form class="vm-search-bar" method="get" action="/#businesses">
+      <div class="vm-search-input-wrap">
+        <i class="bi bi-search"></i>
+        <input type="search" name="q" value="{{ q }}" placeholder="{% trans 'Search by business name or city…' %}" class="vm-search-input" autocomplete="off">
       </div>
-      <div class="sp-salon-grid">
-        {% for salon in salons %}
-          <article class="sp-salon-card">
-            <div class="sp-salon-avatar">{{ salon.name|first }}</div>
-            <div class="sp-salon-info">
-              <h3 class="sp-salon-name">{{ salon.name }}</h3>
-              {% if salon.address %}<p class="sp-salon-address"><i class="bi bi-geo-alt"></i> {{ salon.address }}</p>{% endif %}
+      {% if category != 'all' %}
+        <input type="hidden" name="category" value="{{ category }}">
+      {% endif %}
+      <button type="submit" class="vm-btn vm-btn-primary vm-btn-sm">{% trans "Search" %}</button>
+    </form>
+
+    <div class="vm-filter-pills" role="group" aria-label="{% trans 'Category' %}">
+      <a class="vm-pill{% if category == 'all' %} is-active{% endif %}" href="/?{% if q %}q={{ q|urlencode }}&{% endif %}category=all#businesses">{% trans "All" %}</a>
+      <a class="vm-pill{% if category == 'salon' %} is-active{% endif %}" href="/?{% if q %}q={{ q|urlencode }}&{% endif %}category=salon#businesses">{% trans "Salons" %}</a>
+      <a class="vm-pill{% if category == 'barber' %} is-active{% endif %}" href="/?{% if q %}q={{ q|urlencode }}&{% endif %}category=barber#businesses">{% trans "Barbershops" %}</a>
+      <a class="vm-pill{% if category == 'sports' %} is-active{% endif %}" href="/?{% if q %}q={{ q|urlencode }}&{% endif %}category=sports#businesses">{% trans "Sports venues" %}</a>
+      <a class="vm-pill{% if category == 'fitness' %} is-active{% endif %}" href="/?{% if q %}q={{ q|urlencode }}&{% endif %}category=fitness#businesses">{% trans "Fitness / gyms" %}</a>
+      <a class="vm-pill{% if category == 'services' %} is-active{% endif %}" href="/?{% if q %}q={{ q|urlencode }}&{% endif %}category=services#businesses">{% trans "Services" %}</a>
+    </div>
+
+    {% if businesses %}
+      <div class="vm-business-grid">
+        {% for business in businesses %}
+          <article class="vm-business-card">
+            <div class="vm-business-avatar" aria-hidden="true">{{ business.name|first }}</div>
+            <div class="vm-business-body">
+              <span class="vm-business-cat">{{ business.get_business_category_display }}</span>
+              <h3 class="vm-business-name">{{ business.name }}</h3>
+              {% if business.short_description %}
+                <p class="vm-business-desc">{{ business.short_description }}</p>
+              {% endif %}
+              {% if business.city %}
+                <p class="vm-business-loc"><i class="bi bi-geo-alt"></i> {{ business.city }}</p>
+              {% elif business.address %}
+                <p class="vm-business-loc"><i class="bi bi-geo-alt"></i> {{ business.address }}</p>
+              {% endif %}
             </div>
-            <a class="sp-btn-small" href="{% url 'booking:salon_page' salon.slug %}">{% trans "View & Book" %}</a>
+            <a class="vm-btn vm-btn-primary vm-btn-sm vm-business-cta" href="{% url 'booking:salon_page' business.slug %}">{% trans "Book appointment" %}</a>
           </article>
         {% endfor %}
       </div>
     {% else %}
-      <div class="sp-empty-state">
-        <p>{% trans "No active salons available yet." %}</p>
+      <div class="vm-empty-state">
+        <i class="bi bi-search"></i>
+        <p>{% trans "We couldn't find a business matching your search." %}</p>
       </div>
     {% endif %}
   </div>
 </section>
 
-<footer class="sp-footer-section">
-  <div class="sp-footer-inner">
-    <div class="sp-footer-brand">{% trans "Salon Scheduler" %}</div>
-    <div class="sp-footer-note">{% trans "Professional scheduling for beauty businesses" %}</div>
+<section class="vm-section vm-section-alt" id="owners">
+  <div class="vm-container vm-split">
+    <div class="vm-split-copy">
+      <p class="vm-kicker">{% trans "For business owners" %}</p>
+      <h2 class="vm-section-title">{% trans "Does your business run on appointments?" %}</h2>
+      <p class="vm-section-sub">{% trans "Vremio helps you organize appointments, clients, and working hours in one place — with fewer messages and fewer mistakes." %}</p>
+      <ul class="vm-feature-list">
+        <li><i class="bi bi-check-circle"></i> {% trans "Online booking requests" %}</li>
+        <li><i class="bi bi-check-circle"></i> {% trans "Owner dashboard and calendar" %}</li>
+        <li><i class="bi bi-check-circle"></i> {% trans "Approve, reject, and edit bookings" %}</li>
+        <li><i class="bi bi-check-circle"></i> {% trans "Working hours and unavailable times" %}</li>
+        <li><i class="bi bi-check-circle"></i> {% trans "Customer details and reference photos" %}</li>
+        <li><i class="bi bi-check-circle"></i> {% trans "Email notifications and reminders" %}</li>
+      </ul>
+      <a class="vm-btn vm-btn-primary" href="#contact">{% trans "I want Vremio for my business" %}</a>
+    </div>
+    <div class="vm-owner-card">
+      <h3>{% trans "Still scheduling through messages?" %}</h3>
+      <p>{% trans "Instagram, Viber, and Messenger are hard to track. Vremio gives you a clear calendar and structured booking requests." %}</p>
+      <a class="vm-btn vm-btn-secondary" href="#contact">{% trans "Request access" %}</a>
+    </div>
+  </div>
+</section>
+
+<section class="vm-section">
+  <div class="vm-container">
+    <div class="vm-section-head vm-section-head-center">
+      <p class="vm-kicker">{% trans "How it works" %}</p>
+      <h2 class="vm-section-title">{% trans "Simple for everyone" %}</h2>
+    </div>
+    <div class="vm-steps-grid">
+      <div class="vm-steps-col">
+        <h3 class="vm-steps-heading">{% trans "For customers" %}</h3>
+        <ol class="vm-steps">
+          <li><span class="vm-step-num">1</span><span>{% trans "Choose a business" %}</span></li>
+          <li><span class="vm-step-num">2</span><span>{% trans "Choose a service and time slot" %}</span></li>
+          <li><span class="vm-step-num">3</span><span>{% trans "Send a request and wait for confirmation" %}</span></li>
+        </ol>
+      </div>
+      <div class="vm-steps-col">
+        <h3 class="vm-steps-heading">{% trans "For business owners" %}</h3>
+        <ol class="vm-steps">
+          <li><span class="vm-step-num">1</span><span>{% trans "Set up services and working hours" %}</span></li>
+          <li><span class="vm-step-num">2</span><span>{% trans "Receive booking requests" %}</span></li>
+          <li><span class="vm-step-num">3</span><span>{% trans "Manage calendar and clients" %}</span></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="vm-section vm-section-alt">
+  <div class="vm-container">
+    <div class="vm-section-head vm-section-head-center">
+      <p class="vm-kicker">{% trans "Supported businesses" %}</p>
+      <h2 class="vm-section-title">{% trans "Vremio works for many types of local businesses" %}</h2>
+    </div>
+    <div class="vm-categories-grid">
+      <div class="vm-category-chip"><i class="bi bi-stars"></i> {% trans "Beauty salons" %}</div>
+      <div class="vm-category-chip"><i class="bi bi-scissors"></i> {% trans "Barbershops" %}</div>
+      <div class="vm-category-chip"><i class="bi bi-brush"></i> {% trans "Hair salons" %}</div>
+      <div class="vm-category-chip"><i class="bi bi-heart-pulse"></i> {% trans "Massage & physiotherapy" %}</div>
+      <div class="vm-category-chip"><i class="bi bi-trophy"></i> {% trans "Sports halls" %}</div>
+      <div class="vm-category-chip"><i class="bi bi-building"></i> {% trans "School gyms" %}</div>
+      <div class="vm-category-chip"><i class="bi bi-dribbble"></i> {% trans "Courts & pitches" %}</div>
+      <div class="vm-category-chip"><i class="bi bi-car-front"></i> {% trans "Car wash & detailing" %}</div>
+      <div class="vm-category-chip"><i class="bi bi-book"></i> {% trans "Private lessons" %}</div>
+      <div class="vm-category-chip"><i class="bi bi-door-open"></i> {% trans "Rentable rooms & spaces" %}</div>
+    </div>
+  </div>
+</section>
+
+<section class="vm-section vm-contact-section" id="contact">
+  <div class="vm-container vm-contact-inner">
+    <div class="vm-contact-card">
+      <p class="vm-kicker">{% trans "Get started" %}</p>
+      <h2 class="vm-section-title">{% trans "Want Vremio for your business?" %}</h2>
+      <p class="vm-section-sub">{% trans "If your business works with appointments or reservations, contact us for access and profile setup." %}</p>
+      {% if contact_email %}
+        <p class="vm-contact-email"><i class="bi bi-envelope"></i> {{ contact_email }}</p>
+        <a class="vm-btn vm-btn-primary" href="mailto:{{ contact_email }}">{% trans "Send email" %}</a>
+      {% else %}
+        <p class="vm-contact-placeholder">{% trans "Contact email will be added soon." %}</p>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<footer class="vm-footer">
+  <div class="vm-container vm-footer-inner">
+    <div class="vm-footer-brand">
+      <div class="vm-footer-logo">Vremio</div>
+      <p>{% trans "A modern booking platform for local businesses and services." %}</p>
+    </div>
+    <div class="vm-footer-links">
+      <a href="#businesses">{% trans "Browse businesses" %}</a>
+      <a href="#contact">{% trans "For business owners" %}</a>
+      <a href="{% url 'booking:owner_login' %}">{% trans "Owner sign in" %}</a>
+    </div>
+    <div class="vm-footer-lang">{% include "partials/language_switcher.html" %}</div>
+  </div>
+  <div class="vm-footer-bottom">
+    <span>&copy; {% now "Y" %} Vremio</span>
   </div>
 </footer>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/platform_home.js' %}" defer></script>
 {% endblock %}

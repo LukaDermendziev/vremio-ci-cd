@@ -203,10 +203,11 @@ EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", "False") == "True"
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 DEFAULT_FROM_EMAIL = os.environ.get(
-    "DEFAULT_FROM_EMAIL", "Salon Scheduler <noreply@salonscheduler.app>"
+    "DEFAULT_FROM_EMAIL", "Vremio Booking <noreply@vremio.app>"
 )
 SERVER_EMAIL = os.environ.get("SERVER_EMAIL", DEFAULT_FROM_EMAIL)
 OWNER_NOTIFICATION_EMAIL = os.environ.get("OWNER_NOTIFICATION_EMAIL", "").strip()
+VREMIO_CONTACT_EMAIL = os.environ.get("VREMIO_CONTACT_EMAIL", "").strip()
 
 IMAGE_MODERATION_ENABLED = os.environ.get("IMAGE_MODERATION_ENABLED", "False") == "True"
 IMAGE_MODERATION_PROVIDER = os.environ.get("IMAGE_MODERATION_PROVIDER", "").strip()

@@ -9,7 +9,8 @@ LOCALE_DIR = BASE / "locale" / "mk" / "LC_MESSAGES"
 # English msgid -> Macedonian msgstr
 TRANSLATIONS = {
     # base.html
-    "Salon Scheduler": "Salon Scheduler",
+    "Salon Scheduler": "Vremio",
+    "Vremio": "Vremio",
     # booking_form.html
     "Book": "Резервирај",
     "Something went wrong. Please check your details and choose an available time.": "Нешто тргна наопаку. Проверете ги податоците и изберете слободен термин.",
@@ -207,8 +208,86 @@ TRANSLATIONS = {
     "Online booking, made simple.": "Онлајн резервации, едноставно.",
     "Footer navigation": "Подножје навигација",
     "Made by": "Направено од",
-    # home.html
-    "Salon Scheduler — Book Online": "Salon Scheduler — Резервирај онлајн",
+    # home.html — Vremio platform landing
+    "Vremio — Bookings & Reservations": "Vremio — термини и резервации",
+    "Menu": "Мени",
+    "Browse businesses": "Пребарај бизниси",
+    "For business owners": "За сопственици на бизниси",
+    "Owner sign in": "Најава за сопственици",
+    "Booking platform": "Платформа за закажување",
+    "Vremio — appointments and reservations in one place": "Vremio — термини и резервации на едно место",
+    "Find a service, choose an available time slot, and send a booking request. Vremio helps local businesses manage appointments quickly, clearly, and professionally.": (
+        "Пронајдете услуга, изберете слободен термин и испратете барање за закажување. "
+        "Vremio им помага на локалните бизниси да управуваат со термини брзо, јасно и професионално."
+    ),
+    "Book appointment": "Закажи термин",
+    "I have a business": "Имам бизнис",
+    "Directory": "Директориум",
+    "Businesses on Vremio": "Бизниси на Vremio",
+    "Search and book appointments at local businesses.": "Пребарајте и закажете термин кај локални бизниси.",
+    "Search by business name or city…": "Пребарај по име на бизнис или град…",
+    "Search": "Пребарај",
+    "Category": "Категорија",
+    "All": "Сите",
+    "Salons": "Салони",
+    "Barbershops": "Бербери",
+    "Sports venues": "Спортски терени",
+    "Fitness / gyms": "Фитнес/сали",
+    "Services": "Услуги",
+    "We couldn't find a business matching your search.": "Не најдовме бизнис според вашето пребарување.",
+    "Does your business run on appointments?": "Дали вашиот бизнис работи со термини?",
+    "Vremio helps you organize appointments, clients, and working hours in one place — with fewer messages and fewer mistakes.": (
+        "Vremio ви помага да ги организирате термините, клиентите и работното време на едно место — "
+        "со помалку пораки и помалку грешки."
+    ),
+    "Online booking requests": "Онлајн барања за термин",
+    "Owner dashboard and calendar": "Контролна табла и календар",
+    "Approve, reject, and edit bookings": "Одобрување, одбивање и уредување на термини",
+    "Working hours and unavailable times": "Работно време и недостапни термини",
+    "Customer details and reference photos": "Податоци за клиенти и референтни фотографии",
+    "Email notifications and reminders": "Email известувања и потсетници",
+    "I want Vremio for my business": "Сакам Vremio за мојот бизнис",
+    "Still scheduling through messages?": "Дали вашиот бизнис сè уште закажува преку пораки?",
+    "Instagram, Viber, and Messenger are hard to track. Vremio gives you a clear calendar and structured booking requests.": (
+        "Instagram, Viber и Messenger се тешки за следење. Vremio ви дава јасен календар и структурирани барања за термин."
+    ),
+    "Request access": "Побарај пристап",
+    "How it works": "Како функционира",
+    "Simple for everyone": "Едноставно за сите",
+    "For customers": "За клиенти",
+    "Choose a business": "Изберете бизнис",
+    "Choose a service and time slot": "Изберете услуга и термин",
+    "Send a request and wait for confirmation": "Испратете барање и почекајте потврда",
+    "For business owners": "За сопственици",
+    "Set up services and working hours": "Поставете услуги и работно време",
+    "Receive booking requests": "Примајте барања за термин",
+    "Manage calendar and clients": "Управувајте со календар и клиенти",
+    "Supported businesses": "Поддржани бизниси",
+    "Vremio works for many types of local businesses": "Vremio работи за многу типови локални бизниси",
+    "Beauty salons": "Салони за убавина",
+    "Hair salons": "Фризерски салони",
+    "Massage & physiotherapy": "Масажа и физиотерапија",
+    "Sports halls": "Спортски сали",
+    "School gyms": "Школски спортски сали",
+    "Courts & pitches": "Терени",
+    "Car wash & detailing": "Авто услуги",
+    "Private lessons": "Приватни часови",
+    "Rentable rooms & spaces": "Простории за изнајмување",
+    "Get started": "Започнете",
+    "Want Vremio for your business?": "Сакате Vremio за вашиот бизнис?",
+    "If your business works with appointments or reservations, contact us for access and profile setup.": (
+        "Ако вашиот бизнис работи со термини или резервации, контактирајте нè за пристап и поставување на вашиот профил."
+    ),
+    "Send email": "Испрати email",
+    "Contact email will be added soon.": "Контакт email ќе биде додаден наскоро.",
+    "A modern booking platform for local businesses and services.": "Модерна платформа за закажување за локални бизниси и услуги.",
+    "Beauty salon": "Салон за убавина",
+    "Barbershop": "Берберница",
+    "Sports venue": "Спортски терен",
+    "Fitness / gym": "Фитнес / сала",
+    "Other": "Друго",
+    # legacy home (kept for compatibility)
+    "Salon Scheduler — Book Online": "Vremio — Резервирај онлајн",
     "Book your salon<br><em>appointment online</em>": "Резервирајте го вашиот<br><em>салонски термин онлајн</em>",
     "No messages. No waiting. Choose a service, pick a time, and send your request.": "Без пораки. Без чекање. Изберете услуга, термин и испратете барање.",
     "Choose your salon": "Изберете салон",
@@ -218,7 +297,8 @@ TRANSLATIONS = {
     "No active salons available yet.": "Сè уште нема активни салони.",
     "Professional scheduling for beauty businesses": "Професионално закажување за beauty бизниси",
     # auth
-    "Owner — Salon Scheduler": "Сопственик — Salon Scheduler",
+    "Owner — Vremio": "Сопственик — Vremio",
+    "Owner — Salon Scheduler": "Сопственик — Vremio",
     "Owner Login": "Најава за сопственик",
     "Sign in to your salon dashboard": "Најавете се на контролната табла на салонот",
     "Username": "Корисничко име",
@@ -249,7 +329,8 @@ TRANSLATIONS = {
     "Update password": "Ажурирај лозинка",
     "Cancel": "Откажи",
     "Hello,": "Здраво,",
-    "You requested a password reset for your Salon Scheduler owner account.": "Побаравте ресетирање на лозинката за вашата Salon Scheduler сметка.",
+    "You requested a password reset for your Vremio owner account.": "Побаравте ресетирање на лозинката за вашата Vremio сметка.",
+    "You requested a password reset for your Salon Scheduler owner account.": "Побаравте ресетирање на лозинката за вашата Vremio сметка.",
     "Click the link below to set a new password:": "Кликнете на линкот подолу за да поставите нова лозинка:",
     "This link expires in 24 hours.": "Овој линк истекува за 24 часа.",
     "If you did not request this, ignore this email — your password will not change.": "Ако не сте го побарале ова, игнорирајте ја пораката — вашата лозинка нема да се промени.",
@@ -476,9 +557,14 @@ TRANSLATIONS = {
         "Датум и време: %(date)s во %(time)s\n"
         "Телефон: %(phone)s"
     ),
-    "Salon Scheduler test email": "Тест email од Salon Scheduler",
+    "Vremio test email": "Тест email од Vremio",
+    "This is a test email from Vremio.\n\nIf you received this message, outgoing email is configured correctly.": (
+        "Ова е тест email од Vremio.\n\n"
+        "Ако ја примивте пораката, испраќањето на email е правилно конфигурирано."
+    ),
+    "Salon Scheduler test email": "Тест email од Vremio",
     "This is a test email from Salon Scheduler.\n\nIf you received this message, outgoing email is configured correctly.": (
-        "Ова е тест email од Salon Scheduler.\n\n"
+        "Ова е тест email од Vremio.\n\n"
         "Ако ја примивте пораката, испраќањето на email е правилно конфигурирано."
     ),
     "Review in dashboard:": "Преглед во контролна табла:",
@@ -710,11 +796,11 @@ def main():
 
         po = polib.POFile()
         po.metadata = {
-            "Project-Id-Version": "Salon Scheduler",
+            "Project-Id-Version": "Vremio",
             "Report-Msgid-Bugs-To": "",
             "POT-Creation-Date": "2026-06-21 12:00+0000",
             "PO-Revision-Date": "2026-06-21 12:00+0000",
-            "Last-Translator": "Salon Scheduler",
+            "Last-Translator": "Vremio",
             "Language-Team": "Macedonian" if lang == "mk" else "English",
             "Language": lang,
             "MIME-Version": "1.0",

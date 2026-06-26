@@ -244,9 +244,9 @@ def _send_customer_templated_email(booking, templates):
 
 def send_test_email(recipient):
     """Send a simple test message to verify SMTP/console configuration."""
-    subject = _("Salon Scheduler test email")
+    subject = _("Vremio test email")
     body = _(
-        "This is a test email from Salon Scheduler.\n\n"
+        "This is a test email from Vremio.\n\n"
         "If you received this message, outgoing email is configured correctly."
     )
     return _send_email(subject=subject, body=body, to_email=recipient)

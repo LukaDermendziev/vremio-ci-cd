@@ -2,13 +2,14 @@ import json
 import uuid
 from datetime import date, datetime, timedelta
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate
 from django.contrib.auth import login as auth_login
 from django.contrib.auth import logout as auth_logout
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Q
 from django.http import FileResponse, Http404, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -90,8 +91,37 @@ def _slots_json(slots):
 
 
 def home(request):
-    salons = Salon.objects.filter(is_active=True)
-    return render(request, "booking/home.html", {"salons": salons})
+    businesses = Salon.objects.filter(is_active=True)
+    q = request.GET.get("q", "").strip()
+    category = request.GET.get("category", "").strip()
+
+    if q:
+        businesses = businesses.filter(
+            Q(name__icontains=q)
+            | Q(city__icontains=q)
+            | Q(address__icontains=q)
+            | Q(short_description__icontains=q)
+        )
+    if category and category != "all":
+        businesses = businesses.filter(business_category=category)
+
+    contact_email = (
+        getattr(settings, "VREMIO_CONTACT_EMAIL", "").strip()
+        or getattr(settings, "OWNER_NOTIFICATION_EMAIL", "").strip()
+        or ""
+    )
+
+    return render(
+        request,
+        "booking/home.html",
+        {
+            "businesses": businesses,
+            "q": q,
+            "category": category or "all",
+            "category_choices": Salon.BusinessCategory,
+            "contact_email": contact_email,
+        },
+    )
 
 
 def _get_owner_salon(user):
@@ -956,7 +986,7 @@ def booking_ics(request, booking_id):
     ics_lines = [
         "BEGIN:VCALENDAR",
         "VERSION:2.0",
-        "PRODID:-//Salon Scheduler//EN",
+        "PRODID:-//Vremio//EN",
         "CALSCALE:GREGORIAN",
         "BEGIN:VEVENT",
         f"UID:{uid}",

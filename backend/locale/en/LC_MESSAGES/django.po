@@ -1,11 +1,11 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Salon Scheduler\n"
+"Project-Id-Version: Vremio\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-06-21 12:00+0000\n"
 "PO-Revision-Date: 2026-06-21 12:00+0000\n"
-"Last-Translator: Salon Scheduler\n"
+"Last-Translator: Vremio\n"
 "Language-Team: English\n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
@@ -42,6 +42,9 @@ msgstr "(required)"
 
 msgid "24 h before"
 msgstr "24 h before"
+
+msgid "A modern booking platform for local businesses and services."
+msgstr "A modern booking platform for local businesses and services."
 
 msgid ""
 "A new booking request was submitted.\n"
@@ -100,6 +103,9 @@ msgstr "Add service"
 
 msgid "Add time block"
 msgstr "Add time block"
+
+msgid "All"
+msgstr "All"
 
 msgid "All caught up — no pending requests."
 msgstr "All caught up — no pending requests."
@@ -160,6 +166,9 @@ msgstr "Approval"
 msgid "Approve"
 msgstr "Approve"
 
+msgid "Approve, reject, and edit bookings"
+msgstr "Approve, reject, and edit bookings"
+
 msgid "Approved"
 msgstr "Approved"
 
@@ -214,8 +223,20 @@ msgstr "Back to login"
 msgid "Back to salon"
 msgstr "Back to salon"
 
+msgid "Barbershop"
+msgstr "Barbershop"
+
+msgid "Barbershops"
+msgstr "Barbershops"
+
 msgid "Beautiful nails,"
 msgstr "Beautiful nails,"
+
+msgid "Beauty salon"
+msgstr "Beauty salon"
+
+msgid "Beauty salons"
+msgstr "Beauty salons"
 
 msgid "Before you book"
 msgstr "Before you book"
@@ -315,6 +336,9 @@ msgstr "Booking marked as completed."
 msgid "Booking marked as no-show."
 msgstr "Booking marked as no-show."
 
+msgid "Booking platform"
+msgstr "Booking platform"
+
 msgid "Booking policy"
 msgstr "Booking policy"
 
@@ -357,8 +381,14 @@ msgstr "Booking updated. Email sent."
 msgid "Bookings"
 msgstr "Bookings"
 
+msgid "Browse businesses"
+msgstr "Browse businesses"
+
 msgid "Buffer minutes between bookings"
 msgstr "Buffer minutes between bookings"
+
+msgid "Businesses on Vremio"
+msgstr "Businesses on Vremio"
 
 msgid "Calendar"
 msgstr "Calendar"
@@ -407,8 +437,14 @@ msgid ""
 msgstr ""
 "Cannot delete a customer with existing bookings. Remove bookings first."
 
+msgid "Car wash & detailing"
+msgstr "Car wash & detailing"
+
 msgid "Care, style, and an appointment that suits you."
 msgstr "Care, style, and an appointment that suits you."
+
+msgid "Category"
+msgstr "Category"
 
 msgid "Change Password"
 msgstr "Change Password"
@@ -421,6 +457,12 @@ msgstr "Check your email"
 
 msgid "Check your inbox"
 msgstr "Check your inbox"
+
+msgid "Choose a business"
+msgstr "Choose a business"
+
+msgid "Choose a service and time slot"
+msgstr "Choose a service and time slot"
 
 msgid ""
 "Choose a service, date and available time. The salon will review your "
@@ -490,6 +532,9 @@ msgstr "Contact"
 msgid "Contact details"
 msgstr "Contact details"
 
+msgid "Contact email will be added soon."
+msgstr "Contact email will be added soon."
+
 msgid "Continue"
 msgstr "Continue"
 
@@ -520,6 +565,9 @@ msgstr "Could not save unavailable time block."
 msgid "Could not save working hours. Check the times."
 msgstr "Could not save working hours. Check the times."
 
+msgid "Courts & pitches"
+msgstr "Courts & pitches"
+
 msgid "Customer added successfully."
 msgstr "Customer added successfully."
 
@@ -534,6 +582,9 @@ msgstr "Customer cancelled appointment"
 
 msgid "Customer deleted."
 msgstr "Customer deleted."
+
+msgid "Customer details and reference photos"
+msgstr "Customer details and reference photos"
 
 msgid "Customer must upload a reference photo when booking this sub-service"
 msgstr "Customer must upload a reference photo when booking this sub-service"
@@ -592,6 +643,12 @@ msgstr "Delete this service? This cannot be undone."
 msgid "Description"
 msgstr "Description"
 
+msgid "Directory"
+msgstr "Directory"
+
+msgid "Does your business run on appointments?"
+msgstr "Does your business run on appointments?"
+
 msgid ""
 "Double-click (or double-tap on mobile) an empty slot to add a booking · "
 "Click an appointment to view details"
@@ -645,6 +702,9 @@ msgstr "Email address"
 msgid "Email could not be sent. Prepared message is available."
 msgstr "Email could not be sent. Prepared message is available."
 
+msgid "Email notifications and reminders"
+msgstr "Email notifications and reminders"
+
 msgid "Email sent"
 msgstr "Email sent"
 
@@ -679,8 +739,29 @@ msgstr "Feb"
 msgid "February"
 msgstr "February"
 
+msgid ""
+"Find a service, choose an available time slot, and send a booking request. "
+"Vremio helps local businesses manage appointments quickly, clearly, and "
+"professionally."
+msgstr ""
+"Find a service, choose an available time slot, and send a booking request. "
+"Vremio helps local businesses manage appointments quickly, clearly, and "
+"professionally."
+
+msgid "Fitness / gym"
+msgstr "Fitness / gym"
+
+msgid "Fitness / gyms"
+msgstr "Fitness / gyms"
+
 msgid "Footer navigation"
 msgstr "Footer navigation"
+
+msgid "For business owners"
+msgstr "For business owners"
+
+msgid "For customers"
+msgstr "For customers"
 
 msgid "Forgot password?"
 msgstr "Forgot password?"
@@ -697,8 +778,14 @@ msgstr "Full name"
 msgid "Gap between services in same booking (minutes)"
 msgstr "Gap between services in same booking (minutes)"
 
+msgid "Get started"
+msgstr "Get started"
+
 msgid "Go to login"
 msgstr "Go to login"
+
+msgid "Hair salons"
+msgstr "Hair salons"
 
 msgid ""
 "Hello %(name)s,\n"
@@ -882,16 +969,25 @@ msgstr "History"
 msgid "Hours"
 msgstr "Hours"
 
+msgid "How it works"
+msgstr "How it works"
+
 msgid ""
 "I agree to the selected time and understand it cannot be changed without "
 "notice."
 msgstr ""
 "I agree to the selected time and understand it cannot be changed without "
 "notice."
+
+msgid "I have a business"
+msgstr "I have a business"
 
 msgid "I understand:"
 msgstr "I understand:"
 
+msgid "I want Vremio for my business"
+msgstr "I want Vremio for my business"
+
 msgid ""
 "If an account with that email exists, a password reset link has been sent. "
 "Check your spam folder if you don't see it."
@@ -912,6 +1008,13 @@ msgid ""
 msgstr ""
 "If you do not see the email within a few minutes, check your spam or junk "
 "folder."
+
+msgid ""
+"If your business works with appointments or reservations, contact us for "
+"access and profile setup."
+msgstr ""
+"If your business works with appointments or reservations, contact us for "
+"access and profile setup."
 
 msgid "In person"
 msgstr "In person"
@@ -924,6 +1027,13 @@ msgstr "Instagram"
 
 msgid "Instagram username"
 msgstr "Instagram username"
+
+msgid ""
+"Instagram, Viber, and Messenger are hard to track. Vremio gives you a clear "
+"calendar and structured booking requests."
+msgstr ""
+"Instagram, Viber, and Messenger are hard to track. Vremio gives you a clear "
+"calendar and structured booking requests."
 
 msgid "Invalid blocked date."
 msgstr "Invalid blocked date."
@@ -967,6 +1077,9 @@ msgstr "Loading times…"
 msgid "Made by"
 msgstr "Made by"
 
+msgid "Manage calendar and clients"
+msgstr "Manage calendar and clients"
+
 msgid "Manual review"
 msgstr "Manual review"
 
@@ -981,6 +1094,9 @@ msgstr "Mark as no-show?"
 
 msgid "Mark completed"
 msgstr "Mark completed"
+
+msgid "Massage & physiotherapy"
+msgstr "Massage & physiotherapy"
 
 msgid "Max active future bookings per customer"
 msgstr "Max active future bookings per customer"
@@ -999,6 +1115,9 @@ msgstr "Maximum booking window days"
 
 msgid "May"
 msgstr "May"
+
+msgid "Menu"
+msgstr "Menu"
 
 msgid "Message copied."
 msgstr "Message copied."
@@ -1143,6 +1262,9 @@ msgstr "Online"
 msgid "Online booking"
 msgstr "Online booking"
 
+msgid "Online booking requests"
+msgstr "Online booking requests"
+
 msgid "Online booking, made simple."
 msgstr "Online booking, made simple."
 
@@ -1171,6 +1293,9 @@ msgstr "Open full size"
 msgid "Open now"
 msgstr "Open now"
 
+msgid "Other"
+msgstr "Other"
+
 msgid "Our"
 msgstr "Our"
 
@@ -1179,6 +1304,9 @@ msgstr "Overview"
 
 msgid "Owner Login"
 msgstr "Owner Login"
+
+msgid "Owner dashboard and calendar"
+msgstr "Owner dashboard and calendar"
 
 msgid "Owner manual"
 msgstr "Owner manual"
@@ -1189,8 +1317,14 @@ msgstr "Owner note"
 msgid "Owner panel"
 msgstr "Owner panel"
 
+msgid "Owner sign in"
+msgstr "Owner sign in"
+
 msgid "Owner — Salon Scheduler"
 msgstr "Owner — Salon Scheduler"
+
+msgid "Owner — Vremio"
+msgstr "Owner — Vremio"
 
 msgid "Password"
 msgstr "Password"
@@ -1300,6 +1434,9 @@ msgstr "Price item —"
 msgid "Price list"
 msgstr "Price list"
 
+msgid "Private lessons"
+msgstr "Private lessons"
+
 msgid "Professional nail care"
 msgstr "Professional nail care"
 
@@ -1311,6 +1448,9 @@ msgstr "Ready for"
 
 msgid "Reason (optional)"
 msgstr "Reason (optional)"
+
+msgid "Receive booking requests"
+msgstr "Receive booking requests"
 
 msgid "Reference photo"
 msgstr "Reference photo"
@@ -1351,11 +1491,17 @@ msgstr "Remove this blocked date?"
 msgid "Remove this time block?"
 msgstr "Remove this time block?"
 
+msgid "Rentable rooms & spaces"
+msgstr "Rentable rooms & spaces"
+
 msgid "Request Sent"
 msgstr "Request Sent"
 
 msgid "Request a new one."
 msgstr "Request a new one."
+
+msgid "Request access"
+msgstr "Request access"
 
 msgid "Request an appointment"
 msgstr "Request an appointment"
@@ -1435,6 +1581,9 @@ msgstr "Salon rules (Macedonian)"
 msgid "Salon rules shown to customers"
 msgstr "Salon rules shown to customers"
 
+msgid "Salons"
+msgstr "Salons"
+
 msgid "Saturday"
 msgstr "Saturday"
 
@@ -1474,6 +1623,18 @@ msgstr "Schedule"
 msgid "Scheduling rules"
 msgstr "Scheduling rules"
 
+msgid "School gyms"
+msgstr "School gyms"
+
+msgid "Search"
+msgstr "Search"
+
+msgid "Search and book appointments at local businesses."
+msgstr "Search and book appointments at local businesses."
+
+msgid "Search by business name or city…"
+msgstr "Search by business name or city…"
+
 msgid "Section / Group"
 msgstr "Section / Group"
 
@@ -1483,9 +1644,15 @@ msgstr "Select a date above to see available times."
 msgid "Select one or more services to continue."
 msgstr "Select one or more services to continue."
 
+msgid "Send a request and wait for confirmation"
+msgstr "Send a request and wait for confirmation"
+
 msgid "Send a request in minutes. We'll review it and contact you to confirm."
 msgstr ""
 "Send a request in minutes. We'll review it and contact you to confirm."
+
+msgid "Send email"
+msgstr "Send email"
 
 msgid "Send reset link"
 msgstr "Send reset link"
@@ -1526,6 +1693,9 @@ msgstr "Set new password"
 msgid "Set password"
 msgstr "Set password"
 
+msgid "Set up services and working hours"
+msgstr "Set up services and working hours"
+
 msgid "Show photo"
 msgstr "Show photo"
 
@@ -1540,6 +1710,9 @@ msgstr "Sign in to your salon dashboard"
 
 msgid "Sign out"
 msgstr "Sign out"
+
+msgid "Simple for everyone"
+msgstr "Simple for everyone"
 
 msgid "Slot interval minutes"
 msgstr "Slot interval minutes"
@@ -1563,6 +1736,15 @@ msgstr "Sort order"
 msgid "Source"
 msgstr "Source"
 
+msgid "Sports halls"
+msgstr "Sports halls"
+
+msgid "Sports venue"
+msgstr "Sports venue"
+
+msgid "Sports venues"
+msgstr "Sports venues"
+
 msgid "Start"
 msgstr "Start"
 
@@ -1571,6 +1753,9 @@ msgstr "Start time"
 
 msgid "Status"
 msgstr "Status"
+
+msgid "Still scheduling through messages?"
+msgstr "Still scheduling through messages?"
 
 msgid "Su"
 msgstr "Su"
@@ -1583,6 +1768,9 @@ msgstr "Submit Request"
 
 msgid "Sunday"
 msgstr "Sunday"
+
+msgid "Supported businesses"
+msgstr "Supported businesses"
 
 msgid "Tap to upload a photo"
 msgstr "Tap to upload a photo"
@@ -1696,6 +1884,15 @@ msgstr ""
 "\n"
 "If you received this message, outgoing email is configured correctly."
 
+msgid ""
+"This is a test email from Vremio.\n"
+"\n"
+"If you received this message, outgoing email is configured correctly."
+msgstr ""
+"This is a test email from Vremio.\n"
+"\n"
+"If you received this message, outgoing email is configured correctly."
+
 msgid "This link expires in 24 hours."
 msgstr "This link expires in 24 hours."
 
@@ -1805,8 +2002,36 @@ msgstr "View reference photo"
 msgid "View services"
 msgstr "View services"
 
+msgid "Vremio"
+msgstr "Vremio"
+
+msgid ""
+"Vremio helps you organize appointments, clients, and working hours in one "
+"place — with fewer messages and fewer mistakes."
+msgstr ""
+"Vremio helps you organize appointments, clients, and working hours in one "
+"place — with fewer messages and fewer mistakes."
+
+msgid "Vremio test email"
+msgstr "Vremio test email"
+
+msgid "Vremio works for many types of local businesses"
+msgstr "Vremio works for many types of local businesses"
+
+msgid "Vremio — Bookings & Reservations"
+msgstr "Vremio — Bookings & Reservations"
+
+msgid "Vremio — appointments and reservations in one place"
+msgstr "Vremio — appointments and reservations in one place"
+
+msgid "Want Vremio for your business?"
+msgstr "Want Vremio for your business?"
+
 msgid "We"
 msgstr "We"
+
+msgid "We couldn't find a business matching your search."
+msgstr "We couldn't find a business matching your search."
 
 msgid "We received your booking request"
 msgstr "We received your booking request"
@@ -1850,6 +2075,9 @@ msgstr "Working days"
 
 msgid "Working hours"
 msgstr "Working hours"
+
+msgid "Working hours and unavailable times"
+msgstr "Working hours and unavailable times"
 
 msgid "Working hours saved."
 msgstr "Working hours saved."
@@ -1897,6 +2125,9 @@ msgstr ""
 msgid "You requested a password reset for your Salon Scheduler owner account."
 msgstr ""
 "You requested a password reset for your Salon Scheduler owner account."
+
+msgid "You requested a password reset for your Vremio owner account."
+msgstr "You requested a password reset for your Vremio owner account."
 
 msgid "Your Details"
 msgstr "Your Details"

@@ -1,8 +1,8 @@
-# Salon Scheduler System
+# Vremio
 
-Salon Scheduler System is a web-based appointment booking and management application for beauty and service businesses.
+Vremio is a web-based booking and reservation platform for local businesses and services.
 
-The first real-world use case is a nail salon owner who currently manages appointments through Instagram, Messenger, Viber, and phone notes. The goal of the system is to reduce manual messaging, prevent scheduling confusion, reduce no-shows, and give the owner a clean dashboard/calendar for managing appointments.
+The first real-world use case is a nail salon owner who currently manages appointments through Instagram, Messenger, Viber, and phone notes. The goal of the system is to reduce manual messaging, prevent scheduling confusion, reduce no-shows, and give business owners a clean dashboard/calendar for managing appointments.
 
 ## Main Goal
 

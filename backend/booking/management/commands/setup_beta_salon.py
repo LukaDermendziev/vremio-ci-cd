@@ -123,6 +123,9 @@ class Command(BaseCommand):
                 "owner": user,
                 "name": salon_name,
                 "is_active": True,
+                "business_category": Salon.BusinessCategory.SALON,
+                "short_description": "Салон за маникир и педикир.",
+                "city": "Скопје",
             },
         )
         if not salon_created:
@@ -133,6 +136,12 @@ class Command(BaseCommand):
             salon.owner = user
             salon.name = salon_name
             salon.is_active = True
+            if options["force"]:
+                salon.business_category = Salon.BusinessCategory.SALON
+                if not salon.short_description:
+                    salon.short_description = "Салон за маникир и педикир."
+                if not salon.city:
+                    salon.city = "Скопје"
             salon.save()
             self.stdout.write(f"Updated salon '{salon_name}'.")
         else:
