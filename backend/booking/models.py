@@ -166,6 +166,13 @@ class BookingPolicy(TimeStampedModel):
     maximum_booking_window_days = models.PositiveSmallIntegerField(default=60)
     allow_same_day_booking = models.BooleanField(default=False)
     allow_next_day_booking = models.BooleanField(default=False)
+    allow_last_minute_reopen = models.BooleanField(
+        default=True,
+        help_text=_(
+            "When enabled, cancelled or rejected appointments inside the minimum "
+            "notice window become bookable online at the freed time only."
+        ),
+    )
     auto_approve_bookings = models.BooleanField(default=False)
     late_arrival_limit_minutes = models.PositiveSmallIntegerField(default=15)
     reminder_hours_before = models.PositiveSmallIntegerField(default=24)
@@ -406,6 +413,36 @@ class DateWorkingHoursOverride(TimeStampedModel):
 
         if errors:
             raise ValidationError(errors)
+
+
+class ReleasedSlot(TimeStampedModel):
+    """A freed appointment interval bookable inside the minimum notice window."""
+
+    salon = models.ForeignKey(
+        Salon,
+        on_delete=models.CASCADE,
+        related_name="released_slots",
+    )
+    start_at = models.DateTimeField(db_index=True)
+    end_at = models.DateTimeField()
+    is_active = models.BooleanField(default=True, db_index=True)
+    source_booking = models.ForeignKey(
+        "Booking",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="released_slots",
+    )
+    released_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["start_at"]
+        indexes = [
+            models.Index(fields=["salon", "is_active", "start_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.salon} — {self.start_at:%Y-%m-%d %H:%M} (active={self.is_active})"
 
 
 class UnavailableTimeBlock(TimeStampedModel):

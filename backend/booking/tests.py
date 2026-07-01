@@ -21,6 +21,7 @@ from .models import (
     Customer,
     CustomerBlocklist,
     DateWorkingHoursOverride,
+    ReleasedSlot,
     Salon,
     Service,
     ServicePriceItem,
@@ -39,7 +40,10 @@ from .services import (
     get_available_slots,
     get_calendar_history_cutoff_date,
     get_calendar_history_days,
+    get_last_minute_open_dates,
+    get_salon_local_today,
     is_slot_available,
+    release_booking_slot,
 )
 
 
@@ -117,6 +121,118 @@ class HomePageTests(TestCase):
     def test_home_contact_email_from_settings(self):
         response = self.client.get("/")
         self.assertContains(response, "hello@vremio.test")
+
+
+class LegalComplianceTests(TestCase):
+    def setUp(self):
+        cache.clear()
+        self.user = get_user_model().objects.create_user(
+            username="legalowner",
+            password="password",
+        )
+        self.salon = Salon.objects.create(
+            owner=self.user,
+            name="Legal Test Salon",
+            slug="legal-test",
+        )
+        Service.objects.create(
+            salon=self.salon,
+            name="Manicure",
+            duration_minutes=120,
+            base_price=1000,
+        )
+        BookingPolicy.objects.create(salon=self.salon, email_verification_required=False)
+
+    def test_privacy_page_loads(self):
+        self.assertEqual(self.client.get("/privacy/").status_code, 200)
+
+    def test_terms_page_loads(self):
+        self.assertEqual(self.client.get("/terms/").status_code, 200)
+
+    def test_booking_rules_page_loads(self):
+        self.assertEqual(self.client.get("/booking-rules/").status_code, 200)
+
+    def test_photo_policy_page_loads(self):
+        response = self.client.get("/photo-policy/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Дозволено е")
+
+    def test_privacy_page_has_mk_intro(self):
+        response = self.client.get("/privacy/")
+        self.assertContains(response, "Добредојдовте на Vremio")
+
+    def test_terms_page_has_mk_acceptance(self):
+        response = self.client.get("/terms/")
+        self.assertContains(response, "1. Прифаќање")
+
+    def test_booking_rules_page_has_mk_rules(self):
+        response = self.client.get("/booking-rules/")
+        self.assertContains(response, "автоматски потврден термин")
+
+    def test_salon_page_footer_has_no_owner_login(self):
+        response = self.client.get("/book/legal-test/")
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, reverse("booking:owner_login"))
+
+    def test_contact_page_loads(self):
+        self.assertEqual(self.client.get("/contact/").status_code, 200)
+
+    def test_pilot_terms_page_loads(self):
+        self.assertEqual(self.client.get("/owner/pilot-terms/").status_code, 200)
+
+    def test_home_footer_has_legal_links(self):
+        response = self.client.get("/")
+        self.assertContains(response, reverse("booking:privacy_policy"))
+        self.assertContains(response, reverse("booking:terms_of_use"))
+
+    def test_booking_form_shows_legal_links(self):
+        response = self.client.get("/book/legal-test/request/")
+        self.assertContains(response, reverse("booking:privacy_policy"))
+        self.assertContains(response, reverse("booking:booking_rules"))
+        self.assertContains(response, reverse("booking:photo_policy"))
+
+    def test_booking_requires_rules_accepted(self):
+        selected_date = timezone.localdate() + timedelta(days=20)
+        if selected_date.weekday() == WorkingHours.Weekday.SUNDAY:
+            selected_date += timedelta(days=1)
+        service = self.salon.services.get(name="Manicure")
+        response = self.client.post(
+            "/book/legal-test/request/",
+            {
+                "service": service.id,
+                "date": selected_date.isoformat(),
+                "start_time": "08:00",
+                "full_name": "No Rules",
+                "phone_number": "071000111",
+                "instagram_username": "norules",
+                "email": "norules@example.com",
+                "preferred_contact_method": Customer.PreferredContactMethod.VIBER,
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Booking.objects.filter(customer__phone_number="071000111").exists())
+
+    def test_booking_succeeds_with_rules_accepted(self):
+        selected_date = timezone.localdate() + timedelta(days=20)
+        if selected_date.weekday() == WorkingHours.Weekday.SUNDAY:
+            selected_date += timedelta(days=1)
+        service = self.salon.services.get(name="Manicure")
+        response = self.client.post(
+            "/book/legal-test/request/",
+            {
+                "service": service.id,
+                "date": selected_date.isoformat(),
+                "start_time": "08:00",
+                "full_name": "With Rules",
+                "phone_number": "071000222",
+                "instagram_username": "withrules",
+                "email": "withrules@example.com",
+                "preferred_contact_method": Customer.PreferredContactMethod.VIBER,
+                "rules_accepted": "on",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(Booking.objects.filter(customer__phone_number="071000222").exists())
 
 
 class BookingViewTests(TestCase):
@@ -576,6 +692,175 @@ class AvailabilityTests(TestCase):
         return selected_date
 
 
+class LastMinuteReopenTests(TestCase):
+    def setUp(self):
+        cache.clear()
+        user = get_user_model().objects.create_user(
+            username="lm_owner",
+            password="password",
+        )
+        self.salon = Salon.objects.create(owner=user, name="LM Salon", slug="lm-salon")
+        self.service = Service.objects.create(
+            salon=self.salon,
+            name="Manicure",
+            duration_minutes=120,
+            base_price=1000,
+        )
+        self.policy = BookingPolicy.objects.create(
+            salon=self.salon,
+            minimum_notice_days=14,
+            maximum_booking_window_days=60,
+            allow_last_minute_reopen=True,
+            pending_holds_slot=True,
+            slot_interval_minutes=30,
+            email_verification_required=False,
+        )
+        self.customer = Customer.objects.create(
+            salon=self.salon,
+            full_name="LM Customer",
+            phone_number="070888777",
+            instagram_username="lm_customer",
+        )
+        self.now = timezone.make_aware(
+            datetime.combine(timezone.localdate(), time(7, 0)),
+            timezone.get_current_timezone(),
+        )
+        self.inside_date = timezone.localdate(self.now) + timedelta(days=3)
+        while self.inside_date.weekday() == WorkingHours.Weekday.SUNDAY:
+            self.inside_date += timedelta(days=1)
+        for weekday in range(6):
+            WorkingHours.objects.get_or_create(
+                salon=self.salon,
+                weekday=weekday,
+                defaults={
+                    "is_working_day": True,
+                    "start_time": time(8, 0),
+                    "end_time": time(18, 0),
+                },
+            )
+
+    def _aware_at(self, hour, minute, date=None):
+        date = date or self.inside_date
+        return timezone.make_aware(
+            datetime.combine(date, time(hour, minute)),
+            timezone.get_current_timezone(),
+        )
+
+    def _create_booking(self, status, start_hour=10, end_hour=12):
+        booking = Booking.objects.create(
+            salon=self.salon,
+            customer=self.customer,
+            status=status,
+            source=Booking.Source.OWNER_MANUAL,
+            start_at=self._aware_at(start_hour, 0),
+            end_at=self._aware_at(end_hour, 0),
+            total_duration_minutes=(end_hour - start_hour) * 60,
+        )
+        BookingService.objects.create(
+            booking=booking,
+            service=self.service,
+            service_name_snapshot=self.service.name,
+            duration_minutes_snapshot=self.service.duration_minutes,
+            price_snapshot=self.service.base_price,
+            sort_order=0,
+        )
+        return booking
+
+    def test_cancel_inside_notice_creates_released_slot(self):
+        booking = self._create_booking(Booking.Status.APPROVED)
+        release_booking_slot(booking)
+        booking.status = Booking.Status.CANCELLED
+        booking.save()
+        self.assertEqual(ReleasedSlot.objects.filter(salon=self.salon, is_active=True).count(), 1)
+        release = ReleasedSlot.objects.get(salon=self.salon)
+        self.assertEqual(release.start_at, booking.start_at)
+
+    def test_inside_notice_date_shows_only_released_start(self):
+        booking = self._create_booking(Booking.Status.APPROVED)
+        release_booking_slot(booking)
+        booking.status = Booking.Status.CANCELLED
+        booking.save()
+        slots = get_available_slots(
+            self.salon,
+            self.service,
+            self.inside_date,
+            now=self.now,
+        )
+        self.assertEqual([s["value"] for s in slots], ["10:00"])
+
+    def test_inside_notice_without_release_returns_no_slots(self):
+        slots = get_available_slots(
+            self.salon,
+            self.service,
+            self.inside_date,
+            now=self.now,
+        )
+        self.assertEqual(slots, [])
+
+    def test_toggle_off_does_not_release(self):
+        self.policy.allow_last_minute_reopen = False
+        self.policy.save()
+        booking = self._create_booking(Booking.Status.APPROVED)
+        result = release_booking_slot(booking)
+        self.assertIsNone(result)
+        self.assertEqual(ReleasedSlot.objects.count(), 0)
+
+    def test_early_open_dates_listed(self):
+        booking = self._create_booking(Booking.Status.APPROVED)
+        release_booking_slot(booking)
+        today = get_salon_local_today(self.salon)
+        notice_cutoff = today + timedelta(days=14)
+        dates = get_last_minute_open_dates(self.salon, today, notice_cutoff, now=self.now)
+        self.assertIn(self.inside_date.isoformat(), dates)
+
+    def test_booking_consumes_released_slot(self):
+        booking = self._create_booking(Booking.Status.APPROVED)
+        release_booking_slot(booking)
+        booking.status = Booking.Status.CANCELLED
+        booking.save()
+        outside_date = timezone.localdate(self.now) + timedelta(days=20)
+        while outside_date.weekday() == WorkingHours.Weekday.SUNDAY:
+            outside_date += timedelta(days=1)
+        selected_date = self.inside_date
+        response = self.client.post(
+            "/book/lm-salon/request/",
+            {
+                "service": self.service.id,
+                "date": selected_date.isoformat(),
+                "start_time": "10:00",
+                "full_name": "New Client",
+                "phone_number": "070888778",
+                "instagram_username": "newclient",
+                "email": "new@example.com",
+                "preferred_contact_method": Customer.PreferredContactMethod.VIBER,
+                "rules_accepted": "on",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(
+            ReleasedSlot.objects.filter(salon=self.salon, is_active=True).exists()
+        )
+
+    def test_normal_window_returns_full_slot_list(self):
+        normal_date = timezone.localdate(self.now) + timedelta(days=20)
+        while normal_date.weekday() == WorkingHours.Weekday.SUNDAY:
+            normal_date += timedelta(days=1)
+        slots = get_available_slots(
+            self.salon,
+            self.service,
+            normal_date,
+            now=self.now,
+        )
+        values = {s["value"] for s in slots}
+        self.assertIn("08:00", values)
+        self.assertIn("10:00", values)
+
+    def test_reject_pending_releases_slot(self):
+        booking = self._create_booking(Booking.Status.PENDING)
+        release_booking_slot(booking)
+        self.assertEqual(ReleasedSlot.objects.filter(is_active=True).count(), 1)
+
+
 class BetaReadinessTests(TestCase):
     def setUp(self):
         User = get_user_model()
@@ -639,6 +924,22 @@ class BetaReadinessTests(TestCase):
         response = self.client.get("/owner/dashboard/")
         self.assertEqual(response.status_code, 302)
         self.assertIn("/owner/login/", response.url)
+
+    def test_owner_dashboard_is_not_cacheable(self):
+        self.client.login(username="owner_a", password="pass")
+        response = self.client.get("/owner/dashboard/")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("no-store", response.headers.get("Cache-Control", ""))
+
+    def test_owner_logout_clears_session_and_uses_replace_redirect(self):
+        self.client.login(username="owner_a", password="pass")
+        response = self.client.get("/owner/logout/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "location.replace")
+        self.assertContains(response, "/owner/login/")
+        dashboard = self.client.get("/owner/dashboard/")
+        self.assertEqual(dashboard.status_code, 302)
+        self.assertIn("/owner/login/", dashboard.url)
 
     def test_owner_cannot_access_other_salon_booking_detail(self):
         self.client.login(username="owner_b", password="pass")
@@ -1940,6 +2241,42 @@ class EmailVerificationTests(TestCase):
         self.assertGreaterEqual(len(customer_messages), 2)
         owner_messages = [m for m in mail.outbox if "owner_verify@example.com" in m.to]
         self.assertEqual(len(owner_messages), 1)
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_verify_skips_owner_email_when_owner_inbox_matches_customer(self):
+        from django.core import mail
+
+        self.owner.email = "verify@example.com"
+        self.owner.save()
+        self.client.post("/book/salon-v/request/", self._booking_post_data(phone_number="070555116"))
+        booking = Booking.objects.get(customer__phone_number="070555116")
+        token = booking.email_verification_token
+        response = self.client.get(reverse("booking:verify_booking_email", args=[token]))
+        self.assertEqual(response.status_code, 200)
+        customer_messages = [m for m in mail.outbox if "verify@example.com" in m.to]
+        self.assertGreaterEqual(len(customer_messages), 2)
+        owner_dashboard_messages = [
+            m for m in customer_messages if "owner/dashboard" in m.body
+        ]
+        self.assertEqual(len(owner_dashboard_messages), 0)
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_request_received_email_uses_macedonian(self):
+        from django.core import mail
+
+        self.client.post("/book/salon-v/request/", self._booking_post_data(phone_number="070555117"))
+        booking = Booking.objects.get(customer__phone_number="070555117")
+        token = booking.email_verification_token
+        self.client.get(reverse("booking:verify_booking_email", args=[token]))
+        customer_messages = [m for m in mail.outbox if "verify@example.com" in m.to]
+        request_received = next(
+            m
+            for m in customer_messages
+            if str(booking.manage_token) in m.body
+        )
+        self.assertIn("Го примивме вашето барање за термин", request_received.subject)
+        self.assertIn("Го примивме вашето барање за термин", request_received.body)
+        self.assertNotIn("You have a new booking request", request_received.body)
 
     def test_expired_token_shows_message_and_removes_booking(self):
         self.client.post("/book/salon-v/request/", self._booking_post_data(phone_number="070555113"))

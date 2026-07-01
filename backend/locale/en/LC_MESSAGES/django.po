@@ -40,8 +40,54 @@ msgstr "(recommended)"
 msgid "(required)"
 msgstr "(required)"
 
+msgid "1. Acceptance"
+msgstr "1. Acceptance"
+
+msgid "1. Introduction"
+msgstr "1. Introduction"
+
+msgid "2. Role of Vremio"
+msgstr "2. Role of Vremio"
+
+msgid "2. What data we collect"
+msgstr "2. What data we collect"
+
 msgid "24 h before"
 msgstr "24 h before"
+
+msgid "3. Booking"
+msgstr "3. Booking"
+
+msgid "3. Why we use your data"
+msgstr "3. Why we use your data"
+
+msgid "4. Attached photos"
+msgstr "4. Attached photos"
+
+msgid "4. User obligations"
+msgstr "4. User obligations"
+
+msgid "5. Data sharing"
+msgstr "5. Data sharing"
+
+msgid "5. Limitation of liability"
+msgstr "5. Limitation of liability"
+
+msgid "6. Changes"
+msgstr "6. Changes"
+
+msgid "6. Your rights"
+msgstr "6. Your rights"
+
+msgid "7. Security"
+msgstr "7. Security"
+
+msgid ""
+"A booking submitted through Vremio is a request, not a confirmed "
+"appointment, unless the business has enabled automatic approval."
+msgstr ""
+"A booking submitted through Vremio is a request, not a confirmed "
+"appointment, unless the business has enabled automatic approval."
 
 msgid "A modern booking platform for local businesses and services."
 msgstr "A modern booking platform for local businesses and services."
@@ -74,6 +120,23 @@ msgstr ""
 msgid "A reference photo is required for this service."
 msgstr "A reference photo is required for this service."
 
+msgid ""
+"A submitted appointment request does not represent a confirmed appointment."
+msgstr ""
+"A submitted appointment request does not represent a confirmed appointment."
+
+msgid "About Vremio"
+msgstr "About Vremio"
+
+msgid "Abuse"
+msgstr "Abuse"
+
+msgid "Abuse and blocking"
+msgstr "Abuse and blocking"
+
+msgid "Access to your data"
+msgstr "Access to your data"
+
 msgid "Actions"
 msgstr "Actions"
 
@@ -104,6 +167,9 @@ msgstr "Add service"
 msgid "Add time block"
 msgstr "Add time block"
 
+msgid "After the pilot"
+msgstr "After the pilot"
+
 msgid "All"
 msgstr "All"
 
@@ -123,6 +189,15 @@ msgstr "Allow next day booking"
 
 msgid "Allow same day booking"
 msgstr "Allow same day booking"
+
+msgid "Allowed"
+msgstr "Allowed"
+
+msgid "Allowed formats and size"
+msgstr "Allowed formats and size"
+
+msgid "Allowed formats: JPG, JPEG, PNG, WEBP."
+msgstr "Allowed formats: JPG, JPEG, PNG, WEBP."
 
 msgid "Anti-abuse"
 msgstr "Anti-abuse"
@@ -147,6 +222,9 @@ msgstr "Appointment cancelled. Customer did not provide an email."
 
 msgid "Appointment cancelled. Email sent to customer."
 msgstr "Appointment cancelled. Email sent to customer."
+
+msgid "Appointment date and time"
+msgstr "Appointment date and time"
 
 msgid "Appointment information — %(salon)s"
 msgstr "Appointment information — %(salon)s"
@@ -187,17 +265,30 @@ msgstr "April"
 msgid "Are you sure you want to cancel this appointment?"
 msgstr "Are you sure you want to cancel this appointment?"
 
+msgid "Arriving late may result in cancellation of the appointment."
+msgstr "Arriving late may result in cancellation of the appointment."
+
 msgid "Aug"
 msgstr "Aug"
 
 msgid "August"
 msgstr "August"
 
+msgid "Authorized administrators when necessary for technical support"
+msgstr "Authorized administrators when necessary for technical support"
+
 msgid "Auto approve bookings"
 msgstr "Auto approve bookings"
 
 msgid "Availability"
 msgstr "Availability"
+
+msgid ""
+"Availability shown online may change if another booking is accepted or the "
+"schedule is updated."
+msgstr ""
+"Availability shown online may change if another booking is accepted or the "
+"schedule is updated."
 
 msgid "Available"
 msgstr "Available"
@@ -216,6 +307,9 @@ msgstr "Back"
 
 msgid "Back to %(salon_name)s"
 msgstr "Back to %(salon_name)s"
+
+msgid "Back to home"
+msgstr "Back to home"
 
 msgid "Back to login"
 msgstr "Back to login"
@@ -264,6 +358,9 @@ msgstr "Block this customer from booking?"
 msgid "Block time"
 msgstr "Block time"
 
+msgid "Block users who misuse the platform"
+msgstr "Block users who misuse the platform"
+
 msgid "Blocked"
 msgstr "Blocked"
 
@@ -306,8 +403,14 @@ msgstr "Book your salon<br><em>appointment online</em>"
 msgid "Booking"
 msgstr "Booking"
 
+msgid "Booking Rules"
+msgstr "Booking Rules"
+
 msgid "Booking added successfully."
 msgstr "Booking added successfully."
+
+msgid "Booking approved, rejected, edited, or cancelled"
+msgstr "Booking approved, rejected, edited, or cancelled"
 
 msgid "Booking approved. Customer has no email — use prepared message."
 msgstr "Booking approved. Customer has no email — use prepared message."
@@ -326,6 +429,15 @@ msgstr "Booking cancelled. Customer has no email — use prepared message."
 
 msgid "Booking cancelled. Email sent to customer."
 msgstr "Booking cancelled. Email sent to customer."
+
+msgid ""
+"Booking data is kept as long as needed to operate the service, support the "
+"business owner, and meet reasonable record-keeping needs. Data may be "
+"deleted or anonymized when no longer required."
+msgstr ""
+"Booking data is kept as long as needed to operate the service, support the "
+"business owner, and meet reasonable record-keeping needs. Data may be "
+"deleted or anonymized when no longer required."
 
 msgid "Booking deleted."
 msgstr "Booking deleted."
@@ -363,8 +475,17 @@ msgstr "Booking rejected. Email could not be sent — use prepared message."
 msgid "Booking rejected. Email sent to customer."
 msgstr "Booking rejected. Email sent to customer."
 
+msgid "Booking request received"
+msgstr "Booking request received"
+
 msgid "Booking settings"
 msgstr "Booking settings"
+
+msgid "Booking status"
+msgstr "Booking status"
+
+msgid "Booking status and history"
+msgstr "Booking status and history"
 
 msgid "Booking summary"
 msgstr "Booking summary"
@@ -381,14 +502,44 @@ msgstr "Booking updated. Email sent."
 msgid "Bookings"
 msgstr "Bookings"
 
+msgid "Bookings and approval"
+msgstr "Bookings and approval"
+
 msgid "Browse businesses"
 msgstr "Browse businesses"
 
 msgid "Buffer minutes between bookings"
 msgstr "Buffer minutes between bookings"
 
+msgid "Business owner account data (username, email, password hash)"
+msgstr "Business owner account data (username, email, password hash)"
+
+msgid "Business owner pilot terms"
+msgstr "Business owner pilot terms"
+
+msgid "Business responsibilities"
+msgstr "Business responsibilities"
+
+msgid "Business working hours"
+msgstr "Business working hours"
+
 msgid "Businesses on Vremio"
 msgstr "Businesses on Vremio"
+
+msgid "By submitting an appointment request, you confirm that:"
+msgstr "By submitting an appointment request, you confirm that:"
+
+msgid "By using the Vremio platform, you agree to these terms."
+msgstr "By using the Vremio platform, you agree to these terms."
+
+msgid ""
+"By using the platform, you entrust us with certain personal data necessary "
+"for successfully organizing and managing your appointments. We are committed"
+" to their secure processing and protection."
+msgstr ""
+"By using the platform, you entrust us with certain personal data necessary "
+"for successfully organizing and managing your appointments. We are committed"
+" to their secure processing and protection."
 
 msgid "Calendar"
 msgstr "Calendar"
@@ -517,6 +668,9 @@ msgstr "Closed today"
 msgid "Collapse sidebar"
 msgstr "Collapse sidebar"
 
+msgid "Communication between the customer and the business"
+msgstr "Communication between the customer and the business"
+
 msgid "Completed"
 msgstr "Completed"
 
@@ -529,6 +683,12 @@ msgstr "Confirm your email to complete your booking request"
 msgid "Contact"
 msgstr "Contact"
 
+msgid "Contact and Data Requests"
+msgstr "Contact and Data Requests"
+
+msgid "Contact and data requests"
+msgstr "Contact and data requests"
+
 msgid "Contact details"
 msgstr "Contact details"
 
@@ -538,8 +698,21 @@ msgstr "Contact email will be added soon."
 msgid "Continue"
 msgstr "Continue"
 
+msgid ""
+"Continued paid use, pricing, and formal terms should be agreed separately "
+"before wider commercial launch."
+msgstr ""
+"Continued paid use, pricing, and formal terms should be agreed separately "
+"before wider commercial launch."
+
 msgid "Copy message"
 msgstr "Copy message"
+
+msgid "Correction of inaccurate data"
+msgstr "Correction of inaccurate data"
+
+msgid "Correction of your contact details"
+msgstr "Correction of your contact details"
 
 msgid "Could not add unavailable time block."
 msgstr "Could not add unavailable time block."
@@ -568,6 +741,9 @@ msgstr "Could not save working hours. Check the times."
 msgid "Courts & pitches"
 msgstr "Courts & pitches"
 
+msgid "Creating and managing booking requests"
+msgstr "Creating and managing booking requests"
+
 msgid "Customer added successfully."
 msgstr "Customer added successfully."
 
@@ -589,6 +765,12 @@ msgstr "Customer details and reference photos"
 msgid "Customer must upload a reference photo when booking this sub-service"
 msgstr "Customer must upload a reference photo when booking this sub-service"
 
+msgid "Customer name and surname"
+msgstr "Customer name and surname"
+
+msgid "Customer responsibilities"
+msgstr "Customer responsibilities"
+
 msgid "Customer updated successfully."
 msgstr "Customer updated successfully."
 
@@ -597,6 +779,11 @@ msgstr "Customer view"
 
 msgid "Customers"
 msgstr "Customers"
+
+msgid ""
+"Customers who upload abusive content may be blocked from future bookings."
+msgstr ""
+"Customers who upload abusive content may be blocked from future bookings."
 
 msgid "Dashboard"
 msgstr "Dashboard"
@@ -607,6 +794,9 @@ msgstr "Date"
 msgid "Date & Time"
 msgstr "Date & Time"
 
+msgid "Date and time: %(date)s at %(time)s"
+msgstr "Date and time: %(date)s at %(time)s"
+
 msgid "Day"
 msgstr "Day"
 
@@ -616,8 +806,17 @@ msgstr "Dec"
 msgid "December"
 msgstr "December"
 
+msgid "Decline future requests if abuse is confirmed"
+msgstr "Decline future requests if abuse is confirmed"
+
+msgid "Delays"
+msgstr "Delays"
+
 msgid "Delete"
 msgstr "Delete"
+
+msgid "Delete inappropriate photos"
+msgstr "Delete inappropriate photos"
 
 msgid "Delete photo"
 msgstr "Delete photo"
@@ -640,11 +839,32 @@ msgstr "Delete this service?"
 msgid "Delete this service? This cannot be undone."
 msgstr "Delete this service? This cannot be undone."
 
+msgid "Deletion of a booking or uploaded photo where reasonable"
+msgstr "Deletion of a booking or uploaded photo where reasonable"
+
+msgid "Deletion of data when permitted"
+msgstr "Deletion of data when permitted"
+
+msgid ""
+"Depending on the service you book, we may collect the following information:"
+msgstr ""
+"Depending on the service you book, we may collect the following information:"
+
 msgid "Description"
 msgstr "Description"
 
 msgid "Directory"
 msgstr "Directory"
+
+msgid ""
+"Do not share customer photos or contact details outside what is necessary "
+"for the service."
+msgstr ""
+"Do not share customer photos or contact details outside what is necessary "
+"for the service."
+
+msgid "Do not upload inappropriate, unrelated, or illegal images."
+msgstr "Do not upload inappropriate, unrelated, or illegal images."
 
 msgid "Does your business run on appointments?"
 msgstr "Does your business run on appointments?"
@@ -664,6 +884,22 @@ msgstr "Duration"
 
 msgid "Duration (min)"
 msgstr "Duration (min)"
+
+msgid ""
+"During the pilot, requests are handled manually. You may also contact the "
+"business where you booked directly."
+msgstr ""
+"During the pilot, requests are handled manually. You may also contact the "
+"business where you booked directly."
+
+msgid ""
+"Each business is responsible for service quality, prices, appointment "
+"handling, and communication with its customers. Vremio provides the software"
+" platform only."
+msgstr ""
+"Each business is responsible for service quality, prices, appointment "
+"handling, and communication with its customers. Vremio provides the software"
+" platform only."
 
 msgid ""
 "Each line is a separate rule. Customers see the Macedonian or English "
@@ -702,11 +938,17 @@ msgstr "Email address"
 msgid "Email could not be sent. Prepared message is available."
 msgstr "Email could not be sent. Prepared message is available."
 
+msgid "Email messages"
+msgstr "Email messages"
+
 msgid "Email notifications and reminders"
 msgstr "Email notifications and reminders"
 
 msgid "Email sent"
 msgstr "Email sent"
+
+msgid "Email verification and manage-booking tokens"
+msgstr "Email verification and manage-booking tokens"
 
 msgid "Email verification link expiry (minutes)"
 msgstr "Email verification link expiry (minutes)"
@@ -716,6 +958,9 @@ msgstr "Enable honeypot protection"
 
 msgid "End"
 msgstr "End"
+
+msgid "Enter accurate contact details so the business can reach you."
+msgstr "Enter accurate contact details so the business can reach you."
 
 msgid "Enter your email and we'll send a reset link."
 msgstr "Enter your email and we'll send a reset link."
@@ -733,6 +978,9 @@ msgstr ""
 msgid "Extra duration note"
 msgstr "Extra duration note"
 
+msgid "Features may change or improve during the pilot."
+msgstr "Features may change or improve during the pilot."
+
 msgid "Feb"
 msgstr "Feb"
 
@@ -748,11 +996,17 @@ msgstr ""
 "Vremio helps local businesses manage appointments quickly, clearly, and "
 "professionally."
 
+msgid "First and last name"
+msgstr "First and last name"
+
 msgid "Fitness / gym"
 msgstr "Fitness / gym"
 
 msgid "Fitness / gyms"
 msgstr "Fitness / gyms"
+
+msgid "Follow the booking rules of the business you selected."
+msgstr "Follow the booking rules of the business you selected."
 
 msgid "Footer navigation"
 msgstr "Footer navigation"
@@ -763,8 +1017,17 @@ msgstr "For business owners"
 msgid "For customers"
 msgstr "For customers"
 
+msgid "For questions, correction, or deletion of personal data, contact us."
+msgstr "For questions, correction, or deletion of personal data, contact us."
+
+msgid "For such requests, contact us via the contact email."
+msgstr "For such requests, contact us via the contact email."
+
 msgid "Forgot password?"
 msgstr "Forgot password?"
+
+msgid "Formats"
+msgstr "Formats"
 
 msgid "Fr"
 msgstr "Fr"
@@ -787,6 +1050,9 @@ msgstr "Go to login"
 msgid "Hair salons"
 msgstr "Hair salons"
 
+msgid "Hello %(name)s,"
+msgstr "Hello %(name)s,"
+
 msgid ""
 "Hello %(name)s,\n"
 "\n"
@@ -799,6 +1065,15 @@ msgstr ""
 "Unfortunately, the requested appointment for %(date)s at %(time)s is not available.\n"
 "\n"
 "Please choose another time."
+
+msgid ""
+"Hello %(name)s,\n"
+"\n"
+"We received your booking request."
+msgstr ""
+"Hello %(name)s,\n"
+"\n"
+"We received your booking request."
 
 msgid ""
 "Hello %(name)s,\n"
@@ -837,6 +1112,24 @@ msgstr ""
 "You did not attend your appointment on %(date)s at %(time)s.\n"
 "\n"
 "If you would like to book again, please contact us. — %(salon)s"
+
+msgid ""
+"Hello %(name)s,\n"
+"\n"
+"You requested an appointment at %(salon_name)s. To send your request to the salon, please confirm your email address:"
+msgstr ""
+"Hello %(name)s,\n"
+"\n"
+"You requested an appointment at %(salon_name)s. To send your request to the salon, please confirm your email address:"
+
+msgid ""
+"Hello %(name)s,\n"
+"\n"
+"Your appointment for %(date)s at %(time)s has been confirmed."
+msgstr ""
+"Hello %(name)s,\n"
+"\n"
+"Your appointment for %(date)s at %(time)s has been confirmed."
 
 msgid ""
 "Hello %(name)s,\n"
@@ -972,6 +1265,9 @@ msgstr "Hours"
 msgid "How it works"
 msgstr "How it works"
 
+msgid "I accept the salon rules and understand this is only a request."
+msgstr "I accept the salon rules and understand this is only a request."
+
 msgid ""
 "I agree to the selected time and understand it cannot be changed without "
 "notice."
@@ -982,18 +1278,41 @@ msgstr ""
 msgid "I have a business"
 msgstr "I have a business"
 
+msgid "I have read and agree to the"
+msgstr "I have read and agree to the"
+
+msgid "I have read and agree to the booking rules and privacy policy."
+msgstr "I have read and agree to the booking rules and privacy policy."
+
 msgid "I understand:"
 msgstr "I understand:"
 
 msgid "I want Vremio for my business"
 msgstr "I want Vremio for my business"
 
+msgid "IP address and technical data needed for security and abuse prevention"
+msgstr ""
+"IP address and technical data needed for security and abuse prevention"
+
 msgid ""
 "If an account with that email exists, a password reset link has been sent. "
 "Check your spam folder if you don't see it."
 msgstr ""
 "If an account with that email exists, a password reset link has been sent. "
 "Check your spam folder if you don't see it."
+
+msgid "If the selected service allows or requires a photo upload:"
+msgstr "If the selected service allows or requires a photo upload:"
+
+msgid ""
+"If you cannot attend, cancel the appointment in time according to the "
+"business rules."
+msgstr ""
+"If you cannot attend, cancel the appointment in time according to the "
+"business rules."
+
+msgid "If you did not make this request, you can ignore this email."
+msgstr "If you did not make this request, you can ignore this email."
 
 msgid ""
 "If you did not request this, ignore this email — your password will not "
@@ -1015,6 +1334,12 @@ msgid ""
 msgstr ""
 "If your business works with appointments or reservations, contact us for "
 "access and profile setup."
+
+msgid "Improving security and reliability of the platform"
+msgstr "Improving security and reliability of the platform"
+
+msgid "Improving the security and stability of the system"
+msgstr "Improving the security and stability of the system"
 
 msgid "In person"
 msgstr "In person"
@@ -1022,11 +1347,33 @@ msgstr "In person"
 msgid "Inactive"
 msgstr "Inactive"
 
+msgid "Inappropriate images or abuse of the system may lead to blocking."
+msgstr "Inappropriate images or abuse of the system may lead to blocking."
+
+msgid ""
+"Inappropriate or unrelated images may be deleted. Abusive customers may be "
+"blocked."
+msgstr ""
+"Inappropriate or unrelated images may be deleted. Abusive customers may be "
+"blocked."
+
+msgid "Inappropriate, unrelated, or 18+ images are not allowed."
+msgstr "Inappropriate, unrelated, or 18+ images are not allowed."
+
+msgid "Indecent or explicit photos"
+msgstr "Indecent or explicit photos"
+
 msgid "Instagram"
 msgstr "Instagram"
 
 msgid "Instagram username"
 msgstr "Instagram username"
+
+msgid "Instagram username (if provided)"
+msgstr "Instagram username (if provided)"
+
+msgid "Instagram username or preferred contact method"
+msgstr "Instagram username or preferred contact method"
 
 msgid ""
 "Instagram, Viber, and Messenger are hard to track. Vremio gives you a clear "
@@ -1062,6 +1409,9 @@ msgstr "Jun"
 msgid "June"
 msgstr "June"
 
+msgid "Last updated: %(date)s"
+msgstr "Last updated: %(date)s"
+
 msgid "Late arrival limit minutes"
 msgstr "Late arrival limit minutes"
 
@@ -1071,11 +1421,17 @@ msgstr "Late arrival limit: <strong>%(minutes)s minutes</strong>"
 msgid "Leave blank if not in a group"
 msgstr "Leave blank if not in a group"
 
+msgid "Legal links"
+msgstr "Legal links"
+
 msgid "Loading times…"
 msgstr "Loading times…"
 
 msgid "Made by"
 msgstr "Made by"
+
+msgid "Malicious content"
+msgstr "Malicious content"
 
 msgid "Manage calendar and clients"
 msgstr "Manage calendar and clients"
@@ -1112,6 +1468,13 @@ msgstr "Max reference photo size (MB)"
 
 msgid "Maximum booking window days"
 msgstr "Maximum booking window days"
+
+msgid ""
+"Maximum file size: 5 MB per image (unless the business configures a "
+"different limit)."
+msgstr ""
+"Maximum file size: 5 MB per image (unless the business configures a "
+"different limit)."
 
 msgid "May"
 msgstr "May"
@@ -1244,6 +1607,18 @@ msgstr "No-show message"
 msgid "No-shows"
 msgstr "No-shows"
 
+msgid "Not allowed"
+msgstr "Not allowed"
+
+msgid "Not disrupt the operation of the platform"
+msgstr "Not disrupt the operation of the platform"
+
+msgid "Not misuse photos"
+msgstr "Not misuse photos"
+
+msgid "Not submit false requests"
+msgstr "Not submit false requests"
+
 msgid "Nov"
 msgstr "Nov"
 
@@ -1305,6 +1680,9 @@ msgstr "Overview"
 msgid "Owner Login"
 msgstr "Owner Login"
 
+msgid "Owner Pilot Terms"
+msgstr "Owner Pilot Terms"
+
 msgid "Owner dashboard and calendar"
 msgstr "Owner dashboard and calendar"
 
@@ -1314,8 +1692,14 @@ msgstr "Owner manual"
 msgid "Owner note"
 msgstr "Owner note"
 
+msgid "Owner notifications about new bookings"
+msgstr "Owner notifications about new bookings"
+
 msgid "Owner panel"
 msgstr "Owner panel"
+
+msgid "Owner responsibilities"
+msgstr "Owner responsibilities"
 
 msgid "Owner sign in"
 msgstr "Owner sign in"
@@ -1331,6 +1715,9 @@ msgstr "Password"
 
 msgid "Password Reset Complete"
 msgstr "Password Reset Complete"
+
+msgid "Password reset for business owners"
+msgstr "Password reset for business owners"
 
 msgid "Password updated"
 msgstr "Password updated"
@@ -1362,6 +1749,12 @@ msgstr "Phone call"
 msgid "Phone number"
 msgstr "Phone number"
 
+msgid "Photo Policy"
+msgstr "Photo Policy"
+
+msgid "Photo Upload Policy"
+msgstr "Photo Upload Policy"
+
 msgid "Photo attached"
 msgstr "Photo attached"
 
@@ -1380,8 +1773,35 @@ msgstr "Photo req."
 msgid "Photo required"
 msgstr "Photo required"
 
+msgid "Photo review"
+msgstr "Photo review"
+
 msgid "Photo uploaded"
 msgstr "Photo uploaded"
+
+msgid "Photos are used solely as a reference for the selected service."
+msgstr "Photos are used solely as a reference for the selected service."
+
+msgid "Photos attached for the service"
+msgstr "Photos attached for the service"
+
+msgid "Photos of the current condition (for example for medical pedicure)"
+msgstr "Photos of the current condition (for example for medical pedicure)"
+
+msgid "Photos related to the service"
+msgstr "Photos related to the service"
+
+msgid "Photos that offend or harass others"
+msgstr "Photos that offend or harass others"
+
+msgid "Photos unrelated to the service"
+msgstr "Photos unrelated to the service"
+
+msgid "Pilot period"
+msgstr "Pilot period"
+
+msgid "Platform changes and availability"
+msgstr "Platform changes and availability"
 
 msgid "Please complete all required fields before continuing."
 msgstr "Please complete all required fields before continuing."
@@ -1407,6 +1827,9 @@ msgstr "Please enter your phone number."
 msgid "Please upload a reference photo for this service."
 msgstr "Please upload a reference photo for this service."
 
+msgid "Powered by"
+msgstr "Powered by"
+
 msgid "Preferred contact"
 msgstr "Preferred contact"
 
@@ -1415,6 +1838,12 @@ msgstr "Preferred contact method"
 
 msgid "Prepared message"
 msgstr "Prepared message"
+
+msgid "Preventing abuse of the platform"
+msgstr "Preventing abuse of the platform"
+
+msgid "Preventing abuse, spam, and duplicate bookings"
+msgstr "Preventing abuse, spam, and duplicate bookings"
 
 msgid "Previous month"
 msgstr "Previous month"
@@ -1434,14 +1863,35 @@ msgstr "Price item —"
 msgid "Price list"
 msgstr "Price list"
 
+msgid "Prices"
+msgstr "Prices"
+
+msgid "Privacy Policy"
+msgstr "Privacy Policy"
+
 msgid "Private lessons"
 msgstr "Private lessons"
+
+msgid "Processing appointment requests"
+msgstr "Processing appointment requests"
 
 msgid "Professional nail care"
 msgstr "Professional nail care"
 
 msgid "Professional scheduling for beauty businesses"
 msgstr "Professional scheduling for beauty businesses"
+
+msgid "Provide accurate contact information."
+msgstr "Provide accurate contact information."
+
+msgid "Provide accurate information"
+msgstr "Provide accurate information"
+
+msgid "Quality of the service"
+msgstr "Quality of the service"
+
+msgid "Questions about how your data is used"
+msgstr "Questions about how your data is used"
 
 msgid "Ready for"
 msgstr "Ready for"
@@ -1461,6 +1911,9 @@ msgstr "Reference photo attached"
 msgid "Reference photo required"
 msgstr "Reference photo required"
 
+msgid "Reference photos"
+msgstr "Reference photos"
+
 msgid "Reject"
 msgstr "Reject"
 
@@ -1472,6 +1925,9 @@ msgstr "Rejected"
 
 msgid "Rejected message"
 msgstr "Rejected message"
+
+msgid "Related policies"
+msgstr "Related policies"
 
 msgid "Reminder"
 msgstr "Reminder"
@@ -1493,6 +1949,12 @@ msgstr "Remove this time block?"
 
 msgid "Rentable rooms & spaces"
 msgstr "Rentable rooms & spaces"
+
+msgid "Reopen cancelled slots inside notice window"
+msgstr "Reopen cancelled slots inside notice window"
+
+msgid "Report bugs, incorrect bookings, or security concerns promptly."
+msgstr "Report bugs, incorrect bookings, or security concerns promptly."
 
 msgid "Request Sent"
 msgstr "Request Sent"
@@ -1536,6 +1998,12 @@ msgstr "Reset Link Sent"
 msgid "Reset Password"
 msgstr "Reset Password"
 
+msgid "Restriction of processing"
+msgstr "Restriction of processing"
+
+msgid "Retention"
+msgstr "Retention"
+
 msgid "Revenue from completed appointments only. No online payments."
 msgstr "Revenue from completed appointments only. No online payments."
 
@@ -1544,6 +2012,9 @@ msgstr "Review"
 
 msgid "Review & Submit"
 msgstr "Review & Submit"
+
+msgid "Review important bookings manually during the pilot."
+msgstr "Review important bookings manually during the pilot."
 
 msgid "Review in dashboard:"
 msgstr "Review in dashboard:"
@@ -1644,6 +2115,12 @@ msgstr "Select a date above to see available times."
 msgid "Select one or more services to continue."
 msgstr "Select one or more services to continue."
 
+msgid "Selected service"
+msgstr "Selected service"
+
+msgid "Selected service, date, and time"
+msgstr "Selected service, date, and time"
+
 msgid "Send a request and wait for confirmation"
 msgstr "Send a request and wait for confirmation"
 
@@ -1656,6 +2133,12 @@ msgstr "Send email"
 
 msgid "Send reset link"
 msgstr "Send reset link"
+
+msgid "Sending appointment-related notifications"
+msgstr "Sending appointment-related notifications"
+
+msgid "Sending notifications to customers and business owners"
+msgstr "Sending notifications to customers and business owners"
 
 msgid "Sep"
 msgstr "Sep"
@@ -1678,6 +2161,9 @@ msgstr "Service schedule"
 msgid "Service updated successfully."
 msgstr "Service updated successfully."
 
+msgid "Service: %(service)s"
+msgstr "Service: %(service)s"
+
 msgid "Services"
 msgstr "Services"
 
@@ -1699,6 +2185,9 @@ msgstr "Set up services and working hours"
 msgid "Show photo"
 msgstr "Show photo"
 
+msgid "Showing booking details to the correct business owner"
+msgstr "Showing booking details to the correct business owner"
+
 msgid "Shown on the booking form. Each line is a separate rule."
 msgstr "Shown on the booking form. Each line is a separate rule."
 
@@ -1710,6 +2199,9 @@ msgstr "Sign in to your salon dashboard"
 
 msgid "Sign out"
 msgstr "Sign out"
+
+msgid "Signing out…"
+msgstr "Signing out…"
 
 msgid "Simple for everyone"
 msgstr "Simple for everyone"
@@ -1772,8 +2264,21 @@ msgstr "Sunday"
 msgid "Supported businesses"
 msgstr "Supported businesses"
 
+msgid "Supported formats:"
+msgstr "Supported formats:"
+
 msgid "Tap to upload a photo"
 msgstr "Tap to upload a photo"
+
+msgid ""
+"Technical and security logs (for example IP address for rate limiting and "
+"abuse prevention)"
+msgstr ""
+"Technical and security logs (for example IP address for rate limiting and "
+"abuse prevention)"
+
+msgid "Terms of Use"
+msgstr "Terms of Use"
 
 msgid "Th"
 msgstr "Th"
@@ -1781,11 +2286,30 @@ msgstr "Th"
 msgid "Thank you for letting us know. The salon has been notified."
 msgstr "Thank you for letting us know. The salon has been notified."
 
+msgid "The appointment becomes valid only after approval by the business."
+msgstr "The appointment becomes valid only after approval by the business."
+
+msgid "The appointment is not confirmed until it is approved by the business."
+msgstr ""
+"The appointment is not confirmed until it is approved by the business."
+
 msgid "The appointment is not confirmed until it is approved."
 msgstr "The appointment is not confirmed until it is approved."
 
 msgid "The appointment is not confirmed until the salon approves it."
 msgstr "The appointment is not confirmed until the salon approves it."
+
+msgid "The business itself is responsible for these matters."
+msgstr "The business itself is responsible for these matters."
+
+msgid "The business owner may approve or reject requests."
+msgstr "The business owner may approve or reject requests."
+
+msgid "The business owner or administrator may delete inappropriate images."
+msgstr "The business owner or administrator may delete inappropriate images."
+
+msgid "The business where the request was submitted"
+msgstr "The business where the request was submitted"
 
 msgid ""
 "The customer %(name)s cancelled their appointment.\n"
@@ -1799,6 +2323,9 @@ msgstr ""
 "Service: %(service)s\n"
 "Date and time: %(date)s at %(time)s\n"
 "Phone: %(phone)s"
+
+msgid "The first month may be free as a testing period."
+msgstr "The first month may be free as a testing period."
 
 msgid "The image is too large. Maximum allowed size is %(max)s MB."
 msgstr "The image is too large. Maximum allowed size is %(max)s MB."
@@ -1819,9 +2346,24 @@ msgid ""
 msgstr ""
 "The selected time slot is no longer available. Please choose another time."
 
+msgid ""
+"The service you book is provided by the business itself (salon, barber shop,"
+" sports facility, etc.), not by Vremio."
+msgstr ""
+"The service you book is provided by the business itself (salon, barber shop,"
+" sports facility, etc.), not by Vremio."
+
+msgid ""
+"The system is being tested with real booking flows and real customer data."
+msgstr ""
+"The system is being tested with real booking flows and real customer data."
+
 msgid "The time %(time)s is no longer available. Please select another slot."
 msgstr "The time %(time)s is no longer available. Please select another slot."
 
+msgid "The user agrees to:"
+msgstr "The user agrees to:"
+
 msgid ""
 "The verification link has expired. Please submit a new booking request."
 msgstr ""
@@ -1833,6 +2375,27 @@ msgid ""
 msgstr ""
 "There is not enough available time for the selected services together. "
 "Please choose another date or book the services separately."
+
+msgid ""
+"These are the default customer booking rules for Vremio. An individual "
+"business may add additional rules on its booking page."
+msgstr ""
+"These are the default customer booking rules for Vremio. An individual "
+"business may add additional rules on its booking page."
+
+msgid ""
+"These terms describe the private pilot period for the first business owners "
+"using Vremio. This is not a full commercial contract."
+msgstr ""
+"These terms describe the private pilot period for the first business owners "
+"using Vremio. This is not a full commercial contract."
+
+msgid ""
+"They are available only to the business owner and authorized Vremio "
+"administrators when needed for technical support."
+msgstr ""
+"They are available only to the business owner and authorized Vremio "
+"administrators when needed for technical support."
 
 msgid "This appointment cannot be cancelled."
 msgstr "This appointment cannot be cancelled."
@@ -1872,6 +2435,9 @@ msgstr "This booking request was declined by the salon."
 msgid "This customer already has active appointment(s)."
 msgstr "This customer already has active appointment(s)."
 
+msgid "This is a last-minute opening from a cancelled appointment."
+msgstr "This is a last-minute opening from a cancelled appointment."
+
 msgid "This is a request only — not confirmed until the salon approves it."
 msgstr "This is a request only — not confirmed until the salon approves it."
 
@@ -1895,6 +2461,16 @@ msgstr ""
 
 msgid "This link expires in 24 hours."
 msgstr "This link expires in 24 hours."
+
+msgid "This link is valid for %(minutes)s minutes."
+msgstr "This link is valid for %(minutes)s minutes."
+
+msgid ""
+"This page is a draft for the Vremio private pilot. It is not legal advice "
+"and has not been reviewed by a lawyer."
+msgstr ""
+"This page is a draft for the Vremio private pilot. It is not legal advice "
+"and has not been reviewed by a lawyer."
 
 msgid "This reset link is invalid or has expired."
 msgstr "This reset link is invalid or has expired."
@@ -1966,14 +2542,48 @@ msgstr ""
 msgid "Upload your logo here"
 msgstr "Upload your logo here"
 
+msgid "Uploaded images are used only for the booking request."
+msgstr "Uploaded images are used only for the booking request."
+
+msgid ""
+"Uploaded images are visible only to the logged-in business owner and "
+"platform administrators who need access for support or security."
+msgstr ""
+"Uploaded images are visible only to the logged-in business owner and "
+"platform administrators who need access for support or security."
+
+msgid ""
+"Uploaded photos are used only for the booking or service request. They are "
+"not public. They should be visible only to the logged-in business owner and "
+"platform administrators who need access for support or security."
+msgstr ""
+"Uploaded photos are used only for the booking or service request. They are "
+"not public. They should be visible only to the logged-in business owner and "
+"platform administrators who need access for support or security."
+
+msgid "Uploaded photos are visible only to:"
+msgstr "Uploaded photos are visible only to:"
+
+msgid "Uploaded reference photos (when required or provided)"
+msgstr "Uploaded reference photos (when required or provided)"
+
+msgid "Use customer data only for booking and service purposes."
+msgstr "Use customer data only for booking and service purposes."
+
 msgid "Use dd/mm/yyyy"
 msgstr "Use dd/mm/yyyy"
+
+msgid "Use the platform honestly and do not abuse booking limits."
+msgstr "Use the platform honestly and do not abuse booking limits."
 
 msgid "Username"
 msgstr "Username"
 
 msgid "Verification failed"
 msgstr "Verification failed"
+
+msgid "Verifying customer email addresses"
+msgstr "Verifying customer email addresses"
 
 msgid "Via"
 msgstr "Via"
@@ -2006,11 +2616,95 @@ msgid "Vremio"
 msgstr "Vremio"
 
 msgid ""
+"Vremio applies technical and organizational measures to protect personal "
+"data from unauthorized access, loss, or misuse."
+msgstr ""
+"Vremio applies technical and organizational measures to protect personal "
+"data from unauthorized access, loss, or misuse."
+
+msgid ""
+"Vremio does not sell or share your personal data with third parties, except "
+"when necessary for the platform to function or when required by law."
+msgstr ""
+"Vremio does not sell or share your personal data with third parties, except "
+"when necessary for the platform to function or when required by law."
+
+msgid ""
+"Vremio does not send marketing or newsletter emails unless a separate "
+"explicit opt-in is added in the future."
+msgstr ""
+"Vremio does not send marketing or newsletter emails unless a separate "
+"explicit opt-in is added in the future."
+
+msgid ""
 "Vremio helps you organize appointments, clients, and working hours in one "
 "place — with fewer messages and fewer mistakes."
 msgstr ""
 "Vremio helps you organize appointments, clients, and working hours in one "
 "place — with fewer messages and fewer mistakes."
+
+msgid ""
+"Vremio is a booking and reservation platform for local businesses. The "
+"platform is operated by the Vremio project team. The business listed on a "
+"booking page (for example a salon, barber, or sports venue) provides the "
+"actual service."
+msgstr ""
+"Vremio is a booking and reservation platform for local businesses. The "
+"platform is operated by the Vremio project team. The business listed on a "
+"booking page (for example a salon, barber, or sports venue) provides the "
+"actual service."
+
+msgid ""
+"Vremio is a booking and reservation platform. It helps customers send "
+"appointment requests and helps business owners manage them. The listed "
+"business provides the actual service — not Vremio."
+msgstr ""
+"Vremio is a booking and reservation platform. It helps customers send "
+"appointment requests and helps business owners manage them. The listed "
+"business provides the actual service — not Vremio."
+
+msgid ""
+"Vremio is a platform for online appointment booking and reservation "
+"management for local businesses."
+msgstr ""
+"Vremio is a platform for online appointment booking and reservation "
+"management for local businesses."
+
+msgid "Vremio is not responsible for:"
+msgstr "Vremio is not responsible for:"
+
+msgid ""
+"Vremio may be updated, improved, or temporarily unavailable during "
+"maintenance. During the private pilot, features may change as the system is "
+"tested with real bookings."
+msgstr ""
+"Vremio may be updated, improved, or temporarily unavailable during "
+"maintenance. During the private pilot, features may change as the system is "
+"tested with real bookings."
+
+msgid "Vremio may send transactional emails related to your booking, such as:"
+msgstr ""
+"Vremio may send transactional emails related to your booking, such as:"
+
+msgid ""
+"Vremio may update these terms from time to time in order to improve the "
+"service."
+msgstr ""
+"Vremio may update these terms from time to time in order to improve the "
+"service."
+
+msgid ""
+"Vremio or the business owner may block users who submit fake bookings, "
+"abusive content, or repeated misuse of the system."
+msgstr ""
+"Vremio or the business owner may block users who submit fake bookings, "
+"abusive content, or repeated misuse of the system."
+
+msgid "Vremio provides a booking platform."
+msgstr "Vremio provides a booking platform."
+
+msgid "Vremio reserves the right to:"
+msgstr "Vremio reserves the right to:"
 
 msgid "Vremio test email"
 msgstr "Vremio test email"
@@ -2032,6 +2726,9 @@ msgstr "We"
 
 msgid "We couldn't find a business matching your search."
 msgstr "We couldn't find a business matching your search."
+
+msgid "We look forward to seeing you."
+msgstr "We look forward to seeing you."
 
 msgid "We received your booking request"
 msgstr "We received your booking request"
@@ -2058,11 +2755,26 @@ msgstr "Weekly revenue"
 msgid "Welcome back — %(salon_name)s"
 msgstr "Welcome back — %(salon_name)s"
 
+msgid "Welcome to Vremio."
+msgstr "Welcome to Vremio."
+
+msgid "What data we may process"
+msgstr "What data we may process"
+
 msgid "What we offer"
 msgstr "What we offer"
 
+msgid "What you can request"
+msgstr "What you can request"
+
 msgid "WhatsApp"
 msgstr "WhatsApp"
+
+msgid "Who operates Vremio"
+msgstr "Who operates Vremio"
+
+msgid "Why we process data"
+msgstr "Why we process data"
 
 msgid "Working"
 msgstr "Working"
@@ -2086,6 +2798,20 @@ msgid "Yes, cancel appointment"
 msgstr "Yes, cancel appointment"
 
 msgid ""
+"You accept that significant lateness may result in cancellation of the "
+"appointment"
+msgstr ""
+"You accept that significant lateness may result in cancellation of the "
+"appointment"
+
+msgid ""
+"You accept that the business may decline a request if no appointment is "
+"available"
+msgstr ""
+"You accept that the business may decline a request if no appointment is "
+"available"
+
+msgid ""
 "You already have a booking request waiting for approval. Please wait for the"
 " salon to respond or cancel your existing request."
 msgstr ""
@@ -2098,10 +2824,31 @@ msgid ""
 msgstr ""
 "You already have the maximum number of active appointments. To book a new "
 "one, please cancel or complete an existing appointment."
+
+msgid ""
+"You are responsible for the actual service delivery, prices, and customer "
+"communication."
+msgstr ""
+"You are responsible for the actual service delivery, prices, and customer "
+"communication."
 
 msgid "You can cancel this appointment online."
 msgstr "You can cancel this appointment online."
 
+msgid "You can track your appointment here:"
+msgstr "You can track your appointment here:"
+
+msgid ""
+"You have a new booking request.\n"
+"\n"
+"Customer: %(name)s\n"
+"Phone: %(phone)s"
+msgstr ""
+"You have a new booking request.\n"
+"\n"
+"Customer: %(name)s\n"
+"Phone: %(phone)s"
+
 msgid ""
 "You have a new booking request.\n"
 "\n"
@@ -2121,6 +2868,25 @@ msgid ""
 "You have sent too many requests in a short time. Please try again later."
 msgstr ""
 "You have sent too many requests in a short time. Please try again later."
+
+msgid "You have the right to request:"
+msgstr "You have the right to request:"
+
+msgid ""
+"You may request correction or deletion of your personal data by contacting "
+"Vremio or the business where you booked. We will handle reasonable requests "
+"manually during the pilot period."
+msgstr ""
+"You may request correction or deletion of your personal data by contacting "
+"Vremio or the business where you booked. We will handle reasonable requests "
+"manually during the pilot period."
+
+msgid ""
+"You may upload only images related to the requested service (for example "
+"nail design reference or medical pedicure context)."
+msgstr ""
+"You may upload only images related to the requested service (for example "
+"nail design reference or medical pedicure context)."
 
 msgid "You requested a password reset for your Salon Scheduler owner account."
 msgstr ""
@@ -2128,6 +2894,25 @@ msgstr ""
 
 msgid "You requested a password reset for your Vremio owner account."
 msgstr "You requested a password reset for your Vremio owner account."
+
+msgid ""
+"You understand that the request is not an automatically confirmed "
+"appointment"
+msgstr ""
+"You understand that the request is not an automatically confirmed "
+"appointment"
+
+msgid "You will not abuse the platform with false or repeated requests"
+msgstr "You will not abuse the platform with false or repeated requests"
+
+msgid "You will notify the business if you cannot attend"
+msgstr "You will notify the business if you cannot attend"
+
+msgid "You will provide accurate contact information"
+msgstr "You will provide accurate contact information"
+
+msgid "You will respect the selected appointment time"
+msgstr "You will respect the selected appointment time"
 
 msgid "Your Details"
 msgstr "Your Details"
@@ -2150,6 +2935,11 @@ msgid ""
 msgstr ""
 "Your appointment is not confirmed yet. The salon will review your request "
 "after you verify your email."
+
+msgid ""
+"Your appointment is not confirmed yet. The salon will review your request."
+msgstr ""
+"Your appointment is not confirmed yet. The salon will review your request."
 
 msgid "Your appointment request was declined"
 msgstr "Your appointment request was declined"
@@ -2178,6 +2968,9 @@ msgstr ""
 msgid "Your booking request was declined."
 msgstr "Your booking request was declined."
 
+msgid "Your data is used exclusively for:"
+msgstr "Your data is used exclusively for:"
+
 msgid "Your password has been set. You can now sign in."
 msgstr "Your password has been set. You can now sign in."
 
@@ -2188,6 +2981,15 @@ msgid ""
 "Your request is not confirmed yet. The salon will review it and contact you."
 msgstr ""
 "Your request is not confirmed yet. The salon will review it and contact you."
+
+msgid "Your rights"
+msgstr "Your rights"
+
+msgid "and"
+msgstr "and"
+
+msgid "booking rules"
+msgstr "booking rules"
 
 msgid "customer first name"
 msgstr "customer first name"
@@ -2218,6 +3020,12 @@ msgstr "next appointment?"
 
 msgid "optional"
 msgstr "optional"
+
+msgid "photo policy"
+msgstr "photo policy"
+
+msgid "privacy policy"
+msgstr "privacy policy"
 
 msgid "rules"
 msgstr "rules"

@@ -1,0 +1,53 @@
+{% extends "booking/legal/_page.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Terms of Use" %} — Vremio{% endblock %}
+{% block legal_title %}{% trans "Terms of Use" %}{% endblock %}
+
+{% block legal_content %}
+<section class="vm-legal-section">
+  <h2>{% trans "1. Acceptance" %}</h2>
+  <p>{% trans "By using the Vremio platform, you agree to these terms." %}</p>
+</section>
+
+<section class="vm-legal-section">
+  <h2>{% trans "2. Role of Vremio" %}</h2>
+  <p>{% trans "Vremio provides a booking platform." %}</p>
+  <p>{% trans "The service you book is provided by the business itself (salon, barber shop, sports facility, etc.), not by Vremio." %}</p>
+</section>
+
+<section class="vm-legal-section">
+  <h2>{% trans "3. Booking" %}</h2>
+  <p>{% trans "A submitted appointment request does not represent a confirmed appointment." %}</p>
+  <p>{% trans "The appointment becomes valid only after approval by the business." %}</p>
+</section>
+
+<section class="vm-legal-section">
+  <h2>{% trans "4. User obligations" %}</h2>
+  <p>{% trans "The user agrees to:" %}</p>
+  <ul>
+    <li>{% trans "Provide accurate information" %}</li>
+    <li>{% trans "Not submit false requests" %}</li>
+    <li>{% trans "Not misuse photos" %}</li>
+    <li>{% trans "Not disrupt the operation of the platform" %}</li>
+  </ul>
+</section>
+
+<section class="vm-legal-section">
+  <h2>{% trans "5. Limitation of liability" %}</h2>
+  <p>{% trans "Vremio is not responsible for:" %}</p>
+  <ul>
+    <li>{% trans "Quality of the service" %}</li>
+    <li>{% trans "Prices" %}</li>
+    <li>{% trans "Delays" %}</li>
+    <li>{% trans "Cancellations" %}</li>
+    <li>{% trans "Business working hours" %}</li>
+  </ul>
+  <p>{% trans "The business itself is responsible for these matters." %}</p>
+</section>
+
+<section class="vm-legal-section">
+  <h2>{% trans "6. Changes" %}</h2>
+  <p>{% trans "Vremio may update these terms from time to time in order to improve the service." %}</p>
+</section>
+{% endblock %}

@@ -111,6 +111,7 @@ Detailed project documents are stored in the `docs/` folder:
 * `requirements-v1.md`
 * `roadmap.md`
 * `beta-deployment.md` — beta/production deployment guide
+* `compliance-notes.md` — privacy/compliance operational notes for pilot and production
 
 ---
 

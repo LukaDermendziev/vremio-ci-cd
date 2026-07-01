@@ -13,6 +13,7 @@
   data-slots-url="{% url 'booking:available_slots' salon.slug %}"
   data-min-date="{{ min_date }}"
   data-max-date="{{ max_date }}"
+  data-early-open-dates="{{ early_open_dates_js }}"
   data-closed-weekdays="{{ closed_weekdays_js }}"
   data-closed-dates="{{ closed_dates_js }}"
   data-salon-url="{% url 'booking:salon_page' salon.slug %}"
@@ -185,6 +186,7 @@
 
     <div class="bk-slots-section">
       <div class="bk-section-label">{% trans "Available times" %}</div>
+      <p class="bk-early-open-hint" id="bk-early-open-hint" hidden>{% trans "This is a last-minute opening from a cancelled appointment." %}</p>
       <div class="bk-slots-grid" id="bk-slots-grid">
         <span class="bk-slots-hint">{% trans "Select a date above to see available times." %}</span>
       </div>
@@ -332,6 +334,18 @@
         </label>
       {% endif %}
 
+      <label class="bk-rule-row bk-legal-consent">
+        <input type="checkbox" class="bk-rule-check">
+        <span class="bk-rule-box"><i class="bi bi-check"></i></span>
+        <span class="bk-rule-text">
+          {% trans "I have read and agree to the" %}
+          <a href="{% url 'booking:booking_rules' %}" target="_blank" rel="noopener">{% trans "booking rules" %}</a>,
+          <a href="{% url 'booking:privacy_policy' %}" target="_blank" rel="noopener">{% trans "privacy policy" %}</a>
+          {% trans "and" %}
+          <a href="{% url 'booking:photo_policy' %}" target="_blank" rel="noopener">{% trans "photo policy" %}</a>.
+        </span>
+      </label>
+
       <div style="display:none">{{ form.rules_accepted }}</div>
       {% for err in form.rules_accepted.errors %}<span class="bk-field-error">{{ err }}</span>{% endfor %}
     </div>
@@ -455,17 +469,33 @@ window.BK_I18N = {
   try {
     (JSON.parse(form.dataset.closedDates || '[]')).forEach(d => closedDates.add(d));
   } catch {}
+  const earlyOpenDates = new Set();
+  try {
+    (JSON.parse(form.dataset.earlyOpenDates || '[]')).forEach(d => earlyOpenDates.add(d));
+  } catch {}
 
   function parseLocalDate(str) {
     const [y, m, d] = str.split('-').map(Number);
     return new Date(y, m - 1, d);
   }
 
+  function formatDateStr(dt) {
+    const y = dt.getFullYear();
+    const m = String(dt.getMonth() + 1).padStart(2, '0');
+    const d = String(dt.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
   const minDate = parseLocalDate(form.dataset.minDate);
   const maxDate = parseLocalDate(form.dataset.maxDate);
 
-  state.calYear  = minDate.getFullYear();
-  state.calMonth = minDate.getMonth();
+  let initialCalDate = minDate;
+  if (earlyOpenDates.size) {
+    const sortedEarly = [...earlyOpenDates].sort();
+    initialCalDate = parseLocalDate(sortedEarly[0]);
+  }
+  state.calYear  = initialCalDate.getFullYear();
+  state.calMonth = initialCalDate.getMonth();
 
   // ── Multi-service helpers ─────────────────────────────────────────────────
   const serviceGapMin = Number(form.dataset.serviceGap || 30);
@@ -601,9 +631,10 @@ window.BK_I18N = {
       const dt        = new Date(y, m, d);
       const dateStr   = formatDateStr(dt);
       const isClosed  = closedWeekdays.includes(dt.getDay()) || closedDates.has(dateStr);
-      const isPast    = dt < minDate;
+      const isEarlyOpen = earlyOpenDates.has(dateStr);
+      const isBeforeToday = dateStr < todayStr;
       const isFar     = dt > maxDate;
-      const disabled  = isClosed || isPast || isFar;
+      const disabled  = isClosed || isBeforeToday || isFar || (dt < minDate && !isEarlyOpen);
       const isToday   = dateStr === todayStr;
       const isSelected = state.date === dateStr;
 
@@ -617,18 +648,12 @@ window.BK_I18N = {
       } else {
         btn.className = 'bk-cal-day'
           + (isSelected ? ' selected' : '')
-          + (isToday && !isSelected ? ' today' : '');
+          + (isToday && !isSelected ? ' today' : '')
+          + (isEarlyOpen ? ' early-open' : '');
         btn.addEventListener('click', () => pickDate(dateStr));
       }
       calGrid.appendChild(btn);
     }
-  }
-
-  function formatDateStr(dt) {
-    const y = dt.getFullYear();
-    const m = String(dt.getMonth() + 1).padStart(2, '0');
-    const d = String(dt.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
   }
 
   function formatDateDisplay(str) {
@@ -677,6 +702,8 @@ window.BK_I18N = {
     state.slot = null;
     timeInput.value = '';
     dateInput.value = dateStr;
+    const earlyHint = document.getElementById('bk-early-open-hint');
+    if (earlyHint) earlyHint.hidden = !earlyOpenDates.has(dateStr);
     renderCalendar();
     fetchSlots();
     refreshStep2UI();

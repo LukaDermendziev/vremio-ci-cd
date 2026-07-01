@@ -286,6 +286,165 @@ TRANSLATIONS = {
     "Sports venue": "Спортски терен",
     "Fitness / gym": "Фитнес / сала",
     "Other": "Друго",
+    # legal / compliance pages
+    "Privacy Policy": "Политика за приватност",
+    "Terms of Use": "Услови за користење",
+    "Booking Rules": "Правила за закажување",
+    "Photo Policy": "Политика за фотографии",
+    "Photo Upload Policy": "Политика за прикачување фотографии",
+    "Contact": "Контакт",
+    "Contact and data requests": "Контакт и барања за податоци",
+    "Contact and Data Requests": "Контакт и барања за податоци",
+    "Owner Pilot Terms": "Услови за пилот — сопственици",
+    "Business owner pilot terms": "Услови за пилот за сопственици на бизнис",
+    "Legal links": "Правни линкови",
+    "Back to home": "Назад на почетна",
+    "Last updated: %(date)s": "Последна измена: %(date)s",
+    "This page is a draft for the Vremio private pilot. It is not legal advice and has not been reviewed by a lawyer.": (
+        "Оваа страница е нацрт за приватниот Vremio пилот. Не претставува правен совет и не е прегледана од адвокат."
+    ),
+    "Who operates Vremio": "Кој управува со Vremio",
+    "Vremio is a booking and reservation platform for local businesses. The platform is operated by the Vremio project team. The business listed on a booking page (for example a salon, barber, or sports venue) provides the actual service.": (
+        "Vremio е платформа за закажување и резервации за локални бизниси. Платформата ја управува тимот на Vremio. "
+        "Бизнисот наведен на страницата за резервација (на пр. салон, берберница или спортски терен) ја обезбедува вистинската услуга."
+    ),
+    "What data we may process": "Кои податоци може да ги обработуваме",
+    "Customer name and surname": "Име и презиме на клиентот",
+    "Instagram username or preferred contact method": "Instagram корисничко име или претпочитан начин на контакт",
+    "Selected service, date, and time": "Избрана услуга, датум и време",
+    "Booking status and history": "Статус и историја на резервацијата",
+    "Uploaded reference photos (when required or provided)": "Прикачени референтни фотографии (кога се задолжителни или доставени)",
+    "Email verification and manage-booking tokens": "Email верификација и токени за управување со резервација",
+    "Technical and security logs (for example IP address for rate limiting and abuse prevention)": (
+        "Технички и безбедносни записи (на пр. IP адреса за ограничување на барања и спречување злоупотреба)"
+    ),
+    "Business owner account data (username, email, password hash)": "Податоци за сметка на сопственик (корисничко име, email, хеш на лозинка)",
+    "Why we process data": "Зошто ги обработуваме податоците",
+    "Creating and managing booking requests": "Креирање и управување со барања за резервација",
+    "Verifying customer email addresses": "Потврдување на email адреси на клиенти",
+    "Sending notifications to customers and business owners": "Испраќање известувања до клиенти и сопственици",
+    "Preventing abuse, spam, and duplicate bookings": "Спречување злоупотреба, спам и дупликат резервации",
+    "Showing booking details to the correct business owner": "Приказ на детали за резервација на соодветниот сопственик",
+    "Improving security and reliability of the platform": "Подобрување на безбедноста и доверливоста на платформата",
+    "Reference photos": "Референтни фотографии",
+    "Uploaded photos are used only for the booking or service request. They are not public. They should be visible only to the logged-in business owner and platform administrators who need access for support or security.": (
+        "Прикачените фотографии се користат само за барањето за резервација/услуга. Не се јавни. "
+        "Треба да бидат видливи само за најавениот сопственик и администратори на платформата кога е потребно за поддршка или безбедност."
+    ),
+    "Inappropriate or unrelated images may be deleted. Abusive customers may be blocked.": (
+        "Непримерни или нерелевантни слики може да бидат избришани. Клиенти кои злоупотребуваат може да бидат блокирани."
+    ),
+    "Email messages": "Email пораки",
+    "Vremio may send transactional emails related to your booking, such as:": "Vremio може да испраќа трансакциски email пораки поврзани со вашата резервација, како:",
+    "Booking request received": "Примено барање за резервација",
+    "Booking approved, rejected, edited, or cancelled": "Резервација одобрена, одбиена, изменета или откажана",
+    "Password reset for business owners": "Ресетирање на лозинка за сопственици",
+    "Owner notifications about new bookings": "Известувања до сопственик за нови резервации",
+    "Vremio does not send marketing or newsletter emails unless a separate explicit opt-in is added in the future.": (
+        "Vremio не испраќа маркетинг или newsletter email освен ако во иднина не се додаде посебна јасна согласност."
+    ),
+    "Your rights": "Вашите права",
+    "You may request correction or deletion of your personal data by contacting Vremio or the business where you booked. We will handle reasonable requests manually during the pilot period.": (
+        "Можете да побарате исправка или бришење на вашите лични податоци со контакт на Vremio или на бизнисот каде што резervиравте. "
+        "Разумни барања ќе ги обработуваме рачно за време на пилотот."
+    ),
+    "Retention": "Задржување на податоци",
+    "Booking data is kept as long as needed to operate the service, support the business owner, and meet reasonable record-keeping needs. Data may be deleted or anonymized when no longer required.": (
+        "Податоците за резервации се чуваат колку што е потребно за работа на услугата, поддршка на сопственикот и разумни евиденциски потреби. "
+        "Податоците може да се избришат или анонимизираат кога повеќе не се потребни."
+    ),
+    "About Vremio": "За Vremio",
+    "Vremio is a booking and reservation platform. It helps customers send appointment requests and helps business owners manage them. The listed business provides the actual service — not Vremio.": (
+        "Vremio е платформа за закажување и резервации. Им помага на клиентите да испратат барања за термин и на сопствениците да ги управуваат. "
+        "Наведениот бизнис ја обезбедува вистинската услуга — не Vremio."
+    ),
+    "Bookings and approval": "Резервации и одобрување",
+    "A booking submitted through Vremio is a request, not a confirmed appointment, unless the business has enabled automatic approval.": (
+        "Резервација испратена преку Vremio е барање, не потврден термин, освен ако бизнисот не вклучил автоматско одобрување."
+    ),
+    "The business owner may approve or reject requests.": "Сопственикот може да ги одобри или одбие барањата.",
+    "Availability shown online may change if another booking is accepted or the schedule is updated.": (
+        "Достапноста прикажана онлајн може да се промени ако друга резервација биде прифатена или распоредот се ажурира."
+    ),
+    "Customer responsibilities": "Обврски на клиентот",
+    "Provide accurate contact information.": "Да се внесат точни контакт податоци.",
+    "Use the platform honestly and do not abuse booking limits.": "Да се користи платформата искрено и без злоупотреба на лимитите.",
+    "Do not upload inappropriate, unrelated, or illegal images.": "Да не се прикачуваат непримерни, нерелевантни или незаконски слики.",
+    "Follow the booking rules of the business you selected.": "Да се почитуваат правилата за закажување на избраниот бизнис.",
+    "Business responsibilities": "Обврски на бизнисот",
+    "Each business is responsible for service quality, prices, appointment handling, and communication with its customers. Vremio provides the software platform only.": (
+        "Секој бизнис е одговорен за квалитет на услугата, цени, управување со термини и комуникација со клиентите. Vremio обезбедува само софтверската платформа."
+    ),
+    "Platform changes and availability": "Промени и достапност на платформата",
+    "Vremio may be updated, improved, or temporarily unavailable during maintenance. During the private pilot, features may change as the system is tested with real bookings.": (
+        "Vremio може да се ажурира, подобрува или привремено да не биде достапен за време на одржување. "
+        "За време на приватниот пилот, функциите може да се менуваат додека системот се тестира со вистински резервации."
+    ),
+    "Abuse and blocking": "Злоупотреба и блокирање",
+    "Vremio or the business owner may block users who submit fake bookings, abusive content, or repeated misuse of the system.": (
+        "Vremio или сопственикот може да блокираат корисници кои испраќаат лажни резервации, непримерна содржина или повторена злоупотреба."
+    ),
+    "These are the default customer booking rules for Vremio. An individual business may add additional rules on its booking page.": (
+        "Ова се стандардните правила за закажување на Vremio. Поединечен бизнис може да додаде дополнителни правила на својата страница."
+    ),
+    "The appointment is not confirmed until it is approved by the business.": "Терминот не е потврден додека не биде одобрен од бизнисот.",
+    "Enter accurate contact details so the business can reach you.": "Внесете точни контакт податоци за да може бизнисот да ве контактира.",
+    "If you cannot attend, cancel the appointment in time according to the business rules.": "Доколку не можете да дојдете, откажете го терминот навреме според правилата на бизнисот.",
+    "Arriving late may result in cancellation of the appointment.": "Доцнење може да резултира со откажување на терминот.",
+    "Inappropriate images or abuse of the system may lead to blocking.": "Непримерни слики или злоупотреба може да доведат до блокирање.",
+    "Related policies": "Поврзани политики",
+    "You may upload only images related to the requested service (for example nail design reference or medical pedicure context).": (
+        "Можете да прикачите само слики поврзани со бараната услуга (на пр. референца за дизајн на нокти или медицински педикир)."
+    ),
+    "Inappropriate, unrelated, or 18+ images are not allowed.": "Непримерни, нерелевантни или 18+ слики не се дозволени.",
+    "Uploaded images are used only for the booking request.": "Прикачените слики се користат само за барањето за резервација.",
+    "Uploaded images are visible only to the logged-in business owner and platform administrators who need access for support or security.": (
+        "Прикачените слики се видливи само за најавениот сопственик и администратори на платформата кога е потребно."
+    ),
+    "The business owner or administrator may delete inappropriate images.": "Сопственикот или администраторот може да избрише непримерни слики.",
+    "Customers who upload abusive content may be blocked from future bookings.": "Клиенти кои прикачуваат непримерна содржина може да бидат блокирани.",
+    "Allowed formats and size": "Дозволени формати и големина",
+    "Allowed formats: JPG, JPEG, PNG, WEBP.": "Дозволени формати: JPG, JPEG, PNG, WEBP.",
+    "Maximum file size: 5 MB per image (unless the business configures a different limit).": "Максимална големина: 5 MB по слика (освен ако бизнисот не постави друг лимит).",
+    "For questions, correction, or deletion of personal data, contact us.": "За прашања, исправка или бришење на лични податоци, контактирајте нè.",
+    "What you can request": "Што можете да побарате",
+    "Correction of your contact details": "Исправка на вашите контакт податоци",
+    "Deletion of a booking or uploaded photo where reasonable": "Бришење на резервација или прикачена слика кога е разумно",
+    "Questions about how your data is used": "Прашања за тоа како се користат вашите податоци",
+    "During the pilot, requests are handled manually. You may also contact the business where you booked directly.": (
+        "За време на пилотот, барањата се обработуваат рачно. Можете и директно да го контактирате бизнисот каде што резervиравте."
+    ),
+    "These terms describe the private pilot period for the first business owners using Vremio. This is not a full commercial contract.": (
+        "Овие услови го опишуваат приватниот пилот за првите сопственици кои го користат Vremio. Ова не е целосен комерцијален договор."
+    ),
+    "Pilot period": "Пилот период",
+    "The first month may be free as a testing period.": "Првиот месец може да биде бесплатен како тест период.",
+    "The system is being tested with real booking flows and real customer data.": "Системот се тестира со вистински резервации и вистински податоци од клиенти.",
+    "Features may change or improve during the pilot.": "Функциите може да се менуваат или подобруваат за време на пилотот.",
+    "Owner responsibilities": "Обврски на сопственикот",
+    "You are responsible for the actual service delivery, prices, and customer communication.": "Вие сте одговорни за вистинската услуга, цените и комуникацијата со клиентите.",
+    "Use customer data only for booking and service purposes.": "Користете ги податоците од клиенти само за резервации и услуга.",
+    "Do not share customer photos or contact details outside what is necessary for the service.": (
+        "Не споделувајте фотографии или контакт податоци надвор од она што е потребно за услугата."
+    ),
+    "Review important bookings manually during the pilot.": "Рачно проверувајте ги важните резервации за време на пилотот.",
+    "Report bugs, incorrect bookings, or security concerns promptly.": "Пријавете грешки, неточни резервации или безbedносни проблеми навреме.",
+    "After the pilot": "По пилотот",
+    "Continued paid use, pricing, and formal terms should be agreed separately before wider commercial launch.": (
+        "Понатамошна платена употреба, цени и формални услови треба да се договорат посебно пред пошироко комерцијално лансирање."
+    ),
+    "Powered by": "Овозможено од",
+    "I have read and agree to the": "Ги прочитав и се согласувам со",
+    "booking rules": "правилата за закажување",
+    "privacy policy": "политиката за приватност",
+    "photo policy": "политиката за фотографии",
+    "and": "и",
+    "I have read and agree to the booking rules and privacy policy.": (
+        "Ги прочитав и се согласувам со правилата за закажување и политиката за приватност."
+    ),
+    "I accept the salon rules and understand this is only a request.": (
+        "Ги прочитав и се согласувам со правилата за закажување и политиката за приватност."
+    ),
     # legacy home (kept for compatibility)
     "Salon Scheduler — Book Online": "Vremio — Резервирај онлајн",
     "Book your salon<br><em>appointment online</em>": "Резервирајте го вашиот<br><em>салонски термин онлајн</em>",
@@ -301,6 +460,7 @@ TRANSLATIONS = {
     "Owner — Salon Scheduler": "Сопственик — Vremio",
     "Owner Login": "Најава за сопственик",
     "Sign in to your salon dashboard": "Најавете се на контролната табла на салонот",
+    "Signing out…": "Одјавување…",
     "Username": "Корисничко име",
     "Password": "Лозинка",
     "Sign in": "Најави се",
@@ -503,7 +663,37 @@ TRANSLATIONS = {
     "Appointment cancelled.": "Терминот е откажан.",
     "Cancelled by customer": "Откажано од клиент",
     "Customer cancellation notice (hours)": "Одредба за откажување од клиент (часови)",
+    "Hello %(name)s,": "Здраво %(name)s,",
     "We received your booking request": "Го примивме вашето барање за термин",
+    "Hello %(name)s,\n\nWe received your booking request.": (
+        "Здраво %(name)s,\n\n"
+        "Го примивме вашето барање за термин."
+    ),
+    "You have a new booking request.\n\nCustomer: %(name)s\nPhone: %(phone)s": (
+        "Имате ново барање за термин.\n\n"
+        "Клиент: %(name)s\n"
+        "Телефон: %(phone)s"
+    ),
+    "Service: %(service)s": "Услуга: %(service)s",
+    "Date and time: %(date)s at %(time)s": "Датум и време: %(date)s во %(time)s",
+    "Your appointment is not confirmed yet. The salon will review your request.": (
+        "Терминот сè уште не е потврден. Салонот ќе го прегледа барањето."
+    ),
+    "You can track your appointment here:": "Вашиот термин можете да го следите тука:",
+    "Hello %(name)s,\n\nYour appointment for %(date)s at %(time)s has been confirmed.": (
+        "Здраво %(name)s,\n\n"
+        "Вашиот термин за %(date)s во %(time)s е потврден."
+    ),
+    "We look forward to seeing you.": "Ве очекуваме.",
+    "Hello %(name)s,\n\nYou requested an appointment at %(salon_name)s. To send your request to the salon, please confirm your email address:": (
+        "Здраво %(name)s,\n\n"
+        "Побаравте термин во %(salon_name)s. За да го испратите барањето до салонот, "
+        "потврдете ја вашата email адреса:"
+    ),
+    "This link is valid for %(minutes)s minutes.": "Линкот е важен %(minutes)s минути.",
+    "If you did not make this request, you can ignore this email.": (
+        "Ако не сте го направиле ова барање, можете да го игнорирате овој email."
+    ),
     "Customer cancelled appointment": "Клиент откажа термин",
     "We sent a confirmation email with a link to view and manage your booking.": "Испративме email за потврда со линк за преглед и управување со вашиот термин.",
     "View / manage booking": "Преглед / управување со термин",
@@ -784,6 +974,134 @@ TRANSLATIONS = {
     "The image is too large. Please upload an image up to %(max)s MB.": (
         "Сликата е преголема. Ве молиме прикачете слика до %(max)s MB."
     ),
+    "Reopen cancelled slots inside notice window": "Автоматски отвори откажани термини за онлајн резервација",
+    "This is a last-minute opening from a cancelled appointment.": "Ова е последен слободен термин од откажување.",
+    # Legal pages (2026 update)
+    "1. Introduction": "1. Вовед",
+    "Welcome to Vremio.": "Добредојдовте на Vremio.",
+    "Vremio is a platform for online appointment booking and reservation management for local businesses.": (
+        "Vremio е платформа за онлајн закажување термини и управување со резервации за локални бизниси."
+    ),
+    "By using the platform, you entrust us with certain personal data necessary for successfully organizing and managing your appointments. We are committed to their secure processing and protection.": (
+        "Со користење на платформата, ни доверувате одредени лични податоци неопходни за успешно организирање и управување со вашите термини. "
+        "Ние сме посветени на нивна безбедна обработка и заштита."
+    ),
+    "2. What data we collect": "2. Кои податоци ги собираме",
+    "Depending on the service you book, we may collect the following information:": (
+        "Во зависност од услугата што ја резервирате, може да ги собираме следните информации:"
+    ),
+    "First and last name": "име и презиме",
+    "Instagram username (if provided)": "Instagram корисничко име (доколку е внесено)",
+    "Selected service": "избрана услуга",
+    "Appointment date and time": "датум и време на термин",
+    "Booking status": "статус на резервацијата",
+    "Photos attached for the service": "прикачени фотографии поврзани со услугата",
+    "IP address and technical data needed for security and abuse prevention": (
+        "IP адреса и технички податоци потребни за безбедност и спречување злоупотреба"
+    ),
+    "3. Why we use your data": "3. Зошто ги користиме податоците",
+    "Your data is used exclusively for:": "Вашите податоци се користат исклучиво за:",
+    "Processing appointment requests": "обработка на барања за термин",
+    "Communication between the customer and the business": "комуникација помеѓу клиентот и бизнисот",
+    "Sending appointment-related notifications": "испраќање известувања поврзани со термини",
+    "Preventing abuse of the platform": "спречување злоупотреба на платформата",
+    "Improving the security and stability of the system": "подобрување на сигурноста и стабилноста на системот",
+    "4. Attached photos": "4. Прикачени фотографии",
+    "Photos are used solely as a reference for the selected service.": (
+        "Фотографиите се користат исклучиво како референца за избраната услуга."
+    ),
+    "They are available only to the business owner and authorized Vremio administrators when needed for technical support.": (
+        "Тие се достапни само за сопственикот на бизнисот и овластени администратори на Vremio доколку е потребно за техничка поддршка."
+    ),
+    "5. Data sharing": "5. Споделување на податоци",
+    "Vremio does not sell or share your personal data with third parties, except when necessary for the platform to function or when required by law.": (
+        "Vremio не ги продава ниту ги споделува вашите лични податоци со трети лица, освен кога тоа е неопходно за функционирањето на платформата или кога тоа го бара закон."
+    ),
+    "6. Your rights": "6. Вашите права",
+    "You have the right to request:": "Имате право да побарате:",
+    "Access to your data": "увид во вашите податоци",
+    "Correction of inaccurate data": "исправка на неточни податоци",
+    "Deletion of data when permitted": "бришење на податоци кога тоа е дозволено",
+    "Restriction of processing": "ограничување на обработката",
+    "For such requests, contact us via the contact email.": "За вакви барања контактирајте нè преку контакт е-поштата.",
+    "7. Security": "7. Безбедност",
+    "Vremio applies technical and organizational measures to protect personal data from unauthorized access, loss, or misuse.": (
+        "Vremio применува технички и организациски мерки за заштита на личните податоци од неовластен пристап, губење или злоупотреба."
+    ),
+    "1. Acceptance": "1. Прифаќање",
+    "By using the Vremio platform, you agree to these terms.": "Со користење на платформата Vremio се согласувате со овие услови.",
+    "2. Role of Vremio": "2. Улога на Vremio",
+    "Vremio provides a booking platform.": "Vremio обезбедува платформа за закажување.",
+    "The service you book is provided by the business itself (salon, barber shop, sports facility, etc.), not by Vremio.": (
+        "Услугата што ја резервирате ја обезбедува самиот бизнис (салон, берберница, спортски објект и сл.), а не Vremio."
+    ),
+    "3. Booking": "3. Закажување",
+    "A submitted appointment request does not represent a confirmed appointment.": (
+        "Испратеното барање за термин не претставува потврден термин."
+    ),
+    "The appointment becomes valid only after approval by the business.": (
+        "Терминот станува важечки само по одобрување од страна на бизнисот."
+    ),
+    "4. User obligations": "4. Обврски на корисникот",
+    "The user agrees to:": "Корисникот се согласува дека ќе:",
+    "Provide accurate information": "внесува точни информации",
+    "Not submit false requests": "нема да испраќа лажни барања",
+    "Not misuse photos": "нема да злоупотребува фотографии",
+    "Not disrupt the operation of the platform": "нема да ја попречува работата на платформата",
+    "5. Limitation of liability": "5. Ограничување на одговорност",
+    "Vremio is not responsible for:": "Vremio не е одговорен за:",
+    "Quality of the service": "квалитетот на услугата",
+    "Prices": "цените",
+    "Delays": "доцнења",
+    "Business working hours": "работното време на бизнисот",
+    "The business itself is responsible for these matters.": "За овие прашања одговорен е самиот бизнис.",
+    "6. Changes": "6. Измени",
+    "Vremio may update these terms from time to time in order to improve the service.": (
+        "Vremio може повремено да ги ажурира овие услови со цел подобрување на услугата."
+    ),
+    "By submitting an appointment request, you confirm that:": "Со испраќање барање за термин потврдувате дека:",
+    "You understand that the request is not an automatically confirmed appointment": (
+        "разбирате дека барањето не е автоматски потврден термин"
+    ),
+    "You will provide accurate contact information": "ќе обезбедите точни контакт информации",
+    "You will respect the selected appointment time": "ќе го почитувате избраниот термин",
+    "You will notify the business if you cannot attend": "ќе го известите бизнисот доколку не можете да присуствувате",
+    "You accept that significant lateness may result in cancellation of the appointment": (
+        "прифаќате дека значително доцнење може да резултира со откажување на терминот"
+    ),
+    "You accept that the business may decline a request if no appointment is available": (
+        "прифаќате дека бизнисот може да одбие барање доколку нема достапен термин"
+    ),
+    "You will not abuse the platform with false or repeated requests": (
+        "нема да ја злоупотребувате платформата со лажни или повторени барања"
+    ),
+    "If the selected service allows or requires a photo upload:": (
+        "Доколку избраната услуга дозволува или бара прикачување фотографија:"
+    ),
+    "Allowed": "Дозволено е",
+    "Photos related to the service": "фотографии поврзани со услугата",
+    "Reference photos": "референтни фотографии",
+    "Photos of the current condition (for example for medical pedicure)": (
+        "фотографии од постоечката состојба (на пример за медицински педикир)"
+    ),
+    "Not allowed": "Не е дозволено",
+    "Indecent or explicit photos": "непристојни или експлицитни фотографии",
+    "Photos unrelated to the service": "фотографии што не се поврзани со услугата",
+    "Photos that offend or harass others": "фотографии што ги навредуваат или вознемируваат другите",
+    "Malicious content": "злонамерна содржина",
+    "Formats": "Формати",
+    "Supported formats:": "Поддржани формати:",
+    "Photo review": "Преглед на фотографиите",
+    "Uploaded photos are visible only to:": "Прикачените фотографии се видливи само за:",
+    "The business where the request was submitted": "бизнисот кај кој е испратено барањето",
+    "Authorized administrators when necessary for technical support": (
+        "овластени администратори кога тоа е неопходно за техничка поддршка"
+    ),
+    "Abuse": "Злоупотреба",
+    "Vremio reserves the right to:": "Vremio го задржува правото да:",
+    "Delete inappropriate photos": "избрише несоодветна фотографија",
+    "Block users who misuse the platform": "блокира корисник кој ја злоупотребува платформата",
+    "Decline future requests if abuse is confirmed": "одбие идни барања доколку се утврди злоупотреба",
 }
 
 

@@ -40,8 +40,54 @@ msgstr "(препорачано)"
 msgid "(required)"
 msgstr "(задолжително)"
 
+msgid "1. Acceptance"
+msgstr "1. Прифаќање"
+
+msgid "1. Introduction"
+msgstr "1. Вовед"
+
+msgid "2. Role of Vremio"
+msgstr "2. Улога на Vremio"
+
+msgid "2. What data we collect"
+msgstr "2. Кои податоци ги собираме"
+
 msgid "24 h before"
 msgstr "24 ч. однапред"
+
+msgid "3. Booking"
+msgstr "3. Закажување"
+
+msgid "3. Why we use your data"
+msgstr "3. Зошто ги користиме податоците"
+
+msgid "4. Attached photos"
+msgstr "4. Прикачени фотографии"
+
+msgid "4. User obligations"
+msgstr "4. Обврски на корисникот"
+
+msgid "5. Data sharing"
+msgstr "5. Споделување на податоци"
+
+msgid "5. Limitation of liability"
+msgstr "5. Ограничување на одговорност"
+
+msgid "6. Changes"
+msgstr "6. Измени"
+
+msgid "6. Your rights"
+msgstr "6. Вашите права"
+
+msgid "7. Security"
+msgstr "7. Безбедност"
+
+msgid ""
+"A booking submitted through Vremio is a request, not a confirmed "
+"appointment, unless the business has enabled automatic approval."
+msgstr ""
+"Резервација испратена преку Vremio е барање, не потврден термин, освен ако "
+"бизнисот не вклучил автоматско одобрување."
 
 msgid "A modern booking platform for local businesses and services."
 msgstr "Модерна платформа за закажување за локални бизниси и услуги."
@@ -74,6 +120,22 @@ msgstr ""
 msgid "A reference photo is required for this service."
 msgstr "Потребна е референтна фотографија за оваа услуга."
 
+msgid ""
+"A submitted appointment request does not represent a confirmed appointment."
+msgstr "Испратеното барање за термин не претставува потврден термин."
+
+msgid "About Vremio"
+msgstr "За Vremio"
+
+msgid "Abuse"
+msgstr "Злоупотреба"
+
+msgid "Abuse and blocking"
+msgstr "Злоупотреба и блокирање"
+
+msgid "Access to your data"
+msgstr "увид во вашите податоци"
+
 msgid "Actions"
 msgstr "Акции"
 
@@ -104,6 +166,9 @@ msgstr "Додади услуга"
 msgid "Add time block"
 msgstr "Додади блок"
 
+msgid "After the pilot"
+msgstr "По пилотот"
+
 msgid "All"
 msgstr "Сите"
 
@@ -123,6 +188,15 @@ msgstr "Дозволи резервација следен ден"
 
 msgid "Allow same day booking"
 msgstr "Дозволи резервација ист ден"
+
+msgid "Allowed"
+msgstr "Дозволено е"
+
+msgid "Allowed formats and size"
+msgstr "Дозволени формати и големина"
+
+msgid "Allowed formats: JPG, JPEG, PNG, WEBP."
+msgstr "Дозволени формати: JPG, JPEG, PNG, WEBP."
 
 msgid "Anti-abuse"
 msgstr "Anti-abuse"
@@ -147,6 +221,9 @@ msgstr "Терминот е откажан. Клиентот нема внесе
 
 msgid "Appointment cancelled. Email sent to customer."
 msgstr "Терминот е откажан. Испратен е email до клиентот."
+
+msgid "Appointment date and time"
+msgstr "датум и време на термин"
 
 msgid "Appointment information — %(salon)s"
 msgstr "Информација за термин — %(salon)s"
@@ -187,17 +264,30 @@ msgstr "Април"
 msgid "Are you sure you want to cancel this appointment?"
 msgstr "Дали сте сигурни дека сакате да го откажете терминот?"
 
+msgid "Arriving late may result in cancellation of the appointment."
+msgstr "Доцнење може да резултира со откажување на терминот."
+
 msgid "Aug"
 msgstr "Авг"
 
 msgid "August"
 msgstr "Август"
 
+msgid "Authorized administrators when necessary for technical support"
+msgstr "овластени администратори кога тоа е неопходно за техничка поддршка"
+
 msgid "Auto approve bookings"
 msgstr "Автоматско одобрување"
 
 msgid "Availability"
 msgstr "Достапност"
+
+msgid ""
+"Availability shown online may change if another booking is accepted or the "
+"schedule is updated."
+msgstr ""
+"Достапноста прикажана онлајн може да се промени ако друга резервација биде "
+"прифатена или распоредот се ажурира."
 
 msgid "Available"
 msgstr "Достапни"
@@ -216,6 +306,9 @@ msgstr "Назад"
 
 msgid "Back to %(salon_name)s"
 msgstr "Назад кон %(salon_name)s"
+
+msgid "Back to home"
+msgstr "Назад на почетна"
 
 msgid "Back to login"
 msgstr "Назад на најава"
@@ -264,6 +357,9 @@ msgstr "Дали да се блокира овој клиент од закаж�
 msgid "Block time"
 msgstr "Блокирај време"
 
+msgid "Block users who misuse the platform"
+msgstr "блокира корисник кој ја злоупотребува платформата"
+
 msgid "Blocked"
 msgstr "Блокирано"
 
@@ -306,8 +402,14 @@ msgstr "Резервирајте го вашиот<br><em>салонски те�
 msgid "Booking"
 msgstr "Правила за"
 
+msgid "Booking Rules"
+msgstr "Правила за закажување"
+
 msgid "Booking added successfully."
 msgstr "Терминот е успешно додаден."
+
+msgid "Booking approved, rejected, edited, or cancelled"
+msgstr "Резервација одобрена, одбиена, изменета или откажана"
 
 msgid "Booking approved. Customer has no email — use prepared message."
 msgstr ""
@@ -329,6 +431,15 @@ msgstr ""
 
 msgid "Booking cancelled. Email sent to customer."
 msgstr "Терминот е откажан. Е-пошта е испратена."
+
+msgid ""
+"Booking data is kept as long as needed to operate the service, support the "
+"business owner, and meet reasonable record-keeping needs. Data may be "
+"deleted or anonymized when no longer required."
+msgstr ""
+"Податоците за резервации се чуваат колку што е потребно за работа на "
+"услугата, поддршка на сопственикот и разумни евиденциски потреби. Податоците"
+" може да се избришат или анонимизираат кога повеќе не се потребни."
 
 msgid "Booking deleted."
 msgstr "Терминот е избришан."
@@ -368,8 +479,17 @@ msgstr ""
 msgid "Booking rejected. Email sent to customer."
 msgstr "Терминот е одбиен. Е-пошта е испратена до клиентот."
 
+msgid "Booking request received"
+msgstr "Примено барање за резервација"
+
 msgid "Booking settings"
 msgstr "Поставки за резервации"
+
+msgid "Booking status"
+msgstr "статус на резервацијата"
+
+msgid "Booking status and history"
+msgstr "Статус и историја на резервацијата"
 
 msgid "Booking summary"
 msgstr "Резиме на барањето"
@@ -386,14 +506,45 @@ msgstr "Терминот е ажуриран. Е-пошта е испратен�
 msgid "Bookings"
 msgstr "Термини"
 
+msgid "Bookings and approval"
+msgstr "Резервации и одобрување"
+
 msgid "Browse businesses"
 msgstr "Пребарај бизниси"
 
 msgid "Buffer minutes between bookings"
 msgstr "Бафер меѓу термини (минути)"
 
+msgid "Business owner account data (username, email, password hash)"
+msgstr ""
+"Податоци за сметка на сопственик (корисничко име, email, хеш на лозинка)"
+
+msgid "Business owner pilot terms"
+msgstr "Услови за пилот за сопственици на бизнис"
+
+msgid "Business responsibilities"
+msgstr "Обврски на бизнисот"
+
+msgid "Business working hours"
+msgstr "работното време на бизнисот"
+
 msgid "Businesses on Vremio"
 msgstr "Бизниси на Vremio"
+
+msgid "By submitting an appointment request, you confirm that:"
+msgstr "Со испраќање барање за термин потврдувате дека:"
+
+msgid "By using the Vremio platform, you agree to these terms."
+msgstr "Со користење на платформата Vremio се согласувате со овие услови."
+
+msgid ""
+"By using the platform, you entrust us with certain personal data necessary "
+"for successfully organizing and managing your appointments. We are committed"
+" to their secure processing and protection."
+msgstr ""
+"Со користење на платформата, ни доверувате одредени лични податоци неопходни"
+" за успешно организирање и управување со вашите термини. Ние сме посветени "
+"на нивна безбедна обработка и заштита."
 
 msgid "Calendar"
 msgstr "Календар"
@@ -523,6 +674,9 @@ msgstr "Затворено денес"
 msgid "Collapse sidebar"
 msgstr "Собери странична лента"
 
+msgid "Communication between the customer and the business"
+msgstr "комуникација помеѓу клиентот и бизнисот"
+
 msgid "Completed"
 msgstr "Завршено"
 
@@ -535,6 +689,12 @@ msgstr "Потврдете го вашиот email за да го завршит
 msgid "Contact"
 msgstr "Контакт"
 
+msgid "Contact and Data Requests"
+msgstr "Контакт и барања за податоци"
+
+msgid "Contact and data requests"
+msgstr "Контакт и барања за податоци"
+
 msgid "Contact details"
 msgstr "Контакт податоци"
 
@@ -544,8 +704,21 @@ msgstr "Контакт email ќе биде додаден наскоро."
 msgid "Continue"
 msgstr "Продолжи"
 
+msgid ""
+"Continued paid use, pricing, and formal terms should be agreed separately "
+"before wider commercial launch."
+msgstr ""
+"Понатамошна платена употреба, цени и формални услови треба да се договорат "
+"посебно пред пошироко комерцијално лансирање."
+
 msgid "Copy message"
 msgstr "Копирај порака"
+
+msgid "Correction of inaccurate data"
+msgstr "исправка на неточни податоци"
+
+msgid "Correction of your contact details"
+msgstr "Исправка на вашите контакт податоци"
 
 msgid "Could not add unavailable time block."
 msgstr "Не можеше да се додаде блокот."
@@ -575,6 +748,9 @@ msgstr "Не можеше да се зачува работното време. 
 msgid "Courts & pitches"
 msgstr "Терени"
 
+msgid "Creating and managing booking requests"
+msgstr "Креирање и управување со барања за резервација"
+
 msgid "Customer added successfully."
 msgstr "Клиентот е успешно додаден."
 
@@ -596,6 +772,12 @@ msgstr "Податоци за клиенти и референтни фотог�
 msgid "Customer must upload a reference photo when booking this sub-service"
 msgstr "Клиентот мора да прикачи референтна фотографија при резервација"
 
+msgid "Customer name and surname"
+msgstr "Име и презиме на клиентот"
+
+msgid "Customer responsibilities"
+msgstr "Обврски на клиентот"
+
 msgid "Customer updated successfully."
 msgstr "Клиентот е успешно ажуриран."
 
@@ -604,6 +786,10 @@ msgstr "Страница за клиенти"
 
 msgid "Customers"
 msgstr "Клиенти"
+
+msgid ""
+"Customers who upload abusive content may be blocked from future bookings."
+msgstr "Клиенти кои прикачуваат непримерна содржина може да бидат блокирани."
 
 msgid "Dashboard"
 msgstr "Контролна табла"
@@ -614,6 +800,9 @@ msgstr "Датум"
 msgid "Date & Time"
 msgstr "Датум и време"
 
+msgid "Date and time: %(date)s at %(time)s"
+msgstr "Датум и време: %(date)s во %(time)s"
+
 msgid "Day"
 msgstr "Ден"
 
@@ -623,8 +812,17 @@ msgstr "Дек"
 msgid "December"
 msgstr "Декември"
 
+msgid "Decline future requests if abuse is confirmed"
+msgstr "одбие идни барања доколку се утврди злоупотреба"
+
+msgid "Delays"
+msgstr "доцнења"
+
 msgid "Delete"
 msgstr "Избриши"
+
+msgid "Delete inappropriate photos"
+msgstr "избрише несоодветна фотографија"
 
 msgid "Delete photo"
 msgstr "Избриши слика"
@@ -647,11 +845,33 @@ msgstr "Избриши ја услугата?"
 msgid "Delete this service? This cannot be undone."
 msgstr "Избриши ја услугата? Ова не може да се врати."
 
+msgid "Deletion of a booking or uploaded photo where reasonable"
+msgstr "Бришење на резервација или прикачена слика кога е разумно"
+
+msgid "Deletion of data when permitted"
+msgstr "бришење на податоци кога тоа е дозволено"
+
+msgid ""
+"Depending on the service you book, we may collect the following information:"
+msgstr ""
+"Во зависност од услугата што ја резервирате, може да ги собираме следните "
+"информации:"
+
 msgid "Description"
 msgstr "Опис"
 
 msgid "Directory"
 msgstr "Директориум"
+
+msgid ""
+"Do not share customer photos or contact details outside what is necessary "
+"for the service."
+msgstr ""
+"Не споделувајте фотографии или контакт податоци надвор од она што е потребно"
+" за услугата."
+
+msgid "Do not upload inappropriate, unrelated, or illegal images."
+msgstr "Да не се прикачуваат непримерни, нерелевантни или незаконски слики."
 
 msgid "Does your business run on appointments?"
 msgstr "Дали вашиот бизнис работи со термини?"
@@ -671,6 +891,22 @@ msgstr "Времетраење"
 
 msgid "Duration (min)"
 msgstr "Времетраење (мин)"
+
+msgid ""
+"During the pilot, requests are handled manually. You may also contact the "
+"business where you booked directly."
+msgstr ""
+"За време на пилотот, барањата се обработуваат рачно. Можете и директно да го"
+" контактирате бизнисот каде што резervиравте."
+
+msgid ""
+"Each business is responsible for service quality, prices, appointment "
+"handling, and communication with its customers. Vremio provides the software"
+" platform only."
+msgstr ""
+"Секој бизнис е одговорен за квалитет на услугата, цени, управување со "
+"термини и комуникација со клиентите. Vremio обезбедува само софтверската "
+"платформа."
 
 msgid ""
 "Each line is a separate rule. Customers see the Macedonian or English "
@@ -709,11 +945,17 @@ msgstr "Е-пошта"
 msgid "Email could not be sent. Prepared message is available."
 msgstr "Email не можеше да се испрати. Подготвената порака е достапна."
 
+msgid "Email messages"
+msgstr "Email пораки"
+
 msgid "Email notifications and reminders"
 msgstr "Email известувања и потсетници"
 
 msgid "Email sent"
 msgstr "Е-пошта испратена"
+
+msgid "Email verification and manage-booking tokens"
+msgstr "Email верификација и токени за управување со резервација"
 
 msgid "Email verification link expiry (minutes)"
 msgstr "Важност на линкот за потврда (минути)"
@@ -723,6 +965,9 @@ msgstr "Honeypot заштита"
 
 msgid "End"
 msgstr "Крај"
+
+msgid "Enter accurate contact details so the business can reach you."
+msgstr "Внесете точни контакт податоци за да може бизнисот да ве контактира."
 
 msgid "Enter your email and we'll send a reset link."
 msgstr "Внесете ја вашата е-пошта и ќе ви испратиме линк за ресетирање."
@@ -740,6 +985,9 @@ msgstr ""
 msgid "Extra duration note"
 msgstr "Белешка за дополнително време"
 
+msgid "Features may change or improve during the pilot."
+msgstr "Функциите може да се менуваат или подобруваат за време на пилотот."
+
 msgid "Feb"
 msgstr "Фев"
 
@@ -755,11 +1003,17 @@ msgstr ""
 "закажување. Vremio им помага на локалните бизниси да управуваат со термини "
 "брзо, јасно и професионално."
 
+msgid "First and last name"
+msgstr "име и презиме"
+
 msgid "Fitness / gym"
 msgstr "Фитнес / сала"
 
 msgid "Fitness / gyms"
 msgstr "Фитнес/сали"
+
+msgid "Follow the booking rules of the business you selected."
+msgstr "Да се почитуваат правилата за закажување на избраниот бизнис."
 
 msgid "Footer navigation"
 msgstr "Подножје навигација"
@@ -770,8 +1024,17 @@ msgstr "За сопственици"
 msgid "For customers"
 msgstr "За клиенти"
 
+msgid "For questions, correction, or deletion of personal data, contact us."
+msgstr "За прашања, исправка или бришење на лични податоци, контактирајте нè."
+
+msgid "For such requests, contact us via the contact email."
+msgstr "За вакви барања контактирајте нè преку контакт е-поштата."
+
 msgid "Forgot password?"
 msgstr "Заборавена лозинка?"
+
+msgid "Formats"
+msgstr "Формати"
 
 msgid "Fr"
 msgstr "Пе"
@@ -794,6 +1057,9 @@ msgstr "Оди на најава"
 msgid "Hair salons"
 msgstr "Фризерски салони"
 
+msgid "Hello %(name)s,"
+msgstr "Здраво %(name)s,"
+
 msgid ""
 "Hello %(name)s,\n"
 "\n"
@@ -806,6 +1072,15 @@ msgstr ""
 "За жал, бараниот термин за %(date)s во %(time)s не е достапен.\n"
 "\n"
 "Ве молиме изберете друг термин."
+
+msgid ""
+"Hello %(name)s,\n"
+"\n"
+"We received your booking request."
+msgstr ""
+"Здраво %(name)s,\n"
+"\n"
+"Го примивме вашето барање за термин."
 
 msgid ""
 "Hello %(name)s,\n"
@@ -844,6 +1119,24 @@ msgstr ""
 "Не се појавивте на терминот за %(date)s во %(time)s.\n"
 "\n"
 "Ако сакате повторно да закажете, контактирајте нè. — %(salon)s"
+
+msgid ""
+"Hello %(name)s,\n"
+"\n"
+"You requested an appointment at %(salon_name)s. To send your request to the salon, please confirm your email address:"
+msgstr ""
+"Здраво %(name)s,\n"
+"\n"
+"Побаравте термин во %(salon_name)s. За да го испратите барањето до салонот, потврдете ја вашата email адреса:"
+
+msgid ""
+"Hello %(name)s,\n"
+"\n"
+"Your appointment for %(date)s at %(time)s has been confirmed."
+msgstr ""
+"Здраво %(name)s,\n"
+"\n"
+"Вашиот термин за %(date)s во %(time)s е потврден."
 
 msgid ""
 "Hello %(name)s,\n"
@@ -979,6 +1272,11 @@ msgstr "Работно време"
 msgid "How it works"
 msgstr "Како функционира"
 
+msgid "I accept the salon rules and understand this is only a request."
+msgstr ""
+"Ги прочитав и се согласувам со правилата за закажување и политиката за "
+"приватност."
+
 msgid ""
 "I agree to the selected time and understand it cannot be changed without "
 "notice."
@@ -989,11 +1287,24 @@ msgstr ""
 msgid "I have a business"
 msgstr "Имам бизнис"
 
+msgid "I have read and agree to the"
+msgstr "Ги прочитав и се согласувам со"
+
+msgid "I have read and agree to the booking rules and privacy policy."
+msgstr ""
+"Ги прочитав и се согласувам со правилата за закажување и политиката за "
+"приватност."
+
 msgid "I understand:"
 msgstr "Разбирам дека:"
 
 msgid "I want Vremio for my business"
 msgstr "Сакам Vremio за мојот бизнис"
+
+msgid "IP address and technical data needed for security and abuse prevention"
+msgstr ""
+"IP адреса и технички податоци потребни за безбедност и спречување "
+"злоупотреба"
 
 msgid ""
 "If an account with that email exists, a password reset link has been sent. "
@@ -1001,6 +1312,20 @@ msgid ""
 msgstr ""
 "Ако постои сметка со таа е-пошта, испратен е линк за ресетирање. Проверете "
 "ја папката за спам ако не го гледате."
+
+msgid "If the selected service allows or requires a photo upload:"
+msgstr "Доколку избраната услуга дозволува или бара прикачување фотографија:"
+
+msgid ""
+"If you cannot attend, cancel the appointment in time according to the "
+"business rules."
+msgstr ""
+"Доколку не можете да дојдете, откажете го терминот навреме според правилата "
+"на бизнисот."
+
+msgid "If you did not make this request, you can ignore this email."
+msgstr ""
+"Ако не сте го направиле ова барање, можете да го игнорирате овој email."
 
 msgid ""
 "If you did not request this, ignore this email — your password will not "
@@ -1022,17 +1347,45 @@ msgstr ""
 "Ако вашиот бизнис работи со термини или резервации, контактирајте нè за "
 "пристап и поставување на вашиот профил."
 
+msgid "Improving security and reliability of the platform"
+msgstr "Подобрување на безбедноста и доверливоста на платформата"
+
+msgid "Improving the security and stability of the system"
+msgstr "подобрување на сигурноста и стабилноста на системот"
+
 msgid "In person"
 msgstr "Лично"
 
 msgid "Inactive"
 msgstr "Неактивна"
 
+msgid "Inappropriate images or abuse of the system may lead to blocking."
+msgstr "Непримерни слики или злоупотреба може да доведат до блокирање."
+
+msgid ""
+"Inappropriate or unrelated images may be deleted. Abusive customers may be "
+"blocked."
+msgstr ""
+"Непримерни или нерелевантни слики може да бидат избришани. Клиенти кои "
+"злоупотребуваат може да бидат блокирани."
+
+msgid "Inappropriate, unrelated, or 18+ images are not allowed."
+msgstr "Непримерни, нерелевантни или 18+ слики не се дозволени."
+
+msgid "Indecent or explicit photos"
+msgstr "непристојни или експлицитни фотографии"
+
 msgid "Instagram"
 msgstr "Instagram"
 
 msgid "Instagram username"
 msgstr "Instagram корисничко име"
+
+msgid "Instagram username (if provided)"
+msgstr "Instagram корисничко име (доколку е внесено)"
+
+msgid "Instagram username or preferred contact method"
+msgstr "Instagram корисничко име или претпочитан начин на контакт"
 
 msgid ""
 "Instagram, Viber, and Messenger are hard to track. Vremio gives you a clear "
@@ -1068,6 +1421,9 @@ msgstr "Јун"
 msgid "June"
 msgstr "Јуни"
 
+msgid "Last updated: %(date)s"
+msgstr "Последна измена: %(date)s"
+
 msgid "Late arrival limit minutes"
 msgstr "Лимит за доцнење (минути)"
 
@@ -1077,11 +1433,17 @@ msgstr "Лимит за доцнење: <strong>%(minutes)s минути</strong
 msgid "Leave blank if not in a group"
 msgstr "Остави празно ако не е во група"
 
+msgid "Legal links"
+msgstr "Правни линкови"
+
 msgid "Loading times…"
 msgstr "Се вчитуваат термини…"
 
 msgid "Made by"
 msgstr "Направено од"
+
+msgid "Malicious content"
+msgstr "злонамерна содржина"
 
 msgid "Manage calendar and clients"
 msgstr "Управувајте со календар и клиенти"
@@ -1118,6 +1480,13 @@ msgstr "Макс. големина на фотографија (MB)"
 
 msgid "Maximum booking window days"
 msgstr "Максимален прозорец (дена)"
+
+msgid ""
+"Maximum file size: 5 MB per image (unless the business configures a "
+"different limit)."
+msgstr ""
+"Максимална големина: 5 MB по слика (освен ако бизнисот не постави друг "
+"лимит)."
 
 msgid "May"
 msgstr "Мај"
@@ -1248,6 +1617,18 @@ msgstr "Порака за не се појави"
 msgid "No-shows"
 msgstr "Не се појавија"
 
+msgid "Not allowed"
+msgstr "Не е дозволено"
+
+msgid "Not disrupt the operation of the platform"
+msgstr "нема да ја попречува работата на платформата"
+
+msgid "Not misuse photos"
+msgstr "нема да злоупотребува фотографии"
+
+msgid "Not submit false requests"
+msgstr "нема да испраќа лажни барања"
+
 msgid "Nov"
 msgstr "Ное"
 
@@ -1308,6 +1689,9 @@ msgstr "Преглед"
 msgid "Owner Login"
 msgstr "Најава за сопственик"
 
+msgid "Owner Pilot Terms"
+msgstr "Услови за пилот — сопственици"
+
 msgid "Owner dashboard and calendar"
 msgstr "Контролна табла и календар"
 
@@ -1317,8 +1701,14 @@ msgstr "Рачно од сопственик"
 msgid "Owner note"
 msgstr "Белешка од сопственик"
 
+msgid "Owner notifications about new bookings"
+msgstr "Известувања до сопственик за нови резервации"
+
 msgid "Owner panel"
 msgstr "Панел за сопственик"
+
+msgid "Owner responsibilities"
+msgstr "Обврски на сопственикот"
 
 msgid "Owner sign in"
 msgstr "Најава за сопственици"
@@ -1334,6 +1724,9 @@ msgstr "Лозинка"
 
 msgid "Password Reset Complete"
 msgstr "Лозинката е ресетирана"
+
+msgid "Password reset for business owners"
+msgstr "Ресетирање на лозинка за сопственици"
 
 msgid "Password updated"
 msgstr "Лозинката е ажурирана"
@@ -1365,6 +1758,12 @@ msgstr "Телефонски повик"
 msgid "Phone number"
 msgstr "Телефонски број"
 
+msgid "Photo Policy"
+msgstr "Политика за фотографии"
+
+msgid "Photo Upload Policy"
+msgstr "Политика за прикачување фотографии"
+
 msgid "Photo attached"
 msgstr "Има прикачена слика"
 
@@ -1383,8 +1782,36 @@ msgstr "Фото?"
 msgid "Photo required"
 msgstr "Потребна е фотографија"
 
+msgid "Photo review"
+msgstr "Преглед на фотографиите"
+
 msgid "Photo uploaded"
 msgstr "Има слика"
+
+msgid "Photos are used solely as a reference for the selected service."
+msgstr ""
+"Фотографиите се користат исклучиво како референца за избраната услуга."
+
+msgid "Photos attached for the service"
+msgstr "прикачени фотографии поврзани со услугата"
+
+msgid "Photos of the current condition (for example for medical pedicure)"
+msgstr "фотографии од постоечката состојба (на пример за медицински педикир)"
+
+msgid "Photos related to the service"
+msgstr "фотографии поврзани со услугата"
+
+msgid "Photos that offend or harass others"
+msgstr "фотографии што ги навредуваат или вознемируваат другите"
+
+msgid "Photos unrelated to the service"
+msgstr "фотографии што не се поврзани со услугата"
+
+msgid "Pilot period"
+msgstr "Пилот период"
+
+msgid "Platform changes and availability"
+msgstr "Промени и достапност на платформата"
 
 msgid "Please complete all required fields before continuing."
 msgstr "Пополнете ги сите задолжителни полиња пред да продолжите."
@@ -1410,6 +1837,9 @@ msgstr "Внесете го вашиот телефонски број."
 msgid "Please upload a reference photo for this service."
 msgstr "Прикачете референтна фотографија за оваа услуга."
 
+msgid "Powered by"
+msgstr "Овозможено од"
+
 msgid "Preferred contact"
 msgstr "Претпочитан контакт"
 
@@ -1418,6 +1848,12 @@ msgstr "Претпочитан начин на контакт"
 
 msgid "Prepared message"
 msgstr "Подготвена порака"
+
+msgid "Preventing abuse of the platform"
+msgstr "спречување злоупотреба на платформата"
+
+msgid "Preventing abuse, spam, and duplicate bookings"
+msgstr "Спречување злоупотреба, спам и дупликат резервации"
 
 msgid "Previous month"
 msgstr "Претходен месец"
@@ -1437,14 +1873,35 @@ msgstr "Ставка —"
 msgid "Price list"
 msgstr "Ценовник"
 
+msgid "Prices"
+msgstr "цените"
+
+msgid "Privacy Policy"
+msgstr "Политика за приватност"
+
 msgid "Private lessons"
 msgstr "Приватни часови"
+
+msgid "Processing appointment requests"
+msgstr "обработка на барања за термин"
 
 msgid "Professional nail care"
 msgstr "Професионална нега на нокти"
 
 msgid "Professional scheduling for beauty businesses"
 msgstr "Професионално закажување за beauty бизниси"
+
+msgid "Provide accurate contact information."
+msgstr "Да се внесат точни контакт податоци."
+
+msgid "Provide accurate information"
+msgstr "внесува точни информации"
+
+msgid "Quality of the service"
+msgstr "квалитетот на услугата"
+
+msgid "Questions about how your data is used"
+msgstr "Прашања за тоа како се користат вашите податоци"
 
 msgid "Ready for"
 msgstr "Подготвени за"
@@ -1464,6 +1921,9 @@ msgstr "Прикачена е референтна фотографија"
 msgid "Reference photo required"
 msgstr "Потребна е референтна фотографија"
 
+msgid "Reference photos"
+msgstr "референтни фотографии"
+
 msgid "Reject"
 msgstr "Одбиј"
 
@@ -1475,6 +1935,9 @@ msgstr "Одбиено"
 
 msgid "Rejected message"
 msgstr "Порака за одбивање"
+
+msgid "Related policies"
+msgstr "Поврзани политики"
 
 msgid "Reminder"
 msgstr "Потсетник"
@@ -1496,6 +1959,13 @@ msgstr "Отстрани го блокот?"
 
 msgid "Rentable rooms & spaces"
 msgstr "Простории за изнајмување"
+
+msgid "Reopen cancelled slots inside notice window"
+msgstr "Автоматски отвори откажани термини за онлајн резервација"
+
+msgid "Report bugs, incorrect bookings, or security concerns promptly."
+msgstr ""
+"Пријавете грешки, неточни резервации или безbedносни проблеми навреме."
 
 msgid "Request Sent"
 msgstr "Барањето е испратено"
@@ -1539,6 +2009,12 @@ msgstr "Линкот е испратен"
 msgid "Reset Password"
 msgstr "Ресетирај лозинка"
 
+msgid "Restriction of processing"
+msgstr "ограничување на обработката"
+
+msgid "Retention"
+msgstr "Задржување на податоци"
+
 msgid "Revenue from completed appointments only. No online payments."
 msgstr "Приход само од завршени термини. Без онлајн плаќања."
 
@@ -1547,6 +2023,9 @@ msgstr "Преглед"
 
 msgid "Review & Submit"
 msgstr "Преглед и испраќање"
+
+msgid "Review important bookings manually during the pilot."
+msgstr "Рачно проверувајте ги важните резервации за време на пилотот."
 
 msgid "Review in dashboard:"
 msgstr "Преглед во контролна табла:"
@@ -1647,6 +2126,12 @@ msgstr "Изберете датум погоре за да ги видите с�
 msgid "Select one or more services to continue."
 msgstr "Изберете една или повеќе услуги за да продолжите."
 
+msgid "Selected service"
+msgstr "избрана услуга"
+
+msgid "Selected service, date, and time"
+msgstr "Избрана услуга, датум и време"
+
 msgid "Send a request and wait for confirmation"
 msgstr "Испратете барање и почекајте потврда"
 
@@ -1660,6 +2145,12 @@ msgstr "Испрати email"
 
 msgid "Send reset link"
 msgstr "Испрати линк за ресетирање"
+
+msgid "Sending appointment-related notifications"
+msgstr "испраќање известувања поврзани со термини"
+
+msgid "Sending notifications to customers and business owners"
+msgstr "Испраќање известувања до клиенти и сопственици"
 
 msgid "Sep"
 msgstr "Сеп"
@@ -1682,6 +2173,9 @@ msgstr "Распоред на услуги"
 msgid "Service updated successfully."
 msgstr "Услугата е успешно ажурирана."
 
+msgid "Service: %(service)s"
+msgstr "Услуга: %(service)s"
+
 msgid "Services"
 msgstr "Услуги"
 
@@ -1703,6 +2197,9 @@ msgstr "Поставете услуги и работно време"
 msgid "Show photo"
 msgstr "Прикажи слика"
 
+msgid "Showing booking details to the correct business owner"
+msgstr "Приказ на детали за резервација на соодветниот сопственик"
+
 msgid "Shown on the booking form. Each line is a separate rule."
 msgstr ""
 "Се прикажуваат на формата за резервација. Секој ред е посебно правило."
@@ -1715,6 +2212,9 @@ msgstr "Најавете се на контролната табла на сал
 
 msgid "Sign out"
 msgstr "Одјави се"
+
+msgid "Signing out…"
+msgstr "Одјавување…"
 
 msgid "Simple for everyone"
 msgstr "Едноставно за сите"
@@ -1776,8 +2276,21 @@ msgstr "Недела"
 msgid "Supported businesses"
 msgstr "Поддржани бизниси"
 
+msgid "Supported formats:"
+msgstr "Поддржани формати:"
+
 msgid "Tap to upload a photo"
 msgstr "Допри за да прикачиш слика"
+
+msgid ""
+"Technical and security logs (for example IP address for rate limiting and "
+"abuse prevention)"
+msgstr ""
+"Технички и безбедносни записи (на пр. IP адреса за ограничување на барања и "
+"спречување злоупотреба)"
+
+msgid "Terms of Use"
+msgstr "Услови за користење"
 
 msgid "Th"
 msgstr "Че"
@@ -1785,11 +2298,29 @@ msgstr "Че"
 msgid "Thank you for letting us know. The salon has been notified."
 msgstr "Ви благодариме што нè известивте. Салонот е известен."
 
+msgid "The appointment becomes valid only after approval by the business."
+msgstr "Терминот станува важечки само по одобрување од страна на бизнисот."
+
+msgid "The appointment is not confirmed until it is approved by the business."
+msgstr "Терминот не е потврден додека не биде одобрен од бизнисот."
+
 msgid "The appointment is not confirmed until it is approved."
 msgstr "Терминот не е потврден додека не биде одобрен."
 
 msgid "The appointment is not confirmed until the salon approves it."
 msgstr "Терминот не е потврден додека не биде одобрен."
+
+msgid "The business itself is responsible for these matters."
+msgstr "За овие прашања одговорен е самиот бизнис."
+
+msgid "The business owner may approve or reject requests."
+msgstr "Сопственикот може да ги одобри или одбие барањата."
+
+msgid "The business owner or administrator may delete inappropriate images."
+msgstr "Сопственикот или администраторот може да избрише непримерни слики."
+
+msgid "The business where the request was submitted"
+msgstr "бизнисот кај кој е испратено барањето"
 
 msgid ""
 "The customer %(name)s cancelled their appointment.\n"
@@ -1803,6 +2334,9 @@ msgstr ""
 "Услуга: %(service)s\n"
 "Датум и време: %(date)s во %(time)s\n"
 "Телефон: %(phone)s"
+
+msgid "The first month may be free as a testing period."
+msgstr "Првиот месец може да биде бесплатен како тест период."
 
 msgid "The image is too large. Maximum allowed size is %(max)s MB."
 msgstr "Сликата е преголема. Максималната дозволена големина е %(max)s MB."
@@ -1824,8 +2358,23 @@ msgid ""
 msgstr ""
 "Избраниот термин повеќе не е достапен. Ве молиме изберете друг термин."
 
+msgid ""
+"The service you book is provided by the business itself (salon, barber shop,"
+" sports facility, etc.), not by Vremio."
+msgstr ""
+"Услугата што ја резервирате ја обезбедува самиот бизнис (салон, берберница, "
+"спортски објект и сл.), а не Vremio."
+
+msgid ""
+"The system is being tested with real booking flows and real customer data."
+msgstr ""
+"Системот се тестира со вистински резервации и вистински податоци од клиенти."
+
 msgid "The time %(time)s is no longer available. Please select another slot."
 msgstr "Терминот %(time)s веќе не е достапен. Изберете друг."
+
+msgid "The user agrees to:"
+msgstr "Корисникот се согласува дека ќе:"
 
 msgid ""
 "The verification link has expired. Please submit a new booking request."
@@ -1838,6 +2387,27 @@ msgid ""
 msgstr ""
 "Нема доволно слободно време за избраните услуги заедно. Ве молиме изберете "
 "друг датум или закажете ги услугите одделно."
+
+msgid ""
+"These are the default customer booking rules for Vremio. An individual "
+"business may add additional rules on its booking page."
+msgstr ""
+"Ова се стандардните правила за закажување на Vremio. Поединечен бизнис може "
+"да додаде дополнителни правила на својата страница."
+
+msgid ""
+"These terms describe the private pilot period for the first business owners "
+"using Vremio. This is not a full commercial contract."
+msgstr ""
+"Овие услови го опишуваат приватниот пилот за првите сопственици кои го "
+"користат Vremio. Ова не е целосен комерцијален договор."
+
+msgid ""
+"They are available only to the business owner and authorized Vremio "
+"administrators when needed for technical support."
+msgstr ""
+"Тие се достапни само за сопственикот на бизнисот и овластени администратори "
+"на Vremio доколку е потребно за техничка поддршка."
 
 msgid "This appointment cannot be cancelled."
 msgstr "Овој термин не може да се откаже."
@@ -1877,6 +2447,9 @@ msgstr "Ова барање е одбиено од салонот."
 msgid "This customer already has active appointment(s)."
 msgstr "Клиентот веќе има активен/и термин/и."
 
+msgid "This is a last-minute opening from a cancelled appointment."
+msgstr "Ова е последен слободен термин од откажување."
+
 msgid "This is a request only — not confirmed until the salon approves it."
 msgstr "Ова е само барање — не е потврдено додека салонот не одобри."
 
@@ -1900,6 +2473,16 @@ msgstr ""
 
 msgid "This link expires in 24 hours."
 msgstr "Овој линк истекува за 24 часа."
+
+msgid "This link is valid for %(minutes)s minutes."
+msgstr "Линкот е важен %(minutes)s минути."
+
+msgid ""
+"This page is a draft for the Vremio private pilot. It is not legal advice "
+"and has not been reviewed by a lawyer."
+msgstr ""
+"Оваа страница е нацрт за приватниот Vremio пилот. Не претставува правен "
+"совет и не е прегледана од адвокат."
 
 msgid "This reset link is invalid or has expired."
 msgstr "Овој линк за ресетирање е неважечки или истечен."
@@ -1971,14 +2554,48 @@ msgstr ""
 msgid "Upload your logo here"
 msgstr "Поставете го вашиот лого тука"
 
+msgid "Uploaded images are used only for the booking request."
+msgstr "Прикачените слики се користат само за барањето за резервација."
+
+msgid ""
+"Uploaded images are visible only to the logged-in business owner and "
+"platform administrators who need access for support or security."
+msgstr ""
+"Прикачените слики се видливи само за најавениот сопственик и администратори "
+"на платформата кога е потребно."
+
+msgid ""
+"Uploaded photos are used only for the booking or service request. They are "
+"not public. They should be visible only to the logged-in business owner and "
+"platform administrators who need access for support or security."
+msgstr ""
+"Прикачените фотографии се користат само за барањето за резервација/услуга. "
+"Не се јавни. Треба да бидат видливи само за најавениот сопственик и "
+"администратори на платформата кога е потребно за поддршка или безбедност."
+
+msgid "Uploaded photos are visible only to:"
+msgstr "Прикачените фотографии се видливи само за:"
+
+msgid "Uploaded reference photos (when required or provided)"
+msgstr "Прикачени референтни фотографии (кога се задолжителни или доставени)"
+
+msgid "Use customer data only for booking and service purposes."
+msgstr "Користете ги податоците од клиенти само за резервации и услуга."
+
 msgid "Use dd/mm/yyyy"
 msgstr "Користете дд/мм/гггг"
+
+msgid "Use the platform honestly and do not abuse booking limits."
+msgstr "Да се користи платформата искрено и без злоупотреба на лимитите."
 
 msgid "Username"
 msgstr "Корисничко име"
 
 msgid "Verification failed"
 msgstr "Потврдата не успеа"
+
+msgid "Verifying customer email addresses"
+msgstr "Потврдување на email адреси на клиенти"
 
 msgid "Via"
 msgstr "Преку"
@@ -2011,11 +2628,97 @@ msgid "Vremio"
 msgstr "Vremio"
 
 msgid ""
+"Vremio applies technical and organizational measures to protect personal "
+"data from unauthorized access, loss, or misuse."
+msgstr ""
+"Vremio применува технички и организациски мерки за заштита на личните "
+"податоци од неовластен пристап, губење или злоупотреба."
+
+msgid ""
+"Vremio does not sell or share your personal data with third parties, except "
+"when necessary for the platform to function or when required by law."
+msgstr ""
+"Vremio не ги продава ниту ги споделува вашите лични податоци со трети лица, "
+"освен кога тоа е неопходно за функционирањето на платформата или кога тоа го"
+" бара закон."
+
+msgid ""
+"Vremio does not send marketing or newsletter emails unless a separate "
+"explicit opt-in is added in the future."
+msgstr ""
+"Vremio не испраќа маркетинг или newsletter email освен ако во иднина не се "
+"додаде посебна јасна согласност."
+
+msgid ""
 "Vremio helps you organize appointments, clients, and working hours in one "
 "place — with fewer messages and fewer mistakes."
 msgstr ""
 "Vremio ви помага да ги организирате термините, клиентите и работното време "
 "на едно место — со помалку пораки и помалку грешки."
+
+msgid ""
+"Vremio is a booking and reservation platform for local businesses. The "
+"platform is operated by the Vremio project team. The business listed on a "
+"booking page (for example a salon, barber, or sports venue) provides the "
+"actual service."
+msgstr ""
+"Vremio е платформа за закажување и резервации за локални бизниси. "
+"Платформата ја управува тимот на Vremio. Бизнисот наведен на страницата за "
+"резервација (на пр. салон, берберница или спортски терен) ја обезбедува "
+"вистинската услуга."
+
+msgid ""
+"Vremio is a booking and reservation platform. It helps customers send "
+"appointment requests and helps business owners manage them. The listed "
+"business provides the actual service — not Vremio."
+msgstr ""
+"Vremio е платформа за закажување и резервации. Им помага на клиентите да "
+"испратат барања за термин и на сопствениците да ги управуваат. Наведениот "
+"бизнис ја обезбедува вистинската услуга — не Vremio."
+
+msgid ""
+"Vremio is a platform for online appointment booking and reservation "
+"management for local businesses."
+msgstr ""
+"Vremio е платформа за онлајн закажување термини и управување со резервации "
+"за локални бизниси."
+
+msgid "Vremio is not responsible for:"
+msgstr "Vremio не е одговорен за:"
+
+msgid ""
+"Vremio may be updated, improved, or temporarily unavailable during "
+"maintenance. During the private pilot, features may change as the system is "
+"tested with real bookings."
+msgstr ""
+"Vremio може да се ажурира, подобрува или привремено да не биде достапен за "
+"време на одржување. За време на приватниот пилот, функциите може да се "
+"менуваат додека системот се тестира со вистински резервации."
+
+msgid "Vremio may send transactional emails related to your booking, such as:"
+msgstr ""
+"Vremio може да испраќа трансакциски email пораки поврзани со вашата "
+"резервација, како:"
+
+msgid ""
+"Vremio may update these terms from time to time in order to improve the "
+"service."
+msgstr ""
+"Vremio може повремено да ги ажурира овие услови со цел подобрување на "
+"услугата."
+
+msgid ""
+"Vremio or the business owner may block users who submit fake bookings, "
+"abusive content, or repeated misuse of the system."
+msgstr ""
+"Vremio или сопственикот може да блокираат корисници кои испраќаат лажни "
+"резервации, непримерна содржина или повторена злоупотреба."
+
+msgid "Vremio provides a booking platform."
+msgstr "Vremio обезбедува платформа за закажување."
+
+msgid "Vremio reserves the right to:"
+msgstr "Vremio го задржува правото да:"
 
 msgid "Vremio test email"
 msgstr "Тест email од Vremio"
@@ -2037,6 +2740,9 @@ msgstr "Ср"
 
 msgid "We couldn't find a business matching your search."
 msgstr "Не најдовме бизнис според вашето пребарување."
+
+msgid "We look forward to seeing you."
+msgstr "Ве очекуваме."
 
 msgid "We received your booking request"
 msgstr "Го примивме вашето барање за термин"
@@ -2065,11 +2771,26 @@ msgstr "Неделен приход"
 msgid "Welcome back — %(salon_name)s"
 msgstr "Добредојде — %(salon_name)s"
 
+msgid "Welcome to Vremio."
+msgstr "Добредојдовте на Vremio."
+
+msgid "What data we may process"
+msgstr "Кои податоци може да ги обработуваме"
+
 msgid "What we offer"
 msgstr "Што нудиме"
 
+msgid "What you can request"
+msgstr "Што можете да побарате"
+
 msgid "WhatsApp"
 msgstr "WhatsApp"
+
+msgid "Who operates Vremio"
+msgstr "Кој управува со Vremio"
+
+msgid "Why we process data"
+msgstr "Зошто ги обработуваме податоците"
 
 msgid "Working"
 msgstr "Работно"
@@ -2093,6 +2814,19 @@ msgid "Yes, cancel appointment"
 msgstr "Да, откажи термин"
 
 msgid ""
+"You accept that significant lateness may result in cancellation of the "
+"appointment"
+msgstr ""
+"прифаќате дека значително доцнење може да резултира со откажување на "
+"терминот"
+
+msgid ""
+"You accept that the business may decline a request if no appointment is "
+"available"
+msgstr ""
+"прифаќате дека бизнисот може да одбие барање доколку нема достапен термин"
+
+msgid ""
 "You already have a booking request waiting for approval. Please wait for the"
 " salon to respond or cancel your existing request."
 msgstr ""
@@ -2106,8 +2840,29 @@ msgstr ""
 "Веќе го имате максималниот број активни термини. За нов термин, ве молиме "
 "откажете или завршете постоечки термин."
 
+msgid ""
+"You are responsible for the actual service delivery, prices, and customer "
+"communication."
+msgstr ""
+"Вие сте одговорни за вистинската услуга, цените и комуникацијата со "
+"клиентите."
+
 msgid "You can cancel this appointment online."
 msgstr "Можете да го откажете терминот онлајн."
+
+msgid "You can track your appointment here:"
+msgstr "Вашиот термин можете да го следите тука:"
+
+msgid ""
+"You have a new booking request.\n"
+"\n"
+"Customer: %(name)s\n"
+"Phone: %(phone)s"
+msgstr ""
+"Имате ново барање за термин.\n"
+"\n"
+"Клиент: %(name)s\n"
+"Телефон: %(phone)s"
 
 msgid ""
 "You have a new booking request.\n"
@@ -2130,11 +2885,47 @@ msgstr ""
 "Испративте премногу барања за кратко време. Ве молиме обидете се повторно "
 "подоцна."
 
+msgid "You have the right to request:"
+msgstr "Имате право да побарате:"
+
+msgid ""
+"You may request correction or deletion of your personal data by contacting "
+"Vremio or the business where you booked. We will handle reasonable requests "
+"manually during the pilot period."
+msgstr ""
+"Можете да побарате исправка или бришење на вашите лични податоци со контакт "
+"на Vremio или на бизнисот каде што резervиравте. Разумни барања ќе ги "
+"обработуваме рачно за време на пилотот."
+
+msgid ""
+"You may upload only images related to the requested service (for example "
+"nail design reference or medical pedicure context)."
+msgstr ""
+"Можете да прикачите само слики поврзани со бараната услуга (на пр. референца"
+" за дизајн на нокти или медицински педикир)."
+
 msgid "You requested a password reset for your Salon Scheduler owner account."
 msgstr "Побаравте ресетирање на лозинката за вашата Vremio сметка."
 
 msgid "You requested a password reset for your Vremio owner account."
 msgstr "Побаравте ресетирање на лозинката за вашата Vremio сметка."
+
+msgid ""
+"You understand that the request is not an automatically confirmed "
+"appointment"
+msgstr "разбирате дека барањето не е автоматски потврден термин"
+
+msgid "You will not abuse the platform with false or repeated requests"
+msgstr "нема да ја злоупотребувате платформата со лажни или повторени барања"
+
+msgid "You will notify the business if you cannot attend"
+msgstr "ќе го известите бизнисот доколку не можете да присуствувате"
+
+msgid "You will provide accurate contact information"
+msgstr "ќе обезбедите точни контакт информации"
+
+msgid "You will respect the selected appointment time"
+msgstr "ќе го почитувате избраниот термин"
 
 msgid "Your Details"
 msgstr "Ваши податоци"
@@ -2157,6 +2948,10 @@ msgid ""
 msgstr ""
 "Терминот сè уште не е потврден. Салонот ќе го прегледа барањето откако ќе ја"
 " потврдите email адресата."
+
+msgid ""
+"Your appointment is not confirmed yet. The salon will review your request."
+msgstr "Терминот сè уште не е потврден. Салонот ќе го прегледа барањето."
 
 msgid "Your appointment request was declined"
 msgstr "Вашето барање за термин е одбиено"
@@ -2185,6 +2980,9 @@ msgstr ""
 msgid "Your booking request was declined."
 msgstr "Вашето барање за термин е одбиено."
 
+msgid "Your data is used exclusively for:"
+msgstr "Вашите податоци се користат исклучиво за:"
+
 msgid "Your password has been set. You can now sign in."
 msgstr "Вашата лозинка е поставена. Сега можете да се најавите."
 
@@ -2197,6 +2995,15 @@ msgid ""
 msgstr ""
 "Вашето барање сè уште не е потврдено. Салонот ќе го прегледа и ќе ве "
 "контактира."
+
+msgid "Your rights"
+msgstr "Вашите права"
+
+msgid "and"
+msgstr "и"
+
+msgid "booking rules"
+msgstr "правилата за закажување"
 
 msgid "customer first name"
 msgstr "име на клиент"
@@ -2227,6 +3034,12 @@ msgstr "следен термин?"
 
 msgid "optional"
 msgstr "опционално"
+
+msgid "photo policy"
+msgstr "политиката за фотографии"
+
+msgid "privacy policy"
+msgstr "политиката за приватност"
 
 msgid "rules"
 msgstr "резервации"

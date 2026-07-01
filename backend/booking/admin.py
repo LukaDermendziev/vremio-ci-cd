@@ -8,6 +8,7 @@ from .models import (
     Customer,
     CustomerBlocklist,
     DateWorkingHoursOverride,
+    ReleasedSlot,
     Salon,
     Service,
     ServicePriceItem,
@@ -158,6 +159,14 @@ class DateWorkingHoursOverrideAdmin(admin.ModelAdmin):
     )
     list_filter = ("salon", "mode", "date")
     search_fields = ("reason",)
+
+
+@admin.register(ReleasedSlot)
+class ReleasedSlotAdmin(admin.ModelAdmin):
+    list_display = ("salon", "start_at", "end_at", "is_active", "source_booking", "released_at")
+    list_filter = ("salon", "is_active", "start_at")
+    date_hierarchy = "start_at"
+    readonly_fields = ("released_at",)
 
 
 @admin.register(UnavailableTimeBlock)

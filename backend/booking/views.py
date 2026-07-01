@@ -15,10 +15,12 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
+from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_POST
 
 from .anti_abuse import DEVICE_COOKIE_MAX_AGE, DEVICE_COOKIE_NAME, normalize_phone
 from .email_utils import send_booking_verification_email
+from .legal_utils import get_vremio_contact_email
 from .forms import (
     BlockedDateForm,
     BookingPolicyForm,
@@ -57,11 +59,13 @@ from .services import (
     get_manage_booking_url,
     get_revenue_stats,
     get_salon_local_today,
+    get_last_minute_open_dates,
     get_unbookable_dates_for_customer,
     get_working_window_for_date,
     log_booking_activity,
     MSG_MULTI_SERVICE_NO_FIT,
     parse_service_ids_param,
+    release_booking_slot,
     resolve_services_for_salon,
     send_booking_notification,
     send_owner_customer_cancelled_notification,
@@ -105,12 +109,6 @@ def home(request):
     if category and category != "all":
         businesses = businesses.filter(business_category=category)
 
-    contact_email = (
-        getattr(settings, "VREMIO_CONTACT_EMAIL", "").strip()
-        or getattr(settings, "OWNER_NOTIFICATION_EMAIL", "").strip()
-        or ""
-    )
-
     return render(
         request,
         "booking/home.html",
@@ -119,9 +117,40 @@ def home(request):
             "q": q,
             "category": category or "all",
             "category_choices": Salon.BusinessCategory,
-            "contact_email": contact_email,
+            "contact_email": get_vremio_contact_email(),
         },
     )
+
+
+def _legal_page_context():
+    return {
+        "contact_email": get_vremio_contact_email(),
+        "last_updated": "2026-06-21",
+    }
+
+
+def privacy_policy(request):
+    return render(request, "booking/legal/privacy.html", _legal_page_context())
+
+
+def terms_of_use(request):
+    return render(request, "booking/legal/terms.html", _legal_page_context())
+
+
+def booking_rules(request):
+    return render(request, "booking/legal/booking_rules.html", _legal_page_context())
+
+
+def photo_policy(request):
+    return render(request, "booking/legal/photo_policy.html", _legal_page_context())
+
+
+def contact_data_requests(request):
+    return render(request, "booking/legal/contact.html", _legal_page_context())
+
+
+def owner_pilot_terms(request):
+    return render(request, "booking/legal/owner_pilot_terms.html", _legal_page_context())
 
 
 def _get_owner_salon(user):
@@ -220,6 +249,7 @@ def _owner_dashboard_context(salon):
     }
 
 
+@never_cache
 def owner_login(request):
     """Custom login page for salon owners."""
     if request.user.is_authenticated:
@@ -235,14 +265,23 @@ def owner_login(request):
             return redirect("booking:owner_dashboard")
         error = _("Invalid username or password.")
 
-    return render(request, "booking/auth/login.html", {"error": error})
+    return render(
+        request,
+        "booking/auth/login.html",
+        {
+            "error": error,
+            "logged_out": request.GET.get("logged_out") == "1",
+        },
+    )
 
 
+@never_cache
 def owner_logout(request):
     auth_logout(request)
-    return redirect("booking:owner_login")
+    return render(request, "booking/auth/logout_redirect.html")
 
 
+@never_cache
 @login_required
 def owner_dashboard(request):
     salon = _get_owner_salon(request.user)
@@ -283,6 +322,7 @@ def owner_dashboard(request):
                         messages.success(request, _("Appointment approved."))
                         messages.warning(request, _("Email could not be sent. Prepared message is available."))
             else:
+                release_booking_slot(booking)
                 booking.status = Booking.Status.REJECTED
                 booking.save()
                 log_booking_activity(booking, BookingActivityLog.Action.REJECTED, user=request.user)
@@ -427,6 +467,7 @@ def owner_dashboard(request):
             if booking.status in {Booking.Status.COMPLETED, Booking.Status.NO_SHOW}:
                 messages.warning(request, _("Cannot cancel a completed or no-show booking."))
             else:
+                release_booking_slot(booking)
                 booking.status = Booking.Status.CANCELLED
                 booking.save()
                 log_booking_activity(booking, BookingActivityLog.Action.CANCELLED, user=request.user)
@@ -444,6 +485,7 @@ def owner_dashboard(request):
             booking = get_object_or_404(
                 Booking, pk=request.POST.get("booking_id"), salon=salon
             )
+            release_booking_slot(booking)
             booking.delete()
             messages.success(request, _("Booking deleted."))
 
@@ -1101,6 +1143,7 @@ def book_salon(request, salon_slug):
     max_window = policy.maximum_booking_window_days if policy else 60
     min_date_val = today + timedelta(days=min_notice)
     max_date_val = today + timedelta(days=max_window)
+    early_open_dates = get_last_minute_open_dates(salon, today, min_date_val)
 
     # Ensure working hours exist so we can derive closed weekdays
     working_hours = salon.working_hours.order_by("weekday")
@@ -1166,6 +1209,7 @@ def book_salon(request, salon_slug):
             "services": salon.services.filter(is_active=True).prefetch_related("price_items"),
             "min_date": min_date_val.isoformat(),
             "max_date": max_date_val.isoformat(),
+            "early_open_dates_js": json.dumps(early_open_dates),
             "booking_policy": policy,
             "closed_weekdays_js": json.dumps(closed_weekdays_js),
             "closed_dates_js": json.dumps(
@@ -1375,6 +1419,7 @@ def manage_booking_cancel(request, token):
             messages.error(request, _("This appointment cannot be cancelled."))
         return redirect(reverse("booking:manage_booking", args=[token]))
 
+    release_booking_slot(booking)
     booking.status = Booking.Status.CANCELLED
     booking.cancelled_by_customer = True
     try:

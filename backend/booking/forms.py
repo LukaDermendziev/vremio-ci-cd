@@ -34,8 +34,10 @@ from .models import (
 from .services import (
     MSG_MULTI_SERVICE_NO_FIT,
     calculate_combined_duration_minutes,
+    consume_released_slot,
     get_salon_timezone,
     is_slot_available,
+    release_timeslot,
     resolve_services_for_salon,
 )
 
@@ -136,7 +138,7 @@ class BookingRequestForm(forms.Form):
     selected_price_item_id = forms.IntegerField(required=False, widget=forms.HiddenInput())
     rules_accepted = forms.BooleanField(
         required=True,
-        label=_("I accept the salon rules and understand this is only a request."),
+        label=_("I have read and agree to the booking rules and privacy policy."),
         widget=forms.CheckboxInput(attrs={"class": "bk-rules-hidden"}),
     )
     company_website = forms.CharField(
@@ -381,6 +383,7 @@ class BookingRequestForm(forms.Form):
                 sort_order=sort_order,
             )
 
+        consume_released_slot(self.salon, start_at, end_at)
         self.verification_required = needs_verification
         return booking
 
@@ -531,6 +534,8 @@ class OwnerBookingForm(forms.Form):
 
         if booking_id:
             booking = Booking.objects.get(pk=booking_id, salon=self.salon)
+            old_start = booking.start_at
+            old_end = booking.end_at
             booking.customer = customer
             booking.status = self.cleaned_data["status"]
             booking.start_at = start_at
@@ -541,6 +546,13 @@ class OwnerBookingForm(forms.Form):
             booking.rules_accepted = True
             booking.save()
             booking.booking_services.all().delete()
+            if (old_start, old_end) != (start_at, end_at):
+                release_timeslot(
+                    self.salon,
+                    old_start,
+                    old_end,
+                    source_booking=booking,
+                )
         else:
             booking = Booking(
                 salon=self.salon,
@@ -563,6 +575,7 @@ class OwnerBookingForm(forms.Form):
                 price_snapshot=service.base_price,
                 sort_order=sort_order,
             )
+        consume_released_slot(self.salon, start_at, end_at)
         return booking
 
 
@@ -605,6 +618,7 @@ class BookingPolicyForm(forms.ModelForm):
             "maximum_booking_window_days",
             "allow_same_day_booking",
             "allow_next_day_booking",
+            "allow_last_minute_reopen",
             "auto_approve_bookings",
             "late_arrival_limit_minutes",
             "reminder_hours_before",
@@ -638,6 +652,7 @@ class BookingPolicyForm(forms.ModelForm):
             "maximum_booking_window_days": _("Maximum booking window days"),
             "allow_same_day_booking": _("Allow same day booking"),
             "allow_next_day_booking": _("Allow next day booking"),
+            "allow_last_minute_reopen": _("Reopen cancelled slots inside notice window"),
             "auto_approve_bookings": _("Auto approve bookings"),
             "late_arrival_limit_minutes": _("Late arrival limit minutes"),
             "reminder_hours_before": _("Reminder hours before"),

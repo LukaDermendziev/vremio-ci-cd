@@ -1,0 +1,74 @@
+{% extends "booking/legal/_page.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Privacy Policy" %} — Vremio{% endblock %}
+{% block legal_title %}{% trans "Privacy Policy" %}{% endblock %}
+
+{% block legal_content %}
+<section class="vm-legal-section">
+  <h2>{% trans "1. Introduction" %}</h2>
+  <p>{% trans "Welcome to Vremio." %}</p>
+  <p>{% trans "Vremio is a platform for online appointment booking and reservation management for local businesses." %}</p>
+  <p>{% trans "By using the platform, you entrust us with certain personal data necessary for successfully organizing and managing your appointments. We are committed to their secure processing and protection." %}</p>
+</section>
+
+<section class="vm-legal-section">
+  <h2>{% trans "2. What data we collect" %}</h2>
+  <p>{% trans "Depending on the service you book, we may collect the following information:" %}</p>
+  <ul>
+    <li>{% trans "First and last name" %}</li>
+    <li>{% trans "Phone number" %}</li>
+    <li>{% trans "Email address" %}</li>
+    <li>{% trans "Instagram username (if provided)" %}</li>
+    <li>{% trans "Selected service" %}</li>
+    <li>{% trans "Appointment date and time" %}</li>
+    <li>{% trans "Booking status" %}</li>
+    <li>{% trans "Photos attached for the service" %}</li>
+    <li>{% trans "IP address and technical data needed for security and abuse prevention" %}</li>
+  </ul>
+</section>
+
+<section class="vm-legal-section">
+  <h2>{% trans "3. Why we use your data" %}</h2>
+  <p>{% trans "Your data is used exclusively for:" %}</p>
+  <ul>
+    <li>{% trans "Processing appointment requests" %}</li>
+    <li>{% trans "Communication between the customer and the business" %}</li>
+    <li>{% trans "Sending appointment-related notifications" %}</li>
+    <li>{% trans "Preventing abuse of the platform" %}</li>
+    <li>{% trans "Improving the security and stability of the system" %}</li>
+  </ul>
+</section>
+
+<section class="vm-legal-section">
+  <h2>{% trans "4. Attached photos" %}</h2>
+  <p>{% trans "Photos are used solely as a reference for the selected service." %}</p>
+  <p>{% trans "They are available only to the business owner and authorized Vremio administrators when needed for technical support." %}</p>
+</section>
+
+<section class="vm-legal-section">
+  <h2>{% trans "5. Data sharing" %}</h2>
+  <p>{% trans "Vremio does not sell or share your personal data with third parties, except when necessary for the platform to function or when required by law." %}</p>
+</section>
+
+<section class="vm-legal-section">
+  <h2>{% trans "6. Your rights" %}</h2>
+  <p>{% trans "You have the right to request:" %}</p>
+  <ul>
+    <li>{% trans "Access to your data" %}</li>
+    <li>{% trans "Correction of inaccurate data" %}</li>
+    <li>{% trans "Deletion of data when permitted" %}</li>
+    <li>{% trans "Restriction of processing" %}</li>
+  </ul>
+  <p>{% trans "For such requests, contact us via the contact email." %}</p>
+  {% if contact_email %}
+    <p><a href="mailto:{{ contact_email }}">{{ contact_email }}</a></p>
+  {% endif %}
+  <p><a href="{% url 'booking:contact' %}">{% trans "Contact and data requests" %}</a></p>
+</section>
+
+<section class="vm-legal-section">
+  <h2>{% trans "7. Security" %}</h2>
+  <p>{% trans "Vremio applies technical and organizational measures to protect personal data from unauthorized access, loss, or misuse." %}</p>
+</section>
+{% endblock %}

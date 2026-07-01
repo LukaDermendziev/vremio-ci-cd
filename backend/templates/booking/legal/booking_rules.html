@@ -1,0 +1,29 @@
+{% extends "booking/legal/_page.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Booking Rules" %} — Vremio{% endblock %}
+{% block legal_title %}{% trans "Booking Rules" %}{% endblock %}
+
+{% block legal_content %}
+<section class="vm-legal-section">
+  <p>{% trans "By submitting an appointment request, you confirm that:" %}</p>
+  <ul>
+    <li>{% trans "You understand that the request is not an automatically confirmed appointment" %}</li>
+    <li>{% trans "You will provide accurate contact information" %}</li>
+    <li>{% trans "You will respect the selected appointment time" %}</li>
+    <li>{% trans "You will notify the business if you cannot attend" %}</li>
+    <li>{% trans "You accept that significant lateness may result in cancellation of the appointment" %}</li>
+    <li>{% trans "You accept that the business may decline a request if no appointment is available" %}</li>
+    <li>{% trans "You will not abuse the platform with false or repeated requests" %}</li>
+  </ul>
+</section>
+
+<section class="vm-legal-section">
+  <h2>{% trans "Related policies" %}</h2>
+  <ul>
+    <li><a href="{% url 'booking:privacy_policy' %}">{% trans "Privacy Policy" %}</a></li>
+    <li><a href="{% url 'booking:photo_policy' %}">{% trans "Photo Upload Policy" %}</a></li>
+    <li><a href="{% url 'booking:terms_of_use' %}">{% trans "Terms of Use" %}</a></li>
+  </ul>
+</section>
+{% endblock %}

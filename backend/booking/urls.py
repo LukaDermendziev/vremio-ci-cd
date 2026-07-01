@@ -9,6 +9,12 @@ app_name = "booking"
 
 urlpatterns = [
     path("", views.home, name="home"),
+    path("privacy/", views.privacy_policy, name="privacy_policy"),
+    path("terms/", views.terms_of_use, name="terms_of_use"),
+    path("booking-rules/", views.booking_rules, name="booking_rules"),
+    path("photo-policy/", views.photo_policy, name="photo_policy"),
+    path("contact/", views.contact_data_requests, name="contact"),
+    path("owner/pilot-terms/", views.owner_pilot_terms, name="owner_pilot_terms"),
     path("book/<slug:salon_slug>/", views.salon_page, name="salon_page"),
     path("book/<slug:salon_slug>/request/", views.book_salon, name="book_salon"),
     path("book/<slug:salon_slug>/slots/", views.available_slots, name="available_slots"),

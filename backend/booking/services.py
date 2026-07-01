@@ -12,7 +12,15 @@ from django.utils import timezone
 from django.utils.formats import date_format
 from django.utils.translation import gettext as _
 
-from .models import Booking, BookingActivityLog, BookingPolicy, DateWorkingHoursOverride, Service, WorkingHours
+from .models import (
+    Booking,
+    BookingActivityLog,
+    BookingPolicy,
+    DateWorkingHoursOverride,
+    ReleasedSlot,
+    Service,
+    WorkingHours,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -239,6 +247,128 @@ def get_unbookable_dates_for_customer(salon, start_date, end_date):
     return closed
 
 
+def _is_inside_notice_window(salon, start_at, now=None):
+    """True when appointment date is before the normal minimum-notice cutoff."""
+    if now is None:
+        now = timezone.now()
+    today = timezone.localdate(now, get_salon_timezone(salon))
+    minimum_notice_days = get_policy_value(salon, "minimum_notice_days", 14)
+    appointment_date = timezone.localdate(start_at, get_salon_timezone(salon))
+    notice_cutoff = today + timedelta(days=minimum_notice_days)
+    return today <= appointment_date < notice_cutoff
+
+
+def release_interval(salon, start_at, end_at, source_booking=None):
+    """Mark a freed interval as publicly bookable inside the notice window."""
+    if start_at >= end_at:
+        return None
+    slot, _created = ReleasedSlot.objects.update_or_create(
+        salon=salon,
+        start_at=start_at,
+        end_at=end_at,
+        defaults={
+            "is_active": True,
+            "source_booking": source_booking,
+        },
+    )
+    return slot
+
+
+def release_booking_slot(booking):
+    """Release a booking's time for last-minute public rebooking when policy allows."""
+    return release_timeslot(
+        booking.salon,
+        booking.start_at,
+        booking.end_at,
+        source_booking=booking,
+    )
+
+
+def release_timeslot(salon, start_at, end_at, source_booking=None):
+    """Release a specific interval for last-minute public rebooking when policy allows."""
+    if not get_policy_value(salon, "allow_last_minute_reopen", True):
+        return None
+    now = timezone.now()
+    if start_at <= now:
+        return None
+    if not _is_inside_notice_window(salon, start_at, now=now):
+        return None
+    return release_interval(
+        salon,
+        start_at,
+        end_at,
+        source_booking=source_booking,
+    )
+
+
+def consume_released_slot(salon, start_at, end_at):
+    """Deactivate a released slot once it has been booked."""
+    ReleasedSlot.objects.filter(
+        salon=salon,
+        start_at=start_at,
+        is_active=True,
+    ).update(is_active=False)
+
+
+def get_active_released_intervals(salon, selected_date, now=None):
+    if now is None:
+        now = timezone.now()
+    salon_tz = get_salon_timezone(salon)
+    day_start = timezone.make_aware(
+        datetime.combine(selected_date, time.min),
+        salon_tz,
+    )
+    day_end = day_start + timedelta(days=1)
+    return list(
+        ReleasedSlot.objects.filter(
+            salon=salon,
+            is_active=True,
+            start_at__gte=max(day_start, now),
+            start_at__lt=day_end,
+        ).order_by("start_at")
+    )
+
+
+def get_last_minute_open_dates(salon, today, notice_cutoff_date, now=None):
+    """ISO date strings with active released slots inside the notice window."""
+    if not get_policy_value(salon, "allow_last_minute_reopen", True):
+        return []
+    if now is None:
+        now = timezone.now()
+    if notice_cutoff_date <= today:
+        return []
+    qs = (
+        ReleasedSlot.objects.filter(
+            salon=salon,
+            is_active=True,
+            start_at__gt=now,
+            start_at__date__gte=today,
+            start_at__date__lt=notice_cutoff_date,
+        )
+        .values_list("start_at", flat=True)
+        .distinct()
+    )
+    dates = set()
+    salon_tz = get_salon_timezone(salon)
+    for start_at in qs:
+        dates.add(timezone.localdate(start_at, salon_tz).isoformat())
+    return sorted(dates)
+
+
+def _filter_slots_to_released_only(slots, released_intervals):
+    if not released_intervals:
+        return []
+    filtered = []
+    for slot in slots:
+        slot_start = slot["start"]
+        slot_end = slot["end"]
+        for release in released_intervals:
+            if slot_start == release.start_at and slot_end <= release.end_at:
+                filtered.append(slot)
+                break
+    return filtered
+
+
 def get_available_slots(
     salon,
     services,
@@ -255,8 +385,18 @@ def get_available_slots(
     if not services or any(service.salon_id != salon.id for service in services):
         return []
 
-    if not for_owner and not is_date_allowed(salon, selected_date, now=now):
-        return []
+    last_minute_only = False
+    released_intervals = []
+    if not for_owner:
+        date_ok = is_date_allowed(salon, selected_date, now=now)
+        if get_policy_value(salon, "allow_last_minute_reopen", True):
+            released_intervals = get_active_released_intervals(
+                salon, selected_date, now=now
+            )
+        if not date_ok:
+            if not released_intervals:
+                return []
+            last_minute_only = True
 
     working_interval = get_working_interval_for_date(salon, selected_date)
     if not working_interval:
@@ -305,6 +445,9 @@ def get_available_slots(
                 "label": f"{candidate_start:%H:%M} - {candidate_end:%H:%M}",
             }
         )
+
+    if last_minute_only:
+        return _filter_slots_to_released_only(slots, released_intervals)
 
     return slots
 

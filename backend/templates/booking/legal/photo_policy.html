@@ -1,0 +1,56 @@
+{% extends "booking/legal/_page.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Photo Upload Policy" %} — Vremio{% endblock %}
+{% block legal_title %}{% trans "Photo Upload Policy" %}{% endblock %}
+
+{% block legal_content %}
+<section class="vm-legal-section">
+  <p>{% trans "If the selected service allows or requires a photo upload:" %}</p>
+
+  <h2>{% trans "Allowed" %}</h2>
+  <ul>
+    <li>{% trans "Photos related to the service" %}</li>
+    <li>{% trans "Reference photos" %}</li>
+    <li>{% trans "Photos of the current condition (for example for medical pedicure)" %}</li>
+  </ul>
+
+  <h2>{% trans "Not allowed" %}</h2>
+  <ul>
+    <li>{% trans "Indecent or explicit photos" %}</li>
+    <li>{% trans "Photos unrelated to the service" %}</li>
+    <li>{% trans "Photos that offend or harass others" %}</li>
+    <li>{% trans "Malicious content" %}</li>
+  </ul>
+</section>
+
+<section class="vm-legal-section">
+  <h2>{% trans "Formats" %}</h2>
+  <p>{% trans "Supported formats:" %}</p>
+  <ul>
+    <li>JPG</li>
+    <li>JPEG</li>
+    <li>PNG</li>
+    <li>WEBP</li>
+  </ul>
+</section>
+
+<section class="vm-legal-section">
+  <h2>{% trans "Photo review" %}</h2>
+  <p>{% trans "Uploaded photos are visible only to:" %}</p>
+  <ul>
+    <li>{% trans "The business where the request was submitted" %}</li>
+    <li>{% trans "Authorized administrators when necessary for technical support" %}</li>
+  </ul>
+</section>
+
+<section class="vm-legal-section">
+  <h2>{% trans "Abuse" %}</h2>
+  <p>{% trans "Vremio reserves the right to:" %}</p>
+  <ul>
+    <li>{% trans "Delete inappropriate photos" %}</li>
+    <li>{% trans "Block users who misuse the platform" %}</li>
+    <li>{% trans "Decline future requests if abuse is confirmed" %}</li>
+  </ul>
+</section>
+{% endblock %}

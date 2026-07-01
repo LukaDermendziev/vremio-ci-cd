@@ -159,6 +159,7 @@ class Command(BaseCommand):
             policy.maximum_booking_window_days = 60
             policy.allow_same_day_booking = False
             policy.allow_next_day_booking = False
+            policy.allow_last_minute_reopen = True
             policy.auto_approve_bookings = False
             policy.pending_holds_slot = True
             policy.late_arrival_limit_minutes = 15

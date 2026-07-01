@@ -194,6 +194,9 @@
     </div>
     <div class="vm-footer-lang">{% include "partials/language_switcher.html" %}</div>
   </div>
+  <div class="vm-footer-legal">
+    {% include "partials/legal_footer.html" with legal_footer_dark=True %}
+  </div>
   <div class="vm-footer-bottom">
     <span>&copy; {% now "Y" %} Vremio</span>
   </div>

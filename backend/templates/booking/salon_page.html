@@ -416,8 +416,11 @@ window.SP_I18N = {
     <div class="sp-footer-bottom-right">
       <span class="sp-footer-copy">&copy; {% now "Y" %} {{ salon.name }}</span>
       <span class="sp-footer-sep">·</span>
-      <span class="sp-footer-credit">{% trans "Made by" %} <a href="https://lexilens-mk.netlify.app" target="_blank" rel="noopener">Luka Dermendziev</a></span>
+      <span class="sp-footer-credit">{% trans "Powered by" %} <a href="/">Vremio</a></span>
     </div>
+  </div>
+  <div class="sp-footer-legal">
+    {% include "partials/legal_footer.html" with legal_footer_dark=True legal_footer_compact=True %}
   </div>
 </footer>
 

@@ -5,6 +5,7 @@ from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils import timezone
+from django.utils import translation
 from django.utils.translation import gettext as _
 
 logger = logging.getLogger(__name__)
@@ -100,8 +101,10 @@ def _booking_email_context(booking):
 
 
 def _render_email_parts(subject_template, body_template, context):
-    subject = render_to_string(subject_template, context).strip().replace("\n", " ")
-    body = render_to_string(body_template, context).strip()
+    language = getattr(settings, "LANGUAGE_CODE", "mk")
+    with translation.override(language):
+        subject = render_to_string(subject_template, context).strip().replace("\n", " ")
+        body = render_to_string(body_template, context).strip()
     return subject, body
 
 
@@ -174,6 +177,14 @@ def send_owner_new_booking_email(booking):
     if not owner_email:
         return False, "no_email"
 
+    customer_email = (booking.customer.email or "").strip()
+    if customer_email and owner_email.casefold() == customer_email.casefold():
+        logger.info(
+            "Skipping owner new-booking email for booking %s — owner inbox matches customer email",
+            booking.pk,
+        )
+        return False, "same_as_customer"
+
     context = _booking_email_context(booking)
     subject, body = _render_email_parts(*OWNER_NEW_BOOKING_TEMPLATES, context)
     return _send_email(subject=subject, body=body, to_email=owner_email)
@@ -244,9 +255,11 @@ def _send_customer_templated_email(booking, templates):
 
 def send_test_email(recipient):
     """Send a simple test message to verify SMTP/console configuration."""
-    subject = _("Vremio test email")
-    body = _(
-        "This is a test email from Vremio.\n\n"
-        "If you received this message, outgoing email is configured correctly."
-    )
+    language = getattr(settings, "LANGUAGE_CODE", "mk")
+    with translation.override(language):
+        subject = _("Vremio test email")
+        body = _(
+            "This is a test email from Vremio.\n\n"
+            "If you received this message, outgoing email is configured correctly."
+        )
     return _send_email(subject=subject, body=body, to_email=recipient)

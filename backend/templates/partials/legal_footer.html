@@ -1,0 +1,8 @@
+{% load i18n %}
+<nav class="legal-footer{% if legal_footer_compact %} legal-footer-compact{% endif %}{% if legal_footer_dark %} legal-footer-dark{% endif %}" aria-label="{% trans 'Legal links' %}">
+  <a href="{% url 'booking:privacy_policy' %}">{% trans "Privacy Policy" %}</a>
+  <a href="{% url 'booking:terms_of_use' %}">{% trans "Terms of Use" %}</a>
+  <a href="{% url 'booking:booking_rules' %}">{% trans "Booking Rules" %}</a>
+  <a href="{% url 'booking:photo_policy' %}">{% trans "Photo Policy" %}</a>
+  <a href="{% url 'booking:contact' %}">{% trans "Contact" %}</a>
+</nav>

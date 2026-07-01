@@ -716,6 +716,8 @@
 {% endblock %}
 
 {% block extra_js %}
+{% load static %}
+<script src="{% static 'js/owner_session_guard.js' %}"></script>
 {% if salon %}
 {% load static i18n %}
 <script src="{% static 'js/owner_dashboard.js' %}"></script>

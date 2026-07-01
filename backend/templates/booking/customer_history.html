@@ -55,6 +55,8 @@
 {% endblock %}
 
 {% block extra_js %}
+{% load static %}
+<script src="{% static 'js/owner_session_guard.js' %}"></script>
 <script>
 window.OD_I18N = window.OD_I18N || {
   confirmDeletePhoto: "{% filter escapejs %}{% trans 'Delete this reference photo?' %}{% endfilter %}",

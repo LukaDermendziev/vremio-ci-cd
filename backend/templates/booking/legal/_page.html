@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load static i18n %}
+{% block body_class %}vm-page vm-legal-page{% endblock %}
+
+{% block content %}
+<header class="vm-legal-header">
+  <div class="vm-legal-header-inner">
+    <a class="vm-legal-brand" href="/">Vremio</a>
+    <a class="vm-legal-back" href="/"><i class="bi bi-arrow-left"></i> {% trans "Back to home" %}</a>
+  </div>
+</header>
+
+<main class="vm-legal-main">
+  <div class="vm-legal-container">
+    <h1 class="vm-legal-title">{% block legal_title %}{% endblock %}</h1>
+    <p class="vm-legal-updated">{% blocktrans with date=last_updated %}Last updated: {{ date }}{% endblocktrans %}</p>
+    <article class="vm-legal-doc">
+      <p class="vm-legal-disclaimer">
+        {% trans "This page is a draft for the Vremio private pilot. It is not legal advice and has not been reviewed by a lawyer." %}
+      </p>
+      {% block legal_content %}{% endblock %}
+    </article>
+  </div>
+</main>
+
+<footer class="vm-legal-page-footer">
+  {% include "partials/legal_footer.html" %}
+</footer>
+{% endblock %}

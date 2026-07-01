@@ -31,4 +31,9 @@
     <a href="{% url 'booking:owner_password_reset' %}" class="auth-link-sm">{% trans "Forgot password?" %}</a>
   </div>
 </div>
+{% if logged_out %}
+<script>
+  history.replaceState(null, "", "{% url 'booking:owner_login' %}");
+</script>
+{% endif %}
 {% endblock %}
