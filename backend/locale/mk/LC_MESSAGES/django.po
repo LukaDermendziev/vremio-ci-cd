@@ -2563,7 +2563,7 @@ msgid "This link expires in 24 hours."
 msgstr "Овој линк истекува за 24 часа."
 
 msgid "This link is valid for %(minutes)s minutes."
-msgstr "Линкот е важен %(minutes)s минути."
+msgstr "Линкот е валиден %(minutes)s минути."
 
 msgid ""
 "This page is a draft for the Vremio private pilot. It is not legal advice "

@@ -724,7 +724,7 @@ TRANSLATIONS = {
         "Побаравте термин во %(salon_name)s. За да го испратите барањето до салонот, "
         "потврдете ја вашата email адреса:"
     ),
-    "This link is valid for %(minutes)s minutes.": "Линкот е важен %(minutes)s минути.",
+    "This link is valid for %(minutes)s minutes.": "Линкот е валиден %(minutes)s минути.",
     "If you did not make this request, you can ignore this email.": (
         "Ако не сте го направиле ова барање, можете да го игнорирате овој email."
     ),
