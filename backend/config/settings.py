@@ -111,6 +111,8 @@ elif os.environ.get("POSTGRES_DB"):
             "PASSWORD": os.environ.get("POSTGRES_PASSWORD", ""),
             "HOST": os.environ.get("POSTGRES_HOST", "localhost"),
             "PORT": os.environ.get("POSTGRES_PORT", "5432"),
+            "CONN_MAX_AGE": 600,
+            "CONN_HEALTH_CHECKS": True,
         }
     }
 else:
@@ -120,6 +122,10 @@ else:
             "NAME": BASE_DIR / "db.sqlite3",
         }
     }
+    if not DEBUG:
+        raise ImproperlyConfigured(
+            "PostgreSQL is required in production. Set DATABASE_URL or POSTGRES_DB."
+        )
 
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -171,12 +177,29 @@ STORAGES = {
     },
 }
 
-# Rate limiting uses Django's cache backend (LocMem in dev; use Redis in multi-worker production).
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+# Rate limiting uses Django's cache backend (LocMem in dev; Redis recommended in production).
+_cache_url = os.environ.get("CACHE_URL", "").strip()
+if _cache_url:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": _cache_url,
+        }
     }
-}
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        }
+    }
+    if not DEBUG:
+        import warnings
+
+        warnings.warn(
+            "CACHE_URL is not set. Rate limiting uses per-process memory and is "
+            "not reliable with multiple Gunicorn workers. Set CACHE_URL to a Redis URL.",
+            stacklevel=1,
+        )
 
 MEDIA_URL = "media/"
 _media_root = os.environ.get("MEDIA_ROOT", "")
@@ -214,8 +237,49 @@ VREMIO_CONTACT_EMAIL = os.environ.get("VREMIO_CONTACT_EMAIL", "").strip()
 IMAGE_MODERATION_ENABLED = os.environ.get("IMAGE_MODERATION_ENABLED", "False") == "True"
 IMAGE_MODERATION_PROVIDER = os.environ.get("IMAGE_MODERATION_PROVIDER", "").strip()
 
+# ── Logging ────────────────────────────────────────────────────────────────────
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {name} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
+    },
+    "loggers": {
+        "django.request": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+        "booking": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "booking.email": {
+            "handlers": ["console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+    },
+}
+
 # ── Production security (when DEBUG=False) ─────────────────────────────────────
 if not DEBUG:
+    if os.environ.get("USE_SECURE_PROXY_SSL_HEADER", "True") == "True":
+        SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SECURE_SSL_REDIRECT = os.environ.get("SECURE_SSL_REDIRECT", "True") == "True"
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True

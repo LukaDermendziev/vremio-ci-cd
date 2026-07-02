@@ -166,6 +166,9 @@ msgstr "Додади услуга"
 msgid "Add time block"
 msgstr "Додади блок"
 
+msgid "Additional details for your records…"
+msgstr "Дополнителни детали за вашите записи…"
+
 msgid "After the pilot"
 msgstr "По пилотот"
 
@@ -197,6 +200,9 @@ msgstr "Дозволени формати и големина"
 
 msgid "Allowed formats: JPG, JPEG, PNG, WEBP."
 msgstr "Дозволени формати: JPG, JPEG, PNG, WEBP."
+
+msgid "Already blocked"
+msgstr "Веќе блокиран"
 
 msgid "Anti-abuse"
 msgstr "Anti-abuse"
@@ -266,6 +272,9 @@ msgstr "Дали сте сигурни дека сакате да го отка�
 
 msgid "Arriving late may result in cancellation of the appointment."
 msgstr "Доцнење може да резултира со откажување на терминот."
+
+msgid "Audit log"
+msgstr "Дневник на промени"
 
 msgid "Aug"
 msgstr "Авг"
@@ -351,6 +360,9 @@ msgstr "Блокирај ден"
 msgid "Block full day"
 msgstr "Блокирај цел ден"
 
+msgid "Block reason updated."
+msgstr "Причината за блокирање е ажурирана."
+
 msgid "Block this customer from booking?"
 msgstr "Дали да се блокира овој клиент од закажување?"
 
@@ -365,6 +377,12 @@ msgstr "Блокирано"
 
 msgid "Blocked %(start)s%(end)s"
 msgstr "Блокирано %(start)s%(end)s"
+
+msgid "Blocked customer"
+msgstr "Блокиран клиент"
+
+msgid "Blocked customers"
+msgstr "Блокирани клиенти"
 
 msgid "Blocked date added."
 msgstr "Блокираниот датум е додаден."
@@ -468,6 +486,9 @@ msgstr "Лимит на барања по email на ден"
 msgid "Booking rate limit per phone per day"
 msgstr "Лимит на барања по телефон на ден"
 
+msgid "Booking reference"
+msgstr "Референца на термин"
+
 msgid "Booking rejected. Customer has no email — use prepared message."
 msgstr ""
 "Терминот е одбиен. Клиентот нема е-pошта — користете подготвена порака."
@@ -552,6 +573,9 @@ msgstr "Календар"
 msgid "Call"
 msgstr "Повикај"
 
+msgid "Call customer"
+msgstr "Повикај клиент"
+
 msgid "Cancel"
 msgstr "Откажи"
 
@@ -617,6 +641,9 @@ msgstr "Проверете ја вашата поштенска сандуче"
 
 msgid "Choose a business"
 msgstr "Изберете бизнис"
+
+msgid "Choose a reason…"
+msgstr "Изберете причина…"
 
 msgid "Choose a service and time slot"
 msgstr "Изберете услуга и термин"
@@ -751,6 +778,9 @@ msgstr "Терени"
 msgid "Creating and managing booking requests"
 msgstr "Креирање и управување со барања за резервација"
 
+msgid "Customer actions"
+msgstr "Акции за клиент"
+
 msgid "Customer added successfully."
 msgstr "Клиентот е успешно додаден."
 
@@ -778,6 +808,9 @@ msgstr "Име и презиме на клиентот"
 msgid "Customer responsibilities"
 msgstr "Обврски на клиентот"
 
+msgid "Customer unblocked."
+msgstr "Клиентот е одблокиран."
+
 msgid "Customer updated successfully."
 msgstr "Клиентот е успешно ажуриран."
 
@@ -786,6 +819,9 @@ msgstr "Страница за клиенти"
 
 msgid "Customers"
 msgstr "Клиенти"
+
+msgid "Customers who cannot submit new booking requests."
+msgstr "Клиенти кои не можат да испратат нови барања за термин."
 
 msgid ""
 "Customers who upload abusive content may be blocked from future bookings."
@@ -802,6 +838,9 @@ msgstr "Датум и време"
 
 msgid "Date and time: %(date)s at %(time)s"
 msgstr "Датум и време: %(date)s во %(time)s"
+
+msgid "Date blocked"
+msgstr "Датум на блокирање"
 
 msgid "Day"
 msgstr "Ден"
@@ -897,7 +936,7 @@ msgid ""
 "business where you booked directly."
 msgstr ""
 "За време на пилотот, барањата се обработуваат рачно. Можете и директно да го"
-" контактирате бизнисот каде што резervиравте."
+" контактирате бизнисот каде што резервиравте."
 
 msgid ""
 "Each business is responsible for service quality, prices, appointment "
@@ -918,6 +957,9 @@ msgstr ""
 msgid "Edit"
 msgstr "Уреди"
 
+msgid "Edit block reason"
+msgstr "Уреди причина за блокирање"
+
 msgid "Edit blocked time"
 msgstr "Уреди блокирано време"
 
@@ -926,6 +968,9 @@ msgstr "Уреди термин"
 
 msgid "Edit customer"
 msgstr "Уреди клиент"
+
+msgid "Edit reason"
+msgstr "Уреди причина"
 
 msgid "Edit service"
 msgstr "Уреди услуга"
@@ -944,6 +989,9 @@ msgstr "Е-пошта"
 
 msgid "Email could not be sent. Prepared message is available."
 msgstr "Email не можеше да се испрати. Подготвената порака е достапна."
+
+msgid "Email customer"
+msgstr "Email до клиент"
 
 msgid "Email messages"
 msgstr "Email пораки"
@@ -984,6 +1032,9 @@ msgstr ""
 
 msgid "Extra duration note"
 msgstr "Белешка за дополнително време"
+
+msgid "Fake bookings"
+msgstr "Лажни резервации"
 
 msgid "Features may change or improve during the pilot."
 msgstr "Функциите може да се менуваат или подобруваат за време на пилотот."
@@ -1056,6 +1107,9 @@ msgstr "Оди на најава"
 
 msgid "Hair salons"
 msgstr "Фризерски салони"
+
+msgid "Harassment"
+msgstr "Вознемирување"
 
 msgid "Hello %(name)s,"
 msgstr "Здраво %(name)s,"
@@ -1369,6 +1423,9 @@ msgstr ""
 "Непримерни или нерелевантни слики може да бидат избришани. Клиенти кои "
 "злоупотребуваат може да бидат блокирани."
 
+msgid "Inappropriate photos"
+msgstr "Непримерни слики"
+
 msgid "Inappropriate, unrelated, or 18+ images are not allowed."
 msgstr "Непримерни, нерелевантни или 18+ слики не се дозволени."
 
@@ -1564,6 +1621,12 @@ msgstr "Нема одобрени термини за денес."
 msgid "No available times on this date."
 msgstr "Нема слободни термини на овој датум."
 
+msgid "No blocked customers match your search."
+msgstr "Нема блокирани клиенти што одговараат на пребарувањето."
+
+msgid "No blocked customers."
+msgstr "Нема блокирани клиенти."
+
 msgid "No blocked dates."
 msgstr "Нема блокирани датуми."
 
@@ -1628,6 +1691,9 @@ msgstr "нема да злоупотребува фотографии"
 
 msgid "Not submit false requests"
 msgstr "нема да испраќа лажни барања"
+
+msgid "Notes"
+msgstr "Белешки"
 
 msgid "Nov"
 msgstr "Ное"
@@ -1906,6 +1972,9 @@ msgstr "Прашања за тоа како се користат вашите �
 msgid "Ready for"
 msgstr "Подготвени за"
 
+msgid "Reason"
+msgstr "Причина"
+
 msgid "Reason (optional)"
 msgstr "Причина (опционално)"
 
@@ -1963,9 +2032,15 @@ msgstr "Простории за изнајмување"
 msgid "Reopen cancelled slots inside notice window"
 msgstr "Автоматски отвори откажани термини за онлајн резервација"
 
+msgid "Repeated cancellations"
+msgstr "Повторени откажувања"
+
+msgid "Repeated no-shows"
+msgstr "Повторени непojавувања"
+
 msgid "Report bugs, incorrect bookings, or security concerns promptly."
 msgstr ""
-"Пријавете грешки, неточни резервации или безbedносни проблеми навреме."
+"Пријавете грешки, неточни резервации или безбедносни проблеми навреме."
 
 msgid "Request Sent"
 msgstr "Барањето е испратено"
@@ -2117,6 +2192,9 @@ msgstr "Пребарајте и закажете термин кај локал�
 msgid "Search by business name or city…"
 msgstr "Пребарај по име на бизнис или град…"
 
+msgid "Search by name, phone, or email…"
+msgstr "Пребарај по име, телефон или email…"
+
 msgid "Section / Group"
 msgstr "Секција / група"
 
@@ -2239,6 +2317,9 @@ msgstr "Редослед"
 
 msgid "Source"
 msgstr "Извор"
+
+msgid "Spam"
+msgstr "Спам"
 
 msgid "Sports halls"
 msgstr "Спортски сали"
@@ -2447,6 +2528,13 @@ msgstr "Ова барање е одбиено од салонот."
 msgid "This customer already has active appointment(s)."
 msgstr "Клиентот веќе има активен/и термин/и."
 
+msgid ""
+"This customer will no longer be able to submit booking requests to your "
+"business until unblocked."
+msgstr ""
+"Овој клиент повеќе нема да може да испраќа барања за термин додека не биде "
+"одблокиран."
+
 msgid "This is a last-minute opening from a cancelled appointment."
 msgstr "Ова е последен слободен термин од откажување."
 
@@ -2528,6 +2616,15 @@ msgstr "Блокот е отстранет."
 
 msgid "Unavailable time blocks"
 msgstr "Недостапни блокови"
+
+msgid "Unblock"
+msgstr "Одблокирај"
+
+msgid "Unblock this customer? They will be able to book again."
+msgstr "Дали да се одблокира овој клиент? Повторно ќе може да закажува."
+
+msgid "Unblocked"
+msgstr "Одблокиран"
 
 msgid "Unfortunately the appointment is unavailable — %(salon)s"
 msgstr "За жал терминот не е достапен — %(salon)s"

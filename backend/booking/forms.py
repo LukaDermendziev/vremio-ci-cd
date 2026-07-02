@@ -346,6 +346,8 @@ class BookingRequestForm(forms.Form):
             source=Booking.Source.ONLINE,
             rules_accepted=self.cleaned_data["rules_accepted"],
             customer_note=self.cleaned_data.get("customer_note", ""),
+            client_device_token=get_device_token(self.request),
+            client_ip=get_client_ip(self.request) or None,
         )
 
         if needs_verification:

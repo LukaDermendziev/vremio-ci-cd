@@ -371,7 +371,19 @@ function initOwnerDashboard(config) {
   });
 
   document.querySelectorAll("[data-goto]").forEach(el => {
-    el.addEventListener("click", () => showSection(el.dataset.goto));
+    el.addEventListener("click", (e) => {
+      e.preventDefault();
+      const section = el.dataset.goto;
+      showSection(section);
+      history.replaceState(null, "", "#" + section);
+      syncBottomNav(section);
+    });
+  });
+
+  window.addEventListener("popstate", () => {
+    const section = location.hash.replace("#", "") || "dashboard";
+    showSection(section);
+    syncBottomNav(section);
   });
 
   const hash = location.hash.replace("#", "");
@@ -533,7 +545,66 @@ function initOwnerDashboard(config) {
     bookingForm.querySelector('[name="source"]').value = data.source || "owner_manual";
     bookingForm.querySelector('[name="owner_note"]').value = data.owner_note || "";
     updateReferencePhotoSection(data);
+    updateBookingCustomerActions(data);
     renderBookingSchedule(data);
+  }
+
+  function updateBookingCustomerActions(data) {
+    const section = document.getElementById("od-booking-customer-actions");
+    const callLink = document.getElementById("od-booking-call");
+    const emailLink = document.getElementById("od-booking-email");
+    const blockBtn = document.getElementById("od-booking-block-customer");
+    if (!section) return;
+
+    if (!data?.id) {
+      section.hidden = true;
+      return;
+    }
+
+    section.hidden = false;
+    if (callLink && data.phone_number) {
+      callLink.href = `tel:${data.phone_number}`;
+      callLink.hidden = false;
+    } else if (callLink) {
+      callLink.hidden = true;
+    }
+
+    if (emailLink) {
+      if (data.email) {
+        emailLink.href = `mailto:${data.email}`;
+        emailLink.hidden = false;
+      } else {
+        emailLink.hidden = true;
+      }
+    }
+
+    if (blockBtn) {
+      blockBtn.dataset.customerId = data.customer_id || "";
+      blockBtn.dataset.bookingId = data.id || "";
+      blockBtn.dataset.customerName = data.full_name || "";
+      blockBtn.dataset.phone = data.phone_number || "";
+      blockBtn.dataset.email = data.email || "";
+      blockBtn.dataset.bookingReference = data.booking_reference || "";
+      blockBtn.disabled = Boolean(data.is_customer_blocked);
+      blockBtn.textContent = data.is_customer_blocked
+        ? t("alreadyBlocked", "Already blocked")
+        : t("blockCustomer", "Block customer");
+      if (!blockBtn.dataset.odBlockBound) {
+        blockBtn.dataset.odBlockBound = "1";
+        blockBtn.addEventListener("click", (e) => {
+          e.preventDefault();
+          window.odOpenBlockCustomerModal({
+            customerId: blockBtn.dataset.customerId,
+            bookingId: blockBtn.dataset.bookingId,
+            customer_name: blockBtn.dataset.customerName,
+            phone_number: blockBtn.dataset.phone,
+            email: blockBtn.dataset.email,
+            booking_reference: blockBtn.dataset.bookingReference,
+            is_blocked: blockBtn.disabled,
+          });
+        });
+      }
+    }
   }
 
   function updateReferencePhotoSection(data) {
@@ -543,7 +614,6 @@ function initOwnerDashboard(config) {
     const imgEl = document.getElementById("od-booking-photo-img");
     const showBtn = document.getElementById("od-booking-photo-show");
     const deleteBtn = document.getElementById("od-booking-photo-delete");
-    const blockBtn = document.getElementById("od-booking-photo-block");
     if (!section) return;
     const hasPhoto = data.has_reference_photo && data.reference_photo_url;
     section.hidden = !data.id;
@@ -553,16 +623,15 @@ function initOwnerDashboard(config) {
       previewEl.hidden = false;
       imgEl.src = data.reference_photo_url;
       if (showBtn) {
-        showBtn.onclick = () => openPhotoPreview(data.reference_photo_url);
+        showBtn.onclick = () => openPhotoPreview(data.reference_photo_url, data);
       }
-      [deleteBtn, blockBtn].forEach(btn => {
-        if (!btn) return;
-        btn.dataset.bkId = String(data.id);
-        if (!btn._photoActionBound) {
-          btn._photoActionBound = true;
-          bindBkAction(btn);
+      if (deleteBtn) {
+        deleteBtn.dataset.bkId = String(data.id);
+        if (!deleteBtn._photoActionBound) {
+          deleteBtn._photoActionBound = true;
+          bindBkAction(deleteBtn);
         }
-      });
+      }
     } else {
       emptyEl.hidden = false;
       previewEl.hidden = true;
@@ -570,12 +639,26 @@ function initOwnerDashboard(config) {
     }
   }
 
-  function openPhotoPreview(url) {
+  function openPhotoPreview(url, bookingData = null) {
     if (!url) return;
     const img = document.getElementById("od-photo-modal-img");
     const link = document.getElementById("od-photo-modal-open");
+    const blockBtn = document.getElementById("od-photo-modal-block");
     if (img) img.src = url;
     if (link) link.href = url;
+    if (blockBtn) {
+      const card = bookingData || {};
+      const hasContext = card.id || card.customer_id;
+      blockBtn.hidden = !hasContext;
+      if (hasContext) {
+        blockBtn.dataset.customerId = card.customer_id || "";
+        blockBtn.dataset.bookingId = card.id || "";
+        blockBtn.dataset.customerName = card.full_name || "";
+        blockBtn.dataset.phone = card.phone_number || "";
+        blockBtn.dataset.email = card.email || "";
+        blockBtn.dataset.bookingReference = card.booking_reference || "";
+      }
+    }
     openModal("od-photo-modal");
   }
 
@@ -583,7 +666,18 @@ function initOwnerDashboard(config) {
     const trigger = e.target.closest("[data-photo-preview]");
     if (trigger) {
       e.preventDefault();
-      openPhotoPreview(trigger.dataset.photoPreview);
+      const card = trigger.closest(".od-bk-card");
+      const bookingData = card ? {
+        id: card.dataset.bookingId,
+        customer_id: card.dataset.customerId,
+        full_name: card.dataset.fullName,
+        phone_number: card.dataset.phone,
+        email: card.dataset.email,
+        booking_reference: card.dataset.bookingId
+          ? `#${card.dataset.bookingId} · ${card.dataset.date || ""} ${card.dataset.startTime || ""}`.trim()
+          : "",
+      } : null;
+      openPhotoPreview(trigger.dataset.photoPreview, bookingData);
     }
   });
 
@@ -640,9 +734,11 @@ function initOwnerDashboard(config) {
       bookingForm.querySelector('[name="status"]').value = "approved";
       bookingForm.querySelector('[name="source"]').value = "owner_manual";
       updateReferencePhotoSection({});
+      updateBookingCustomerActions({});
       renderBookingSchedule({});
     } else {
       updateReferencePhotoSection({});
+      updateBookingCustomerActions({});
       renderBookingSchedule({});
     }
 
@@ -652,10 +748,6 @@ function initOwnerDashboard(config) {
 
   bookingForm?.addEventListener("submit", () => {
     if (slotsSelect?.value) startInput.value = slotsSelect.value;
-  });
-
-  bookingDeleteBtn?.addEventListener("click", () => {
-    if (confirm(t("confirmDeleteBooking", "Delete this booking permanently?"))) bookingDeleteForm.submit();
   });
 
   document.querySelectorAll("[data-add-booking]").forEach(btn => {
@@ -695,9 +787,6 @@ function initOwnerDashboard(config) {
 
   document.querySelectorAll("[data-add-service]").forEach(btn => btn.addEventListener("click", () => openServiceModal(null)));
   document.querySelectorAll("[data-edit-service]").forEach(btn => btn.addEventListener("click", () => openServiceModal(btn.dataset.editService)));
-  serviceDeleteBtn?.addEventListener("click", () => {
-    if (confirm(t("confirmDeleteService", "Delete this service?"))) serviceDeleteForm.submit();
-  });
 
   // ── AJAX booking status actions (no page reload) ─────────────────────────────
   const STATUS_LABELS = {
@@ -713,7 +802,6 @@ function initOwnerDashboard(config) {
     cancel: t("confirmCancelBooking", "Cancel this booking?"),
     mark_no_show: t("confirmMarkNoShow", "Mark as no-show?"),
     delete_reference_photo: t("confirmDeletePhoto", "Delete this reference photo?"),
-    block_customer: t("confirmBlockCustomer", "Block this customer from booking?"),
   };
 
   function bkActionButtons(status, bookingId) {
@@ -756,7 +844,10 @@ function initOwnerDashboard(config) {
       });
       if (!resp.ok) throw new Error("Server error");
       const data = await resp.json();
-      if (!data.ok) throw new Error("Action failed");
+      if (!data.ok) {
+        const errMsg = (data.messages || []).find(m => m[0] === "error" || m[0] === "danger");
+        throw new Error(errMsg ? errMsg[1] : "Action failed");
+      }
 
       if (action === "delete_reference_photo") {
         if (card) {
@@ -777,13 +868,7 @@ function initOwnerDashboard(config) {
         return;
       }
 
-      if (action === "block_customer") {
-        const msg = (data.messages || []).find(m => m[0] === "success");
-        showToast(msg ? msg[1] : t("customerBlocked", "Customer blocked."));
-        return;
-      }
-
-      // Infer the new status from the action name — don't depend solely on server response
+      // Infer the new status from the action name
       // so the UI always updates correctly even if new_status is missing from JSON
       const ACTION_TO_STATUS = {
         approve:         "approved",
@@ -960,20 +1045,27 @@ function initOwnerDashboard(config) {
   }
 
   function bindBkAction(btn) {
+    if (btn.dataset.odBkBound) return;
+    btn.dataset.odBkBound = "1";
     btn.addEventListener("click", async () => {
       const action = btn.dataset.bkAction;
       const bookingId = btn.dataset.bkId;
       const card = btn.closest(".od-bk-card");
-      const cardlessActions = ["delete_reference_photo", "block_customer"];
-      if (!card && !cardlessActions.includes(action)) return;
+      if (!card && action !== "delete_reference_photo") return;
       if (CONFIRM_ACTIONS[action]) {
         if (!confirm(CONFIRM_ACTIONS[action])) return;
       }
-      btn.disabled = true;
-      btn.style.opacity = ".5";
+      if (window.OwnerAjax) {
+        window.OwnerAjax.setButtonLoading(btn, true);
+      } else {
+        btn.disabled = true;
+      }
       await sendBookingAction(action, bookingId, card);
-      btn.disabled = false;
-      btn.style.opacity = "";
+      if (window.OwnerAjax) {
+        window.OwnerAjax.setButtonLoading(btn, false);
+      } else {
+        btn.disabled = false;
+      }
     });
   }
 
@@ -1110,8 +1202,22 @@ function initOwnerDashboard(config) {
       const csrf = document.querySelector("[name=csrfmiddlewaretoken]")?.value;
       fetch(window.location.pathname, {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded", "X-CSRFToken": csrf },
-        body: `action=reorder_price_items&item_ids=${encodeURIComponent(orderedIds)}&return_section=services`
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "X-CSRFToken": csrf,
+          "X-Requested-With": "fetch",
+        },
+        body: `action=reorder_price_items&item_ids=${encodeURIComponent(orderedIds)}&return_section=services`,
+      }).then(async (resp) => {
+        if (!resp.ok && window.OwnerAjax) {
+          try {
+            const data = await resp.json();
+            const errMsg = (data.messages || []).find(m => m[0] === "error");
+            window.OwnerAjax.showToast(errMsg ? errMsg[1] : t("somethingWentWrong", "Something went wrong."), "error");
+          } catch (_) {
+            window.OwnerAjax.showToast(t("somethingWentWrong", "Something went wrong."), "error");
+          }
+        }
       });
     });
   });
@@ -1135,8 +1241,22 @@ function initOwnerDashboard(config) {
       const csrf = document.querySelector("[name=csrfmiddlewaretoken]")?.value;
       fetch(window.location.pathname, {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded", "X-CSRFToken": csrf },
-        body: `action=reorder_price_items&item_ids=${encodeURIComponent(orderedIds)}&return_section=services`
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "X-CSRFToken": csrf,
+          "X-Requested-With": "fetch",
+        },
+        body: `action=reorder_price_items&item_ids=${encodeURIComponent(orderedIds)}&return_section=services`,
+      }).then(async (resp) => {
+        if (!resp.ok && window.OwnerAjax) {
+          try {
+            const data = await resp.json();
+            const errMsg = (data.messages || []).find(m => m[0] === "error");
+            window.OwnerAjax.showToast(errMsg ? errMsg[1] : t("somethingWentWrong", "Something went wrong."), "error");
+          } catch (_) {
+            window.OwnerAjax.showToast(t("somethingWentWrong", "Something went wrong."), "error");
+          }
+        }
       });
     }
 
@@ -1236,12 +1356,14 @@ function initOwnerDashboard(config) {
   const customerForm = document.getElementById("od-customer-form");
   const customerDeleteBtn = document.getElementById("od-customer-delete");
   const customerDeleteForm = document.getElementById("od-customer-delete-form");
+  const customerBlockBtn = document.getElementById("od-customer-block");
 
   function openCustomerModal(customerId) {
     customerForm.reset();
     customerForm.querySelector('[name="customer_id"]').value = "";
     document.getElementById("od-customer-modal-title").textContent = customerId ? t("editCustomer", "Edit customer") : t("addCustomer", "Add customer");
     customerDeleteBtn.style.display = customerId ? "" : "none";
+    if (customerBlockBtn) customerBlockBtn.style.display = customerId ? "" : "none";
 
     if (customerId) {
       const row = document.querySelector(`tr[data-customer-id="${customerId}"]`);
@@ -1252,6 +1374,14 @@ function initOwnerDashboard(config) {
         customerForm.querySelector('[name="instagram_username"]').value = row.dataset.instagram || "";
         customerForm.querySelector('[name="email"]').value = row.dataset.email || "";
         customerForm.querySelector('[name="preferred_contact_method"]').value = row.dataset.contact || "viber";
+        if (customerBlockBtn) {
+          customerBlockBtn.dataset.customerId = customerId;
+          customerBlockBtn.dataset.customerName = row.dataset.fullName || "";
+          customerBlockBtn.dataset.phone = row.dataset.phone || "";
+          customerBlockBtn.dataset.email = row.dataset.email || "";
+          delete customerBlockBtn.dataset.bookingId;
+          delete customerBlockBtn.dataset.bookingReference;
+        }
       }
       customerDeleteForm.querySelector('[name="customer_id"]').value = customerId;
     }
@@ -1260,9 +1390,6 @@ function initOwnerDashboard(config) {
 
   document.querySelectorAll("[data-add-customer]").forEach(btn => btn.addEventListener("click", () => openCustomerModal(null)));
   document.querySelectorAll("[data-edit-customer]").forEach(btn => btn.addEventListener("click", () => openCustomerModal(btn.dataset.editCustomer)));
-  customerDeleteBtn?.addEventListener("click", () => {
-    if (confirm(t("confirmDeleteCustomer", "Delete this customer?"))) customerDeleteForm.submit();
-  });
 
   // Block modal
   const blockForm = document.getElementById("od-block-form");
@@ -1313,15 +1440,7 @@ function initOwnerDashboard(config) {
     blockDeleteForm.querySelector('[name="block_id"]').value = blockId;
     blockDeleteBtn.style.display = "";
   }));
-  blockDeleteBtn?.addEventListener("click", () => {
-    if (confirm(t("confirmRemoveTimeBlock", "Remove this time block?"))) blockDeleteForm.submit();
-  });
-
-  document.querySelectorAll("[data-delete-blocked-date]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      if (confirm(t("confirmRemoveBlockedDate", "Remove this blocked date?"))) btn.closest("form")?.submit();
-    });
-  });
+  // Blocked date inline deletes handled by owner_dashboard_ajax.js
 
   // ── Utility: register both dblclick (desktop) and double-tap (mobile) ───────
   function onDoubleTap(el, handler) {
@@ -1433,16 +1552,27 @@ function initOwnerDashboard(config) {
     return cgEvents.filter(ev => ev.date === ds && ev.type === "booking").length;
   }
 
+  function escapeHtml(value) {
+    if (value == null) return "";
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
   function cgChipContent(ev) {
     if (ev.type === "block") {
-      return `<div class="cgrid-chip-block">${tf("blockedRange", "Blocked %(start)s%(end)s", { start: ev.start_time || ev.time || "", end: ev.end_time ? "–" + ev.end_time : "" })}</div>`;
+      return `<div class="cgrid-chip-block">${escapeHtml(tf("blockedRange", "Blocked %(start)s%(end)s", { start: ev.start_time || ev.time || "", end: ev.end_time ? "–" + ev.end_time : "" }))}</div>`;
     }
-    const photoIcon = ev.hasReferencePhoto ? `<span class="cgrid-chip-photo" title="${t("photoUploaded", "Photo uploaded")}"><i class="bi bi-camera-fill"></i></span>` : "";
-    const svcLabel = ev.servicesLabel || ev.services || "";
-    const timeRange = ev.end_time ? `${ev.time || ""} – ${ev.end_time}` : (ev.time || "");
-    const meta = `${timeRange} · ${ev.duration || ""}${t("minSuffix", "min")}`;
+    const photoIcon = ev.hasReferencePhoto ? `<span class="cgrid-chip-photo" title="${escapeHtml(t("photoUploaded", "Photo uploaded"))}"><i class="bi bi-camera-fill"></i></span>` : "";
+    const svcLabel = escapeHtml(ev.servicesLabel || ev.services || "");
+    const customerName = escapeHtml(ev.customerName || ev.title || "");
+    const timeRange = escapeHtml(ev.end_time ? `${ev.time || ""} – ${ev.end_time}` : (ev.time || ""));
+    const meta = `${timeRange} · ${escapeHtml(ev.duration || "")}${t("minSuffix", "min")}`;
     return `
-      <div class="cgrid-chip-name">${ev.customerName || ev.title || ""}${photoIcon}</div>
+      <div class="cgrid-chip-name">${customerName}${photoIcon}</div>
       ${svcLabel ? `<div class="cgrid-chip-svc">${svcLabel}</div>` : ""}
       <div class="cgrid-chip-meta">${meta}</div>
     `;
@@ -1457,17 +1587,18 @@ function initOwnerDashboard(config) {
     }
     const sc = CG_STATUS[ev.status] || CG_STATUS.pending;
     const dotColor = {"pending":"#D97706","approved":"#059669","completed":"#2563EB","rejected":"#DB2777","cancelled":"#6B7280","no_show":"#C2410C"}[ev.status] || "#D97706";
-    const svcLabel = ev.servicesLabel || ev.services || "";
-    const timeRange = ev.end_time ? `${ev.time || ""} – ${ev.end_time}` : (ev.time || "");
+    const svcLabel = escapeHtml(ev.servicesLabel || ev.services || "");
+    const customerName = escapeHtml(ev.customerName || ev.title || "");
+    const timeRange = escapeHtml(ev.end_time ? `${ev.time || ""} – ${ev.end_time}` : (ev.time || ""));
     if (variant === "day") {
       return `<div class="cgrid-span-event" data-booking-id="${ev.bookingId || ev.id || ""}" style="top:${top}px;height:${height}px">
         <div class="cgrid-day-chip ${sc.cls}">
           <div class="cgrid-day-chip-body">
-            <div class="cgrid-day-chip-name">${ev.customerName || ev.title || ""}</div>
+            <div class="cgrid-day-chip-name">${customerName}</div>
             ${svcLabel ? `<div class="cgrid-day-chip-svc">${svcLabel}</div>` : ""}
-            <div class="cgrid-day-chip-meta">${timeRange} · ${ev.duration || ""}${t("minSuffix", "min")}</div>
+            <div class="cgrid-day-chip-meta">${timeRange} · ${escapeHtml(ev.duration || "")}${t("minSuffix", "min")}</div>
           </div>
-          <span class="cgrid-day-chip-status" style="background:${dotColor}22;color:${dotColor}">${sc.label}</span>
+          <span class="cgrid-day-chip-status" style="background:${dotColor}22;color:${dotColor}">${escapeHtml(sc.label)}</span>
         </div>
       </div>`;
     }
@@ -1655,6 +1786,7 @@ function initOwnerDashboard(config) {
 
   // End of cgrid — remove old FullCalendar placeholder
   if (cgridEl) cgFetchAndRender();
+  window.odCgFetchAndRender = cgFetchAndRender;
 
   if (false && window.FullCalendar) {
     calendar = new FullCalendar.Calendar(calEl, {
@@ -1777,6 +1909,72 @@ function initOwnerDashboard(config) {
 
   document.getElementById("od-modal-close")?.addEventListener("click", () => closeModal("od-msg-modal"));
 
+  // Blocked customers list
+  const blockedSearch = document.getElementById("od-blocked-search");
+  blockedSearch?.addEventListener("input", () => {
+    const query = blockedSearch.value.trim().toLowerCase();
+    const rows = document.querySelectorAll("#od-blocked-table tbody tr");
+    let visible = 0;
+    rows.forEach((row) => {
+      const text = row.dataset.searchText || row.textContent.toLowerCase();
+      const show = !query || text.includes(query);
+      row.hidden = !show;
+      if (show) visible += 1;
+    });
+    let empty = document.getElementById("od-blocked-search-empty");
+    if (!empty && blockedSearch.closest(".od-card")) {
+      empty = document.createElement("div");
+      empty.id = "od-blocked-search-empty";
+      empty.className = "od-empty";
+      blockedSearch.closest(".od-card")?.appendChild(empty);
+    }
+    if (empty) {
+      empty.textContent = t("noBlockedCustomersMatch", "No blocked customers match your search.");
+      empty.style.display = rows.length && visible === 0 ? "block" : "none";
+    }
+  });
+
+  document.querySelectorAll("[data-unblock-entry]").forEach((btn) => {
+    if (btn.dataset.odUnblockBound) return;
+    btn.dataset.odUnblockBound = "1";
+    btn.addEventListener("click", async () => {
+      if (!confirm(t("confirmUnblockCustomer", "Unblock this customer? They will be able to book again."))) return;
+      const entryId = btn.dataset.unblockEntry;
+      const csrf = document.querySelector("[name=csrfmiddlewaretoken]")?.value;
+      if (window.OwnerAjax) window.OwnerAjax.setButtonLoading(btn, true);
+      try {
+        const resp = await fetch(`/owner/customers/block/${entryId}/unblock/`, {
+          method: "POST",
+          headers: { "X-CSRFToken": csrf, "X-Requested-With": "fetch" },
+        });
+        const data = await resp.json();
+        if (!resp.ok || !data.ok) throw new Error(data.error || "Request failed");
+        btn.closest("tr")?.remove();
+        showToast(t("customerUnblocked", "Customer unblocked."));
+      } catch (err) {
+        showToast(err.message || t("somethingWentWrong", "Something went wrong. Please try again."), "error");
+      } finally {
+        if (window.OwnerAjax) window.OwnerAjax.setButtonLoading(btn, false);
+      }
+    });
+  });
+
+  document.addEventListener("od:customer-blocked", async () => {
+    showSection("blocked-customers");
+    history.replaceState(null, "", "#blocked-customers");
+    syncBottomNav("blocked-customers");
+    if (window.OwnerAjax) {
+      await window.OwnerAjax.refreshSection("od-sec-blocked-customers", window.odRebindDashboard);
+    }
+  });
+
+  document.addEventListener("od:customer-unblocked", (event) => {
+    const entryId = event.detail?.id;
+    if (entryId) {
+      document.querySelector(`tr[data-block-entry-id="${entryId}"]`)?.remove();
+    }
+  });
+
   window.odOpenBookingModal = openBookingModal;
   window.odOpenBlockModal = openBlockModal;
 
@@ -1788,4 +1986,51 @@ function initOwnerDashboard(config) {
     ).forEach(cb => cb.classList.add("od-toggle-cb"));
   }
   initToggles();
+
+  function rebindDashboardInteractions() {
+    document.querySelectorAll("[data-bk-action]").forEach(bindBkAction);
+    document.querySelectorAll("[data-edit-booking]").forEach(btn => {
+      if (btn.dataset.odEditBkBound) return;
+      btn.dataset.odEditBkBound = "1";
+      btn.addEventListener("click", () => openBookingModal(btn.dataset.editBooking));
+    });
+    document.querySelectorAll("[data-edit-service]").forEach(btn => {
+      if (btn.dataset.odEditSvcBound) return;
+      btn.dataset.odEditSvcBound = "1";
+      btn.addEventListener("click", () => openServiceModal(btn.dataset.editService));
+    });
+    document.querySelectorAll("[data-edit-customer]").forEach(btn => {
+      if (btn.dataset.odEditCustBound) return;
+      btn.dataset.odEditCustBound = "1";
+      btn.addEventListener("click", () => openCustomerModal(btn.dataset.editCustomer));
+    });
+    document.querySelectorAll("[data-unblock-entry]").forEach((btn) => {
+      if (btn.dataset.odUnblockBound) return;
+      btn.dataset.odUnblockBound = "1";
+      btn.addEventListener("click", async () => {
+        if (!confirm(t("confirmUnblockCustomer", "Unblock this customer? They will be able to book again."))) return;
+        const entryId = btn.dataset.unblockEntry;
+        const csrf = document.querySelector("[name=csrfmiddlewaretoken]")?.value;
+        if (window.OwnerAjax) window.OwnerAjax.setButtonLoading(btn, true);
+        try {
+          const resp = await fetch(`/owner/customers/block/${entryId}/unblock/`, {
+            method: "POST",
+            headers: { "X-CSRFToken": csrf, "X-Requested-With": "fetch" },
+          });
+          const data = await resp.json();
+          if (!resp.ok || !data.ok) throw new Error(data.error || "Request failed");
+          btn.closest("tr")?.remove();
+          showToast(t("customerUnblocked", "Customer unblocked."));
+        } catch (err) {
+          showToast(err.message || t("somethingWentWrong", "Something went wrong. Please try again."), "error");
+        } finally {
+          if (window.OwnerAjax) window.OwnerAjax.setButtonLoading(btn, false);
+        }
+      });
+    });
+    if (window.initOwnerDashboardAjax) window.initOwnerDashboardAjax();
+    initToggles();
+  }
+  window.odRebindDashboard = rebindDashboardInteractions;
+  document.addEventListener("od:rebind", rebindDashboardInteractions);
 }

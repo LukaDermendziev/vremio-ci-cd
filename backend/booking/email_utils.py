@@ -4,11 +4,12 @@ import logging
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
+from django.utils.html import escape
 from django.utils import timezone
 from django.utils import translation
 from django.utils.translation import gettext as _
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("booking.email")
 
 # (subject template name, body template name)
 CUSTOMER_EMAIL_TEMPLATES = {
@@ -120,7 +121,7 @@ def _send_email(*, subject, body, to_email, reply_to=None):
             to=[to_email],
             reply_to=reply_to or [],
         )
-        html_body = body.replace("\n", "<br>\n")
+        html_body = escape(body).replace("\n", "<br>\n")
         message.attach_alternative(f"<html><body>{html_body}</body></html>", "text/html")
         message.send(fail_silently=False)
         return True, "sent"

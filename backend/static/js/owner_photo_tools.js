@@ -1,4 +1,4 @@
-/* Lightweight photo preview + owner booking actions for standalone owner pages (e.g. customer history). */
+/* Lightweight photo preview + owner booking photo actions for standalone owner pages. */
 
 (function initOwnerPhotoTools() {
   const photoModal = document.getElementById("od-photo-modal");
@@ -16,12 +16,25 @@
     document.getElementById(id)?.classList.remove("open");
   }
 
-  function openPhotoPreview(url) {
+  function openPhotoPreview(url, trigger) {
     if (!url) return;
     const img = document.getElementById("od-photo-modal-img");
     const link = document.getElementById("od-photo-modal-open");
+    const blockBtn = document.getElementById("od-photo-modal-block");
+    const blockSource = trigger?.closest(".od-photo-actions")?.querySelector("[data-open-block-customer]") || trigger;
     if (img) img.src = url;
     if (link) link.href = url;
+    if (blockBtn && blockSource?.dataset?.customerId) {
+      blockBtn.hidden = false;
+      blockBtn.dataset.customerId = blockSource.dataset.customerId || "";
+      blockBtn.dataset.bookingId = blockSource.dataset.bookingId || trigger?.closest(".od-photo-controls")?.dataset.bookingId || "";
+      blockBtn.dataset.customerName = blockSource.dataset.customerName || "";
+      blockBtn.dataset.phone = blockSource.dataset.phone || "";
+      blockBtn.dataset.email = blockSource.dataset.email || "";
+      blockBtn.dataset.bookingReference = blockSource.dataset.bookingReference || "";
+    } else if (blockBtn) {
+      blockBtn.hidden = true;
+    }
     openModal("od-photo-modal");
   }
 
@@ -29,7 +42,7 @@
     const trigger = e.target.closest("[data-photo-preview]");
     if (!trigger) return;
     e.preventDefault();
-    openPhotoPreview(trigger.dataset.photoPreview);
+    openPhotoPreview(trigger.dataset.photoPreview, trigger);
   });
 
   document.querySelectorAll("[data-close-modal]").forEach((btn) => {
@@ -42,7 +55,6 @@
 
   const CONFIRM_ACTIONS = {
     delete_reference_photo: t("confirmDeletePhoto", "Delete this reference photo?"),
-    block_customer: t("confirmBlockCustomer", "Block this customer from booking?"),
   };
 
   function showToast(msg, type = "success") {
@@ -90,11 +102,6 @@
           }
         }
         showToast(msg ? msg[1] : t("photoRemoved", "Photo removed."));
-        return;
-      }
-
-      if (action === "block_customer") {
-        showToast(msg ? msg[1] : t("customerBlocked", "Customer blocked."));
       }
     } catch (err) {
       showToast(t("somethingWentWrong", "Something went wrong. Please try again."), "error");

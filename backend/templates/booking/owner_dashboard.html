@@ -46,6 +46,7 @@
       <a href="#calendar" data-section="calendar"><i class="bi bi-calendar3"></i><span>{% trans "Calendar" %}</span></a>
       <a href="#bookings" data-section="bookings"><i class="bi bi-journal-text"></i><span>{% trans "Bookings" %}</span></a>
       <a href="#customers" data-section="customers"><i class="bi bi-people"></i><span>{% trans "Customers" %}</span></a>
+      <a href="#blocked-customers" data-section="blocked-customers"><i class="bi bi-slash-circle"></i><span>{% trans "Blocked customers" %}</span></a>
       <a href="#services" data-section="services"><i class="bi bi-scissors"></i><span>{% trans "Services" %}</span></a>
       <a href="#hours" data-section="hours"><i class="bi bi-clock"></i><span>{% trans "Working hours" %}</span></a>
       <a href="#availability" data-section="availability"><i class="bi bi-slash-circle"></i><span>{% trans "Availability" %}</span></a>
@@ -302,6 +303,67 @@
           </div>
         {% else %}
           <div class="od-empty">{% trans "No customers yet." %}</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="od-section" id="od-sec-blocked-customers">
+      <div class="od-page-top">
+        <div>
+          <div class="od-page-title">{% trans "Blocked customers" %}</div>
+          <p class="od-page-sub">{% trans "Customers who cannot submit new booking requests." %}</p>
+        </div>
+      </div>
+      <div class="od-card od-table-card">
+        <div class="od-table-toolbar">
+          <input type="search" id="od-blocked-search" class="od-input od-search-input" placeholder="{% trans 'Search by name, phone, or email…' %}">
+        </div>
+        {% if blocked_customers %}
+          <div class="od-table-wrap">
+            <table class="od-table" id="od-blocked-table">
+              <thead>
+                <tr>
+                  <th>{% trans "Name" %}</th>
+                  <th class="od-col-hide-xs">{% trans "Phone" %}</th>
+                  <th class="od-col-hide-sm">{% trans "Email" %}</th>
+                  <th class="od-col-hide-sm">{% trans "Date blocked" %}</th>
+                  <th>{% trans "Reason" %}</th>
+                  <th>{% trans "Status" %}</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for entry in blocked_customers %}
+                  <tr data-block-entry-id="{{ entry.id }}"
+                      data-search-text="{{ entry.display_name|lower }} {{ entry.phone_number|lower }} {{ entry.email|lower }}">
+                    <td>
+                      <strong>{{ entry.display_name }}</strong>
+                      <div class="od-cell-sub od-col-show-xs">{{ entry.phone_number }}</div>
+                    </td>
+                    <td class="od-col-hide-xs">{{ entry.phone_number }}</td>
+                    <td class="od-col-hide-sm">{{ entry.email|default:"—" }}</td>
+                    <td class="od-col-hide-sm">{% if entry.blocked_at %}{{ entry.blocked_at|date:"d/m/Y H:i" }}{% else %}{{ entry.created_at|date:"d/m/Y H:i" }}{% endif %}</td>
+                    <td>{{ entry.get_reason_display_label|default:"—" }}</td>
+                    <td><span class="od-badge od-badge-danger">{% trans "Blocked" %}</span></td>
+                    <td class="od-row-actions od-actions-wrap">
+                      <button type="button" class="od-btn od-btn-ghost od-btn-sm" data-view-block-entry="{{ entry.id }}">{% trans "View" %}</button>
+                      <button type="button" class="od-btn od-btn-ghost od-btn-sm"
+                              data-open-block-customer-edit
+                              data-entry-id="{{ entry.id }}"
+                              data-reason-code="{{ entry.reason_code }}"
+                              data-notes="{{ entry.notes|escape }}"
+                              data-customer-name="{{ entry.display_name|escape }}"
+                              data-phone="{{ entry.phone_number|escape }}"
+                              data-email="{{ entry.email|escape }}">{% trans "Edit" %}</button>
+                      <button type="button" class="od-btn od-btn-danger od-btn-sm" data-unblock-entry="{{ entry.id }}">{% trans "Unblock" %}</button>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="od-empty" id="od-blocked-empty">{% trans "No blocked customers." %}</div>
         {% endif %}
       </div>
     </div>
@@ -709,6 +771,7 @@
 {% include "booking/partials/owner_price_modal.html" %}
 {% include "booking/partials/owner_customer_modal.html" %}
 {% include "booking/partials/owner_block_modals.html" %}
+{% include "booking/partials/owner_block_customer_modal.html" %}
 {% include "booking/partials/owner_message_modal.html" %}
 {% include "booking/partials/owner_photo_modal.html" %}
 
@@ -720,7 +783,10 @@
 <script src="{% static 'js/owner_session_guard.js' %}"></script>
 {% if salon %}
 {% load static i18n %}
+<script src="{% static 'js/owner_ajax.js' %}"></script>
+<script src="{% static 'js/owner_block_customer.js' %}"></script>
 <script src="{% static 'js/owner_dashboard.js' %}"></script>
+<script src="{% static 'js/owner_dashboard_ajax.js' %}"></script>
 
 <script>
 window.OD_I18N = {
@@ -781,9 +847,34 @@ window.OD_I18N = {
   day: "{% filter escapejs %}{% trans "Day" %}{% endfilter %}",
   unavailable: "{% filter escapejs %}{% trans "Unavailable" %}{% endfilter %}",
   photoUploaded: "{% filter escapejs %}{% trans "Photo uploaded" %}{% endfilter %}",
+  blockCustomer: "{% filter escapejs %}{% trans "Block customer" %}{% endfilter %}",
+  alreadyBlocked: "{% filter escapejs %}{% trans "Already blocked" %}{% endfilter %}",
+  customerBlocked: "{% filter escapejs %}{% trans "Customer blocked." %}{% endfilter %}",
+  customerUnblocked: "{% filter escapejs %}{% trans "Customer unblocked." %}{% endfilter %}",
+  blockReasonUpdated: "{% filter escapejs %}{% trans "Block reason updated." %}{% endfilter %}",
+  confirmUnblockCustomer: "{% filter escapejs %}{% trans "Unblock this customer? They will be able to book again." %}{% endfilter %}",
+  editBlockReason: "{% filter escapejs %}{% trans "Edit block reason" %}{% endfilter %}",
+  customer: "{% filter escapejs %}{% trans "Customer" %}{% endfilter %}",
+  phone: "{% filter escapejs %}{% trans "Phone" %}{% endfilter %}",
+  email: "{% filter escapejs %}{% trans "Email" %}{% endfilter %}",
+  dateBlocked: "{% filter escapejs %}{% trans "Date blocked" %}{% endfilter %}",
+  reason: "{% filter escapejs %}{% trans "Reason" %}{% endfilter %}",
+  status: "{% filter escapejs %}{% trans "Status" %}{% endfilter %}",
+  notes: "{% filter escapejs %}{% trans "Notes" %}{% endfilter %}",
+  auditLog: "{% filter escapejs %}{% trans "Audit log" %}{% endfilter %}",
+  blocked: "{% filter escapejs %}{% trans "Blocked" %}{% endfilter %}",
+  unblocked: "{% filter escapejs %}{% trans "Unblocked" %}{% endfilter %}",
+  noBlockedCustomersMatch: "{% filter escapejs %}{% trans "No blocked customers match your search." %}{% endfilter %}",
 };
 </script>
 <script>
+initOwnerBlockCustomer({
+  blockUrl: "{% url 'booking:owner_block_customer' %}",
+  contextUrl: "{% url 'booking:owner_customer_block_context' %}",
+  detailUrlBase: "/owner/customers/block/",
+  updateUrlBase: "/owner/customers/block/",
+  unblockUrlBase: "/owner/customers/block/",
+});
 initOwnerDashboard({
   locale: "{{ LANGUAGE_CODE }}",
   eventsUrl: "{% url 'booking:owner_calendar_events' %}",

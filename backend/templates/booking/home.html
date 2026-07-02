@@ -43,30 +43,27 @@
       <p class="vm-section-sub">{% trans "Search and book appointments at local businesses." %}</p>
     </div>
 
-    <form class="vm-search-bar" method="get" action="/#businesses">
+    <form class="vm-search-bar" id="vm-business-search" action="/#businesses">
       <div class="vm-search-input-wrap">
         <i class="bi bi-search"></i>
-        <input type="search" name="q" value="{{ q }}" placeholder="{% trans 'Search by business name or city…' %}" class="vm-search-input" autocomplete="off">
+        <input type="search" name="q" id="vm-search-q" value="{{ q }}" placeholder="{% trans 'Search by business name or city…' %}" class="vm-search-input" autocomplete="off">
       </div>
-      {% if category != 'all' %}
-        <input type="hidden" name="category" value="{{ category }}">
-      {% endif %}
       <button type="submit" class="vm-btn vm-btn-primary vm-btn-sm">{% trans "Search" %}</button>
     </form>
 
-    <div class="vm-filter-pills" role="group" aria-label="{% trans 'Category' %}">
-      <a class="vm-pill{% if category == 'all' %} is-active{% endif %}" href="/?{% if q %}q={{ q|urlencode }}&{% endif %}category=all#businesses">{% trans "All" %}</a>
-      <a class="vm-pill{% if category == 'salon' %} is-active{% endif %}" href="/?{% if q %}q={{ q|urlencode }}&{% endif %}category=salon#businesses">{% trans "Salons" %}</a>
-      <a class="vm-pill{% if category == 'barber' %} is-active{% endif %}" href="/?{% if q %}q={{ q|urlencode }}&{% endif %}category=barber#businesses">{% trans "Barbershops" %}</a>
-      <a class="vm-pill{% if category == 'sports' %} is-active{% endif %}" href="/?{% if q %}q={{ q|urlencode }}&{% endif %}category=sports#businesses">{% trans "Sports venues" %}</a>
-      <a class="vm-pill{% if category == 'fitness' %} is-active{% endif %}" href="/?{% if q %}q={{ q|urlencode }}&{% endif %}category=fitness#businesses">{% trans "Fitness / gyms" %}</a>
-      <a class="vm-pill{% if category == 'services' %} is-active{% endif %}" href="/?{% if q %}q={{ q|urlencode }}&{% endif %}category=services#businesses">{% trans "Services" %}</a>
+    <div class="vm-filter-pills" role="group" aria-label="{% trans 'Category' %}" id="vm-category-pills">
+      <button type="button" class="vm-pill{% if category == 'all' %} is-active{% endif %}" data-category="all">{% trans "All" %}</button>
+      <button type="button" class="vm-pill{% if category == 'salon' %} is-active{% endif %}" data-category="salon">{% trans "Salons" %}</button>
+      <button type="button" class="vm-pill{% if category == 'barber' %} is-active{% endif %}" data-category="barber">{% trans "Barbershops" %}</button>
+      <button type="button" class="vm-pill{% if category == 'sports' %} is-active{% endif %}" data-category="sports">{% trans "Sports venues" %}</button>
+      <button type="button" class="vm-pill{% if category == 'fitness' %} is-active{% endif %}" data-category="fitness">{% trans "Fitness / gyms" %}</button>
+      <button type="button" class="vm-pill{% if category == 'services' %} is-active{% endif %}" data-category="services">{% trans "Services" %}</button>
     </div>
 
     {% if businesses %}
-      <div class="vm-business-grid">
+      <div class="vm-business-grid" id="vm-business-grid">
         {% for business in businesses %}
-          <article class="vm-business-card">
+          <article class="vm-business-card" data-category="{{ business.business_category }}" data-search="{{ business.name|lower }} {{ business.city|lower }} {{ business.address|lower }} {{ business.short_description|lower }}">
             <div class="vm-business-avatar" aria-hidden="true">{{ business.name|first }}</div>
             <div class="vm-business-body">
               <span class="vm-business-cat">{{ business.get_business_category_display }}</span>
@@ -83,6 +80,10 @@
             <a class="vm-btn vm-btn-primary vm-btn-sm vm-business-cta" href="{% url 'booking:salon_page' business.slug %}">{% trans "Book appointment" %}</a>
           </article>
         {% endfor %}
+      </div>
+      <div class="vm-empty-state" id="vm-business-empty" hidden>
+        <i class="bi bi-search"></i>
+        <p>{% trans "We couldn't find a business matching your search." %}</p>
       </div>
     {% else %}
       <div class="vm-empty-state">

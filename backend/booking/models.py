@@ -458,6 +458,9 @@ class UnavailableTimeBlock(TimeStampedModel):
 
     class Meta:
         ordering = ["date", "start_time"]
+        indexes = [
+            models.Index(fields=["salon", "date"]),
+        ]
 
     def __str__(self):
         return f"{self.salon} - {self.date} {self.start_time}-{self.end_time}"
@@ -541,6 +544,8 @@ class Booking(TimeStampedModel):
     change_message_generated_at = models.DateTimeField(null=True, blank=True)
     manage_token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False, db_index=True)
     cancelled_by_customer = models.BooleanField(default=False)
+    client_device_token = models.CharField(max_length=64, blank=True)
+    client_ip = models.GenericIPAddressField(null=True, blank=True)
 
     class Meta:
         ordering = ["start_at"]
@@ -622,7 +627,16 @@ class BookingService(models.Model):
     def __str__(self):
         return self.service_name_snapshot
 
+    def clean(self):
+        errors = {}
+        if self.booking_id and self.service_id:
+            if self.service.salon_id != self.booking.salon_id:
+                errors["service"] = "Service must belong to the same salon as the booking."
+        if errors:
+            raise ValidationError(errors)
+
     def save(self, *args, **kwargs):
+        self.full_clean()
         if self.service_id:
             if not self.service_name_snapshot:
                 self.service_name_snapshot = self.service.name
@@ -674,19 +688,70 @@ class BookingActivityLog(models.Model):
 
 
 class CustomerBlocklist(TimeStampedModel):
+    class ReasonCode(models.TextChoices):
+        SPAM = "spam", _("Spam")
+        FAKE_BOOKINGS = "fake_bookings", _("Fake bookings")
+        REPEATED_NO_SHOWS = "repeated_no_shows", _("Repeated no-shows")
+        REPEATED_CANCELLATIONS = "repeated_cancellations", _("Repeated cancellations")
+        INAPPROPRIATE_PHOTOS = "inappropriate_photos", _("Inappropriate photos")
+        HARASSMENT = "harassment", _("Harassment")
+        OTHER = "other", _("Other")
+
     salon = models.ForeignKey(
         Salon,
         on_delete=models.CASCADE,
         related_name="customer_blocklist_entries",
     )
+    customer = models.ForeignKey(
+        Customer,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="blocklist_entries",
+    )
     phone_number = models.CharField(max_length=30)
     email = models.EmailField(blank=True)
+    email_verified = models.BooleanField(default=False)
     instagram_username = models.CharField(max_length=80, blank=True)
+    device_token = models.CharField(max_length=64, blank=True)
+    last_known_ip = models.GenericIPAddressField(null=True, blank=True)
+    reason_code = models.CharField(
+        max_length=30,
+        choices=ReasonCode.choices,
+        blank=True,
+    )
     reason = models.TextField(blank=True)
+    notes = models.TextField(blank=True)
+    source_booking = models.ForeignKey(
+        Booking,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="customer_blocks",
+    )
+    blocked_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="customer_blocks_created",
+    )
+    blocked_at = models.DateTimeField(null=True, blank=True)
+    unblocked_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="customer_blocks_removed",
+    )
+    unblocked_at = models.DateTimeField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
 
     class Meta:
-        ordering = ["-created_at"]
+        ordering = ["-blocked_at", "-created_at"]
+        indexes = [
+            models.Index(fields=["salon", "is_active"]),
+        ]
         constraints = [
             models.UniqueConstraint(
                 fields=["salon", "phone_number"],
@@ -697,3 +762,50 @@ class CustomerBlocklist(TimeStampedModel):
 
     def __str__(self):
         return f"{self.phone_number} blocked for {self.salon}"
+
+    @property
+    def display_name(self):
+        if self.customer_id:
+            return self.customer.full_name
+        return self.phone_number
+
+    def get_reason_display_label(self):
+        if self.reason_code:
+            return self.get_reason_code_display()
+        return self.reason or ""
+
+
+class CustomerBlockEvent(models.Model):
+    class EventType(models.TextChoices):
+        BLOCKED = "blocked", _("Blocked")
+        UNBLOCKED = "unblocked", _("Unblocked")
+        UPDATED = "updated", _("Updated")
+
+    blocklist_entry = models.ForeignKey(
+        CustomerBlocklist,
+        on_delete=models.CASCADE,
+        related_name="events",
+    )
+    event_type = models.CharField(max_length=20, choices=EventType.choices)
+    performed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+    )
+    reason_code = models.CharField(max_length=30, blank=True)
+    notes = models.TextField(blank=True)
+    source_booking = models.ForeignKey(
+        Booking,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="customer_block_events",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.blocklist_entry} — {self.event_type}"

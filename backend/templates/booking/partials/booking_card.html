@@ -1,6 +1,7 @@
 {% load i18n %}
 <div class="od-bk-card" data-status="{{ booking.status }}"
   data-booking-id="{{ booking.id }}"
+  data-customer-id="{{ booking.customer_id }}"
   data-full-name="{{ booking.customer.full_name }}"
   data-phone="{{ booking.customer.phone_number }}"
   data-instagram="{{ booking.customer.instagram_username }}"
@@ -54,6 +55,17 @@
       <button type="button" class="od-btn od-btn-ghost od-btn-sm" data-edit-booking="{{ booking.id }}">{% trans "Edit" %}</button>
     {% endif %}
     <a class="od-btn od-btn-ghost od-btn-sm" href="tel:{{ booking.customer.phone_number }}">{% trans "Call" %}</a>
+    {% if booking.customer.email %}
+      <a class="od-btn od-btn-ghost od-btn-sm" href="mailto:{{ booking.customer.email }}">{% trans "Email" %}</a>
+    {% endif %}
+    <button type="button" class="od-btn od-btn-danger od-btn-sm"
+            data-open-block-customer
+            data-customer-id="{{ booking.customer_id }}"
+            data-booking-id="{{ booking.id }}"
+            data-customer-name="{{ booking.customer.full_name|escape }}"
+            data-phone="{{ booking.customer.phone_number|escape }}"
+            data-email="{{ booking.customer.email|escape }}"
+            data-booking-reference="#{{ booking.id }} · {{ booking.start_at|date:'d/m/Y H:i' }}">{% trans "Block customer" %}</button>
     <button type="button" class="od-btn od-btn-ghost od-btn-sm"
             data-message-booking="{{ booking.id }}"
             data-message-type="{% if booking.status == 'pending' %}pending{% elif booking.status == 'approved' %}approved{% elif booking.status == 'rejected' or booking.status == 'cancelled' %}rejected{% else %}reminder{% endif %}">{% trans "Message" %}</button>

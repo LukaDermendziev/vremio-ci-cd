@@ -33,7 +33,7 @@ class NeverCacheOwnerMiddleware:
 
     def __call__(self, request):
         response = self.get_response(request)
-        if request.path.startswith("/owner/"):
+        if request.path.startswith("/owner/") and not request.path.rstrip("/").endswith("/photo"):
             response["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
             response["Pragma"] = "no-cache"
             response["Expires"] = "0"

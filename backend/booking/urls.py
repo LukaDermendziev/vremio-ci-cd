@@ -20,7 +20,12 @@ urlpatterns = [
     path("book/<slug:salon_slug>/slots/", views.available_slots, name="available_slots"),
     path("booking/verify/<uuid:token>/", views.verify_booking_email, name="verify_booking_email"),
     path("booking/verify-email-sent/", views.booking_verify_email_sent, name="booking_verify_email_sent"),
-    path("booking/<int:booking_id>/success/", views.booking_success, name="booking_success"),
+    path("booking/success/", views.booking_success, name="booking_success"),
+    path(
+        "booking/<int:booking_id>/success/",
+        views.booking_success_legacy,
+        name="booking_success_legacy",
+    ),
     path("booking/manage/<uuid:token>/", views.manage_booking, name="manage_booking"),
     path("booking/manage/<uuid:token>/cancel/", views.manage_booking_cancel, name="manage_booking_cancel"),
 
@@ -52,6 +57,27 @@ urlpatterns = [
         "owner/customers/<int:customer_id>/",
         views.customer_history,
         name="customer_history",
+    ),
+    path("owner/customers/block/", views.owner_block_customer, name="owner_block_customer"),
+    path(
+        "owner/customers/block/context/",
+        views.owner_customer_block_context,
+        name="owner_customer_block_context",
+    ),
+    path(
+        "owner/customers/block/<int:entry_id>/",
+        views.owner_customer_block_detail,
+        name="owner_customer_block_detail",
+    ),
+    path(
+        "owner/customers/block/<int:entry_id>/unblock/",
+        views.owner_unblock_customer,
+        name="owner_unblock_customer",
+    ),
+    path(
+        "owner/customers/block/<int:entry_id>/update/",
+        views.owner_update_customer_block,
+        name="owner_update_customer_block",
     ),
 
     # ── Owner auth ───────────────────────────────────────────────────────────────

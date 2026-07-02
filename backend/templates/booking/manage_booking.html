@@ -45,10 +45,10 @@
       <div class="bk-ss-row"><i class="bi bi-calendar3"></i><span>{{ booking.start_at|date:"d/m/Y" }}</span></div>
       <div class="bk-ss-row"><i class="bi bi-clock"></i><span>{{ booking.start_at|date:"H:i" }} – {{ booking.end_at|date:"H:i" }}</span></div>
     </div>
-    <form method="post" action="{% url 'booking:manage_booking_cancel' booking.manage_token %}" class="bk-manage-actions">
+    <form method="post" action="{% url 'booking:manage_booking_cancel' booking.manage_token %}" class="bk-manage-actions" id="bk-manage-cancel-form">
       {% csrf_token %}
       <input type="hidden" name="confirm" value="yes">
-      <button type="submit" class="bk-btn-danger">{% trans "Yes, cancel appointment" %}</button>
+      <button type="submit" class="bk-btn-danger" id="bk-manage-cancel-btn">{% trans "Yes, cancel appointment" %}</button>
       <a href="{% url 'booking:manage_booking' booking.manage_token %}" class="bk-btn-ghost">{% trans "No, go back" %}</a>
     </form>
   </div>
@@ -126,4 +126,9 @@
   </div>
 
 </div>
+{% endblock %}
+
+{% block extra_js %}
+{% load static %}
+<script src="{% static 'js/manage_booking.js' %}" defer></script>
 {% endblock %}

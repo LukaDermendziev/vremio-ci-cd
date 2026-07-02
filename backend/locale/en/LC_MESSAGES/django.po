@@ -167,6 +167,9 @@ msgstr "Add service"
 msgid "Add time block"
 msgstr "Add time block"
 
+msgid "Additional details for your records…"
+msgstr "Additional details for your records…"
+
 msgid "After the pilot"
 msgstr "After the pilot"
 
@@ -198,6 +201,9 @@ msgstr "Allowed formats and size"
 
 msgid "Allowed formats: JPG, JPEG, PNG, WEBP."
 msgstr "Allowed formats: JPG, JPEG, PNG, WEBP."
+
+msgid "Already blocked"
+msgstr "Already blocked"
 
 msgid "Anti-abuse"
 msgstr "Anti-abuse"
@@ -267,6 +273,9 @@ msgstr "Are you sure you want to cancel this appointment?"
 
 msgid "Arriving late may result in cancellation of the appointment."
 msgstr "Arriving late may result in cancellation of the appointment."
+
+msgid "Audit log"
+msgstr "Audit log"
 
 msgid "Aug"
 msgstr "Aug"
@@ -352,6 +361,9 @@ msgstr "Block day"
 msgid "Block full day"
 msgstr "Block full day"
 
+msgid "Block reason updated."
+msgstr "Block reason updated."
+
 msgid "Block this customer from booking?"
 msgstr "Block this customer from booking?"
 
@@ -366,6 +378,12 @@ msgstr "Blocked"
 
 msgid "Blocked %(start)s%(end)s"
 msgstr "Blocked %(start)s%(end)s"
+
+msgid "Blocked customer"
+msgstr "Blocked customer"
+
+msgid "Blocked customers"
+msgstr "Blocked customers"
 
 msgid "Blocked date added."
 msgstr "Blocked date added."
@@ -466,6 +484,9 @@ msgstr "Booking rate limit per email per day"
 msgid "Booking rate limit per phone per day"
 msgstr "Booking rate limit per phone per day"
 
+msgid "Booking reference"
+msgstr "Booking reference"
+
 msgid "Booking rejected. Customer has no email — use prepared message."
 msgstr "Booking rejected. Customer has no email — use prepared message."
 
@@ -547,6 +568,9 @@ msgstr "Calendar"
 msgid "Call"
 msgstr "Call"
 
+msgid "Call customer"
+msgstr "Call customer"
+
 msgid "Cancel"
 msgstr "Cancel"
 
@@ -611,6 +635,9 @@ msgstr "Check your inbox"
 
 msgid "Choose a business"
 msgstr "Choose a business"
+
+msgid "Choose a reason…"
+msgstr "Choose a reason…"
 
 msgid "Choose a service and time slot"
 msgstr "Choose a service and time slot"
@@ -744,6 +771,9 @@ msgstr "Courts & pitches"
 msgid "Creating and managing booking requests"
 msgstr "Creating and managing booking requests"
 
+msgid "Customer actions"
+msgstr "Customer actions"
+
 msgid "Customer added successfully."
 msgstr "Customer added successfully."
 
@@ -771,6 +801,9 @@ msgstr "Customer name and surname"
 msgid "Customer responsibilities"
 msgstr "Customer responsibilities"
 
+msgid "Customer unblocked."
+msgstr "Customer unblocked."
+
 msgid "Customer updated successfully."
 msgstr "Customer updated successfully."
 
@@ -779,6 +812,9 @@ msgstr "Customer view"
 
 msgid "Customers"
 msgstr "Customers"
+
+msgid "Customers who cannot submit new booking requests."
+msgstr "Customers who cannot submit new booking requests."
 
 msgid ""
 "Customers who upload abusive content may be blocked from future bookings."
@@ -796,6 +832,9 @@ msgstr "Date & Time"
 
 msgid "Date and time: %(date)s at %(time)s"
 msgstr "Date and time: %(date)s at %(time)s"
+
+msgid "Date blocked"
+msgstr "Date blocked"
 
 msgid "Day"
 msgstr "Day"
@@ -911,6 +950,9 @@ msgstr ""
 msgid "Edit"
 msgstr "Edit"
 
+msgid "Edit block reason"
+msgstr "Edit block reason"
+
 msgid "Edit blocked time"
 msgstr "Edit blocked time"
 
@@ -919,6 +961,9 @@ msgstr "Edit booking"
 
 msgid "Edit customer"
 msgstr "Edit customer"
+
+msgid "Edit reason"
+msgstr "Edit reason"
 
 msgid "Edit service"
 msgstr "Edit service"
@@ -937,6 +982,9 @@ msgstr "Email address"
 
 msgid "Email could not be sent. Prepared message is available."
 msgstr "Email could not be sent. Prepared message is available."
+
+msgid "Email customer"
+msgstr "Email customer"
 
 msgid "Email messages"
 msgstr "Email messages"
@@ -977,6 +1025,9 @@ msgstr ""
 
 msgid "Extra duration note"
 msgstr "Extra duration note"
+
+msgid "Fake bookings"
+msgstr "Fake bookings"
 
 msgid "Features may change or improve during the pilot."
 msgstr "Features may change or improve during the pilot."
@@ -1049,6 +1100,9 @@ msgstr "Go to login"
 
 msgid "Hair salons"
 msgstr "Hair salons"
+
+msgid "Harassment"
+msgstr "Harassment"
 
 msgid "Hello %(name)s,"
 msgstr "Hello %(name)s,"
@@ -1357,6 +1411,9 @@ msgstr ""
 "Inappropriate or unrelated images may be deleted. Abusive customers may be "
 "blocked."
 
+msgid "Inappropriate photos"
+msgstr "Inappropriate photos"
+
 msgid "Inappropriate, unrelated, or 18+ images are not allowed."
 msgstr "Inappropriate, unrelated, or 18+ images are not allowed."
 
@@ -1552,6 +1609,12 @@ msgstr "No approved appointments for today."
 msgid "No available times on this date."
 msgstr "No available times on this date."
 
+msgid "No blocked customers match your search."
+msgstr "No blocked customers match your search."
+
+msgid "No blocked customers."
+msgstr "No blocked customers."
+
 msgid "No blocked dates."
 msgstr "No blocked dates."
 
@@ -1618,6 +1681,9 @@ msgstr "Not misuse photos"
 
 msgid "Not submit false requests"
 msgstr "Not submit false requests"
+
+msgid "Notes"
+msgstr "Notes"
 
 msgid "Nov"
 msgstr "Nov"
@@ -1896,6 +1962,9 @@ msgstr "Questions about how your data is used"
 msgid "Ready for"
 msgstr "Ready for"
 
+msgid "Reason"
+msgstr "Reason"
+
 msgid "Reason (optional)"
 msgstr "Reason (optional)"
 
@@ -1952,6 +2021,12 @@ msgstr "Rentable rooms & spaces"
 
 msgid "Reopen cancelled slots inside notice window"
 msgstr "Reopen cancelled slots inside notice window"
+
+msgid "Repeated cancellations"
+msgstr "Repeated cancellations"
+
+msgid "Repeated no-shows"
+msgstr "Repeated no-shows"
 
 msgid "Report bugs, incorrect bookings, or security concerns promptly."
 msgstr "Report bugs, incorrect bookings, or security concerns promptly."
@@ -2106,6 +2181,9 @@ msgstr "Search and book appointments at local businesses."
 msgid "Search by business name or city…"
 msgstr "Search by business name or city…"
 
+msgid "Search by name, phone, or email…"
+msgstr "Search by name, phone, or email…"
+
 msgid "Section / Group"
 msgstr "Section / Group"
 
@@ -2227,6 +2305,9 @@ msgstr "Sort order"
 
 msgid "Source"
 msgstr "Source"
+
+msgid "Spam"
+msgstr "Spam"
 
 msgid "Sports halls"
 msgstr "Sports halls"
@@ -2435,6 +2516,13 @@ msgstr "This booking request was declined by the salon."
 msgid "This customer already has active appointment(s)."
 msgstr "This customer already has active appointment(s)."
 
+msgid ""
+"This customer will no longer be able to submit booking requests to your "
+"business until unblocked."
+msgstr ""
+"This customer will no longer be able to submit booking requests to your "
+"business until unblocked."
+
 msgid "This is a last-minute opening from a cancelled appointment."
 msgstr "This is a last-minute opening from a cancelled appointment."
 
@@ -2516,6 +2604,15 @@ msgstr "Unavailable time block removed."
 
 msgid "Unavailable time blocks"
 msgstr "Unavailable time blocks"
+
+msgid "Unblock"
+msgstr "Unblock"
+
+msgid "Unblock this customer? They will be able to book again."
+msgstr "Unblock this customer? They will be able to book again."
+
+msgid "Unblocked"
+msgstr "Unblocked"
 
 msgid "Unfortunately the appointment is unavailable — %(salon)s"
 msgstr "Unfortunately the appointment is unavailable — %(salon)s"

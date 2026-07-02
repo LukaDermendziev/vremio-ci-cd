@@ -5,7 +5,7 @@ from django.core.cache import cache
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from .models import Booking, Customer, CustomerBlocklist
+from .models import Booking, Customer
 
 ACTIVE_STATUSES = [Booking.Status.PENDING, Booking.Status.APPROVED]
 
@@ -114,21 +114,16 @@ def _active_future_bookings(salon, phone, email):
     )
 
 
-def is_customer_blocked(salon, phone, email="", instagram=""):
-    phone = normalize_phone(phone)
-    email = normalize_email(email)
-    instagram = normalize_instagram(instagram)
+def is_customer_blocked(salon, phone, email="", instagram="", device_token=""):
+    from .customer_blocking import is_customer_blocked as _is_customer_blocked
 
-    entries = CustomerBlocklist.objects.filter(salon=salon, is_active=True)
-    for entry in entries:
-        if phone and normalize_phone(entry.phone_number) == phone:
-            return True
-        if email and entry.email and normalize_email(entry.email) == email:
-            return True
-        if instagram and entry.instagram_username:
-            if normalize_instagram(entry.instagram_username) == instagram:
-                return True
-    return False
+    return _is_customer_blocked(
+        salon,
+        phone=phone,
+        email=email,
+        instagram=instagram,
+        device_token=device_token,
+    )
 
 
 def _rate_limit_exceeded(salon_id, policy, ip, phone, email):
@@ -200,7 +195,7 @@ def check_public_booking_allowed(
 ):
     result = AntiAbuseResult()
 
-    if is_customer_blocked(salon, phone, email, instagram):
+    if is_customer_blocked(salon, phone, email, instagram, device_token):
         return AntiAbuseResult(
             ok=False,
             error_code="blocklist",

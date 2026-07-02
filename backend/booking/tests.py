@@ -20,6 +20,7 @@ from .models import (
     BookingService,
     Customer,
     CustomerBlocklist,
+    CustomerBlockEvent,
     DateWorkingHoursOverride,
     ReleasedSlot,
     Salon,
@@ -44,6 +45,7 @@ from .services import (
     get_salon_local_today,
     is_slot_available,
     release_booking_slot,
+    ensure_default_working_hours,
 )
 
 
@@ -105,16 +107,22 @@ class HomePageTests(TestCase):
 
     def test_home_search_by_name(self):
         response = self.client.get("/?q=fancy")
+        self.assertContains(response, 'id="vm-search-q"')
+        self.assertContains(response, 'value="fancy"')
         self.assertContains(response, "Fancy Fingers")
-        self.assertNotContains(response, "City Barbers")
+        self.assertContains(response, "City Barbers")
+        self.assertContains(response, 'data-search="fancy fingers')
 
     def test_home_category_filter(self):
         response = self.client.get("/?category=barber")
-        self.assertNotContains(response, "Fancy Fingers")
+        self.assertContains(response, 'data-category="barber"')
+        self.assertContains(response, "Fancy Fingers")
         self.assertContains(response, "City Barbers")
+        self.assertContains(response, 'data-category="salon"')
 
     def test_home_empty_search_message(self):
         response = self.client.get("/?q=nonexistent-xyz")
+        self.assertContains(response, 'id="vm-business-empty"')
         self.assertContains(response, _("We couldn't find a business matching your search."))
 
     @override_settings(VREMIO_CONTACT_EMAIL="hello@vremio.test")
@@ -2597,3 +2605,429 @@ class AutoCompleteAndCalendarHistoryTests(TestCase):
             Booking.objects.filter(salon=self.salon, status=Booking.Status.COMPLETED).count(),
             1,
         )
+
+
+class CustomerBlockingTests(TestCase):
+    def setUp(self):
+        User = get_user_model()
+        self.owner = User.objects.create_user(username="blockowner", password="pass")
+        self.salon = Salon.objects.create(name="Block Salon", slug="block-salon", owner=self.owner)
+        self.policy = BookingPolicy.objects.create(salon=self.salon, email_verification_required=False)
+        self.service = Service.objects.create(
+            salon=self.salon,
+            name="Manicure",
+            duration_minutes=120,
+            base_price=600,
+        )
+        for weekday in range(6):
+            WorkingHours.objects.create(
+                salon=self.salon,
+                weekday=weekday,
+                is_working_day=True,
+                start_time=time(8, 0),
+                end_time=time(18, 0),
+            )
+        self.customer = Customer.objects.create(
+            salon=self.salon,
+            full_name="Blocked Target",
+            phone_number="070999888",
+            email="target@example.com",
+            instagram_username="target",
+        )
+        start = timezone.make_aware(
+            datetime.combine(timezone.localdate() + timedelta(days=20), time(10, 0)),
+            timezone.get_current_timezone(),
+        )
+        self.booking = Booking.objects.create(
+            salon=self.salon,
+            customer=self.customer,
+            status=Booking.Status.PENDING,
+            source=Booking.Source.ONLINE,
+            start_at=start,
+            end_at=start + timedelta(hours=2),
+            total_duration_minutes=120,
+            rules_accepted=True,
+            client_device_token="device-abc-123",
+        )
+        BookingService.objects.create(
+            booking=self.booking,
+            service=self.service,
+            service_name_snapshot="Manicure",
+        )
+        self.client.login(username="blockowner", password="pass")
+
+    def _future_date(self):
+        selected = timezone.localdate() + timedelta(days=20)
+        while selected.weekday() == WorkingHours.Weekday.SUNDAY:
+            selected += timedelta(days=1)
+        return selected
+
+    def test_owner_can_block_customer_via_unified_endpoint(self):
+        response = self.client.post(
+            reverse("booking:owner_block_customer"),
+            {
+                "booking_id": self.booking.id,
+                "reason_code": CustomerBlocklist.ReasonCode.SPAM,
+                "notes": "Repeated spam messages",
+            },
+            HTTP_X_REQUESTED_WITH="fetch",
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data["ok"])
+        entry = CustomerBlocklist.objects.get(salon=self.salon, phone_number="070999888")
+        self.assertTrue(entry.is_active)
+        self.assertEqual(entry.reason_code, CustomerBlocklist.ReasonCode.SPAM)
+        self.assertEqual(entry.device_token, "device-abc-123")
+        self.assertEqual(entry.events.count(), 1)
+        self.assertEqual(entry.events.first().event_type, CustomerBlockEvent.EventType.BLOCKED)
+
+    def test_blocked_customer_cannot_submit_and_unblock_restores_access(self):
+        self.client.post(
+            reverse("booking:owner_block_customer"),
+            {
+                "customer_id": self.customer.id,
+                "reason_code": CustomerBlocklist.ReasonCode.FAKE_BOOKINGS,
+            },
+            HTTP_X_REQUESTED_WITH="fetch",
+        )
+        blocked = self.client.post(
+            "/book/block-salon/request/",
+            {
+                "service": self.service.id,
+                "date": self._future_date().isoformat(),
+                "start_time": "12:00",
+                "full_name": "Blocked Target",
+                "phone_number": "070999888",
+                "instagram_username": "target",
+                "email": "target@example.com",
+                "preferred_contact_method": Customer.PreferredContactMethod.VIBER,
+                "rules_accepted": "on",
+            },
+        )
+        self.assertEqual(blocked.status_code, 200)
+        self.assertContains(blocked, "не може да биде испратено")
+
+        entry = CustomerBlocklist.objects.get(salon=self.salon, phone_number="070999888")
+        unblock = self.client.post(
+            reverse("booking:owner_unblock_customer", args=[entry.id]),
+            HTTP_X_REQUESTED_WITH="fetch",
+        )
+        self.assertEqual(unblock.status_code, 200)
+        self.assertTrue(unblock.json()["ok"])
+        self.assertEqual(entry.events.filter(event_type=CustomerBlockEvent.EventType.UNBLOCKED).count(), 1)
+
+    def test_device_token_blocks_even_with_different_phone(self):
+        CustomerBlocklist.objects.create(
+            salon=self.salon,
+            phone_number="070000001",
+            device_token="shared-device-token",
+            reason_code=CustomerBlocklist.ReasonCode.OTHER,
+            is_active=True,
+            blocked_at=timezone.now(),
+        )
+        from .anti_abuse import is_customer_blocked
+
+        self.assertTrue(
+            is_customer_blocked(
+                self.salon,
+                phone="070111999",
+                device_token="shared-device-token",
+            )
+        )
+
+    def test_block_requires_reason(self):
+        response = self.client.post(
+            reverse("booking:owner_block_customer"),
+            {"customer_id": self.customer.id, "reason_code": ""},
+            HTTP_X_REQUESTED_WITH="fetch",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(response.json()["ok"])
+
+    def test_owner_block_context_returns_customer_details(self):
+        response = self.client.get(
+            reverse("booking:owner_customer_block_context"),
+            {"booking_id": self.booking.id},
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["customer_name"], "Blocked Target")
+        self.assertEqual(data["booking_id"], self.booking.id)
+        self.assertIn("reason_choices", data)
+
+
+class ProductionReadinessTests(TestCase):
+    def setUp(self):
+        User = get_user_model()
+        self.owner_a = User.objects.create_user(username="prod_a", password="pass")
+        self.owner_b = User.objects.create_user(username="prod_b", password="pass")
+        self.salon_a = Salon.objects.create(owner=self.owner_a, name="Prod A", slug="prod-a")
+        self.salon_b = Salon.objects.create(owner=self.owner_b, name="Prod B", slug="prod-b")
+        BookingPolicy.objects.create(salon=self.salon_a, minimum_notice_days=0, email_verification_required=False)
+        BookingPolicy.objects.create(salon=self.salon_b, minimum_notice_days=0, email_verification_required=False)
+        self.service_a = Service.objects.create(
+            salon=self.salon_a, name="Manicure", duration_minutes=120, base_price=600
+        )
+        self.service_b = Service.objects.create(
+            salon=self.salon_b, name="Pedicure", duration_minutes=120, base_price=700
+        )
+        self.customer_a = Customer.objects.create(
+            salon=self.salon_a,
+            full_name="Prod Customer",
+            phone_number="070100200",
+        )
+        self.customer_b = Customer.objects.create(
+            salon=self.salon_b,
+            full_name="Other Customer",
+            phone_number="070300400",
+        )
+        selected = timezone.localdate() + timedelta(days=1)
+        if selected.weekday() == WorkingHours.Weekday.SUNDAY:
+            selected += timedelta(days=1)
+        start = timezone.make_aware(datetime.combine(selected, time(10, 0)), timezone.get_current_timezone())
+        self.booking_a = Booking.objects.create(
+            salon=self.salon_a,
+            customer=self.customer_a,
+            status=Booking.Status.PENDING,
+            source=Booking.Source.ONLINE,
+            start_at=start,
+            end_at=start + timedelta(hours=2),
+            total_duration_minutes=120,
+            rules_accepted=True,
+        )
+        BookingService.objects.create(
+            booking=self.booking_a,
+            service=self.service_a,
+            service_name_snapshot="Manicure",
+        )
+
+    def test_legacy_booking_success_url_returns_404(self):
+        response = self.client.get(
+            reverse("booking:booking_success_legacy", args=[self.booking_a.pk])
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_booking_success_without_session_returns_404(self):
+        response = self.client.get(reverse("booking:booking_success"))
+        self.assertEqual(response.status_code, 404)
+
+    def test_booking_success_with_session_shows_page(self):
+        session = self.client.session
+        session["booking_success_id"] = self.booking_a.pk
+        session.save()
+        response = self.client.get(reverse("booking:booking_success"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Prod Customer")
+
+    def test_booking_success_session_is_one_time(self):
+        session = self.client.session
+        session["booking_success_id"] = self.booking_a.pk
+        session.save()
+        self.client.get(reverse("booking:booking_success"))
+        response = self.client.get(reverse("booking:booking_success"))
+        self.assertEqual(response.status_code, 404)
+
+    def test_owner_cannot_block_other_salon_customer(self):
+        self.client.login(username="prod_a", password="pass")
+        response = self.client.post(
+            reverse("booking:owner_block_customer"),
+            {
+                "customer_id": self.customer_b.id,
+                "reason_code": CustomerBlocklist.ReasonCode.SPAM,
+            },
+            HTTP_X_REQUESTED_WITH="fetch",
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_owner_cannot_unblock_other_salon_entry(self):
+        entry = CustomerBlocklist.objects.create(
+            salon=self.salon_b,
+            phone_number="070300400",
+            reason_code=CustomerBlocklist.ReasonCode.OTHER,
+            is_active=True,
+            blocked_at=timezone.now(),
+        )
+        self.client.login(username="prod_a", password="pass")
+        response = self.client.post(
+            reverse("booking:owner_unblock_customer", args=[entry.id]),
+            HTTP_X_REQUESTED_WITH="fetch",
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_booking_service_rejects_cross_salon_service(self):
+        item = BookingService(
+            booking=self.booking_a,
+            service=self.service_b,
+            service_name_snapshot="Pedicure",
+        )
+        with self.assertRaises(ValidationError):
+            item.save()
+
+
+class OwnerDashboardAjaxTests(TestCase):
+    def setUp(self):
+        User = get_user_model()
+        self.owner = User.objects.create_user(username="ajaxowner", password="pass")
+        self.salon = Salon.objects.create(owner=self.owner, name="Ajax Salon", slug="ajax-salon")
+        ensure_default_working_hours(self.salon)
+        BookingPolicy.objects.create(salon=self.salon, email_verification_required=False)
+        self.service = Service.objects.create(
+            salon=self.salon,
+            name="Manicure",
+            duration_minutes=120,
+            base_price=1000,
+        )
+        self.client.login(username="ajaxowner", password="pass")
+
+    def _fetch_post(self, data):
+        return self.client.post(
+            reverse("booking:owner_dashboard"),
+            data,
+            HTTP_X_REQUESTED_WITH="fetch",
+        )
+
+    def test_save_service_returns_json(self):
+        response = self._fetch_post(
+            {
+                "action": "save_service",
+                "name": "Pedicure",
+                "duration_minutes": "120",
+                "base_price": "1200",
+                "sort_order": "1",
+                "return_section": "services",
+            }
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data["ok"])
+        self.assertEqual(data["action"], "save_service")
+        self.assertIn("service", data["payload"])
+        self.assertTrue(self.salon.services.filter(name="Pedicure").exists())
+
+    def test_save_working_hours_returns_json(self):
+        response = self._fetch_post(
+            {
+                "action": "save_working_hours",
+                "return_section": "hours",
+                "form-TOTAL_FORMS": "7",
+                "form-INITIAL_FORMS": "7",
+                "form-MIN_NUM_FORMS": "0",
+                "form-MAX_NUM_FORMS": "1000",
+                **{
+                    f"form-{i}-weekday": str(i)
+                    for i in range(7)
+                },
+                **{
+                    f"form-{i}-id": str(
+                        self.salon.working_hours.get(weekday=i).pk
+                    )
+                    for i in range(7)
+                },
+                **{
+                    f"form-{i}-is_working_day": "on"
+                    if i != WorkingHours.Weekday.SUNDAY
+                    else ""
+                    for i in range(7)
+                },
+                **{
+                    f"form-{i}-start_time": "08:00"
+                    for i in range(7)
+                },
+                **{
+                    f"form-{i}-end_time": "18:00"
+                    for i in range(7)
+                },
+            }
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["ok"])
+
+    def test_invalid_customer_save_returns_400_json(self):
+        response = self._fetch_post(
+            {
+                "action": "save_customer",
+                "full_name": "",
+                "phone_number": "",
+                "return_section": "customers",
+            }
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(response.json()["ok"])
+
+    def test_delete_blocked_date_returns_json(self):
+        from booking.models import DateWorkingHoursOverride
+
+        row = DateWorkingHoursOverride.objects.create(
+            salon=self.salon,
+            date=timezone.localdate() + timedelta(days=30),
+            mode=DateWorkingHoursOverride.Mode.CLOSED,
+            reason="Holiday",
+        )
+        response = self._fetch_post(
+            {
+                "action": "delete_blocked_date",
+                "override_id": row.id,
+                "return_section": "availability",
+            }
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["ok"])
+        self.assertFalse(
+            self.salon.date_working_hours_overrides.filter(pk=row.id).exists()
+        )
+
+    def test_reorder_price_items_returns_json(self):
+        item = ServicePriceItem.objects.create(
+            service=self.service,
+            name="Classic",
+            price_display="500",
+            sort_order=0,
+        )
+        response = self._fetch_post(
+            {
+                "action": "reorder_price_items",
+                "item_ids": str(item.id),
+                "return_section": "services",
+            }
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["ok"])
+
+    def test_manage_booking_cancel_fetch_returns_json(self):
+        customer = Customer.objects.create(
+            salon=self.salon,
+            full_name="Cancel Me",
+            phone_number="070123456",
+            preferred_contact_method=Customer.PreferredContactMethod.VIBER,
+        )
+        start = timezone.now() + timedelta(hours=48)
+        booking = Booking.objects.create(
+            salon=self.salon,
+            customer=customer,
+            status=Booking.Status.APPROVED,
+            source=Booking.Source.ONLINE,
+            start_at=start,
+            end_at=start + timedelta(hours=2),
+            total_duration_minutes=120,
+            rules_accepted=True,
+        )
+        BookingService.objects.create(
+            booking=booking,
+            service=self.service,
+            service_name_snapshot="Manicure",
+        )
+        self.salon.booking_policy.customer_cancellation_notice_hours = 24
+        self.salon.booking_policy.save()
+
+        response = self.client.post(
+            reverse("booking:manage_booking_cancel", args=[booking.manage_token]),
+            {"confirm": "yes"},
+            HTTP_X_REQUESTED_WITH="fetch",
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data["ok"])
+        self.assertTrue(data["cancelled"])
+        booking.refresh_from_db()
+        self.assertEqual(booking.status, Booking.Status.CANCELLED)

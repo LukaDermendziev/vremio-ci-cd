@@ -18,7 +18,15 @@ from django.utils.translation import gettext as _
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_POST
 
-from .anti_abuse import DEVICE_COOKIE_MAX_AGE, DEVICE_COOKIE_NAME, normalize_phone
+from .anti_abuse import DEVICE_COOKIE_MAX_AGE, DEVICE_COOKIE_NAME
+from .customer_blocking import (
+    block_customer as block_customer_service,
+    get_active_block_entry,
+    resolve_customer_for_block,
+    serialize_blocklist_entry,
+    unblock_customer as unblock_customer_service,
+    update_customer_block,
+)
 from .email_utils import send_booking_verification_email
 from .legal_utils import get_vremio_contact_email
 from .forms import (
@@ -95,19 +103,9 @@ def _slots_json(slots):
 
 
 def home(request):
-    businesses = Salon.objects.filter(is_active=True)
+    businesses = Salon.objects.filter(is_active=True).order_by("name")
     q = request.GET.get("q", "").strip()
-    category = request.GET.get("category", "").strip()
-
-    if q:
-        businesses = businesses.filter(
-            Q(name__icontains=q)
-            | Q(city__icontains=q)
-            | Q(address__icontains=q)
-            | Q(short_description__icontains=q)
-        )
-    if category and category != "all":
-        businesses = businesses.filter(business_category=category)
+    category = request.GET.get("category", "").strip() or "all"
 
     return render(
         request,
@@ -115,7 +113,7 @@ def home(request):
         {
             "businesses": businesses,
             "q": q,
-            "category": category or "all",
+            "category": category,
             "category_choices": Salon.BusinessCategory,
             "contact_email": get_vremio_contact_email(),
         },
@@ -211,6 +209,11 @@ def _owner_dashboard_context(salon):
         mode=DateWorkingHoursOverride.Mode.CLOSED
     ).order_by("date")
     unavailable_blocks = salon.unavailable_time_blocks.order_by("date", "start_time")[:30]
+    blocked_customers = (
+        salon.customer_blocklist_entries.filter(is_active=True)
+        .select_related("customer", "blocked_by", "source_booking")
+        .order_by("-blocked_at", "-created_at")
+    )
     revenue = get_revenue_stats(salon)
 
     week_start = today - timedelta(days=today.weekday())
@@ -239,6 +242,7 @@ def _owner_dashboard_context(salon):
         "working_hours": working_hours,
         "blocked_dates": blocked_dates,
         "unavailable_blocks": unavailable_blocks,
+        "blocked_customers": blocked_customers,
         "revenue": revenue,
         "policy_form": BookingPolicyForm(instance=booking_policy) if booking_policy else None,
         "blocked_date_form": BlockedDateForm(),
@@ -246,6 +250,7 @@ def _owner_dashboard_context(salon):
         "owner_booking_form": OwnerBookingForm(salon=salon),
         "service_form": ServiceForm(salon=salon),
         "customer_form": OwnerCustomerForm(salon=salon),
+        "block_reason_choices": CustomerBlocklist.ReasonCode.choices,
     }
 
 
@@ -506,38 +511,6 @@ def owner_dashboard(request):
             else:
                 messages.info(request, _("No photo attached to this booking."))
 
-        elif action == "block_customer":
-            booking = get_object_or_404(
-                Booking.objects.select_related("customer"),
-                pk=request.POST.get("booking_id"),
-                salon=salon,
-            )
-            customer = booking.customer
-            reason = (request.POST.get("block_reason") or "").strip()
-            phone = normalize_phone(customer.phone_number)
-            entry, created = CustomerBlocklist.objects.get_or_create(
-                salon=salon,
-                phone_number=phone,
-                defaults={
-                    "email": customer.email or "",
-                    "instagram_username": customer.instagram_username or "",
-                    "reason": reason,
-                    "is_active": True,
-                },
-            )
-            if not created:
-                entry.is_active = True
-                if reason:
-                    entry.reason = reason
-                entry.save()
-            log_booking_activity(
-                booking,
-                BookingActivityLog.Action.CUSTOMER_BLOCKED,
-                user=request.user,
-                note=reason or phone,
-            )
-            messages.success(request, _("Customer blocked."))
-
         elif action == "save_service":
             service = None
             service_id = request.POST.get("service_id")
@@ -606,9 +579,7 @@ def owner_dashboard(request):
                 ServicePriceItem.objects.filter(
                     pk=item_id, service__salon=salon
                 ).update(sort_order=sort_index)
-            # AJAX call — return 204 with no redirect
-            from django.http import HttpResponse
-            return HttpResponse(status=204)
+            messages.success(request, _("Price list order saved."))
 
         elif action == "save_customer":
             customer = None
@@ -677,46 +648,33 @@ def owner_dashboard(request):
         else:
             messages.error(request, _("Unknown action."))
 
-        # AJAX path: return JSON so JS can update UI without reload
         if request.headers.get("X-Requested-With") == "fetch":
-            booking_obj = None
-            if action in (
-                "approve",
-                "reject",
-                "mark_completed",
-                "mark_no_show",
-                "cancel",
-                "cancel_booking",
-                "delete_reference_photo",
-                "block_customer",
-            ):
-                try:
-                    booking_obj = Booking.objects.get(
-                        pk=request.POST.get("booking_id"), salon=salon
-                    )
-                except Exception:
-                    pass
-            response_data = {"ok": True, "action": action}
-            if booking_obj:
-                response_data.update({
-                    "booking_id": booking_obj.id,
-                    "new_status": booking_obj.status,
-                    "new_status_display": booking_obj.get_status_display(),
-                    "has_reference_photo": bool(booking_obj.reference_photo),
-                })
-            # Fresh counts so the UI can update overview stats without reload
-            today_date = timezone.localdate()
-            response_data["pending_count"] = salon.bookings.filter(
-                status=Booking.Status.PENDING
-            ).count()
-            response_data["today_count"] = salon.bookings.filter(
-                status=Booking.Status.APPROVED,
-                start_at__date=today_date,
-            ).count()
-            # Include any Django messages
-            msg_list = [(m.level_tag, str(m)) for m in messages.get_messages(request)]
-            response_data["messages"] = msg_list
-            return JsonResponse(response_data)
+            from .owner_ajax import build_owner_ajax_payload, messages_to_list, response_is_ok
+
+            msg_list = messages_to_list(request)
+            ok = response_is_ok(msg_list)
+            payload = build_owner_ajax_payload(salon, action, request)
+            stats = payload.get("stats", {})
+            response_data = {
+                "ok": ok,
+                "action": action,
+                "section": request.POST.get("return_section", "dashboard"),
+                "messages": msg_list,
+                "payload": payload,
+                "pending_count": stats.get("pending_count", 0),
+                "today_count": stats.get("today_count", 0),
+            }
+            booking_data = payload.get("booking")
+            if booking_data:
+                response_data.update(
+                    {
+                        "booking_id": booking_data["id"],
+                        "new_status": booking_data["status"],
+                        "new_status_display": booking_data["status_display"],
+                        "has_reference_photo": booking_data["has_reference_photo"],
+                    }
+                )
+            return JsonResponse(response_data, status=200 if ok else 400)
 
         section = request.POST.get("return_section", "dashboard")
         return redirect(f"{reverse('booking:owner_dashboard')}#{section}")
@@ -749,8 +707,176 @@ def customer_history(request, customer_id):
             "salon": salon,
             "customer": customer,
             "bookings": bookings,
+            "customer_block_entry": get_active_block_entry(salon, customer),
+            "block_reason_choices": CustomerBlocklist.ReasonCode.choices,
         },
     )
+
+
+def _json_block_error(exc):
+    if isinstance(exc, ValidationError):
+        if hasattr(exc, "message_dict"):
+            messages_list = []
+            for msgs in exc.message_dict.values():
+                messages_list.extend(msgs if isinstance(msgs, list) else [msgs])
+            return JsonResponse({"ok": False, "error": " ".join(str(m) for m in messages_list)}, status=400)
+        if hasattr(exc, "messages"):
+            return JsonResponse({"ok": False, "error": " ".join(str(m) for m in exc.messages)}, status=400)
+        return JsonResponse({"ok": False, "error": str(exc)}, status=400)
+    return JsonResponse({"ok": False, "error": str(exc)}, status=400)
+
+
+@login_required
+@require_POST
+def owner_block_customer(request):
+    salon = _get_owner_salon(request.user)
+    if not salon:
+        return JsonResponse({"ok": False, "error": "Unauthorized"}, status=403)
+
+    customer_id = request.POST.get("customer_id")
+    booking_id = request.POST.get("booking_id")
+    reason_code = (request.POST.get("reason_code") or "").strip()
+    notes = (request.POST.get("notes") or "").strip()
+
+    try:
+        customer, booking = resolve_customer_for_block(
+            salon=salon,
+            customer_id=customer_id,
+            booking_id=booking_id,
+        )
+        entry = block_customer_service(
+            salon=salon,
+            performed_by=request.user,
+            reason_code=reason_code,
+            notes=notes,
+            customer=customer,
+            booking=booking,
+        )
+        if booking:
+            log_booking_activity(
+                booking,
+                BookingActivityLog.Action.CUSTOMER_BLOCKED,
+                user=request.user,
+                note=entry.get_reason_display_label(),
+            )
+    except (ValidationError, Booking.DoesNotExist, Customer.DoesNotExist) as exc:
+        return _json_block_error(exc)
+
+    return JsonResponse({"ok": True, "entry": serialize_blocklist_entry(entry)})
+
+
+@login_required
+@require_GET
+def owner_customer_block_detail(request, entry_id):
+    salon = _get_owner_salon(request.user)
+    if not salon:
+        return JsonResponse({"error": "Unauthorized"}, status=403)
+
+    entry = get_object_or_404(
+        CustomerBlocklist.objects.select_related("customer", "blocked_by", "source_booking"),
+        pk=entry_id,
+        salon=salon,
+    )
+    events = [
+        {
+            "event_type": event.event_type,
+            "event_label": event.get_event_type_display(),
+            "performed_by": (
+                event.performed_by.get_full_name() or event.performed_by.username
+                if event.performed_by
+                else "System"
+            ),
+            "reason_code": event.reason_code,
+            "notes": event.notes,
+            "created_at": event.created_at.isoformat(),
+        }
+        for event in entry.events.select_related("performed_by").order_by("-created_at")[:20]
+    ]
+    data = serialize_blocklist_entry(entry)
+    data["events"] = events
+    return JsonResponse(data)
+
+
+@login_required
+@require_POST
+def owner_unblock_customer(request, entry_id):
+    salon = _get_owner_salon(request.user)
+    if not salon:
+        return JsonResponse({"ok": False, "error": "Unauthorized"}, status=403)
+
+    entry = get_object_or_404(CustomerBlocklist, pk=entry_id, salon=salon)
+    try:
+        entry = unblock_customer_service(entry=entry, performed_by=request.user)
+    except ValidationError as exc:
+        return _json_block_error(exc)
+
+    return JsonResponse({"ok": True, "entry": serialize_blocklist_entry(entry)})
+
+
+@login_required
+@require_POST
+def owner_update_customer_block(request, entry_id):
+    salon = _get_owner_salon(request.user)
+    if not salon:
+        return JsonResponse({"ok": False, "error": "Unauthorized"}, status=403)
+
+    entry = get_object_or_404(CustomerBlocklist, pk=entry_id, salon=salon)
+    reason_code = (request.POST.get("reason_code") or "").strip()
+    notes = (request.POST.get("notes") or "").strip()
+
+    try:
+        entry = update_customer_block(
+            entry=entry,
+            performed_by=request.user,
+            reason_code=reason_code,
+            notes=notes,
+        )
+    except ValidationError as exc:
+        return _json_block_error(exc)
+
+    return JsonResponse({"ok": True, "entry": serialize_blocklist_entry(entry)})
+
+
+@login_required
+@require_GET
+def owner_customer_block_context(request):
+    """Return block modal context for a customer or booking."""
+    salon = _get_owner_salon(request.user)
+    if not salon:
+        return JsonResponse({"error": "Unauthorized"}, status=403)
+
+    customer_id = request.GET.get("customer_id")
+    booking_id = request.GET.get("booking_id")
+    try:
+        customer, booking = resolve_customer_for_block(
+            salon=salon,
+            customer_id=customer_id,
+            booking_id=booking_id,
+        )
+    except (ValidationError, Booking.DoesNotExist, Customer.DoesNotExist) as exc:
+        return _json_block_error(exc)
+
+    entry = get_active_block_entry(salon, customer)
+    data = {
+        "customer_id": customer.id,
+        "customer_name": customer.full_name,
+        "phone_number": customer.phone_number,
+        "email": customer.email or "",
+        "instagram_username": customer.instagram_username or "",
+        "is_blocked": bool(entry),
+        "block_entry_id": entry.id if entry else None,
+        "booking_id": booking.id if booking else None,
+        "booking_reference": (
+            f"#{booking.id} · {timezone.localtime(booking.start_at):%d/%m/%Y %H:%M}"
+            if booking
+            else ""
+        ),
+        "reason_choices": [
+            {"value": value, "label": str(label)}
+            for value, label in CustomerBlocklist.ReasonCode.choices
+        ],
+    }
+    return JsonResponse(data)
 
 
 @login_required
@@ -932,9 +1058,12 @@ def owner_booking_detail(request, booking_id):
         for entry in booking.activity_log.order_by("created_at")
     ]
 
+    block_entry = get_active_block_entry(salon, booking.customer)
+
     return JsonResponse(
         {
             "id": booking.id,
+            "customer_id": booking.customer_id,
             "full_name": booking.customer.full_name,
             "phone_number": booking.customer.phone_number,
             "instagram_username": booking.customer.instagram_username,
@@ -966,6 +1095,8 @@ def owner_booking_detail(request, booking_id):
             "created_at": booking.created_at.isoformat(),
             "updated_at": booking.updated_at.isoformat(),
             "activity_log": activity,
+            "is_customer_blocked": bool(block_entry),
+            "booking_reference": f"#{booking.id} · {local_start:%d/%m/%Y %H:%M}",
         }
     )
 
@@ -1092,12 +1223,17 @@ def owner_available_slots(request):
     except ValueError:
         return JsonResponse({"slots": []})
 
+    exclude_booking_id = None
+    if exclude_id:
+        if Booking.objects.filter(pk=exclude_id, salon=salon).exists():
+            exclude_booking_id = exclude_id
+
     slots = get_available_slots(
         salon,
         services,
         selected_date,
         for_owner=True,
-        exclude_booking_id=exclude_id or None,
+        exclude_booking_id=exclude_booking_id,
     )
     return _slots_json(slots)
 
@@ -1195,7 +1331,8 @@ def book_salon(request, salon_slug):
                         BookingActivityLog.Action.EMAIL_SENT,
                         note="Owner notified of new request",
                     )
-                response = redirect(reverse("booking:booking_success", args=[booking.pk]))
+                request.session["booking_success_id"] = booking.pk
+                response = redirect(reverse("booking:booking_success"))
             return _ensure_booking_device_cookie(response, request)
     else:
         form = BookingRequestForm(salon=salon, request=request)
@@ -1221,7 +1358,12 @@ def book_salon(request, salon_slug):
     return _ensure_booking_device_cookie(response, request)
 
 
-def booking_success(request, booking_id):
+def booking_success(request):
+    """Show booking confirmation only to the browser that just submitted the request."""
+    booking_id = request.session.pop("booking_success_id", None)
+    if not booking_id:
+        raise Http404
+
     booking = get_object_or_404(
         Booking.objects.select_related("salon", "customer").prefetch_related("booking_services"),
         pk=booking_id,
@@ -1237,6 +1379,11 @@ def booking_success(request, booking_id):
             "manage_url": get_manage_booking_url(booking),
         },
     )
+
+
+def booking_success_legacy(request, booking_id):
+    """Deprecated enumerable URL — always forbidden."""
+    raise Http404
 
 
 def booking_verify_email_sent(request):
@@ -1405,18 +1552,17 @@ def manage_booking_cancel(request, token):
 
     allowed, reason = can_customer_cancel_booking(booking)
     if not allowed:
+        error_msg = _("This appointment cannot be cancelled.")
         if reason == "too_close":
-            messages.error(
-                request,
-                _(
-                    "This appointment is too close for automatic cancellation. "
-                    "Please contact the salon."
-                ),
+            error_msg = _(
+                "This appointment is too close for automatic cancellation. "
+                "Please contact the salon."
             )
         elif reason == "past":
-            messages.error(request, _("This appointment has already passed."))
-        else:
-            messages.error(request, _("This appointment cannot be cancelled."))
+            error_msg = _("This appointment has already passed.")
+        if request.headers.get("X-Requested-With") == "fetch":
+            return JsonResponse({"ok": False, "error": error_msg}, status=400)
+        messages.error(request, error_msg)
         return redirect(reverse("booking:manage_booking", args=[token]))
 
     release_booking_slot(booking)
@@ -1436,6 +1582,16 @@ def manage_booking_cancel(request, token):
 
     send_booking_notification(booking, "customer_cancelled")
     send_owner_customer_cancelled_notification(booking)
+
+    if request.headers.get("X-Requested-With") == "fetch":
+        return JsonResponse(
+            {
+                "ok": True,
+                "cancelled": True,
+                "status": booking.status,
+                "status_display": booking.get_status_display(),
+            }
+        )
 
     return redirect(f"{reverse('booking:manage_booking', args=[token])}?cancelled=1")
 

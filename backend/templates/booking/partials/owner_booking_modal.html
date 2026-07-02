@@ -76,6 +76,14 @@
           <tbody id="od-booking-schedule-body"></tbody>
         </table>
       </div>
+      <div class="od-booking-customer-actions" id="od-booking-customer-actions" hidden>
+        <div class="od-field-label">{% trans "Customer actions" %}</div>
+        <div class="od-booking-customer-actions-row">
+          <a class="od-btn od-btn-ghost od-btn-sm" id="od-booking-call" href="#">{% trans "Call customer" %}</a>
+          <a class="od-btn od-btn-ghost od-btn-sm" id="od-booking-email" href="#" hidden>{% trans "Email customer" %}</a>
+          <button type="button" class="od-btn od-btn-danger od-btn-sm" id="od-booking-block-customer">{% trans "Block customer" %}</button>
+        </div>
+      </div>
       <div class="od-booking-photo-section" id="od-booking-photo-section" hidden>
         <div class="od-field-label">{% trans "Reference photo" %}</div>
         <div class="od-booking-photo-empty" id="od-booking-photo-empty">{% trans "No photo attached." %}</div>
@@ -85,7 +93,6 @@
             <div class="od-photo-actions" id="od-booking-photo-actions">
               <button type="button" class="od-btn od-btn-ghost od-btn-sm" id="od-booking-photo-show">{% trans "Show photo" %}</button>
               <button type="button" class="od-btn od-btn-ghost od-btn-sm" id="od-booking-photo-delete">{% trans "Delete photo" %}</button>
-              <button type="button" class="od-btn od-btn-danger od-btn-sm" id="od-booking-photo-block">{% trans "Block customer" %}</button>
             </div>
           </div>
         </div>

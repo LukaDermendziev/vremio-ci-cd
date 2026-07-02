@@ -1,3 +1,9 @@
+"""Django admin for Vremio booking models.
+
+Salon owners use the owner dashboard — do not grant them Django staff access.
+Staff users with model permissions can see all salons' data across tenants.
+Restrict /admin/ to platform superusers only in production.
+"""
 from django.contrib import admin
 
 from .models import (
@@ -7,6 +13,7 @@ from .models import (
     BookingService,
     Customer,
     CustomerBlocklist,
+    CustomerBlockEvent,
     DateWorkingHoursOverride,
     ReleasedSlot,
     Salon,
@@ -186,6 +193,24 @@ class BookingActivityLogAdmin(admin.ModelAdmin):
 
 @admin.register(CustomerBlocklist)
 class CustomerBlocklistAdmin(admin.ModelAdmin):
-    list_display = ("phone_number", "salon", "email", "instagram_username", "is_active", "created_at")
-    list_filter = ("salon", "is_active")
-    search_fields = ("phone_number", "email", "instagram_username", "reason")
+    list_display = (
+        "phone_number",
+        "salon",
+        "customer",
+        "reason_code",
+        "email",
+        "is_active",
+        "blocked_at",
+        "blocked_by",
+    )
+    list_filter = ("salon", "is_active", "reason_code")
+    search_fields = ("phone_number", "email", "instagram_username", "reason", "notes")
+    readonly_fields = ("blocked_at", "unblocked_at", "created_at", "updated_at")
+
+
+@admin.register(CustomerBlockEvent)
+class CustomerBlockEventAdmin(admin.ModelAdmin):
+    list_display = ("blocklist_entry", "event_type", "performed_by", "reason_code", "created_at")
+    list_filter = ("event_type", "created_at")
+    search_fields = ("blocklist_entry__phone_number", "notes")
+    readonly_fields = ("blocklist_entry", "event_type", "performed_by", "reason_code", "notes", "created_at")

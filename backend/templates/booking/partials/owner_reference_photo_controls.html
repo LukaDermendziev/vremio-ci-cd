@@ -15,6 +15,7 @@
         type="button"
         class="od-btn od-btn-ghost od-btn-sm"
         data-photo-preview="{% url 'booking:owner_booking_photo' booking.id %}"
+        data-booking-id="{{ booking.id }}"
       >{% trans "Show photo" %}</button>
       <button
         type="button"
@@ -25,8 +26,13 @@
       <button
         type="button"
         class="od-btn od-btn-danger od-btn-sm"
-        data-bk-action="block_customer"
-        data-bk-id="{{ booking.id }}"
+        data-open-block-customer
+        data-customer-id="{{ booking.customer_id }}"
+        data-booking-id="{{ booking.id }}"
+        data-customer-name="{{ booking.customer.full_name|escape }}"
+        data-phone="{{ booking.customer.phone_number|escape }}"
+        data-email="{{ booking.customer.email|escape }}"
+        data-booking-reference="#{{ booking.id }} · {{ booking.start_at|date:'d/m/Y H:i' }}"
       >{% trans "Block customer" %}</button>
     </div>
   </div>

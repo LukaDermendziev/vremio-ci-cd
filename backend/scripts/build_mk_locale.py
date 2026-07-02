@@ -179,6 +179,40 @@ TRANSLATIONS = {
     "Show photo": "Прикажи слика",
     "Delete photo": "Избриши слика",
     "Block customer": "Блокирај клиент",
+    "Blocked customers": "Блокирани клиенти",
+    "Customers who cannot submit new booking requests.": "Клиенти кои не можат да испратат нови барања за термин.",
+    "Search by name, phone, or email…": "Пребарај по име, телефон или email…",
+    "Date blocked": "Датум на блокирање",
+    "Reason": "Причина",
+    "Status": "Статус",
+    "Unblock": "Одблокирај",
+    "Blocked customer": "Блокиран клиент",
+    "Booking reference": "Референца на термин",
+    "Choose a reason…": "Изберете причина…",
+    "Notes": "Белешки",
+    "optional": "опционално",
+    "Additional details for your records…": "Дополнителни детали за вашите записи…",
+    "This customer will no longer be able to submit booking requests to your business until unblocked.": "Овој клиент повеќе нема да може да испраќа барања за термин додека не биде одблокиран.",
+    "Customer actions": "Акции за клиент",
+    "Call customer": "Повикај клиент",
+    "Email customer": "Email до клиент",
+    "Already blocked": "Веќе блокиран",
+    "Customer unblocked.": "Клиентот е одблокиран.",
+    "Block reason updated.": "Причината за блокирање е ажурирана.",
+    "Unblock this customer? They will be able to book again.": "Дали да се одблокира овој клиент? Повторно ќе може да закажува.",
+    "Edit block reason": "Уреди причина за блокирање",
+    "Audit log": "Дневник на промени",
+    "Unblocked": "Одблокиран",
+    "No blocked customers.": "Нема блокирани клиенти.",
+    "No blocked customers match your search.": "Нема блокирани клиенти што одговараат на пребарувањето.",
+    "Edit reason": "Уреди причина",
+    "Spam": "Спам",
+    "Fake bookings": "Лажни резервации",
+    "Repeated no-shows": "Повторени непojавувања",
+    "Repeated cancellations": "Повторени откажувања",
+    "Inappropriate photos": "Непримерни слики",
+    "Harassment": "Вознемирување",
+    "Other": "Друго",
     "Delete this reference photo?": "Дали да се избрише референтната слика?",
     "Block this customer from booking?": "Дали да се блокира овој клиент од закажување?",
     "Customer blocked.": "Клиентот е блокиран.",
@@ -412,7 +446,7 @@ TRANSLATIONS = {
     "Deletion of a booking or uploaded photo where reasonable": "Бришење на резервација или прикачена слика кога е разумно",
     "Questions about how your data is used": "Прашања за тоа како се користат вашите податоци",
     "During the pilot, requests are handled manually. You may also contact the business where you booked directly.": (
-        "За време на пилотот, барањата се обработуваат рачно. Можете и директно да го контактирате бизнисот каде што резervиравте."
+        "За време на пилотот, барањата се обработуваат рачно. Можете и директно да го контактирате бизнисот каде што резервиравте."
     ),
     "These terms describe the private pilot period for the first business owners using Vremio. This is not a full commercial contract.": (
         "Овие услови го опишуваат приватниот пилот за првите сопственици кои го користат Vremio. Ова не е целосен комерцијален договор."
@@ -428,7 +462,7 @@ TRANSLATIONS = {
         "Не споделувајте фотографии или контакт податоци надвор од она што е потребно за услугата."
     ),
     "Review important bookings manually during the pilot.": "Рачно проверувајте ги важните резервации за време на пилотот.",
-    "Report bugs, incorrect bookings, or security concerns promptly.": "Пријавете грешки, неточни резервации или безbedносни проблеми навреме.",
+    "Report bugs, incorrect bookings, or security concerns promptly.": "Пријавете грешки, неточни резервации или безбедносни проблеми навреме.",
     "After the pilot": "По пилотот",
     "Continued paid use, pricing, and formal terms should be agreed separately before wider commercial launch.": (
         "Понатамошна платена употреба, цени и формални услови треба да се договорат посебно пред пошироко комерцијално лансирање."
