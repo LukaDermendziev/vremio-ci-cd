@@ -1732,6 +1732,9 @@ function initOwnerDashboard(config) {
 
   async function cgFetchAndRender() {
     if (!cgridEl) return;
+    if (window.odMcIsMobileCalendar?.()) {
+      return window.odMcFetchMonth?.(true);
+    }
     let start, end;
     if (cgView === "week") {
       start = cgIso(cgWeekStart);
@@ -1785,6 +1788,14 @@ function initOwnerDashboard(config) {
   document.getElementById("cal-view-day")?.addEventListener("click",  () => { cgView="day";  cgFetchAndRender(); });
 
   // End of cgrid — remove old FullCalendar placeholder
+  if (window.initOwnerCalendarMobile) {
+    window.initOwnerCalendarMobile({
+      eventsUrl: config.eventsUrl,
+      locale: CG_LOCALE,
+      openBookingModal,
+      openBlockModal,
+    });
+  }
   if (cgridEl) cgFetchAndRender();
   window.odCgFetchAndRender = cgFetchAndRender;
 

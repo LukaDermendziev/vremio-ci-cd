@@ -4741,6 +4741,448 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
 }
 
 /* ═══════════════════════════════════════════════════════════
+   Mobile calendar (mcgrid) — month + agenda, ≤640px
+   ═══════════════════════════════════════════════════════════ */
+.od-cal-mobile { display: none; }
+.od-cal-desktop { display: block; }
+
+@media (max-width: 640px) {
+  .od-cal-desktop { display: none !important; }
+  .od-cal-mobile { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
+  .od-cal-header-sub { display: none; }
+
+  /* Single scroll surface: lock page scroll while calendar is open */
+  .od-main:has(#od-sec-calendar.active) {
+    overflow: hidden;
+    height: 100dvh;
+    max-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    padding-top: 12px;
+    padding-bottom: calc(58px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .od-main:has(#od-sec-calendar.active) .od-dashboard-lang {
+    flex-shrink: 0;
+  }
+
+  .od-main:has(#od-sec-calendar.active) .od-alert {
+    flex-shrink: 0;
+  }
+
+  #od-sec-calendar.active {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    padding-bottom: 0;
+    margin-bottom: 0;
+  }
+
+  #od-sec-calendar.active .od-cal-header {
+    margin-bottom: 6px;
+    flex-shrink: 0;
+  }
+
+  .od-cal-mobile.is-loading { opacity: 0.92; }
+
+  .mcgrid-toolbar {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+  }
+
+  .mcgrid-nav {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .mcgrid-nav-btn {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--od-border, #E5E7EB);
+    background: #fff;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .mcgrid-month-label {
+    flex: 1;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--od-text, #111827);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-transform: capitalize;
+    min-width: 0;
+    padding: 0 2px;
+  }
+
+  .mcgrid-toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .mcgrid-today-btn {
+    border: 1px solid var(--od-border, #E5E7EB);
+    background: #fff;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+    font-family: inherit;
+  }
+
+  .mcgrid-action-btn {
+    flex: 1;
+    min-width: 0;
+    justify-content: center;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .mcgrid-action-btn .mcgrid-action-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  @media (max-width: 360px) {
+    .mcgrid-action-btn .mcgrid-action-label { display: none; }
+    .mcgrid-action-btn { flex: 0 0 40px; padding: 0; }
+  }
+
+  .mcgrid-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: auto;
+  }
+
+  .mcgrid-collapse-shell {
+    --mc-collapse: 0;
+    --mc-month-h: 292px;
+    --mc-week-h: 64px;
+    position: relative;
+    flex-shrink: 0;
+    height: calc(var(--mc-month-h) * (1 - var(--mc-collapse)) + var(--mc-week-h) * var(--mc-collapse));
+    transition: height 200ms ease;
+    overflow: hidden;
+    border-bottom: 1px solid var(--od-border, #E5E7EB);
+    margin-bottom: 0;
+  }
+
+  .mcgrid-month {
+    position: absolute;
+    inset: 0 0 auto 0;
+    padding: 0 2px 8px;
+    opacity: calc(1 - var(--mc-collapse) * 1.2);
+    transform: translateY(calc(var(--mc-collapse) * -12px));
+    transition: opacity 180ms ease, transform 200ms ease;
+    z-index: 2;
+  }
+
+  .mcgrid-week-strip {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    padding: 4px 2px 8px;
+    opacity: var(--mc-collapse);
+    transform: translateY(calc((1 - var(--mc-collapse)) * 8px));
+    transition: opacity 180ms ease, transform 200ms ease;
+    z-index: 3;
+  }
+
+  .mcgrid-dow-row {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    margin-bottom: 4px;
+  }
+
+  .mcgrid-dow {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: #6B7280;
+    text-transform: uppercase;
+  }
+
+  .mcgrid-dow-sun { color: #DC2626; }
+
+  .mcgrid-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+  }
+
+  .mcgrid-day {
+    min-height: 44px;
+    border: none;
+    background: transparent;
+    border-radius: 10px;
+    padding: 4px 2px 2px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    cursor: pointer;
+    font-family: inherit;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mcgrid-day-out .mcgrid-day-num { color: #D1D5DB; }
+  .mcgrid-day-closed .mcgrid-day-num { color: #9CA3AF; }
+  .mcgrid-day-num {
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--od-text, #111827);
+    border-radius: 8px;
+  }
+
+  .mcgrid-day-today .mcgrid-day-num {
+    box-shadow: inset 0 0 0 1.5px var(--od-text, #111827);
+  }
+
+  .mcgrid-day-selected .mcgrid-day-num {
+    background: var(--od-text, #111827);
+    color: #fff;
+  }
+
+  .mcgrid-indicators {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-height: 6px;
+    width: 100%;
+    padding: 0 2px;
+  }
+
+  .mcgrid-ind-bar {
+    flex: 1;
+    max-width: 10px;
+    height: 3px;
+    border-radius: 2px;
+  }
+
+  .mcgrid-ind-more {
+    font-size: 8px;
+    font-weight: 700;
+    color: #6B7280;
+    line-height: 1;
+  }
+
+  .mcgrid-week-day {
+    border: none;
+    background: transparent;
+    border-radius: 10px;
+    padding: 4px 2px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    cursor: pointer;
+    font-family: inherit;
+    min-height: 52px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mcgrid-week-dow {
+    font-size: 10px;
+    font-weight: 600;
+    color: #6B7280;
+    text-transform: uppercase;
+  }
+
+  .mcgrid-week-num {
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    font-size: 15px;
+    font-weight: 700;
+    border-radius: 10px;
+    color: var(--od-text, #111827);
+  }
+
+  .mcgrid-week-day-today .mcgrid-week-num {
+    box-shadow: inset 0 0 0 1.5px var(--od-text, #111827);
+  }
+
+  .mcgrid-week-day-selected .mcgrid-week-num {
+    background: var(--od-text, #111827);
+    color: #fff;
+  }
+
+  .mcgrid-week-day-closed .mcgrid-week-num { color: #9CA3AF; }
+
+  .mcgrid-agenda {
+    padding: 12px 0 24px;
+    min-height: min(50vh, 320px);
+  }
+
+  .mcgrid-agenda-header {
+    padding: 0 4px 12px;
+    border-bottom: 1px solid #F3F4F6;
+    margin-bottom: 8px;
+  }
+
+  .mcgrid-agenda-date {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--od-text, #111827);
+    text-transform: capitalize;
+  }
+
+  .mcgrid-agenda-count {
+    font-size: 12px;
+    color: #6B7280;
+    margin-top: 2px;
+  }
+
+  .mcgrid-agenda-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0 2px;
+  }
+
+  .mcgrid-agenda-list.mcgrid-agenda-animate {
+    animation: mcgridAgendaIn 180ms ease;
+  }
+
+  @keyframes mcgridAgendaIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .mcgrid-agenda-card {
+    display: grid;
+    grid-template-columns: 4px auto 1fr auto;
+    gap: 10px;
+    align-items: start;
+    width: 100%;
+    text-align: left;
+    padding: 12px 12px 12px 0;
+    border: 1px solid var(--od-border, #E5E7EB);
+    border-radius: 12px;
+    background: #fff;
+    cursor: pointer;
+    font-family: inherit;
+    transition: box-shadow 150ms ease, border-color 150ms ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mcgrid-agenda-card:active {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    border-color: #D1D5DB;
+  }
+
+  .mcgrid-agenda-bar {
+    width: 4px;
+    align-self: stretch;
+    border-radius: 0 4px 4px 0;
+    margin-left: 0;
+  }
+
+  .mcgrid-agenda-time {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--od-text, #111827);
+    white-space: nowrap;
+    padding-top: 1px;
+  }
+
+  .mcgrid-agenda-body {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .mcgrid-agenda-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--od-text, #111827);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .mcgrid-agenda-photo {
+    font-size: 12px;
+    color: #6B7280;
+  }
+
+  .mcgrid-agenda-svc {
+    font-size: 12px;
+    color: #6B7280;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mcgrid-agenda-status {
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    padding-top: 2px;
+  }
+
+  .mcgrid-agenda-empty {
+    text-align: center;
+    padding: 32px 16px;
+    color: #6B7280;
+  }
+
+  .mcgrid-agenda-empty i {
+    font-size: 28px;
+    color: #D1D5DB;
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  .mcgrid-agenda-empty p {
+    margin: 0 0 16px;
+    font-size: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mcgrid-collapse-shell,
+  .mcgrid-month,
+  .mcgrid-week-strip,
+  .mcgrid-agenda-list.mcgrid-agenda-animate {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
    Service cards — redesigned expandable layout
    ═══════════════════════════════════════════════════════════ */
 .od-svc-card {

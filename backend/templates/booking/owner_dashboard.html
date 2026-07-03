@@ -210,41 +210,78 @@
       <div class="od-cal-header">
         <div>
           <div class="od-page-title">{% trans "Calendar" %}</div>
-          <p class="od-page-sub">{% trans "View and manage your appointment schedule." %}</p>
+          <p class="od-page-sub od-cal-header-sub">{% trans "View and manage your appointment schedule." %}</p>
         </div>
       </div>
 
-            <div class="cgrid-toolbar">
-        <div class="cgrid-nav">
-          <button type="button" class="cgrid-nav-btn" id="cal-prev"><i class="bi bi-chevron-left"></i></button>
-          <span class="cgrid-range" id="cal-range-label">—</span>
-          <button type="button" class="cgrid-nav-btn" id="cal-next"><i class="bi bi-chevron-right"></i></button>
-          <button type="button" class="cgrid-today-btn" id="cal-today">{% trans "Today" %}</button>
-        </div>
-        <div class="cgrid-actions">
-          <div class="cgrid-view-toggle">
-            <button type="button" class="cgrid-view-btn active" id="cal-view-week">{% trans "Week" %}</button>
-            <button type="button" class="cgrid-view-btn" id="cal-view-day">{% trans "Day" %}</button>
+      <div class="od-cal-desktop">
+        <div class="cgrid-toolbar">
+          <div class="cgrid-nav">
+            <button type="button" class="cgrid-nav-btn" id="cal-prev"><i class="bi bi-chevron-left"></i></button>
+            <span class="cgrid-range" id="cal-range-label">—</span>
+            <button type="button" class="cgrid-nav-btn" id="cal-next"><i class="bi bi-chevron-right"></i></button>
+            <button type="button" class="cgrid-today-btn" id="cal-today">{% trans "Today" %}</button>
           </div>
-          <div class="cgrid-action-btns">
-            <button type="button" class="od-btn od-btn-primary od-btn-compact" data-add-booking><i class="bi bi-plus-lg"></i> {% trans "Add" %}</button>
-            <button type="button" class="od-btn od-btn-ghost od-btn-compact" data-add-block><i class="bi bi-slash-circle"></i> {% trans "Block" %}</button>
+          <div class="cgrid-actions">
+            <div class="cgrid-view-toggle">
+              <button type="button" class="cgrid-view-btn active" id="cal-view-week">{% trans "Week" %}</button>
+              <button type="button" class="cgrid-view-btn" id="cal-view-day">{% trans "Day" %}</button>
+            </div>
+            <div class="cgrid-action-btns">
+              <button type="button" class="od-btn od-btn-primary od-btn-compact" data-add-booking><i class="bi bi-plus-lg"></i> {% trans "Add" %}</button>
+              <button type="button" class="od-btn od-btn-ghost od-btn-compact" data-add-block><i class="bi bi-slash-circle"></i> {% trans "Block" %}</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="od-calendar-grid" class="cgrid-outer"></div>
+
+        <div class="cgrid-legend">
+          <span class="cgrid-legend-item"><span class="cgrid-dot" style="background:#D97706"></span> {% trans "Pending" %}</span>
+          <span class="cgrid-legend-item"><span class="cgrid-dot" style="background:#059669"></span> {% trans "Approved" %}</span>
+          <span class="cgrid-legend-item"><span class="cgrid-dot" style="background:#2563EB"></span> {% trans "Completed" %}</span>
+          <span class="cgrid-legend-item"><span class="cgrid-dot" style="background:#DB2777"></span> {% trans "Rejected" %}</span>
+          <span class="cgrid-legend-item"><span class="cgrid-dot" style="background:#6B7280"></span> {% trans "Cancelled" %}</span>
+          <span class="cgrid-legend-item"><span class="cgrid-dot" style="background:#C2410C"></span> {% trans "No Show" %}</span>
+          <span class="cgrid-legend-item"><span class="cgrid-dot" style="background:#7C3AED"></span> {% trans "Unavailable" %}</span>
+        </div>
+        <p class="od-cal-hint">{% trans "Double-click (or double-tap on mobile) an empty slot to add a booking · Click an appointment to view details" %}</p>
+      </div>
+
+      <div class="od-cal-mobile" id="od-cal-mobile" hidden>
+        <div class="mcgrid-toolbar">
+          <div class="mcgrid-nav">
+            <button type="button" class="mcgrid-nav-btn" id="mc-cal-prev" aria-label="{% trans 'Previous month' %}"><i class="bi bi-chevron-left"></i></button>
+            <span class="mcgrid-month-label" id="mc-month-label">—</span>
+            <button type="button" class="mcgrid-nav-btn" id="mc-cal-next" aria-label="{% trans 'Next month' %}"><i class="bi bi-chevron-right"></i></button>
+          </div>
+          <div class="mcgrid-toolbar-actions">
+            <button type="button" class="mcgrid-today-btn" id="mc-cal-today">{% trans "Today" %}</button>
+            <button type="button" class="od-btn od-btn-primary od-btn-compact mcgrid-action-btn" id="mc-add-booking" aria-label="{% trans 'Add booking' %}"><i class="bi bi-plus-lg"></i><span class="mcgrid-action-label">{% trans "Add" %}</span></button>
+            <button type="button" class="od-btn od-btn-ghost od-btn-compact mcgrid-action-btn" id="mc-add-block" aria-label="{% trans 'Block time' %}"><i class="bi bi-slash-circle"></i><span class="mcgrid-action-label">{% trans "Block" %}</span></button>
+          </div>
+        </div>
+
+        <div class="mcgrid-scroll" id="mcgrid-scroll">
+          <div class="mcgrid-collapse-shell" id="mcgrid-collapse-shell">
+            <div class="mcgrid-month" id="mcgrid-month"></div>
+            <div class="mcgrid-week-strip" id="mcgrid-week-strip" aria-hidden="true"></div>
+          </div>
+
+          <div class="mcgrid-agenda">
+            <div class="mcgrid-agenda-header" id="mcgrid-agenda-header">
+              <div class="mcgrid-agenda-date" id="mcgrid-agenda-date">—</div>
+              <div class="mcgrid-agenda-count" id="mcgrid-agenda-count"></div>
+            </div>
+            <div class="mcgrid-agenda-list" id="mcgrid-agenda-list"></div>
+            <div class="mcgrid-agenda-empty" id="mcgrid-agenda-empty" hidden>
+              <i class="bi bi-calendar-x"></i>
+              <p>{% trans "No appointments for this day." %}</p>
+              <button type="button" class="od-btn od-btn-primary od-btn-sm" id="mc-empty-add-booking"><i class="bi bi-plus-lg"></i> {% trans "Add booking" %}</button>
+            </div>
           </div>
         </div>
       </div>
-
-      <div id="od-calendar-grid" class="cgrid-outer"></div>
-
-      <div class="cgrid-legend">
-        <span class="cgrid-legend-item"><span class="cgrid-dot" style="background:#D97706"></span> {% trans "Pending" %}</span>
-        <span class="cgrid-legend-item"><span class="cgrid-dot" style="background:#059669"></span> {% trans "Approved" %}</span>
-        <span class="cgrid-legend-item"><span class="cgrid-dot" style="background:#2563EB"></span> {% trans "Completed" %}</span>
-        <span class="cgrid-legend-item"><span class="cgrid-dot" style="background:#DB2777"></span> {% trans "Rejected" %}</span>
-        <span class="cgrid-legend-item"><span class="cgrid-dot" style="background:#6B7280"></span> {% trans "Cancelled" %}</span>
-        <span class="cgrid-legend-item"><span class="cgrid-dot" style="background:#C2410C"></span> {% trans "No Show" %}</span>
-        <span class="cgrid-legend-item"><span class="cgrid-dot" style="background:#7C3AED"></span> {% trans "Unavailable" %}</span>
-      </div>
-      <p class="od-cal-hint">{% trans "Double-click (or double-tap on mobile) an empty slot to add a booking · Click an appointment to view details" %}</p>
     </div>
     <div class="od-section" id="od-sec-bookings">
       <div class="od-page-top">
@@ -786,6 +823,7 @@
 <script src="{% static 'js/owner_ajax.js' %}"></script>
 <script src="{% static 'js/owner_block_customer.js' %}"></script>
 <script src="{% static 'js/owner_dashboard.js' %}"></script>
+<script src="{% static 'js/owner_calendar_mobile.js' %}"></script>
 <script src="{% static 'js/owner_dashboard_ajax.js' %}"></script>
 
 <script>
@@ -865,6 +903,9 @@ window.OD_I18N = {
   blocked: "{% filter escapejs %}{% trans "Blocked" %}{% endfilter %}",
   unblocked: "{% filter escapejs %}{% trans "Unblocked" %}{% endfilter %}",
   noBlockedCustomersMatch: "{% filter escapejs %}{% trans "No blocked customers match your search." %}{% endfilter %}",
+  noAppointmentsThisDay: "{% filter escapejs %}{% trans "No appointments for this day." %}{% endfilter %}",
+  previousMonth: "{% filter escapejs %}{% trans "Previous month" %}{% endfilter %}",
+  nextMonth: "{% filter escapejs %}{% trans "Next month" %}{% endfilter %}",
 };
 </script>
 <script>
