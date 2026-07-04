@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from booking.models import Booking, BookingActivityLog
-from booking.services import delete_unverified_booking, log_booking_activity
+from booking.services import cleanup_expired_unverified_bookings, delete_unverified_booking, log_booking_activity
 
 
 class Command(BaseCommand):

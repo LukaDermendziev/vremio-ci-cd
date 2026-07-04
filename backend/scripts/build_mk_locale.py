@@ -1010,6 +1010,8 @@ TRANSLATIONS = {
     ),
     "Reopen cancelled slots inside notice window": "Автоматски отвори откажани термини за онлајн резервација",
     "This is a last-minute opening from a cancelled appointment.": "Ова е последен слободен термин од откажување.",
+    "This cancelled opening is not available for your selected service.": "Овој термин од откажување не е достапен за избраната услуга.",
+    "Could not cancel appointment.": "Терминот не можеше да се откаже.",
     # Legal pages (2026 update)
     "1. Introduction": "1. Вовед",
     "Welcome to Vremio.": "Добредојдовте на Vremio.",

@@ -744,6 +744,9 @@ msgstr "Correction of your contact details"
 msgid "Could not add unavailable time block."
 msgstr "Could not add unavailable time block."
 
+msgid "Could not cancel appointment."
+msgstr "Could not cancel appointment."
+
 msgid "Could not copy. Long-press the message to copy."
 msgstr "Could not copy. Long-press the message to copy."
 
@@ -2512,6 +2515,9 @@ msgstr "This appointment was marked as a no-show."
 
 msgid "This booking request was declined by the salon."
 msgstr "This booking request was declined by the salon."
+
+msgid "This cancelled opening is not available for your selected service."
+msgstr "This cancelled opening is not available for your selected service."
 
 msgid "This customer already has active appointment(s)."
 msgstr "This customer already has active appointment(s)."

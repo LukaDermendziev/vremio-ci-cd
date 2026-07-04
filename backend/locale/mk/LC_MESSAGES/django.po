@@ -750,6 +750,9 @@ msgstr "Исправка на вашите контакт податоци"
 msgid "Could not add unavailable time block."
 msgstr "Не можеше да се додаде блокот."
 
+msgid "Could not cancel appointment."
+msgstr "Терминот не можеше да се откаже."
+
 msgid "Could not copy. Long-press the message to copy."
 msgstr ""
 "Не можеше да се копира. Долго притиснете на пораката за да ја копирате."
@@ -2524,6 +2527,9 @@ msgstr "Овој термин е означен како не се појави.
 
 msgid "This booking request was declined by the salon."
 msgstr "Ова барање е одбиено од салонот."
+
+msgid "This cancelled opening is not available for your selected service."
+msgstr "Овој термин од откажување не е достапен за избраната услуга."
 
 msgid "This customer already has active appointment(s)."
 msgstr "Клиентот веќе има активен/и термин/и."

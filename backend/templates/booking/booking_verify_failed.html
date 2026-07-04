@@ -16,9 +16,15 @@
 
     <p class="bk-success-msg">{{ message }}</p>
 
+    {% if salon %}
+    <a class="bk-btn-primary" href="{% url 'booking:book_salon' salon.slug %}">
+      {% trans "Back to booking" %}
+    </a>
+    {% else %}
     <a class="bk-btn-primary" href="{% url 'booking:home' %}">
       {% trans "Back to home" %}
     </a>
+    {% endif %}
   </div>
   <div class="bk-page-legal-footer">
     {% include "partials/legal_footer.html" with legal_footer_compact=True %}

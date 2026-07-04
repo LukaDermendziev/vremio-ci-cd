@@ -208,7 +208,9 @@ def send_booking_verification_email(booking):
         expiration_minutes = policy.email_verification_expiration_minutes
 
     site_url = getattr(settings, "SITE_URL", "").rstrip("/")
-    verify_url = f"{site_url}/booking/verify/{booking.email_verification_token}/"
+    verify_url = (
+        f"{site_url}/book/{booking.salon.slug}/verify/{booking.email_verification_token}/"
+    )
     context = _booking_email_context(booking)
     context.update({
         "verify_url": verify_url,

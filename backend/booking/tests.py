@@ -42,9 +42,12 @@ from .services import (
     get_calendar_history_cutoff_date,
     get_calendar_history_days,
     get_last_minute_open_dates,
+    get_last_minute_open_dates_for_services,
     get_salon_local_today,
     is_slot_available,
     release_booking_slot,
+    release_interval,
+    consume_released_slot,
     ensure_default_working_hours,
 )
 
@@ -867,6 +870,126 @@ class LastMinuteReopenTests(TestCase):
         booking = self._create_booking(Booking.Status.PENDING)
         release_booking_slot(booking)
         self.assertEqual(ReleasedSlot.objects.filter(is_active=True).count(), 1)
+
+    def test_release_allows_slot_after_overlapping_booking(self):
+        """Bookings may start later inside a release when the release start is still busy."""
+        Booking.objects.create(
+            salon=self.salon,
+            customer=self.customer,
+            status=Booking.Status.APPROVED,
+            source=Booking.Source.OWNER_MANUAL,
+            start_at=self._aware_at(8, 30),
+            end_at=self._aware_at(13, 0),
+            total_duration_minutes=270,
+        )
+        release_interval(
+            self.salon,
+            self._aware_at(12, 0),
+            self._aware_at(16, 30),
+        )
+        slots = get_available_slots(
+            self.salon,
+            self.service,
+            self.inside_date,
+            now=self.now,
+        )
+        values = [s["value"] for s in slots]
+        self.assertIn("13:00", values)
+        self.assertNotIn("12:00", values)
+
+    def test_short_release_excluded_from_service_aware_dates(self):
+        release_interval(
+            self.salon,
+            self._aware_at(10, 0),
+            self._aware_at(11, 0),
+        )
+        today = get_salon_local_today(self.salon)
+        notice_cutoff = today + timedelta(days=14)
+        raw_dates = get_last_minute_open_dates(
+            self.salon, today, notice_cutoff, now=self.now
+        )
+        service_dates = get_last_minute_open_dates_for_services(
+            self.salon, [self.service], today, notice_cutoff, now=self.now
+        )
+        self.assertIn(self.inside_date.isoformat(), raw_dates)
+        self.assertNotIn(self.inside_date.isoformat(), service_dates)
+
+    def test_consume_released_slot_splits_remaining_intervals(self):
+        release = release_interval(
+            self.salon,
+            self._aware_at(12, 0),
+            self._aware_at(16, 30),
+        )
+        consume_released_slot(
+            self.salon,
+            self._aware_at(13, 30),
+            self._aware_at(15, 30),
+        )
+        release.refresh_from_db()
+        self.assertFalse(release.is_active)
+        active = list(
+            ReleasedSlot.objects.filter(salon=self.salon, is_active=True).order_by("start_at")
+        )
+        self.assertEqual(len(active), 2)
+        self.assertEqual(active[0].start_at, self._aware_at(12, 0))
+        self.assertEqual(active[0].end_at, self._aware_at(13, 30))
+        self.assertEqual(active[1].start_at, self._aware_at(15, 30))
+        self.assertEqual(active[1].end_at, self._aware_at(16, 30))
+
+    def test_cancel_after_partial_booking_restores_all_start_slots(self):
+        release_interval(
+            self.salon,
+            self._aware_at(12, 0),
+            self._aware_at(16, 30),
+        )
+        booking = self._create_booking(Booking.Status.APPROVED, start_hour=13, end_hour=15)
+        booking.start_at = self._aware_at(13, 30)
+        booking.end_at = self._aware_at(15, 30)
+        booking.save(update_fields=["start_at", "end_at"])
+        consume_released_slot(self.salon, booking.start_at, booking.end_at)
+        release_booking_slot(booking)
+        booking.status = Booking.Status.CANCELLED
+        booking.save(update_fields=["status"])
+        slots = get_available_slots(
+            self.salon,
+            self.service,
+            self.inside_date,
+            now=self.now,
+        )
+        values = [s["value"] for s in slots]
+        self.assertIn("13:00", values)
+        self.assertIn("13:30", values)
+        self.assertIn("14:00", values)
+        self.assertIn("14:30", values)
+
+    def test_last_minute_dates_api_returns_service_aware_dates(self):
+        release_interval(
+            self.salon,
+            self._aware_at(12, 0),
+            self._aware_at(16, 30),
+        )
+        response = self.client.get(
+            f"/book/{self.salon.slug}/last-minute-dates/?services={self.service.id}"
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn(self.inside_date.isoformat(), data["dates"])
+
+    def test_available_slots_api_flags_release_unavailable(self):
+        release_interval(
+            self.salon,
+            self._aware_at(10, 0),
+            self._aware_at(11, 0),
+        )
+        response = self.client.get(
+            f"/book/{self.salon.slug}/slots/"
+            f"?services={self.service.id}&date={self.inside_date.isoformat()}"
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["slots"], [])
+        self.assertTrue(data["last_minute"])
+        self.assertTrue(data["release_unavailable"])
 
 
 class BetaReadinessTests(TestCase):
@@ -2239,7 +2362,9 @@ class EmailVerificationTests(TestCase):
         booking = Booking.objects.get(customer__phone_number="070555112")
         token = booking.email_verification_token
         self.assertIsNotNone(token)
-        response = self.client.get(reverse("booking:verify_booking_email", args=[token]))
+        response = self.client.get(
+            reverse("booking:verify_booking_email", args=[self.salon.slug, token])
+        )
         self.assertEqual(response.status_code, 200)
         booking.refresh_from_db()
         self.assertEqual(booking.status, Booking.Status.PENDING)
@@ -2259,7 +2384,9 @@ class EmailVerificationTests(TestCase):
         self.client.post("/book/salon-v/request/", self._booking_post_data(phone_number="070555116"))
         booking = Booking.objects.get(customer__phone_number="070555116")
         token = booking.email_verification_token
-        response = self.client.get(reverse("booking:verify_booking_email", args=[token]))
+        response = self.client.get(
+            reverse("booking:verify_booking_email", args=[self.salon.slug, token])
+        )
         self.assertEqual(response.status_code, 200)
         customer_messages = [m for m in mail.outbox if "verify@example.com" in m.to]
         self.assertGreaterEqual(len(customer_messages), 2)
@@ -2275,7 +2402,9 @@ class EmailVerificationTests(TestCase):
         self.client.post("/book/salon-v/request/", self._booking_post_data(phone_number="070555117"))
         booking = Booking.objects.get(customer__phone_number="070555117")
         token = booking.email_verification_token
-        self.client.get(reverse("booking:verify_booking_email", args=[token]))
+        self.client.get(
+            reverse("booking:verify_booking_email", args=[self.salon.slug, token])
+        )
         customer_messages = [m for m in mail.outbox if "verify@example.com" in m.to]
         request_received = next(
             m
@@ -2293,7 +2422,9 @@ class EmailVerificationTests(TestCase):
         Booking.objects.filter(pk=booking.pk).update(
             verification_expires_at=timezone.now() - timedelta(minutes=1)
         )
-        response = self.client.get(reverse("booking:verify_booking_email", args=[token]))
+        response = self.client.get(
+            reverse("booking:verify_booking_email", args=[self.salon.slug, token])
+        )
         self.assertContains(
             response,
             _("The verification link has expired. Please submit a new booking request."),
@@ -2321,12 +2452,96 @@ class EmailVerificationTests(TestCase):
             total_duration_minutes=120,
             rules_accepted=True,
         )
-        response = self.client.get(reverse("booking:verify_booking_email", args=[token]))
+        response = self.client.get(
+            reverse("booking:verify_booking_email", args=[self.salon.slug, token])
+        )
         self.assertContains(
             response,
             _("The selected time slot is no longer available. Please choose another time."),
         )
-        self.assertFalse(Booking.objects.filter(email_verification_token=token).exists())
+        self.assertFalse(Booking.objects.filter(pk=booking.pk).exists())
+
+    def test_unverified_does_not_consume_released_slot(self):
+        self.policy.minimum_notice_days = 14
+        self.policy.save()
+        inside_date = timezone.localdate() + timedelta(days=3)
+        while inside_date.weekday() == WorkingHours.Weekday.SUNDAY:
+            inside_date += timedelta(days=1)
+        start = timezone.make_aware(
+            datetime.combine(inside_date, time(12, 0)),
+            timezone.get_current_timezone(),
+        )
+        end = start + timedelta(hours=4, minutes=30)
+        release_interval(self.salon, start, end)
+        self.client.post(
+            "/book/salon-v/request/",
+            self._booking_post_data(
+                phone_number="070555118",
+                date=inside_date.isoformat(),
+                start_time="13:00",
+            ),
+        )
+        self.assertTrue(
+            ReleasedSlot.objects.filter(salon=self.salon, is_active=True).exists()
+        )
+
+    def test_failed_verify_restores_released_slot(self):
+        self.policy.minimum_notice_days = 14
+        self.policy.save()
+        inside_date = timezone.localdate() + timedelta(days=4)
+        while inside_date.weekday() == WorkingHours.Weekday.SUNDAY:
+            inside_date += timedelta(days=1)
+        start = timezone.make_aware(
+            datetime.combine(inside_date, time(12, 0)),
+            timezone.get_current_timezone(),
+        )
+        end = start + timedelta(hours=4, minutes=30)
+        release_interval(self.salon, start, end)
+        self.client.post(
+            "/book/salon-v/request/",
+            self._booking_post_data(
+                phone_number="070555119",
+                date=inside_date.isoformat(),
+                start_time="13:00",
+            ),
+        )
+        booking = Booking.objects.get(customer__phone_number="070555119")
+        token = booking.email_verification_token
+        other = Customer.objects.create(
+            salon=self.salon,
+            full_name="Blocker",
+            phone_number="070555121",
+            instagram_username="blocker",
+        )
+        Booking.objects.create(
+            salon=self.salon,
+            customer=other,
+            status=Booking.Status.APPROVED,
+            source=Booking.Source.OWNER_MANUAL,
+            start_at=booking.start_at,
+            end_at=booking.end_at,
+            total_duration_minutes=120,
+            rules_accepted=True,
+        )
+        response = self.client.get(
+            reverse("booking:verify_booking_email", args=[self.salon.slug, token])
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Booking.objects.filter(pk=booking.pk).exists())
+        self.assertTrue(
+            ReleasedSlot.objects.filter(salon=self.salon, is_active=True).exists()
+        )
+
+    def test_verify_failed_page_links_back_to_salon_booking(self):
+        self.client.post("/book/salon-v/request/", self._booking_post_data(phone_number="070555120"))
+        booking = Booking.objects.get(customer__phone_number="070555120")
+        booking.verification_expires_at = timezone.now() - timedelta(minutes=1)
+        booking.save(update_fields=["verification_expires_at"])
+        response = self.client.get(
+            reverse("booking:verify_booking_email", args=[self.salon.slug, booking.email_verification_token])
+        )
+        self.assertContains(response, reverse("booking:book_salon", args=[self.salon.slug]))
+        self.assertFalse(Booking.objects.filter(pk=booking.pk).exists())
 
     def test_verification_token_is_uuid_not_sequential_id(self):
         self.client.post("/book/salon-v/request/", self._booking_post_data(phone_number="070555116"))
@@ -2343,7 +2558,9 @@ class EmailVerificationTests(TestCase):
         photo_name = booking.reference_photo.name
         self.assertTrue(photo_name)
         token = booking.email_verification_token
-        self.client.get(reverse("booking:verify_booking_email", args=[token]))
+        self.client.get(
+            reverse("booking:verify_booking_email", args=[self.salon.slug, token])
+        )
         booking.refresh_from_db()
         self.assertEqual(booking.reference_photo.name, photo_name)
 

@@ -58,6 +58,7 @@ from .services import (
     build_service_schedule,
     can_customer_cancel_booking,
     complete_email_verification,
+    cleanup_expired_unverified_bookings,
     delete_unverified_booking,
     ensure_default_working_hours,
     format_services_label,
@@ -67,9 +68,11 @@ from .services import (
     get_manage_booking_url,
     get_revenue_stats,
     get_salon_local_today,
-    get_last_minute_open_dates,
+    get_active_released_intervals,
+    get_last_minute_open_dates_for_services,
     get_unbookable_dates_for_customer,
     get_working_window_for_date,
+    is_date_allowed,
     log_booking_activity,
     MSG_MULTI_SERVICE_NO_FIT,
     parse_service_ids_param,
@@ -87,7 +90,7 @@ def _services_from_request(request, salon):
     return resolve_services_for_salon(salon, service_ids) or []
 
 
-def _slots_json(slots):
+def _slots_json(slots, *, last_minute=False, release_unavailable=False):
     return JsonResponse(
         {
             "slots": [
@@ -97,7 +100,9 @@ def _slots_json(slots):
                     "end": slot["end"].strftime("%H:%M"),
                 }
                 for slot in slots
-            ]
+            ],
+            "last_minute": last_minute,
+            "release_unavailable": release_unavailable,
         }
     )
 
@@ -1279,7 +1284,6 @@ def book_salon(request, salon_slug):
     max_window = policy.maximum_booking_window_days if policy else 60
     min_date_val = today + timedelta(days=min_notice)
     max_date_val = today + timedelta(days=max_window)
-    early_open_dates = get_last_minute_open_dates(salon, today, min_date_val)
 
     # Ensure working hours exist so we can derive closed weekdays
     working_hours = salon.working_hours.order_by("weekday")
@@ -1294,6 +1298,7 @@ def book_salon(request, salon_slug):
         closed_weekdays_js.append(0)
 
     if request.method == "POST":
+        cleanup_expired_unverified_bookings(salon=salon)
         form = BookingRequestForm(request.POST, request.FILES, salon=salon, request=request)
         if form.is_valid():
             booking = form.save()
@@ -1346,7 +1351,6 @@ def book_salon(request, salon_slug):
             "services": salon.services.filter(is_active=True).prefetch_related("price_items"),
             "min_date": min_date_val.isoformat(),
             "max_date": max_date_val.isoformat(),
-            "early_open_dates_js": json.dumps(early_open_dates),
             "booking_policy": policy,
             "closed_weekdays_js": json.dumps(closed_weekdays_js),
             "closed_dates_js": json.dumps(
@@ -1390,7 +1394,27 @@ def booking_verify_email_sent(request):
     return render(request, "booking/booking_verify_email_sent.html")
 
 
-def verify_booking_email(request, token):
+def _resolve_salon_for_verify(salon_slug):
+    if not salon_slug:
+        return None
+    return Salon.objects.filter(slug=salon_slug, is_active=True).first()
+
+
+def _verify_failed_response(request, *, salon, reason, message):
+    return render(
+        request,
+        "booking/booking_verify_failed.html",
+        {
+            "reason": reason,
+            "message": message,
+            "salon": salon,
+        },
+    )
+
+
+def verify_booking_email(request, token, salon_slug=None):
+    fallback_salon = _resolve_salon_for_verify(salon_slug)
+
     booking = (
         Booking.objects.filter(
             email_verification_token=token,
@@ -1402,14 +1426,14 @@ def verify_booking_email(request, token):
     )
 
     if not booking:
-        return render(
+        return _verify_failed_response(
             request,
-            "booking/booking_verify_failed.html",
-            {
-                "reason": "invalid",
-                "message": _("This verification link is invalid or has already been used."),
-            },
+            salon=fallback_salon,
+            reason="invalid",
+            message=_("This verification link is invalid or has already been used."),
         )
+
+    salon = booking.salon
 
     if booking.verification_expires_at and booking.verification_expires_at < timezone.now():
         log_booking_activity(
@@ -1418,39 +1442,33 @@ def verify_booking_email(request, token):
             note="Verification link expired",
         )
         delete_unverified_booking(booking)
-        return render(
+        return _verify_failed_response(
             request,
-            "booking/booking_verify_failed.html",
-            {
-                "reason": "expired",
-                "message": _(
-                    "The verification link has expired. Please submit a new booking request."
-                ),
-            },
+            salon=salon,
+            reason="expired",
+            message=_(
+                "The verification link has expired. Please submit a new booking request."
+            ),
         )
 
     success, reason = complete_email_verification(booking)
     if not success:
         if reason == "slot_unavailable":
             delete_unverified_booking(booking)
-            return render(
+            return _verify_failed_response(
                 request,
-                "booking/booking_verify_failed.html",
-                {
-                    "reason": "slot_unavailable",
-                    "message": _(
-                        "The selected time slot is no longer available. Please choose another time."
-                    ),
-                },
+                salon=salon,
+                reason="slot_unavailable",
+                message=_(
+                    "The selected time slot is no longer available. Please choose another time."
+                ),
             )
         delete_unverified_booking(booking)
-        return render(
+        return _verify_failed_response(
             request,
-            "booking/booking_verify_failed.html",
-            {
-                "reason": reason,
-                "message": _("Something went wrong. Please submit a new booking request."),
-            },
+            salon=salon,
+            reason=reason,
+            message=_("Something went wrong. Please submit a new booking request."),
         )
 
     booking.refresh_from_db()
@@ -1597,18 +1615,43 @@ def manage_booking_cancel(request, token):
 
 
 @require_GET
+def last_minute_dates(request, salon_slug):
+    salon = get_object_or_404(Salon, slug=salon_slug, is_active=True)
+    services = _services_from_request(request, salon)
+    if not services:
+        return JsonResponse({"dates": []})
+
+    today = get_salon_local_today(salon)
+    policy = getattr(salon, "booking_policy", None)
+    min_notice = policy.minimum_notice_days if policy else 14
+    notice_cutoff = today + timedelta(days=min_notice)
+    dates = get_last_minute_open_dates_for_services(
+        salon, services, today, notice_cutoff
+    )
+    return JsonResponse({"dates": dates})
+
+
+@require_GET
 def available_slots(request, salon_slug):
     salon = get_object_or_404(Salon, slug=salon_slug, is_active=True)
     date_value = request.GET.get("date")
     services = _services_from_request(request, salon)
 
     if not services or not date_value:
-        return JsonResponse({"slots": []})
+        return JsonResponse({"slots": [], "last_minute": False, "release_unavailable": False})
 
     try:
         selected_date = datetime.strptime(date_value, "%Y-%m-%d").date()
     except ValueError:
-        return JsonResponse({"slots": []})
+        return JsonResponse({"slots": [], "last_minute": False, "release_unavailable": False})
 
     slots = get_available_slots(salon, services, selected_date)
-    return _slots_json(slots)
+    last_minute = not is_date_allowed(salon, selected_date) and bool(
+        get_active_released_intervals(salon, selected_date)
+    )
+    release_unavailable = last_minute and not slots
+    return _slots_json(
+        slots,
+        last_minute=last_minute,
+        release_unavailable=release_unavailable,
+    )

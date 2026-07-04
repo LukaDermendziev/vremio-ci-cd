@@ -18,7 +18,17 @@ urlpatterns = [
     path("book/<slug:salon_slug>/", views.salon_page, name="salon_page"),
     path("book/<slug:salon_slug>/request/", views.book_salon, name="book_salon"),
     path("book/<slug:salon_slug>/slots/", views.available_slots, name="available_slots"),
-    path("booking/verify/<uuid:token>/", views.verify_booking_email, name="verify_booking_email"),
+    path(
+        "book/<slug:salon_slug>/last-minute-dates/",
+        views.last_minute_dates,
+        name="last_minute_dates",
+    ),
+    path(
+        "book/<slug:salon_slug>/verify/<uuid:token>/",
+        views.verify_booking_email,
+        name="verify_booking_email",
+    ),
+    path("booking/verify/<uuid:token>/", views.verify_booking_email, name="verify_booking_email_legacy"),
     path("booking/verify-email-sent/", views.booking_verify_email_sent, name="booking_verify_email_sent"),
     path("booking/success/", views.booking_success, name="booking_success"),
     path(

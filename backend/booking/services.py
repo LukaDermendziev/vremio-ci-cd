@@ -276,12 +276,16 @@ def release_interval(salon, start_at, end_at, source_booking=None):
 
 def release_booking_slot(booking):
     """Release a booking's time for last-minute public rebooking when policy allows."""
-    return release_timeslot(
+    result = release_timeslot(
         booking.salon,
         booking.start_at,
         booking.end_at,
         source_booking=booking,
     )
+    if result:
+        local_date = timezone.localdate(booking.start_at, get_salon_timezone(booking.salon))
+        merge_adjacent_released_slots(booking.salon, local_date)
+    return result
 
 
 def release_timeslot(salon, start_at, end_at, source_booking=None):
@@ -302,12 +306,82 @@ def release_timeslot(salon, start_at, end_at, source_booking=None):
 
 
 def consume_released_slot(salon, start_at, end_at):
-    """Deactivate a released slot once it has been booked."""
-    ReleasedSlot.objects.filter(
-        salon=salon,
-        start_at=start_at,
-        is_active=True,
-    ).update(is_active=False)
+    """Carve a booked interval out of active releases, leaving the rest bookable."""
+    overlapping = list(
+        ReleasedSlot.objects.filter(
+            salon=salon,
+            is_active=True,
+            start_at__lt=end_at,
+            end_at__gt=start_at,
+        )
+    )
+    for release in overlapping:
+        source = release.source_booking
+        release.is_active = False
+        release.save(update_fields=["is_active"])
+        if release.start_at < start_at:
+            release_interval(
+                salon,
+                release.start_at,
+                start_at,
+                source_booking=source,
+            )
+        if end_at < release.end_at:
+            release_interval(
+                salon,
+                end_at,
+                release.end_at,
+                source_booking=source,
+            )
+
+
+def merge_adjacent_released_slots(salon, selected_date):
+    """Merge touching active releases on a date back into one bookable window."""
+    salon_tz = get_salon_timezone(salon)
+    day_start = timezone.make_aware(
+        datetime.combine(selected_date, time.min),
+        salon_tz,
+    )
+    day_end = day_start + timedelta(days=1)
+    releases = list(
+        ReleasedSlot.objects.filter(
+            salon=salon,
+            is_active=True,
+            start_at__lt=day_end,
+            end_at__gt=day_start,
+        ).order_by("start_at")
+    )
+    if len(releases) < 2:
+        return
+
+    groups = []
+    group_start = releases[0].start_at
+    group_end = releases[0].end_at
+    group_source = releases[0].source_booking
+    group_ids = [releases[0].pk]
+
+    for release in releases[1:]:
+        if release.start_at <= group_end:
+            group_end = max(group_end, release.end_at)
+            group_ids.append(release.pk)
+        else:
+            groups.append((group_start, group_end, group_source, group_ids))
+            group_start = release.start_at
+            group_end = release.end_at
+            group_source = release.source_booking
+            group_ids = [release.pk]
+    groups.append((group_start, group_end, group_source, group_ids))
+
+    for group_start, group_end, group_source, group_ids in groups:
+        if len(group_ids) < 2:
+            continue
+        ReleasedSlot.objects.filter(pk__in=group_ids).update(is_active=False)
+        release_interval(
+            salon,
+            group_start,
+            group_end,
+            source_booking=group_source,
+        )
 
 
 def get_active_released_intervals(salon, selected_date, now=None):
@@ -323,8 +397,8 @@ def get_active_released_intervals(salon, selected_date, now=None):
         ReleasedSlot.objects.filter(
             salon=salon,
             is_active=True,
-            start_at__gte=max(day_start, now),
             start_at__lt=day_end,
+            end_at__gt=max(day_start, now),
         ).order_by("start_at")
     )
 
@@ -337,22 +411,41 @@ def get_last_minute_open_dates(salon, today, notice_cutoff_date, now=None):
         now = timezone.now()
     if notice_cutoff_date <= today:
         return []
-    qs = (
-        ReleasedSlot.objects.filter(
-            salon=salon,
-            is_active=True,
-            start_at__gt=now,
-            start_at__date__gte=today,
-            start_at__date__lt=notice_cutoff_date,
-        )
-        .values_list("start_at", flat=True)
-        .distinct()
-    )
+    qs = ReleasedSlot.objects.filter(
+        salon=salon,
+        is_active=True,
+        end_at__gt=now,
+        start_at__date__lt=notice_cutoff_date,
+    ).values_list("start_at", flat=True)
     dates = set()
     salon_tz = get_salon_timezone(salon)
     for start_at in qs:
-        dates.add(timezone.localdate(start_at, salon_tz).isoformat())
+        local_day = timezone.localdate(start_at, salon_tz)
+        if today <= local_day < notice_cutoff_date:
+            dates.add(local_day.isoformat())
     return sorted(dates)
+
+
+def get_last_minute_open_dates_for_services(
+    salon, services, today, notice_cutoff_date, now=None
+):
+    """Dates with at least one bookable last-minute slot for the selected services."""
+    if now is None:
+        now = timezone.now()
+    services = normalize_services(services)
+    if not services:
+        return []
+
+    bookable = []
+    for date_str in get_last_minute_open_dates(salon, today, notice_cutoff_date, now=now):
+        selected_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+        if get_available_slots(salon, services, selected_date, now=now):
+            bookable.append(date_str)
+    return bookable
+
+
+def _slot_fits_release(slot_start, slot_end, release):
+    return release.start_at <= slot_start and slot_end <= release.end_at
 
 
 def _filter_slots_to_released_only(slots, released_intervals):
@@ -363,7 +456,7 @@ def _filter_slots_to_released_only(slots, released_intervals):
         slot_start = slot["start"]
         slot_end = slot["end"]
         for release in released_intervals:
-            if slot_start == release.start_at and slot_end <= release.end_at:
+            if _slot_fits_release(slot_start, slot_end, release):
                 filtered.append(slot)
                 break
     return filtered
@@ -888,10 +981,27 @@ def resolve_services_from_booking(booking):
 
 
 def delete_unverified_booking(booking):
-    """Remove an unverified booking and its reference photo file."""
+    """Remove an unverified booking, restore any held last-minute slot, and delete photo."""
+    salon = booking.salon
+    start_at = booking.start_at
+    end_at = booking.end_at
     if booking.reference_photo:
         booking.reference_photo.delete(save=False)
     booking.delete()
+    release_timeslot(salon, start_at, end_at)
+
+
+def cleanup_expired_unverified_bookings(*, salon=None):
+    """Delete expired unverified bookings so they cannot hold slots or limits."""
+    now = timezone.now()
+    qs = Booking.objects.filter(
+        status=Booking.Status.UNVERIFIED,
+        verification_expires_at__lt=now,
+    ).select_related("salon")
+    if salon is not None:
+        qs = qs.filter(salon=salon)
+    for booking in list(qs):
+        delete_unverified_booking(booking)
 
 
 def complete_email_verification(booking):
@@ -929,6 +1039,7 @@ def complete_email_verification(booking):
     booking.email_verification_token = None
     booking.verification_expires_at = None
     booking.save()
+    consume_released_slot(booking.salon, booking.start_at, booking.end_at)
     return True, "verified"
 
 

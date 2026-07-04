@@ -11,9 +11,9 @@
   method="post"
   enctype="multipart/form-data"
   data-slots-url="{% url 'booking:available_slots' salon.slug %}"
+  data-last-minute-dates-url="{% url 'booking:last_minute_dates' salon.slug %}"
   data-min-date="{{ min_date }}"
   data-max-date="{{ max_date }}"
-  data-early-open-dates="{{ early_open_dates_js }}"
   data-closed-weekdays="{{ closed_weekdays_js }}"
   data-closed-dates="{{ closed_dates_js }}"
   data-salon-url="{% url 'booking:salon_page' salon.slug %}"
@@ -372,6 +372,7 @@
 window.BK_I18N = {
   loading: "{% filter escapejs %}{% trans 'Loading times…' %}{% endfilter %}",
   noSlots: "{% filter escapejs %}{% trans 'No available times on this date.' %}{% endfilter %}",
+  lastMinuteNoFit: "{% filter escapejs %}{% trans 'This cancelled opening is not available for your selected service.' %}{% endfilter %}",
   loadError: "{% filter escapejs %}{% trans 'Could not load times. Please try again.' %}{% endfilter %}",
   selectDateHint: "{% filter escapejs %}{% trans 'Select a date above to see available times.' %}{% endfilter %}",
   noMultiFit: "{% filter escapejs %}{{ multi_service_no_fit_message }}{% endfilter %}",
@@ -461,6 +462,7 @@ window.BK_I18N = {
   const monthLabel     = document.getElementById('bk-month-label');
   const slotsGrid      = document.getElementById('bk-slots-grid');
   const slotsUrl       = form.dataset.slotsUrl;
+  const lastMinuteDatesUrl = form.dataset.lastMinuteDatesUrl;
 
   // Closed weekdays from the backend (JS day numbers: 0=Sun, 1=Mon … 6=Sat)
   let closedWeekdays = [];
@@ -470,9 +472,6 @@ window.BK_I18N = {
     (JSON.parse(form.dataset.closedDates || '[]')).forEach(d => closedDates.add(d));
   } catch {}
   const earlyOpenDates = new Set();
-  try {
-    (JSON.parse(form.dataset.earlyOpenDates || '[]')).forEach(d => earlyOpenDates.add(d));
-  } catch {}
 
   function parseLocalDate(str) {
     const [y, m, d] = str.split('-').map(Number);
@@ -489,13 +488,8 @@ window.BK_I18N = {
   const minDate = parseLocalDate(form.dataset.minDate);
   const maxDate = parseLocalDate(form.dataset.maxDate);
 
-  let initialCalDate = minDate;
-  if (earlyOpenDates.size) {
-    const sortedEarly = [...earlyOpenDates].sort();
-    initialCalDate = parseLocalDate(sortedEarly[0]);
-  }
-  state.calYear  = initialCalDate.getFullYear();
-  state.calMonth = initialCalDate.getMonth();
+  state.calYear  = minDate.getFullYear();
+  state.calMonth = minDate.getMonth();
 
   // ── Multi-service helpers ─────────────────────────────────────────────────
   const serviceGapMin = Number(form.dataset.serviceGap || 30);
@@ -605,8 +599,44 @@ window.BK_I18N = {
     const targetStep = state.step - 1;
     if (targetStep < 1) return;
     goTo(targetStep);
-    if (targetStep === 2) renderCalendar();
+    if (targetStep === 2) {
+      fetchEarlyOpenDates().then(() => {
+        syncCalendarMonthToSelections();
+        renderCalendar();
+      });
+    }
     if (targetStep === 1) refreshStep1UI();
+  }
+
+  function syncCalendarMonthToSelections() {
+    if (earlyOpenDates.size) {
+      const sortedEarly = [...earlyOpenDates].sort();
+      const d = parseLocalDate(sortedEarly[0]);
+      state.calYear = d.getFullYear();
+      state.calMonth = d.getMonth();
+    } else {
+      state.calYear = minDate.getFullYear();
+      state.calMonth = minDate.getMonth();
+    }
+  }
+
+  async function fetchEarlyOpenDates() {
+    earlyOpenDates.clear();
+    if (!state.selections.length || !lastMinuteDatesUrl) return;
+    const ids = state.selections.map(s => s.service.id).join(',');
+    const url = `${lastMinuteDatesUrl}?services=${encodeURIComponent(ids)}`;
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
+      (data.dates || []).forEach(d => earlyOpenDates.add(d));
+    } catch {
+      /* keep calendar on normal min-date rules only */
+    }
+  }
+
+  function updateEarlyOpenHint(show) {
+    const earlyHint = document.getElementById('bk-early-open-hint');
+    if (earlyHint) earlyHint.hidden = !show;
   }
 
   const todayStr = formatDateStr(new Date());
@@ -663,22 +693,34 @@ window.BK_I18N = {
 
   async function fetchSlots() {
     if (!state.selections.length || !state.date) return;
+    updateEarlyOpenHint(false);
     slotsGrid.innerHTML = `<span class="bk-slots-hint bk-slots-loading"><i class="bi bi-arrow-repeat"></i> ${I18N.loading}</span>`;
     const ids = state.selections.map(s => s.service.id).join(',');
     const url = `${slotsUrl}?services=${encodeURIComponent(ids)}&date=${encodeURIComponent(state.date)}`;
     try {
       const res  = await fetch(url);
       const data = await res.json();
-      renderSlots(data.slots || []);
+      renderSlots(data.slots || [], {
+        lastMinute: !!data.last_minute,
+        releaseUnavailable: !!data.release_unavailable,
+      });
+      const hasSlots = (data.slots || []).length > 0;
+      updateEarlyOpenHint(hasSlots && earlyOpenDates.has(state.date));
     } catch {
       slotsGrid.innerHTML = `<span class="bk-slots-hint">${I18N.loadError}</span>`;
+      updateEarlyOpenHint(false);
     }
   }
 
-  function renderSlots(slots) {
+  function renderSlots(slots, meta = {}) {
     slotsGrid.innerHTML = '';
     if (!slots.length) {
-      const msg = state.selections.length > 1 ? I18N.noMultiFit : I18N.noSlots;
+      let msg;
+      if (meta.releaseUnavailable) {
+        msg = I18N.lastMinuteNoFit;
+      } else {
+        msg = state.selections.length > 1 ? I18N.noMultiFit : I18N.noSlots;
+      }
       slotsGrid.innerHTML = `<span class="bk-slots-hint">${msg}</span>`;
       return;
     }
@@ -702,8 +744,7 @@ window.BK_I18N = {
     state.slot = null;
     timeInput.value = '';
     dateInput.value = dateStr;
-    const earlyHint = document.getElementById('bk-early-open-hint');
-    if (earlyHint) earlyHint.hidden = !earlyOpenDates.has(dateStr);
+    updateEarlyOpenHint(false);
     renderCalendar();
     fetchSlots();
     refreshStep2UI();
@@ -960,13 +1001,17 @@ window.BK_I18N = {
     });
   }
 
-  step1NextBtn?.addEventListener('click', () => {
+  step1NextBtn?.addEventListener('click', async () => {
     if (!state.selections.length) return;
     state.date = null;
     state.slot = null;
     timeInput.value = '';
+    await fetchEarlyOpenDates();
+    syncCalendarMonthToSelections();
     goTo(2);
     renderCalendar();
+    updateEarlyOpenHint(false);
+    slotsGrid.innerHTML = `<span class="bk-slots-hint">${I18N.selectDateHint}</span>`;
     refreshStep2UI();
   });
 

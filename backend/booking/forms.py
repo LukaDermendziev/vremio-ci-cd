@@ -385,7 +385,8 @@ class BookingRequestForm(forms.Form):
                 sort_order=sort_order,
             )
 
-        consume_released_slot(self.salon, start_at, end_at)
+        if not needs_verification:
+            consume_released_slot(self.salon, start_at, end_at)
         self.verification_required = needs_verification
         return booking
 

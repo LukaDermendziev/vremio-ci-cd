@@ -130,5 +130,13 @@
 
 {% block extra_js %}
 {% load static %}
+<script>
+window.MANAGE_I18N = {
+  cancelledTitle: "{% filter escapejs %}{% trans 'Appointment cancelled.' %}{% endfilter %}",
+  cancelledLead: "{% filter escapejs %}{% trans 'Thank you for letting us know. The salon has been notified.' %}{% endfilter %}",
+  cancelError: "{% filter escapejs %}{% trans 'Could not cancel appointment.' %}{% endfilter %}",
+  genericError: "{% filter escapejs %}{% trans 'Something went wrong.' %}{% endfilter %}",
+};
+</script>
 <script src="{% static 'js/manage_booking.js' %}" defer></script>
 {% endblock %}
