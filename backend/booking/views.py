@@ -1344,6 +1344,7 @@ def book_salon(request, salon_slug):
                 response = redirect(reverse("booking:booking_success"))
             return _ensure_booking_device_cookie(response, request)
     else:
+        cleanup_expired_unverified_bookings(salon=salon)
         form = BookingRequestForm(salon=salon, request=request)
 
     response = render(

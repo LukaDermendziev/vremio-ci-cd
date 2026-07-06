@@ -1773,11 +1773,26 @@ class AntiAbuseTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "барање за термин")
 
-    def test_second_pending_blocked_for_same_email(self):
+    def test_second_pending_blocked_for_same_email_different_phone_allowed(self):
         self._create_booking("070111222", "shared@example.com")
         response = self.client.post(
             "/book/salon-a/request/",
             self._post_data("070999888", "shared@example.com", start_time="12:00"),
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            Booking.objects.filter(
+                customer__phone_number="070999888",
+                status=Booking.Status.PENDING,
+            ).count(),
+            1,
+        )
+
+    def test_second_pending_blocked_for_same_phone_different_format(self):
+        self._create_booking("070111222", "first@example.com")
+        response = self.client.post(
+            "/book/salon-a/request/",
+            self._post_data("+389 70 111 222", "other@example.com", start_time="12:00"),
         )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "барање за термин")
@@ -1826,6 +1841,22 @@ class AntiAbuseTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "не може да биде испратено")
+
+    def test_expired_unverified_does_not_block_new_booking(self):
+        self.policy.email_verification_required = True
+        self.policy.save()
+        self.client.post(
+            "/book/salon-a/request/",
+            self._post_data("070111333", "verify@example.com"),
+        )
+        booking = Booking.objects.get(customer__phone_number="070111333")
+        booking.verification_expires_at = timezone.now() - timedelta(minutes=5)
+        booking.save(update_fields=["verification_expires_at"])
+        response = self.client.post(
+            "/book/salon-a/request/",
+            self._post_data("070111333", "verify@example.com", start_time="12:00"),
+        )
+        self.assertEqual(response.status_code, 302)
 
     def test_rate_limit_blocks_repeated_submissions(self):
         self.policy.booking_rate_limit_per_ip_per_hour = 1

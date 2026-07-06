@@ -43,12 +43,22 @@ class AntiAbuseResult:
 
 
 def normalize_phone(value):
+    """Normalize phone numbers to a comparable local form (07xxxxxxxx for MK mobiles)."""
     if not value:
         return ""
-    value = value.strip()
-    digits = re.sub(r"[^\d+]", "", value)
+    digits = re.sub(r"\D", "", value.strip())
+    if not digits:
+        return ""
     if digits.startswith("00"):
-        digits = "+" + digits[2:]
+        digits = digits[2:]
+    if digits.startswith("389"):
+        local = digits[3:]
+        if len(local) == 8 and local.startswith("7"):
+            return f"0{local}"
+        if len(local) == 9 and local.startswith("07"):
+            return local
+    if len(digits) == 8 and digits.startswith("7"):
+        return f"0{digits}"
     return digits
 
 
@@ -85,23 +95,33 @@ def _policy_value(policy, name, default):
     return getattr(policy, name, default)
 
 
-def get_matching_customer_ids(salon, phone, email):
+def get_matching_customer_ids(salon, phone, email=None):
+    """Match customers by normalized phone only (one pending limit per phone number)."""
     phone = normalize_phone(phone)
-    email = normalize_email(email)
-    if not phone and not email:
+    if not phone:
         return set()
 
     matched = set()
-    for customer in Customer.objects.filter(salon=salon).only("id", "phone_number", "email"):
-        if email and normalize_email(customer.email) == email:
-            matched.add(customer.id)
-        if phone and normalize_phone(customer.phone_number) == phone:
+    for customer in Customer.objects.filter(salon=salon).only("id", "phone_number"):
+        if normalize_phone(customer.phone_number) == phone:
             matched.add(customer.id)
     return matched
 
 
-def _active_future_bookings(salon, phone, email):
-    customer_ids = get_matching_customer_ids(salon, phone, email)
+def _unverified_booking_count(salon, customer_ids):
+    if not customer_ids:
+        return 0
+    now = timezone.now()
+    return Booking.objects.filter(
+        salon=salon,
+        customer_id__in=customer_ids,
+        status=Booking.Status.UNVERIFIED,
+        verification_expires_at__gt=now,
+    ).count()
+
+
+def _active_future_bookings(salon, phone, email=None):
+    customer_ids = get_matching_customer_ids(salon, phone)
     if not customer_ids:
         return Booking.objects.none()
 
@@ -219,14 +239,8 @@ def check_public_booking_allowed(
     max_active = _policy_value(policy, "max_active_future_bookings_per_customer", 2)
 
     active_qs = _active_future_bookings(salon, phone, email)
-    customer_ids = get_matching_customer_ids(salon, phone, email)
-    unverified_count = 0
-    if customer_ids:
-        unverified_count = Booking.objects.filter(
-            salon=salon,
-            customer_id__in=customer_ids,
-            status=Booking.Status.UNVERIFIED,
-        ).count()
+    customer_ids = get_matching_customer_ids(salon, phone)
+    unverified_count = _unverified_booking_count(salon, customer_ids)
 
     pending_count = active_qs.filter(status=Booking.Status.PENDING).count() + unverified_count
     active_count = active_qs.count()
