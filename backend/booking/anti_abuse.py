@@ -13,6 +13,10 @@ MSG_PENDING_LIMIT = _(
     "You already have a booking request waiting for approval. "
     "Please wait for the salon to respond or cancel your existing request."
 )
+MSG_PENDING_VERIFY = _(
+    "You already started a booking request. Please check your email inbox "
+    "(and spam folder) to confirm it before submitting again."
+)
 MSG_ACTIVE_LIMIT = _(
     "You already have the maximum number of active appointments. "
     "To book a new one, please cancel or complete an existing appointment."
@@ -95,13 +99,34 @@ def _policy_value(policy, name, default):
     return getattr(policy, name, default)
 
 
+def phone_lookup_variants(phone):
+    """Common stored forms for the same Macedonian mobile number."""
+    phone = normalize_phone(phone)
+    if not phone:
+        return []
+    variants = {phone}
+    if phone.startswith("0") and len(phone) == 9:
+        local = phone[1:]
+        variants.add(f"+389{local}")
+        variants.add(f"389{local}")
+    return list(variants)
+
+
 def get_matching_customer_ids(salon, phone, email=None):
     """Match customers by normalized phone only (one pending limit per phone number)."""
     phone = normalize_phone(phone)
     if not phone:
         return set()
 
-    matched = set()
+    matched = set(
+        Customer.objects.filter(
+            salon=salon,
+            phone_number__in=phone_lookup_variants(phone),
+        ).values_list("id", flat=True)
+    )
+    if matched:
+        return matched
+
     for customer in Customer.objects.filter(salon=salon).only("id", "phone_number"):
         if normalize_phone(customer.phone_number) == phone:
             matched.add(customer.id)
@@ -242,14 +267,19 @@ def check_public_booking_allowed(
     customer_ids = get_matching_customer_ids(salon, phone)
     unverified_count = _unverified_booking_count(salon, customer_ids)
 
-    pending_count = active_qs.filter(status=Booking.Status.PENDING).count() + unverified_count
+    pending_active = active_qs.filter(status=Booking.Status.PENDING).count()
+    pending_count = pending_active + unverified_count
     active_count = active_qs.count()
 
     if max_pending and pending_count >= max_pending:
+        if unverified_count and not pending_active:
+            user_message = str(MSG_PENDING_VERIFY)
+        else:
+            user_message = str(MSG_PENDING_LIMIT)
         return AntiAbuseResult(
             ok=False,
             error_code="pending_limit",
-            user_message=str(MSG_PENDING_LIMIT),
+            user_message=user_message,
         )
 
     if max_active and active_count >= max_active:

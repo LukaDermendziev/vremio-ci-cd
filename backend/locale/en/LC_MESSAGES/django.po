@@ -2960,6 +2960,13 @@ msgstr ""
 "one, please cancel or complete an existing appointment."
 
 msgid ""
+"You already started a booking request. Please check your email inbox (and "
+"spam folder) to confirm it before submitting again."
+msgstr ""
+"You already started a booking request. Please check your email inbox (and "
+"spam folder) to confirm it before submitting again."
+
+msgid ""
 "You are responsible for the actual service delivery, prices, and customer "
 "communication."
 msgstr ""

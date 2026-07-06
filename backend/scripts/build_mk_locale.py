@@ -981,6 +981,10 @@ TRANSLATIONS = {
         "Веќе имате барање за термин кое чека одобрување. "
         "Ве молиме почекајте одговор од салонот или откажете го постоечкото барање."
     ),
+    "You already started a booking request. Please check your email inbox (and spam folder) to confirm it before submitting again.": (
+        "Веќе започнавте барање за термин. Проверете ја е-поштата (и спам папката) "
+        "за да го потврдите, пред да испратите повторно."
+    ),
     "You already have the maximum number of active appointments. To book a new one, please cancel or complete an existing appointment.": (
         "Веќе го имате максималниот број активни термини. "
         "За нов термин, ве молиме откажете или завршете постоечки термин."

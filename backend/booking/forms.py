@@ -17,7 +17,6 @@ from .anti_abuse import (
     get_device_token,
     honeypot_triggered,
     normalize_phone,
-    record_booking_attempt,
 )
 from .image_moderation import moderate_reference_photo
 from .image_utils import FORMAT_TO_EXT, prepare_reference_photo, validate_reference_photo
@@ -246,15 +245,6 @@ class BookingRequestForm(forms.Form):
         if not abuse_result.ok:
             self.add_error(None, abuse_result.user_message)
             return cleaned_data
-
-        record_booking_attempt(
-            self.salon.id,
-            self.policy,
-            ip,
-            phone,
-            email,
-            device_token,
-        )
 
         if not services:
             self.add_error(None, _("Please choose at least one service."))

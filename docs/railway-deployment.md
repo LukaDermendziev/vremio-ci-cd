@@ -34,7 +34,32 @@ PostgreSQL is **required** in production (`DJANGO_DEBUG=False`).
 
 ---
 
-## 3. Add a volume for customer photos
+## 3. Add Redis (recommended)
+
+**Yes — add Redis in production.** Gunicorn runs multiple workers. Without Redis, rate limiting (`anti_abuse.py`) uses **in-memory cache per worker**, so limits are inconsistent and the `CACHE_URL is not set` warning appears in logs.
+
+The app already supports Redis: set `CACHE_URL` and Django uses the built-in `RedisCache` backend (`redis` package is in `requirements.txt`).
+
+### Steps on Railway
+
+1. In the project canvas, click **+ New** → **Database** → **Redis**.
+2. Open your **web service** → **Variables** → **Add reference**.
+3. Pick the Redis service variable (usually `REDIS_URL`).
+4. Add a **new** variable on the web service named `CACHE_URL` and set its value to that Redis URL reference.
+
+   Railway may let you reference `REDIS_URL` directly as `CACHE_URL` — either way, the web service must expose **`CACHE_URL`** (that is what `settings.py` reads).
+
+5. Redeploy the web service.
+
+### Verify after deploy
+
+In Railway logs, the `CACHE_URL is not set` warning should disappear. Rate limits (booking attempts per IP/phone/device) are then shared across all Gunicorn workers.
+
+> Redis is for **caching/rate limits only**. Customer photos still need the media volume (next section). Booking emails still use Brevo SMTP — Redis does not replace email.
+
+---
+
+## 4. Add a volume for customer photos
 
 Uploaded booking photos are stored on disk. Without a volume, they are lost on redeploy.
 
@@ -96,7 +121,7 @@ Nixpacks installs packages in `/opt/venv`. Plain `python` over SSH may not see D
 
 ---
 
-## 4. Environment variables
+## 5. Environment variables
 
 **Do not upload your local `.env` file to Railway.** Railway does not use a file on disk — you enter each variable separately in the dashboard (or via the Railway CLI). Your local `.env` stays on your machine only.
 
@@ -152,10 +177,15 @@ Then separately add **`DATABASE_URL`** via **Add Reference** → Postgres servic
 | `RAILWAY_ENVIRONMENT` | Detects Railway runtime |
 | `PORT` | Port Gunicorn binds to |
 
-### Optional (not needed on day one)
+### Redis (recommended — see section 3)
 
 ```env
-CACHE_URL=<redis-url>
+CACHE_URL=<reference REDIS_URL from Redis service>
+```
+
+### Other optional
+
+```env
 SECURE_SSL_REDIRECT=False
 SECURE_HSTS_PRELOAD=False
 ```
@@ -196,15 +226,8 @@ VREMIO_CONTACT_EMAIL=contact.vremio@gmail.com
 
 Use a verified sender in Brevo (domain or email).
 
-### Optional (recommended later)
-
-```env
-CACHE_URL=<redis-url-from-railway-redis-plugin>
-```
-
-Without Redis, rate limiting uses in-memory cache per worker. Add Redis before scaling traffic.
-
 ---
+
 
 ## CI/CD
 
@@ -233,7 +256,7 @@ That way broken code does not reach production via PR merges.
 
 ---
 
-## 5. First deploy
+## 6. First deploy
 
 Push to GitHub (or click **Deploy**). Railway will:
 
@@ -248,7 +271,7 @@ Health check: `GET /health/` → `ok`
 
 ---
 
-## 6. Bootstrap salon data (one time)
+## 7. Bootstrap salon data (one time)
 
 After the first successful deploy, run the setup command **inside** the Railway container (see bootstrap section above for SSH setup):
 
@@ -276,7 +299,7 @@ railway run python manage.py createsuperuser
 
 ---
 
-## 7. Custom domain — Fancy Fingers
+## 8. Custom domain — Fancy Fingers
 
 1. Web service → **Settings** → **Networking** → **Custom Domain**
 2. Add: `www.fancyfingers.mk`
@@ -293,7 +316,7 @@ Railway provisions HTTPS automatically once DNS propagates (often 5–30 minutes
 
 ---
 
-## 8. What to put where
+## 9. What to put where
 
 | Link | URL |
 |------|-----|
@@ -306,7 +329,7 @@ On `www.fancyfingers.mk`, visiting `/` redirects to the Fancy Fingers salon page
 
 ---
 
-## 9. Post-deploy checklist
+## 10. Post-deploy checklist
 
 - [ ] `https://www.fancyfingers.mk/` → salon page
 - [ ] `https://YOUR-APP.up.railway.app/` → Vremio homepage
@@ -319,7 +342,7 @@ On `www.fancyfingers.mk`, visiting `/` redirects to the Fancy Fingers salon page
 
 ---
 
-## 10. Troubleshooting
+## 11. Troubleshooting
 
 **Healthcheck failure**
 → Build/deploy OK but `/health/` failed. Common causes: missing `DJANGO_SECRET_KEY` or `DATABASE_URL`, or app crash on startup. Click **View logs** on the Deploy step (not Build). Also **generate a public domain** (Settings → Networking) — your service may show as "Unexposed". A code fix auto-allows Railway internal healthcheck hosts and disables SSL redirect internally.

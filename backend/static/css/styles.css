@@ -3621,6 +3621,23 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
 }
 .bk-btn-primary:not(:disabled):hover  { transform: translateY(-1px); opacity: 0.92; box-shadow: 0 4px 14px rgba(196,135,138,0.3); }
 .bk-btn-primary:not(:disabled):active { transform: scale(0.97); opacity: 0.85; box-shadow: none; }
+.bk-btn-primary.is-loading {
+  position: relative;
+  color: transparent;
+  pointer-events: none;
+}
+.bk-btn-primary.is-loading::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: bk-spin 0.8s linear infinite;
+}
 
 /* ── Back button — enlarged touch target ─────────────────────────────────── */
 .bk-back-btn {

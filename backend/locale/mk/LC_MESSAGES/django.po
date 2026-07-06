@@ -2976,6 +2976,13 @@ msgstr ""
 "откажете или завршете постоечки термин."
 
 msgid ""
+"You already started a booking request. Please check your email inbox (and "
+"spam folder) to confirm it before submitting again."
+msgstr ""
+"Веќе започнавте барање за термин. Проверете ја е-поштата (и спам папката) за"
+" да го потврдите, пред да испратите повторно."
+
+msgid ""
 "You are responsible for the actual service delivery, prices, and customer "
 "communication."
 msgstr ""

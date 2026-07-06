@@ -18,7 +18,13 @@ from django.utils.translation import gettext as _
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET, require_POST
 
-from .anti_abuse import DEVICE_COOKIE_MAX_AGE, DEVICE_COOKIE_NAME
+from .anti_abuse import (
+    DEVICE_COOKIE_MAX_AGE,
+    DEVICE_COOKIE_NAME,
+    get_client_ip,
+    get_device_token,
+    record_booking_attempt,
+)
 from .customer_blocking import (
     block_customer as block_customer_service,
     get_active_block_entry,
@@ -27,7 +33,6 @@ from .customer_blocking import (
     unblock_customer as unblock_customer_service,
     update_customer_block,
 )
-from .email_utils import send_booking_verification_email
 from .legal_utils import get_vremio_contact_email
 from .forms import (
     BlockedDateForm,
@@ -59,6 +64,7 @@ from .services import (
     can_customer_cancel_booking,
     complete_email_verification,
     cleanup_expired_unverified_bookings,
+    defer_after_commit,
     delete_unverified_booking,
     ensure_default_working_hours,
     format_services_label,
@@ -76,6 +82,8 @@ from .services import (
     log_booking_activity,
     MSG_MULTI_SERVICE_NO_FIT,
     parse_service_ids_param,
+    process_new_online_booking_emails,
+    process_verification_booking_emails,
     release_booking_slot,
     resolve_services_for_salon,
     send_booking_notification,
@@ -1306,40 +1314,20 @@ def book_salon(request, salon_slug):
         form = BookingRequestForm(request.POST, request.FILES, salon=salon, request=request)
         if form.is_valid():
             booking = form.save()
+            policy = getattr(salon, "booking_policy", None)
+            record_booking_attempt(
+                salon.id,
+                policy,
+                get_client_ip(request),
+                form.cleaned_data["phone_number"],
+                form.cleaned_data.get("email", ""),
+                get_device_token(request),
+            )
             if getattr(form, "verification_required", False):
-                log_booking_activity(
-                    booking,
-                    BookingActivityLog.Action.VERIFICATION_SENT,
-                    note="Email verification sent",
-                )
-                sent, _reason = send_booking_verification_email(booking)
-                if sent:
-                    log_booking_activity(
-                        booking,
-                        BookingActivityLog.Action.EMAIL_SENT,
-                        note="Verification email sent to customer",
-                    )
+                defer_after_commit(process_verification_booking_emails, booking.pk)
                 response = redirect(reverse("booking:booking_verify_email_sent"))
             else:
-                log_booking_activity(
-                    booking,
-                    BookingActivityLog.Action.REQUESTED,
-                    note="Online booking request",
-                )
-                sent, _reason = send_booking_notification(booking, "request_received")
-                if sent:
-                    log_booking_activity(
-                        booking,
-                        BookingActivityLog.Action.EMAIL_SENT,
-                        note="Request received email sent to customer",
-                    )
-                sent, _reason = send_owner_new_booking_notification(booking)
-                if sent:
-                    log_booking_activity(
-                        booking,
-                        BookingActivityLog.Action.EMAIL_SENT,
-                        note="Owner notified of new request",
-                    )
+                defer_after_commit(process_new_online_booking_emails, booking.pk)
                 request.session["booking_success_id"] = booking.pk
                 response = redirect(reverse("booking:booking_success"))
             return _ensure_booking_device_cookie(response, request)

@@ -1,11 +1,13 @@
 import logging
 import re
+import threading
 from decimal import Decimal
 from datetime import datetime, time, timedelta
 from urllib.parse import quote
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from django.conf import settings
+from django.db import transaction
 from django.db.models import Sum
 from django.urls import reverse
 from django.utils import timezone
@@ -1055,6 +1057,77 @@ def send_owner_customer_cancelled_notification(booking):
     from . import email_utils
 
     return email_utils.send_owner_customer_cancelled_email(booking)
+
+
+def defer_after_commit(func, *args, **kwargs):
+    """Run a task in a background thread after the DB transaction commits."""
+
+    def _run():
+        try:
+            func(*args, **kwargs)
+        except Exception:
+            logger.exception("Deferred booking task failed: %s", getattr(func, "__name__", func))
+
+    transaction.on_commit(
+        lambda: threading.Thread(target=_run, daemon=True).start()
+    )
+
+
+def process_new_online_booking_emails(booking_id):
+    """Send customer/owner emails for a new online booking (runs in background)."""
+    booking = (
+        Booking.objects.select_related("customer", "salon", "salon__booking_policy")
+        .filter(pk=booking_id)
+        .first()
+    )
+    if not booking:
+        return
+
+    log_booking_activity(
+        booking,
+        BookingActivityLog.Action.REQUESTED,
+        note="Online booking request",
+    )
+    sent, _reason = send_booking_notification(booking, "request_received")
+    if sent:
+        log_booking_activity(
+            booking,
+            BookingActivityLog.Action.EMAIL_SENT,
+            note="Request received email sent to customer",
+        )
+    sent, _reason = send_owner_new_booking_notification(booking)
+    if sent:
+        log_booking_activity(
+            booking,
+            BookingActivityLog.Action.EMAIL_SENT,
+            note="Owner notified of new request",
+        )
+
+
+def process_verification_booking_emails(booking_id):
+    """Send verification email for an unverified online booking (runs in background)."""
+    booking = (
+        Booking.objects.select_related("customer", "salon", "salon__booking_policy")
+        .filter(pk=booking_id)
+        .first()
+    )
+    if not booking:
+        return
+
+    from .email_utils import send_booking_verification_email
+
+    log_booking_activity(
+        booking,
+        BookingActivityLog.Action.VERIFICATION_SENT,
+        note="Email verification sent",
+    )
+    sent, _reason = send_booking_verification_email(booking)
+    if sent:
+        log_booking_activity(
+            booking,
+            BookingActivityLog.Action.EMAIL_SENT,
+            note="Verification email sent to customer",
+        )
 
 
 def resolve_services_from_booking(booking):

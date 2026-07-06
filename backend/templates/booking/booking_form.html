@@ -1135,6 +1135,14 @@ window.BK_I18N = {
 
   document.querySelectorAll('.bk-rule-check').forEach(cb => cb.addEventListener('change', refreshSubmit));
 
+  form?.addEventListener('submit', () => {
+    const submitBtn = document.getElementById('bk-submit');
+    if (!submitBtn || submitBtn.disabled) return;
+    submitBtn.disabled = true;
+    submitBtn.classList.add('is-loading');
+    submitBtn.setAttribute('aria-busy', 'true');
+  });
+
   document.getElementById('bk-prev-month')?.addEventListener('click', () => {
     if (state.calMonth === 0) { state.calMonth = 11; state.calYear--; }
     else state.calMonth--;
