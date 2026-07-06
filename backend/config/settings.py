@@ -54,6 +54,17 @@ _railway_domain = os.environ.get("RAILWAY_PUBLIC_DOMAIN", "").strip().lower()
 if _railway_domain and _railway_domain not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(_railway_domain)
 
+# Railway internal healthchecks use localhost / private domain — not the public URL.
+if os.environ.get("RAILWAY_ENVIRONMENT"):
+    for _host in (
+        "localhost",
+        "127.0.0.1",
+        "healthcheck.railway.app",
+        os.environ.get("RAILWAY_PRIVATE_DOMAIN", "").strip(),
+    ):
+        if _host and _host not in ALLOWED_HOSTS:
+            ALLOWED_HOSTS.append(_host)
+
 if not DEBUG:
     for _host in ALLOWED_HOSTS:
         if _host in ("*", "localhost", "127.0.0.1") or _host.startswith("."):
@@ -303,7 +314,9 @@ LOGGING = {
 if not DEBUG:
     if os.environ.get("USE_SECURE_PROXY_SSL_HEADER", "True") == "True":
         SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-    SECURE_SSL_REDIRECT = os.environ.get("SECURE_SSL_REDIRECT", "True") == "True"
+    # Railway terminates HTTPS at the edge; internal healthchecks use HTTP.
+    _ssl_redirect_default = "False" if os.environ.get("RAILWAY_ENVIRONMENT") else "True"
+    SECURE_SSL_REDIRECT = os.environ.get("SECURE_SSL_REDIRECT", _ssl_redirect_default) == "True"
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_BROWSER_XSS_FILTER = True

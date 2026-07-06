@@ -38,15 +38,40 @@ PostgreSQL is **required** in production (`DJANGO_DEBUG=False`).
 
 Uploaded booking photos are stored on disk. Without a volume, they are lost on redeploy.
 
-1. Web service → **Settings** → **Volumes** → **Add volume**
-2. Mount path:
+**Volumes are not in Settings.** Create one like this:
+
+### Option A — Command palette (easiest)
+
+1. Open your **Project** canvas (the diagram with your services).
+2. Press **`Ctrl+K`** (Windows) or **`Cmd+K`** (Mac).
+3. Type **`volume`** → choose **Create Volume** (or similar).
+4. Select your **web service** (the GitHub repo service).
+5. Mount path:
+
    ```
    /app/media
    ```
-3. Add variable:
-   ```
-   MEDIA_ROOT=/app/media
-   ```
+
+6. Redeploy the web service.
+
+Also set variable `MEDIA_ROOT=/app/media` in **Variables** (if not already).
+
+### Option B — Right-click canvas
+
+1. On the project canvas, **right-click** empty space.
+2. Look for **Create Volume** / **Add Volume**.
+3. Attach to the web service, mount path `/app/media`.
+
+### Option C — Railway CLI
+
+```bash
+railway link
+railway volume add --mount-path /app/media
+```
+
+Then redeploy.
+
+> **Note:** You can launch without a volume first — the site will work, but uploaded photos may disappear on the next redeploy until the volume is attached.
 
 ---
 
@@ -65,7 +90,58 @@ Use [`.env.example`](../.env.example) as a checklist. Copy values **one by one**
 
 `DATABASE_URL` should be added as a **reference** from the Postgres service (Railway links them automatically) — do not paste a local value.
 
-### Required
+### Complete variable list (copy into Railway)
+
+Web service → **Variables** → **Raw Editor** — paste and fill in the `<...>` placeholders:
+
+```env
+DJANGO_SECRET_KEY=<generate with: python -c "import secrets; print(secrets.token_urlsafe(50))">
+DJANGO_DEBUG=False
+
+DJANGO_ALLOWED_HOSTS=www.fancyfingers.mk,fancyfingers.mk
+SITE_URL=https://www.fancyfingers.mk
+
+CUSTOMER_DOMAINS=www.fancyfingers.mk,fancyfingers.mk
+CUSTOMER_DOMAIN_SALON_SLUG=fancy-fingers
+
+MEDIA_ROOT=/app/media
+
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp-relay.brevo.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_USE_SSL=False
+EMAIL_HOST_USER=<your-brevo-login-email>
+EMAIL_HOST_PASSWORD=<your-brevo-smtp-key>
+DEFAULT_FROM_EMAIL=Fancy Fingers Booking <vremio.booking@gmail.com>
+SERVER_EMAIL=Fancy Fingers Booking <vremio.booking@gmail.com>
+OWNER_NOTIFICATION_EMAIL=fancyfingers97@gmail.com
+VREMIO_CONTACT_EMAIL=contact.vremio@gmail.com
+```
+
+Then separately add **`DATABASE_URL`** via **Add Reference** → Postgres service (do not paste into Raw Editor).
+
+### Auto-set by Railway (do not add manually)
+
+| Variable | Purpose |
+|----------|---------|
+| `DATABASE_URL` | From Postgres reference |
+| `RAILWAY_PUBLIC_DOMAIN` | Your `*.up.railway.app` hostname |
+| `RAILWAY_PRIVATE_DOMAIN` | Internal networking |
+| `RAILWAY_ENVIRONMENT` | Detects Railway runtime |
+| `PORT` | Port Gunicorn binds to |
+
+### Optional (not needed on day one)
+
+```env
+CACHE_URL=<redis-url>
+SECURE_SSL_REDIRECT=False
+SECURE_HSTS_PRELOAD=False
+```
+
+`SECURE_SSL_REDIRECT` defaults to **False** on Railway automatically (HTTPS is handled at the edge).
+
+### Required (summary)
 
 ```env
 DJANGO_SECRET_KEY=<generate-a-long-random-string>
@@ -230,6 +306,9 @@ On `www.fancyfingers.mk`, visiting `/` redirects to the Fancy Fingers salon page
 ---
 
 ## 10. Troubleshooting
+
+**Healthcheck failure**
+→ Build/deploy OK but `/health/` failed. Common causes: missing `DJANGO_SECRET_KEY` or `DATABASE_URL`, or app crash on startup. Click **View logs** on the Deploy step (not Build). Also **generate a public domain** (Settings → Networking) — your service may show as "Unexposed". A code fix auto-allows Railway internal healthcheck hosts and disables SSL redirect internally.
 
 **Build failed during “Build image”**
 → Almost always **Root Directory** is not `backend`, or PostgreSQL/`DATABASE_URL` is missing while `DJANGO_DEBUG=False`. Set root to `backend`, reference `DATABASE_URL`, redeploy. Click **View logs** on the failed deploy for the exact error line.
