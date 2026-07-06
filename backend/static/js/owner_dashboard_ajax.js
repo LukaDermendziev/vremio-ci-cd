@@ -78,7 +78,6 @@
 
   function bindAjaxForm(form, options) {
     if (!form) return;
-    delete form.dataset.odAjaxBound;
     OA.bindForm(form, options);
   }
 
@@ -195,7 +194,11 @@
 
     bindAjaxForm(global.document.getElementById("od-price-item-form"), {
       closeModal: "od-price-modal",
-      onSuccess: async () => {
+      onSuccess: async (_data, form) => {
+        form.querySelector('[name="item_id"]')?.setAttribute("value", "");
+        form.reset();
+        const sortInput = form.querySelector('[name="item_sort"]');
+        if (sortInput) sortInput.value = "0";
         closeModal("od-price-modal");
         await refreshSection("od-sec-services");
       },
@@ -293,5 +296,6 @@
   }
 
   global.initOwnerDashboardAjax = initOwnerDashboardAjax;
+  global.odBindInlineDeleteForms = bindInlineDeleteForms;
   initOwnerDashboardAjax();
 })(window);

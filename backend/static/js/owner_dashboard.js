@@ -2104,7 +2104,7 @@ function initOwnerDashboard(config) {
         }
       });
     });
-    if (window.initOwnerDashboardAjax) window.initOwnerDashboardAjax();
+    if (window.odBindInlineDeleteForms) window.odBindInlineDeleteForms();
     initToggles();
   }
   window.odRebindDashboard = rebindDashboardInteractions;

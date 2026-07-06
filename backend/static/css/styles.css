@@ -3309,9 +3309,11 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
   width: 100%;
   opacity: 1;
   transition: border-color 0.14s, background 0.14s, transform 0.08s, box-shadow 0.14s;
-  animation: bk-slot-in 0.28s ease forwards;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+}
+.bk-slot.bk-slot-animate {
+  animation: bk-slot-in 0.42s ease-out var(--bk-slot-delay, 0ms) both;
 }
 .bk-slot:hover  { border-color: var(--bk-accent); transform: translateY(-2px); box-shadow: 0 3px 10px rgba(196,135,138,0.18); }
 .bk-slot:active { transform: scale(0.93); }
@@ -3324,8 +3326,18 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
 }
 .bk-slot.selected:active { transform: scale(0.96); }
 @keyframes bk-slot-in {
-  from { opacity: 0; transform: translateY(6px) scale(0.96); }
-  to   { opacity: 1; transform: translateY(0)   scale(1); }
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@media (hover: hover) and (pointer: fine) and (min-width: 641px) {
+  @keyframes bk-slot-in-rich {
+    from { opacity: 0; transform: translateY(6px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .bk-slot.bk-slot-animate {
+    animation-name: bk-slot-in-rich;
+    animation-duration: 0.4s;
+  }
 }
 .bk-slots-hint {
   grid-column: 1 / -1;
@@ -3357,14 +3369,10 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
     padding: 13px 10px;
     font-size: 14px;
   }
-}
-
-/* Touch browsers: skip slot entrance animation (avoids hidden 4th slot in Chrome/Firefox/Samsung too). */
-@media (hover: none) and (pointer: coarse) {
-  .bk-slot {
-    animation: none;
-    opacity: 1;
-    transform: none;
+  .bk-slot.bk-slot-animate {
+    animation-name: bk-slot-in;
+    animation-duration: 0.42s;
+    animation-timing-function: ease-out;
   }
 }
 
@@ -3712,7 +3720,7 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
 @media (prefers-reduced-motion: reduce) {
   .bk-check-circle  { animation: none; stroke-dashoffset: 0; }
   .bk-check-mark    { animation: none; stroke-dashoffset: 0; }
-  .bk-slot          { animation: none; opacity: 1; transform: none; }
+  .bk-slot.bk-slot-animate { animation: none; opacity: 1; transform: none; }
   .bk-confirm-bar   { animation: none; }
 }
 

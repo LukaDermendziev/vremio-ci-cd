@@ -90,10 +90,17 @@
   }
 
   function bindForm(form, options = {}) {
-    if (!form || form.dataset.odAjaxBound) return;
+    if (!form) return;
+    if (form._odSubmitHandler) {
+      form.removeEventListener("submit", form._odSubmitHandler);
+      form._odSubmitHandler = null;
+    }
     form.dataset.odAjaxBound = "1";
-    form.addEventListener("submit", async (e) => {
+    let submitting = false;
+    form._odSubmitHandler = async (e) => {
       e.preventDefault();
+      if (submitting) return;
+      submitting = true;
       const submitBtn = form.querySelector('[type="submit"]') || options.loadingBtn;
       setButtonLoading(submitBtn, true);
       try {
@@ -118,9 +125,11 @@
         showToast(err.message || "Something went wrong.", "error");
         if (options.onError) options.onError(err, form);
       } finally {
+        submitting = false;
         setButtonLoading(submitBtn, false);
       }
-    });
+    };
+    form.addEventListener("submit", form._odSubmitHandler);
   }
 
   async function postAction(params, options = {}) {
