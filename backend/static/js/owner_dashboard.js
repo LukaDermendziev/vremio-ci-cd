@@ -1147,17 +1147,20 @@ function initOwnerDashboard(config) {
     setTimeout(() => priceItemName?.focus(), 120);
   }
 
-  // "Add price item" buttons on service cards
-  document.querySelectorAll("[data-manage-prices]").forEach(btn => {
-    btn.addEventListener("click", e => {
-      e.stopPropagation();
-      openPriceModal(btn.dataset.managePrices, btn.dataset.serviceName);
+  function bindPriceListInteractions() {
+    document.querySelectorAll("[data-manage-prices]").forEach(btn => {
+      if (btn.dataset.odManagePricesBound) return;
+      btn.dataset.odManagePricesBound = "1";
+      btn.addEventListener("click", e => {
+        e.stopPropagation();
+        openPriceModal(btn.dataset.managePrices, btn.dataset.serviceName);
+      });
     });
-  });
 
-  // Inline "Edit" buttons inside the price table — data comes directly from button attributes
-  document.querySelectorAll("[data-inline-edit-item]").forEach(btn => {
-    btn.addEventListener("click", e => {
+    document.querySelectorAll("[data-inline-edit-item]").forEach(btn => {
+      if (btn.dataset.odInlineEditBound) return;
+      btn.dataset.odInlineEditBound = "1";
+      btn.addEventListener("click", e => {
       e.stopPropagation();
       const svcId   = btn.dataset.svcId;
       const svcName = btn.dataset.svcName;
@@ -1175,13 +1178,13 @@ function initOwnerDashboard(config) {
       openModal("od-price-modal");
       setTimeout(() => priceItemName?.focus(), 80);
     });
-  });
+    });
 
-  // ── Drag-to-reorder price list rows ──────────────────────────────────────────
-  document.querySelectorAll(".od-svc-price-body").forEach(body => {
-    const tbody = body.querySelector("tbody");
-    if (!tbody) return;
-    let dragSrc = null;
+    document.querySelectorAll(".od-svc-price-body").forEach(body => {
+      const tbody = body.querySelector("tbody");
+      if (!tbody || tbody.dataset.odPriceDragBound) return;
+      tbody.dataset.odPriceDragBound = "1";
+      let dragSrc = null;
 
     tbody.addEventListener("dragstart", e => {
       const row = e.target.closest(".od-price-drag-row");
@@ -1244,137 +1247,132 @@ function initOwnerDashboard(config) {
         }
       });
     });
-  });
 
-  priceItemClear?.addEventListener("click", resetPriceForm);
+      let touchDragEl  = null;
+      let lpTimer      = null;
+      let touchActive  = false;
+      let startTouchY  = 0;
+      let startTouchX  = 0;
 
-  // ── Touch long-press drag-to-reorder (mobile) ────────────────────────────────
-  document.querySelectorAll(".od-svc-price-body").forEach(body => {
-    const tbody = body.querySelector("tbody");
-    if (!tbody) return;
-
-    let touchDragEl  = null;
-    let lpTimer      = null;
-    let touchActive  = false;
-    let startTouchY  = 0;
-    let startTouchX  = 0;
-
-    function saveTouchOrder() {
-      const orderedIds = [...tbody.querySelectorAll(".od-price-drag-row")]
-        .map(r => r.dataset.itemId).join(",");
-      const csrf = document.querySelector("[name=csrfmiddlewaretoken]")?.value;
-      fetch(window.location.pathname, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          "X-CSRFToken": csrf,
-          "X-Requested-With": "fetch",
-        },
-        body: `action=reorder_price_items&item_ids=${encodeURIComponent(orderedIds)}&return_section=services`,
-      }).then(async (resp) => {
-        if (!resp.ok && window.OwnerAjax) {
-          try {
-            const data = await resp.json();
-            const errMsg = (data.messages || []).find(m => m[0] === "error");
-            window.OwnerAjax.showToast(errMsg ? errMsg[1] : t("somethingWentWrong", "Something went wrong."), "error");
-          } catch (_) {
-            window.OwnerAjax.showToast(t("somethingWentWrong", "Something went wrong."), "error");
+      function saveTouchOrder() {
+        const orderedIds = [...tbody.querySelectorAll(".od-price-drag-row")]
+          .map(r => r.dataset.itemId).join(",");
+        const csrf = document.querySelector("[name=csrfmiddlewaretoken]")?.value;
+        fetch(window.location.pathname, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-CSRFToken": csrf,
+            "X-Requested-With": "fetch",
+          },
+          body: `action=reorder_price_items&item_ids=${encodeURIComponent(orderedIds)}&return_section=services`,
+        }).then(async (resp) => {
+          if (!resp.ok && window.OwnerAjax) {
+            try {
+              const data = await resp.json();
+              const errMsg = (data.messages || []).find(m => m[0] === "error");
+              window.OwnerAjax.showToast(errMsg ? errMsg[1] : t("somethingWentWrong", "Something went wrong."), "error");
+            } catch (_) {
+              window.OwnerAjax.showToast(t("somethingWentWrong", "Something went wrong."), "error");
+            }
           }
+        });
+      }
+
+      tbody.addEventListener("touchstart", e => {
+        const handle = e.target.closest(".od-drag-handle");
+        if (!handle) return;
+        const row = handle.closest(".od-price-drag-row");
+        if (!row) return;
+
+        startTouchY = e.touches[0].clientY;
+        startTouchX = e.touches[0].clientX;
+
+        lpTimer = setTimeout(() => {
+          touchActive = true;
+          touchDragEl = row;
+          row.classList.add("od-drag-active");
+          try { navigator.vibrate?.(40); } catch (_) {}
+        }, 420);
+      }, { passive: true });
+
+      tbody.addEventListener("touchmove", e => {
+        const touch = e.touches[0];
+        if (!touchActive) {
+          if (Math.abs(touch.clientY - startTouchY) > 8 || Math.abs(touch.clientX - startTouchX) > 8) {
+            clearTimeout(lpTimer);
+            lpTimer = null;
+          }
+          return;
+        }
+        e.preventDefault();
+
+        const rows = [...tbody.querySelectorAll(".od-price-drag-row")];
+        let over = null;
+        for (const r of rows) {
+          if (r === touchDragEl) continue;
+          const rect = r.getBoundingClientRect();
+          if (touch.clientY >= rect.top && touch.clientY <= rect.bottom) { over = r; break; }
+        }
+        rows.forEach(r => r.classList.remove("od-drag-over"));
+        if (over) over.classList.add("od-drag-over");
+      }, { passive: false });
+
+      function endTouchDrag() {
+        clearTimeout(lpTimer);
+        if (!touchActive || !touchDragEl) { touchActive = false; touchDragEl = null; return; }
+
+        const target = tbody.querySelector(".od-drag-over");
+        if (target && target !== touchDragEl) {
+          const rows = [...tbody.querySelectorAll(".od-price-drag-row")];
+          const si = rows.indexOf(touchDragEl);
+          const ti = rows.indexOf(target);
+          if (si < ti) target.after(touchDragEl);
+          else target.before(touchDragEl);
+          saveTouchOrder();
+        }
+        tbody.querySelectorAll(".od-drag-active,.od-drag-over").forEach(r =>
+          r.classList.remove("od-drag-active","od-drag-over"));
+        touchActive  = false;
+        touchDragEl  = null;
+      }
+
+      tbody.addEventListener("touchend", endTouchDrag);
+      tbody.addEventListener("touchcancel", endTouchDrag);
+    });
+
+    document.querySelectorAll(".od-price-group-toggle").forEach(btn => {
+      if (btn.dataset.odPriceGroupBound) return;
+      btn.dataset.odPriceGroupBound = "1";
+      btn.addEventListener("click", () => {
+        const collapsed = btn.classList.toggle("od-group-collapsed");
+        let row = btn.closest("tr").nextElementSibling;
+        while (row && !row.classList.contains("od-price-group-row")) {
+          row.classList.toggle("od-group-hidden", collapsed);
+          row = row.nextElementSibling;
         }
       });
-    }
-
-    tbody.addEventListener("touchstart", e => {
-      const handle = e.target.closest(".od-drag-handle");
-      if (!handle) return;
-      const row = handle.closest(".od-price-drag-row");
-      if (!row) return;
-
-      startTouchY = e.touches[0].clientY;
-      startTouchX = e.touches[0].clientX;
-
-      lpTimer = setTimeout(() => {
-        touchActive = true;
-        touchDragEl = row;
-        row.classList.add("od-drag-active");
-        try { navigator.vibrate?.(40); } catch (_) {}
-      }, 420);
-    }, { passive: true });
-
-    tbody.addEventListener("touchmove", e => {
-      const t = e.touches[0];
-      // Cancel long-press if user scrolled before it fired
-      if (!touchActive) {
-        if (Math.abs(t.clientY - startTouchY) > 8 || Math.abs(t.clientX - startTouchX) > 8) {
-          clearTimeout(lpTimer);
-          lpTimer = null;
-        }
-        return;
-      }
-      e.preventDefault(); // stop page scroll while dragging
-
-      const rows = [...tbody.querySelectorAll(".od-price-drag-row")];
-      let over = null;
-      for (const r of rows) {
-        if (r === touchDragEl) continue;
-        const rect = r.getBoundingClientRect();
-        if (t.clientY >= rect.top && t.clientY <= rect.bottom) { over = r; break; }
-      }
-      rows.forEach(r => r.classList.remove("od-drag-over"));
-      if (over) over.classList.add("od-drag-over");
-    }, { passive: false });
-
-    function endTouchDrag() {
-      clearTimeout(lpTimer);
-      if (!touchActive || !touchDragEl) { touchActive = false; touchDragEl = null; return; }
-
-      const target = tbody.querySelector(".od-drag-over");
-      if (target && target !== touchDragEl) {
-        const rows = [...tbody.querySelectorAll(".od-price-drag-row")];
-        const si = rows.indexOf(touchDragEl);
-        const ti = rows.indexOf(target);
-        if (si < ti) target.after(touchDragEl);
-        else target.before(touchDragEl);
-        saveTouchOrder();
-      }
-      tbody.querySelectorAll(".od-drag-active,.od-drag-over").forEach(r =>
-        r.classList.remove("od-drag-active","od-drag-over"));
-      touchActive  = false;
-      touchDragEl  = null;
-    }
-
-    tbody.addEventListener("touchend",    endTouchDrag);
-    tbody.addEventListener("touchcancel", endTouchDrag);
-  });
-
-  // ── Collapsible group header rows in price tables ────────────────────────────
-  document.querySelectorAll(".od-price-group-toggle").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const groupId = btn.dataset.toggleGroup;
-      const collapsed = btn.classList.toggle("od-group-collapsed");
-      // Hide/show all item rows that belong to this group
-      // They are the sibling <tr> rows after this header row until the next group row
-      let row = btn.closest("tr").nextElementSibling;
-      while (row && !row.classList.contains("od-price-group-row")) {
-        row.classList.toggle("od-group-hidden", collapsed);
-        row = row.nextElementSibling;
-      }
     });
-  });
 
-  // ── Expand/collapse price list panels ────────────────────────────────────────
-  document.querySelectorAll("[data-price-toggle]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const svcId  = btn.dataset.priceToggle;
-      const body   = document.getElementById(`od-price-body-${svcId}`);
-      const chev   = document.getElementById(`od-price-chevron-${svcId}`);
-      if (!body) return;
-      const open = !body.hidden;
-      body.hidden = open;
-      btn.setAttribute("aria-expanded", String(!open));
-      chev?.classList.toggle("od-price-toggle-chevron--open", !open);
+    document.querySelectorAll("[data-price-toggle]").forEach(btn => {
+      if (btn.dataset.odPriceToggleBound) return;
+      btn.dataset.odPriceToggleBound = "1";
+      btn.addEventListener("click", () => {
+        const svcId  = btn.dataset.priceToggle;
+        const body   = document.getElementById(`od-price-body-${svcId}`);
+        const chev   = document.getElementById(`od-price-chevron-${svcId}`);
+        if (!body) return;
+        const open = !body.hidden;
+        body.hidden = open;
+        btn.setAttribute("aria-expanded", String(!open));
+        chev?.classList.toggle("od-price-toggle-chevron--open", !open);
+      });
     });
-  });
+  }
+
+  bindPriceListInteractions();
+
+  priceItemClear?.addEventListener("click", resetPriceForm);
 
   // Customer modal
   const customerForm = document.getElementById("od-customer-form");
@@ -2061,6 +2059,11 @@ function initOwnerDashboard(config) {
 
   function rebindDashboardInteractions() {
     document.querySelectorAll("[data-bk-action]").forEach(bindBkAction);
+    document.querySelectorAll("[data-add-service]").forEach(btn => {
+      if (btn.dataset.odAddSvcBound) return;
+      btn.dataset.odAddSvcBound = "1";
+      btn.addEventListener("click", () => openServiceModal(null));
+    });
     document.querySelectorAll("[data-edit-booking]").forEach(btn => {
       if (btn.dataset.odEditBkBound) return;
       btn.dataset.odEditBkBound = "1";
@@ -2071,6 +2074,7 @@ function initOwnerDashboard(config) {
       btn.dataset.odEditSvcBound = "1";
       btn.addEventListener("click", () => openServiceModal(btn.dataset.editService));
     });
+    bindPriceListInteractions();
     document.querySelectorAll("[data-edit-customer]").forEach(btn => {
       if (btn.dataset.odEditCustBound) return;
       btn.dataset.odEditCustBound = "1";
