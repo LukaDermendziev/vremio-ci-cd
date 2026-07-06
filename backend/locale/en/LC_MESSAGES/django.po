@@ -2734,11 +2734,17 @@ msgstr "View all"
 msgid "View and manage your appointment schedule."
 msgstr "View and manage your appointment schedule."
 
+msgid "View pending bookings"
+msgstr "View pending bookings"
+
 msgid "View reference photo"
 msgstr "View reference photo"
 
 msgid "View services"
 msgstr "View services"
+
+msgid "View today on calendar"
+msgstr "View today on calendar"
 
 msgid "Vremio"
 msgstr "Vremio"

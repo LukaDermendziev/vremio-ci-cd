@@ -5955,6 +5955,28 @@ body.bk-step1-confirm-open .bk-toast {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08);
 }
+.od-stat-link {
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  width: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+.od-stat-link:focus-visible {
+  outline: 2px solid #D97706;
+  outline-offset: 2px;
+}
+.od-stat-pending.od-stat-link:active {
+  transform: scale(0.98);
+}
+.od-stat-today.od-stat-link:focus-visible {
+  outline: 2px solid #059669;
+  outline-offset: 2px;
+}
+.od-stat-today.od-stat-link:active {
+  transform: scale(0.98);
+}
 .od-stat-icon-wrap {
   width: 34px;
   height: 34px;

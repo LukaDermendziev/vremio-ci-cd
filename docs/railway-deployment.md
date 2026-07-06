@@ -73,6 +73,27 @@ Then redeploy.
 
 > **Note:** You can launch without a volume first — the site will work, but uploaded photos may disappear on the next redeploy until the volume is attached.
 
+### Bootstrap salon on production (one-time)
+
+`railway run` executes **on your PC** and cannot reach `postgres.railway.internal`. Use **SSH** into the running container instead:
+
+```bash
+railway login
+railway link   # select the web service, not Postgres
+railway ssh keys add   # first time only — register your SSH key
+
+railway ssh /opt/venv/bin/python manage.py setup_beta_salon \
+  --username OWNER_USERNAME \
+  --email owner@example.com \
+  --slug fancy-fingers \
+  --salon-name "Fancy Fingers" \
+  --instagram salon_instagram_handle
+
+railway ssh /opt/venv/bin/python manage.py changepassword OWNER_USERNAME
+```
+
+Nixpacks installs packages in `/opt/venv`. Plain `python` over SSH may not see Django — always use `/opt/venv/bin/python`.
+
 ---
 
 ## 4. Environment variables
@@ -229,30 +250,23 @@ Health check: `GET /health/` → `ok`
 
 ## 6. Bootstrap salon data (one time)
 
-After the first successful deploy, run the setup command on Railway:
-
-**Option A — Railway CLI**
+After the first successful deploy, run the setup command **inside** the Railway container (see bootstrap section above for SSH setup):
 
 ```bash
 railway link
-railway run python manage.py setup_beta_salon \
-  --username fancy_fingers_owner \
+railway ssh keys add   # first time only
+
+railway ssh /opt/venv/bin/python manage.py setup_beta_salon \
+  --username sofija_stankova \
   --email fancyfingers97@gmail.com \
   --slug fancy-fingers \
-  --salon-name "Fancy Fingers"
+  --salon-name "Fancy Fingers" \
+  --instagram fancyy.fingerss
+
+railway ssh /opt/venv/bin/python manage.py changepassword sofija_stankova
 ```
 
-**Option B — Railway dashboard**
-
-Service → **Settings** → run a one-off command (if available) or use the CLI above.
-
-Then set the owner password:
-
-```bash
-railway run python manage.py changepassword fancy_fingers_owner
-```
-
-Or use **password reset** at `https://www.fancyfingers.mk/owner/password/reset/`.
+Do **not** use `railway run` — it runs locally and cannot reach the private database host.
 
 Create a Django superuser for `/admin/` if needed:
 

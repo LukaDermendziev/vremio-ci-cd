@@ -2747,11 +2747,17 @@ msgstr "Види ги сите"
 msgid "View and manage your appointment schedule."
 msgstr "Преглед и управување со термините."
 
+msgid "View pending bookings"
+msgstr "Погледни термини на чекање"
+
 msgid "View reference photo"
 msgstr "Погледни референтна слика"
 
 msgid "View services"
 msgstr "Погледни услуги"
+
+msgid "View today on calendar"
+msgstr "Погледни денес на календарот"
 
 msgid "Vremio"
 msgstr "Vremio"

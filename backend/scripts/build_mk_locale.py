@@ -563,6 +563,8 @@ TRANSLATIONS = {
     "Total revenue": "Вкупен приход",
     "Revenue from completed appointments only. No online payments.": "Приход само од завршени термини. Без онлајн плаќања.",
     "Today's appointments": "Денешни термини",
+    "View today on calendar": "Погледни денес на календарот",
+    "View pending bookings": "Погледни термини на чекање",
     "No approved appointments for today.": "Нема одобрени термини за денес.",
     "Pending booking requests": "Барања на чекање",
     "View all": "Види ги сите",

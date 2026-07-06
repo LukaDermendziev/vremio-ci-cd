@@ -3,6 +3,11 @@
 function initOwnerDashboard(config) {
   const I18N = window.OD_I18N || {};
   const CG_LOCALE = config.locale || document.documentElement.lang || "mk";
+
+  const CG_IS_MK = String(CG_LOCALE || "").toLowerCase().startsWith("mk");
+  const CG_MONTHS_MK_SHORT = ["јан", "фев", "мар", "апр", "мај", "јун", "јул", "авг", "сеп", "окт", "ное", "дек"];
+  const CG_MONTHS_MK_LONG = ["јануари", "февруари", "март", "април", "мај", "јуни", "јули", "август", "септември", "октомври", "ноември", "декември"];
+  const CG_WEEKDAYS_MK_LONG = ["недела", "понеделник", "вторник", "среда", "четврток", "петок", "сабота"];
   const t = (key, fallback) => (I18N[key] != null && I18N[key] !== "") ? I18N[key] : fallback;
   const tf = (key, fallback, vars) => {
     let s = t(key, fallback);
@@ -285,13 +290,19 @@ function initOwnerDashboard(config) {
     });
   });
 
-  function showSection(id) {
+  function showSection(id, options = {}) {
     document.querySelectorAll(".od-section").forEach(s => s.classList.remove("active"));
     document.querySelectorAll(".od-nav a").forEach(a => a.classList.remove("is-active"));
     document.getElementById("od-sec-" + id)?.classList.add("active");
     document.querySelector(`.od-nav a[data-section="${id}"]`)?.classList.add("is-active");
     if (id === "calendar") {
-      setTimeout(() => cgFetchAndRender(), 100);
+      setTimeout(() => {
+        if (options.calendarToday && typeof window.odGoToCalendarToday === "function") {
+          window.odGoToCalendarToday();
+        } else if (typeof window.odCgFetchAndRender === "function") {
+          window.odCgFetchAndRender();
+        }
+      }, 100);
     }
   }
 
@@ -370,13 +381,23 @@ function initOwnerDashboard(config) {
     });
   });
 
+  function activateBookingTab(status) {
+    const tab = document.querySelector(`.od-tab[data-tab="${status}"]`);
+    if (tab) tab.click();
+  }
+
   document.querySelectorAll("[data-goto]").forEach(el => {
     el.addEventListener("click", (e) => {
       e.preventDefault();
       const section = el.dataset.goto;
-      showSection(section);
+      showSection(section, {
+        calendarToday: section === "calendar" && el.hasAttribute("data-calendar-today"),
+      });
       history.replaceState(null, "", "#" + section);
       syncBottomNav(section);
+      if (el.dataset.bookingTab && section === "bookings") {
+        activateBookingTab(el.dataset.bookingTab);
+      }
     });
   });
 
@@ -1500,11 +1521,23 @@ function initOwnerDashboard(config) {
   }
   function cgFmtWeekRange(mon) {
     const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+    if (CG_IS_MK) {
+      const startMonth = CG_MONTHS_MK_SHORT[mon.getMonth()];
+      const endMonth = CG_MONTHS_MK_SHORT[sun.getMonth()];
+      const fmtS = `${mon.getDate()} ${startMonth}`;
+      const fmtE = `${sun.getDate()} ${endMonth} ${sun.getFullYear()}`;
+      return `${fmtS} – ${fmtE}`;
+    }
     const fmtS = mon.toLocaleDateString(CG_LOCALE, { day:"numeric", month:"short" });
     const fmtE = sun.toLocaleDateString(CG_LOCALE, { day:"numeric", month:"short", year:"numeric" });
     return `${fmtS} – ${fmtE}`;
   }
   function cgFormatDayLong(d) {
+    if (CG_IS_MK) {
+      const weekday = CG_WEEKDAYS_MK_LONG[d.getDay()];
+      const month = CG_MONTHS_MK_LONG[d.getMonth()];
+      return `${weekday}, ${d.getDate()} ${month} ${d.getFullYear()}`;
+    }
     return d.toLocaleDateString(CG_LOCALE, { weekday:"long", day:"numeric", month:"long", year:"numeric" });
   }
   function cgFormatWeekdayShort(d) {
@@ -1801,6 +1834,16 @@ function initOwnerDashboard(config) {
   }
   if (cgridEl) cgFetchAndRender();
   window.odCgFetchAndRender = cgFetchAndRender;
+  window.odGoToCalendarToday = function odGoToCalendarToday() {
+    if (window.odMcIsMobileCalendar?.()) {
+      window.odMcGoToday?.();
+      return;
+    }
+    cgView = "day";
+    cgDayDate = new Date();
+    cgWeekStart = cgMonday(new Date());
+    cgFetchAndRender();
+  };
 
   if (false && window.FullCalendar) {
     calendar = new FullCalendar.Calendar(calEl, {

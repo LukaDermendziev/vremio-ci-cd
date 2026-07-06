@@ -82,6 +82,9 @@
     return mcMeta.closedDates.includes(ds) || mcMeta.closedWeekdays.includes(dw);
   }
 
+  const MC_MONTHS_MK_LONG = ["јануари", "февруари", "март", "април", "мај", "јуни", "јули", "август", "септември", "октомври", "ноември", "декември"];
+  const MC_WEEKDAYS_MK_LONG = ["недела", "понеделник", "вторник", "среда", "четврток", "петок", "сабота"];
+
   function mcLocaleTag() {
     const raw = (config.locale || global.document.documentElement.lang || "mk").toLowerCase();
     if (raw === "mk" || raw.startsWith("mk-")) return "mk-MK";
@@ -100,7 +103,12 @@
   }
 
   function mcFormatMonthYear(d) {
-    return d.toLocaleDateString(mcLocaleTag(), { month: "long", year: "numeric" });
+    const tag = mcLocaleTag();
+    if (tag.toLowerCase().startsWith("mk")) {
+      const month = MC_MONTHS_MK_LONG[d.getMonth()];
+      return `${month} ${d.getFullYear()}`;
+    }
+    return d.toLocaleDateString(tag, { month: "long", year: "numeric" });
   }
 
   function mcNormalizeEvents(data) {
@@ -242,7 +250,13 @@
   }
 
   function mcFormatAgendaHeader(d) {
-    return d.toLocaleDateString(mcLocaleTag(), {
+    const tag = mcLocaleTag();
+    if (tag.toLowerCase().startsWith("mk")) {
+      const weekday = MC_WEEKDAYS_MK_LONG[d.getDay()];
+      const month = MC_MONTHS_MK_LONG[d.getMonth()];
+      return `${weekday}, ${d.getDate()} ${month}`;
+    }
+    return d.toLocaleDateString(tag, {
       weekday: "long",
       day: "numeric",
       month: "long",
@@ -540,4 +554,5 @@
   global.odMcFetchMonth = odMcFetchMonth;
   global.odMcRefresh = odMcRefresh;
   global.odMcIsMobileCalendar = mcIsMobile;
+  global.odMcGoToday = mcGoToday;
 })(window);

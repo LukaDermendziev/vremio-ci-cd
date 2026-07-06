@@ -111,16 +111,16 @@
       </div>
 
       <div class="od-stats od-stats-modern">
-        <div class="od-stat od-stat-pending">
+        <button type="button" class="od-stat od-stat-pending od-stat-link" data-goto="bookings" data-booking-tab="pending" aria-label="{% trans 'View pending bookings' %}">
           <div class="od-stat-icon-wrap"><i class="bi bi-hourglass-split"></i></div>
           <span class="od-stat-value" data-stat="pending">{{ pending_count }}</span>
           <span class="od-stat-label">{% trans "Pending" %}</span>
-        </div>
-        <div class="od-stat od-stat-today">
+        </button>
+        <button type="button" class="od-stat od-stat-today od-stat-link" data-goto="calendar" data-calendar-today aria-label="{% trans 'View today on calendar' %}">
           <div class="od-stat-icon-wrap"><i class="bi bi-calendar-check"></i></div>
           <span class="od-stat-value" data-stat="today">{{ today_count }}</span>
           <span class="od-stat-label">{% trans "Today" %}</span>
-        </div>
+        </button>
         <div class="od-stat od-stat-upcoming">
           <div class="od-stat-icon-wrap"><i class="bi bi-calendar-event"></i></div>
           <span class="od-stat-value">{{ upcoming_approved_bookings|length }}</span>
