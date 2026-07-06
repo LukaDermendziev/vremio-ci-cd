@@ -56,6 +56,8 @@ if _railway_domain and _railway_domain not in ALLOWED_HOSTS:
 
 # Railway internal healthchecks use localhost / private domain — not the public URL.
 if os.environ.get("RAILWAY_ENVIRONMENT"):
+    if ".up.railway.app" not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(".up.railway.app")
     for _host in (
         "localhost",
         "127.0.0.1",
@@ -64,6 +66,10 @@ if os.environ.get("RAILWAY_ENVIRONMENT"):
     ):
         if _host and _host not in ALLOWED_HOSTS:
             ALLOWED_HOSTS.append(_host)
+    if _railway_domain:
+        _railway_origin = f"https://{_railway_domain}"
+        if _railway_origin not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS.append(_railway_origin)
 
 if not DEBUG:
     for _host in ALLOWED_HOSTS:
