@@ -1,6 +1,6 @@
 [build]
 builder = "nixpacks"
-buildCommand = "pip install -r requirements.txt && python manage.py collectstatic --noinput"
+buildCommand = "pip install -r requirements.txt && DJANGO_BUILD=1 python manage.py collectstatic --noinput"
 
 [deploy]
 preDeployCommand = "python manage.py migrate --noinput"

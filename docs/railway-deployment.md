@@ -13,6 +13,8 @@ Both domains hit the **same** app and database. Customer emails and manage-booki
 
 ## 1. Create the Railway project
 
+> **If deploy fails at “Build image”:** open the web service → **Settings** → **Root Directory** must be `backend`. Also add PostgreSQL and reference `DATABASE_URL` before redeploying.
+
 1. Go to [railway.app](https://railway.app) and create a new project.
 2. **Deploy from GitHub** — connect this repo (`salon-scheduler-system`).
 3. Open the web service → **Settings** → **Root Directory** → set to:
@@ -229,8 +231,8 @@ On `www.fancyfingers.mk`, visiting `/` redirects to the Fancy Fingers salon page
 
 ## 10. Troubleshooting
 
-**502 / app not starting**  
-→ Check deploy logs. Common causes: missing `DATABASE_URL`, missing `DJANGO_SECRET_KEY`, migrate failure.
+**Build failed during “Build image”**
+→ Almost always **Root Directory** is not `backend`, or PostgreSQL/`DATABASE_URL` is missing while `DJANGO_DEBUG=False`. Set root to `backend`, reference `DATABASE_URL`, redeploy. Click **View logs** on the failed deploy for the exact error line.
 
 **CSRF error on booking form**  
 → Ensure `DJANGO_DEBUG=False` and domain is in `DJANGO_ALLOWED_HOSTS`. CSRF origins are auto-added for HTTPS hosts.

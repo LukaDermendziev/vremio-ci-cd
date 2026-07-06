@@ -143,7 +143,9 @@ else:
             "NAME": BASE_DIR / "db.sqlite3",
         }
     }
-    if not DEBUG:
+    # collectstatic during Railway/Nixpacks build may run before DATABASE_URL exists.
+    _build_phase = os.environ.get("DJANGO_BUILD") == "1"
+    if not DEBUG and not _build_phase:
         raise ImproperlyConfigured(
             "PostgreSQL is required in production. Set DATABASE_URL or POSTGRES_DB."
         )
