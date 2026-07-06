@@ -12,7 +12,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _, override
 
-from .forms import BookingRequestForm
+from .forms import BookingPolicyForm, BookingRequestForm
 from .models import (
     Booking,
     BookingActivityLog,
@@ -701,6 +701,163 @@ class AvailabilityTests(TestCase):
         while selected_date.weekday() == WorkingHours.Weekday.SUNDAY:
             selected_date += timedelta(days=1)
         return selected_date
+
+
+class FixedStartTimesTests(TestCase):
+    def setUp(self):
+        user = get_user_model().objects.create_user(
+            username="fixed_owner",
+            password="password",
+        )
+        self.salon = Salon.objects.create(
+            owner=user,
+            name="Fixed Salon",
+            slug="fixed-salon",
+        )
+        self.service = Service.objects.create(
+            salon=self.salon,
+            name="Manicure",
+            duration_minutes=120,
+            base_price=1000,
+        )
+        self.policy = BookingPolicy.objects.create(
+            salon=self.salon,
+            minimum_notice_days=0,
+            maximum_booking_window_days=60,
+            allow_same_day_booking=True,
+            allow_next_day_booking=True,
+            pending_holds_slot=True,
+            slot_interval_minutes=30,
+            use_fixed_start_times=True,
+            fixed_start_times=["08:00", "10:30", "13:00", "15:30"],
+            email_verification_required=False,
+        )
+        self.selected_date = timezone.localdate() + timedelta(days=7)
+        self.now = timezone.make_aware(
+            datetime.combine(timezone.localdate(), time(7, 0)),
+            timezone.get_current_timezone(),
+        )
+        WorkingHours.objects.create(
+            salon=self.salon,
+            weekday=self.selected_date.weekday(),
+            is_working_day=True,
+            start_time=time(8, 0),
+            end_time=time(18, 0),
+        )
+        self.customer = Customer.objects.create(
+            salon=self.salon,
+            full_name="Fixed Customer",
+            phone_number="070555444",
+            instagram_username="fixed_customer",
+        )
+
+    def _slot_values(self):
+        slots = get_available_slots(
+            self.salon,
+            self.service,
+            self.selected_date,
+            now=self.now,
+        )
+        return {slot["value"] for slot in slots}
+
+    def test_fixed_start_times_return_only_configured_starts(self):
+        values = self._slot_values()
+        self.assertEqual(values, {"08:00", "10:30", "13:00", "15:30"})
+        self.assertNotIn("08:30", values)
+        self.assertNotIn("09:00", values)
+
+    def test_fixed_start_times_respect_busy_intervals(self):
+        Booking.objects.create(
+            salon=self.salon,
+            customer=self.customer,
+            status=Booking.Status.APPROVED,
+            source=Booking.Source.OWNER_MANUAL,
+            start_at=timezone.make_aware(
+                datetime.combine(self.selected_date, time(8, 0)),
+                timezone.get_current_timezone(),
+            ),
+            end_at=timezone.make_aware(
+                datetime.combine(self.selected_date, time(10, 0)),
+                timezone.get_current_timezone(),
+            ),
+            total_duration_minutes=120,
+        )
+
+        values = self._slot_values()
+        self.assertNotIn("08:00", values)
+        self.assertIn("10:30", values)
+        self.assertIn("13:00", values)
+
+    def test_fixed_start_times_outside_custom_hours_are_skipped(self):
+        DateWorkingHoursOverride.objects.create(
+            salon=self.salon,
+            date=self.selected_date,
+            mode=DateWorkingHoursOverride.Mode.CUSTOM_HOURS,
+            custom_start_time=time(10, 0),
+            custom_end_time=time(16, 0),
+        )
+
+        values = self._slot_values()
+        self.assertNotIn("08:00", values)
+        self.assertIn("10:30", values)
+        self.assertIn("13:00", values)
+        self.assertNotIn("15:30", values)
+
+    def test_interval_mode_when_fixed_times_disabled(self):
+        self.policy.use_fixed_start_times = False
+        self.policy.save(update_fields=["use_fixed_start_times"])
+
+        values = self._slot_values()
+        self.assertIn("08:00", values)
+        self.assertIn("08:30", values)
+        self.assertGreater(len(values), 4)
+
+    def test_policy_form_parses_fixed_start_times(self):
+        form = BookingPolicyForm(
+            data={
+                "minimum_notice_days": 14,
+                "maximum_booking_window_days": 60,
+                "allow_same_day_booking": False,
+                "allow_next_day_booking": False,
+                "allow_last_minute_reopen": True,
+                "auto_approve_bookings": False,
+                "late_arrival_limit_minutes": 15,
+                "reminder_hours_before": 24,
+                "pending_holds_slot": True,
+                "max_appointments_per_day": 4,
+                "use_fixed_start_times": True,
+                "fixed_start_times_text": "15:30, 08:00, 10:30",
+                "slot_interval_minutes": 30,
+                "buffer_minutes_between_bookings": 0,
+                "service_gap_minutes": 30,
+                "customer_cancellation_notice_hours": 24,
+                "max_pending_bookings_per_customer": 1,
+                "max_active_future_bookings_per_customer": 2,
+                "booking_rate_limit_per_ip_per_hour": 5,
+                "booking_rate_limit_per_email_per_day": 3,
+                "booking_rate_limit_per_phone_per_day": 3,
+                "enable_honeypot_protection": True,
+                "max_reference_photo_size_mb": 5,
+                "email_verification_required": True,
+                "email_verification_expiration_minutes": 60,
+                "salon_rules": "Rule",
+                "salon_rules_en": "Rule EN",
+                "msg_approved": "ok",
+                "msg_rejected": "no",
+                "msg_cancelled": "cancel",
+                "msg_edited": "edit",
+                "msg_no_show": "noshow",
+                "msg_pending": "pending",
+                "msg_reminder": "reminder",
+            },
+            instance=self.policy,
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+        saved = form.save()
+        self.assertEqual(
+            saved.fixed_start_times,
+            ["08:00", "10:30", "15:30"],
+        )
 
 
 class LastMinuteReopenTests(TestCase):

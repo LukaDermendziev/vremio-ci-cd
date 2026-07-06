@@ -137,6 +137,7 @@ class BookingPolicyAdmin(admin.ModelAdmin):
         "maximum_booking_window_days",
         "auto_approve_bookings",
         "pending_holds_slot",
+        "use_fixed_start_times",
         "slot_interval_minutes",
         "buffer_minutes_between_bookings",
     )
@@ -145,6 +146,7 @@ class BookingPolicyAdmin(admin.ModelAdmin):
         "pending_holds_slot",
         "allow_same_day_booking",
         "allow_next_day_booking",
+        "use_fixed_start_times",
     )
 
 

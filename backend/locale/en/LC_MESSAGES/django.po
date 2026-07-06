@@ -146,6 +146,9 @@ msgstr "Active"
 msgid "Add"
 msgstr "Add"
 
+msgid "Add at least one fixed start time."
+msgstr "Add at least one fixed start time."
+
 msgid "Add blocked date"
 msgstr "Add blocked date"
 
@@ -207,6 +210,9 @@ msgstr "Already blocked"
 
 msgid "Anti-abuse"
 msgstr "Anti-abuse"
+
+msgid "Any notes for the salon..."
+msgstr "Any notes for the salon..."
 
 msgid "Appointment"
 msgstr "Appointment"
@@ -695,6 +701,13 @@ msgstr "Closed today"
 msgid "Collapse sidebar"
 msgstr "Collapse sidebar"
 
+msgid ""
+"Comma-separated HH:MM times (e.g. 08:00, 10:30, 13:00, 15:30). Used only "
+"when fixed start times mode is on; slot interval is ignored."
+msgstr ""
+"Comma-separated HH:MM times (e.g. 08:00, 10:30, 13:00, 15:30). Used only "
+"when fixed start times mode is on; slot interval is ignored."
+
 msgid "Communication between the customer and the business"
 msgstr "Communication between the customer and the business"
 
@@ -1058,6 +1071,9 @@ msgstr "Fitness / gym"
 
 msgid "Fitness / gyms"
 msgstr "Fitness / gyms"
+
+msgid "Fixed start times"
+msgstr "Fixed start times"
 
 msgid "Follow the booking rules of the business you selected."
 msgstr "Follow the booking rules of the business you selected."
@@ -1544,6 +1560,9 @@ msgstr "Menu"
 
 msgid "Message copied."
 msgstr "Message copied."
+
+msgid "Message to salon (optional)"
+msgstr "Message to salon (optional)"
 
 msgid "Messenger"
 msgstr "Messenger"
@@ -2675,6 +2694,9 @@ msgstr "Use customer data only for booking and service purposes."
 
 msgid "Use dd/mm/yyyy"
 msgstr "Use dd/mm/yyyy"
+
+msgid "Use fixed start times"
+msgstr "Use fixed start times"
 
 msgid "Use the platform honestly and do not abuse booking limits."
 msgstr "Use the platform honestly and do not abuse booking limits."

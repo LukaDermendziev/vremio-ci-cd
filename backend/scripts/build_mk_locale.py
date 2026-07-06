@@ -112,6 +112,8 @@ TRANSLATIONS = {
     "Dec": "Дек",
     # booking_success.html
     "Request Sent": "Барањето е испратено",
+    "Message to salon (optional)": "Порака до салонот (опционално)",
+    "Any notes for the salon...": "Белешки за салонот...",
     "Request sent!": "Барањето е испратено!",
     "Your booking request has been submitted.<br> The appointment is <strong>not confirmed yet</strong>.<br> %(salon_name)s will review your request and contact you.": (
         "Вашето барање за термин е испратено.<br> "
@@ -899,6 +901,10 @@ TRANSLATIONS = {
     "Reminder hours before": "Потсетник (часови однапред)",
     "Pending holds slot": "На чекање го држи терминот",
     "Max appointments per day": "Макс. термини дневно",
+    "Use fixed start times": "Фиксни почетни термини",
+    "Fixed start times": "Почетни часови (HH:MM)",
+    "Comma-separated HH:MM times (e.g. 08:00, 10:30, 13:00, 15:30). Used only when fixed start times mode is on; slot interval is ignored.": "Време одделено со запирка во формат HH:MM (на пр. 08:00, 10:30, 13:00, 15:30). Се користи само кога се вклучени фиксни термини; интервалот на термини се игнорира.",
+    "Add at least one fixed start time.": "Додадете барем еден фиксен почетен термин.",
     "Slot interval minutes": "Интервал на термини (минути)",
     "Buffer minutes between bookings": "Бафер меѓу термини (минути)",
     "Gap between services in same booking (minutes)": "Пауза меѓу услуги во иста резервација (минути)",

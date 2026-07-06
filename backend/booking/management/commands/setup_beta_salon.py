@@ -164,6 +164,9 @@ class Command(BaseCommand):
             policy.pending_holds_slot = True
             policy.late_arrival_limit_minutes = 15
             policy.reminder_hours_before = 24
+            policy.use_fixed_start_times = True
+            policy.fixed_start_times = ["08:00", "10:30", "13:00", "15:30"]
+            policy.max_appointments_per_day = 4
             policy.save()
             self.stdout.write("Booking policy configured with beta defaults.")
 

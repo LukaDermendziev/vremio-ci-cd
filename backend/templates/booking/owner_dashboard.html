@@ -667,8 +667,16 @@
               {% with f=policy_form.max_appointments_per_day %}
                 <div class="od-field"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% if f.errors %}<span class="od-field-error">{{ f.errors.0 }}</span>{% endif %}</div>
               {% endwith %}
+              {% with f=policy_form.fixed_start_times_text %}
+                <div class="od-field od-field-full od-field-fixed-times" id="od-fixed-times-field">
+                  <label for="{{ f.id_for_label }}">{{ f.label }}</label>
+                  {{ f }}
+                  {% if f.help_text %}<p class="od-field-hint">{{ f.help_text }}</p>{% endif %}
+                  {% if f.errors %}<span class="od-field-error">{{ f.errors.0 }}</span>{% endif %}
+                </div>
+              {% endwith %}
               {% with f=policy_form.slot_interval_minutes %}
-                <div class="od-field"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% if f.errors %}<span class="od-field-error">{{ f.errors.0 }}</span>{% endif %}</div>
+                <div class="od-field od-field-slot-interval" id="od-slot-interval-field"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% if f.errors %}<span class="od-field-error">{{ f.errors.0 }}</span>{% endif %}</div>
               {% endwith %}
               {% with f=policy_form.buffer_minutes_between_bookings %}
                 <div class="od-field"><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{% if f.errors %}<span class="od-field-error">{{ f.errors.0 }}</span>{% endif %}</div>

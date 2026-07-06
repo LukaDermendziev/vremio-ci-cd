@@ -37,6 +37,7 @@ from .services import (
     consume_released_slot,
     get_salon_timezone,
     is_slot_available,
+    parse_fixed_start_times_text,
     release_timeslot,
     resolve_services_for_salon,
 )
@@ -125,7 +126,9 @@ class BookingRequestForm(forms.Form):
         widget=forms.HiddenInput(),
     )
     customer_note = forms.CharField(
-        widget=forms.Textarea(attrs={"rows": 2, "placeholder": "Any notes for the salon..."}),
+        widget=forms.Textarea(
+            attrs={"rows": 2, "placeholder": _("Any notes for the salon...")}
+        ),
         required=False,
         label=_("Message to salon (optional)"),
     )
@@ -614,6 +617,21 @@ WorkingHoursFormSet = modelformset_factory(
 
 
 class BookingPolicyForm(forms.ModelForm):
+    fixed_start_times_text = forms.CharField(
+        required=False,
+        label=_("Fixed start times"),
+        help_text=_(
+            "Comma-separated HH:MM times (e.g. 08:00, 10:30, 13:00, 15:30). "
+            "Used only when fixed start times mode is on; slot interval is ignored."
+        ),
+        widget=forms.TextInput(
+            attrs={
+                "class": "od-input",
+                "placeholder": "08:00, 10:30, 13:00, 15:30",
+            }
+        ),
+    )
+
     class Meta:
         model = BookingPolicy
         fields = [
@@ -627,6 +645,7 @@ class BookingPolicyForm(forms.ModelForm):
             "reminder_hours_before",
             "pending_holds_slot",
             "max_appointments_per_day",
+            "use_fixed_start_times",
             "slot_interval_minutes",
             "buffer_minutes_between_bookings",
             "service_gap_minutes",
@@ -661,6 +680,7 @@ class BookingPolicyForm(forms.ModelForm):
             "reminder_hours_before": _("Reminder hours before"),
             "pending_holds_slot": _("Pending holds slot"),
             "max_appointments_per_day": _("Max appointments per day"),
+            "use_fixed_start_times": _("Use fixed start times"),
             "slot_interval_minutes": _("Slot interval minutes"),
             "buffer_minutes_between_bookings": _("Buffer minutes between bookings"),
             "service_gap_minutes": _("Gap between services in same booking (minutes)"),
@@ -695,6 +715,38 @@ class BookingPolicyForm(forms.ModelForm):
             "msg_pending":   forms.Textarea(attrs={"rows": 3}),
             "msg_reminder":  forms.Textarea(attrs={"rows": 3}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:
+            times = self.instance.fixed_start_times or []
+            if isinstance(times, list):
+                self.fields["fixed_start_times_text"].initial = ", ".join(times)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        use_fixed = cleaned_data.get("use_fixed_start_times")
+        text = cleaned_data.get("fixed_start_times_text", "")
+        try:
+            parsed_times = parse_fixed_start_times_text(text)
+        except ValueError as exc:
+            self.add_error("fixed_start_times_text", str(exc))
+            parsed_times = []
+        if use_fixed and not parsed_times:
+            self.add_error(
+                "fixed_start_times_text",
+                _("Add at least one fixed start time."),
+            )
+        cleaned_data["_parsed_fixed_start_times"] = parsed_times
+        return cleaned_data
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if "_parsed_fixed_start_times" in self.cleaned_data:
+            instance.fixed_start_times = self.cleaned_data["_parsed_fixed_start_times"]
+        if commit:
+            instance.save()
+        return instance
 
 
 class UnavailableTimeBlockForm(forms.ModelForm):

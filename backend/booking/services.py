@@ -27,6 +27,8 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_START_TIME = time(8, 0)
 DEFAULT_END_TIME = time(18, 0)
+FIXED_START_TIME_RE = re.compile(r"^(\d{1,2}):(\d{2})$")
+DEFAULT_FIXED_START_TIMES = ["08:00", "10:30", "13:00", "15:30"]
 
 
 MSG_MULTI_SERVICE_NO_FIT = _(
@@ -503,21 +505,34 @@ def get_available_slots(
     working_start, working_end = working_interval
     combined_minutes = calculate_combined_duration_minutes(services, salon)
     service_duration = timedelta(minutes=combined_minutes)
-    slot_interval = timedelta(minutes=get_policy_value(salon, "slot_interval_minutes", 30))
-    if slot_interval.total_seconds() <= 0:
-        slot_interval = timedelta(minutes=30)
 
     busy_intervals = get_busy_intervals_for_date(
         salon,
         selected_date,
         exclude_booking_id=exclude_booking_id,
     )
-    candidates = generate_candidate_slots(
-        working_start=working_start,
-        working_end=working_end,
-        duration=service_duration,
-        slot_interval=slot_interval,
-    )
+    fixed_times = get_salon_fixed_start_times(salon)
+    if fixed_times is not None:
+        candidates = generate_fixed_candidate_slots(
+            selected_date=selected_date,
+            salon=salon,
+            working_start=working_start,
+            working_end=working_end,
+            duration=service_duration,
+            fixed_time_strings=fixed_times,
+        )
+    else:
+        slot_interval = timedelta(
+            minutes=get_policy_value(salon, "slot_interval_minutes", 30)
+        )
+        if slot_interval.total_seconds() <= 0:
+            slot_interval = timedelta(minutes=30)
+        candidates = generate_candidate_slots(
+            working_start=working_start,
+            working_end=working_end,
+            duration=service_duration,
+            slot_interval=slot_interval,
+        )
 
     slots = []
     for candidate_start, candidate_end in candidates:
@@ -735,6 +750,75 @@ def round_to_next_slot(value, slot_interval, base=None):
         return value
 
     return value + (slot_interval - remainder)
+
+
+def parse_fixed_start_times_text(text):
+    if not (text or "").strip():
+        return []
+    parts = re.split(r"[,\n]+", text.strip())
+    return normalize_fixed_start_times(parts)
+
+
+def normalize_fixed_start_times(parts):
+    seen = set()
+    normalized = []
+    for part in parts:
+        part = part.strip()
+        if not part:
+            continue
+        match = FIXED_START_TIME_RE.match(part)
+        if not match:
+            raise ValueError(
+                _("Each time must be in HH:MM format (e.g. 08:00).")
+            )
+        hour, minute = int(match.group(1)), int(match.group(2))
+        if hour > 23 or minute > 59:
+            raise ValueError(
+                _("Each time must be a valid clock time (00:00–23:59).")
+            )
+        value = f"{hour:02d}:{minute:02d}"
+        if value not in seen:
+            seen.add(value)
+            normalized.append(value)
+    normalized.sort(key=lambda item: (int(item[:2]), int(item[3:5])))
+    return normalized
+
+
+def get_salon_fixed_start_times(salon):
+    if not get_policy_value(salon, "use_fixed_start_times", False):
+        return None
+    times = get_policy_value(salon, "fixed_start_times", [])
+    if not isinstance(times, list):
+        return []
+    return times
+
+
+def generate_fixed_candidate_slots(
+    *,
+    selected_date,
+    salon,
+    working_start,
+    working_end,
+    duration,
+    fixed_time_strings,
+):
+    salon_tz = get_salon_timezone(salon)
+    for time_string in fixed_time_strings:
+        match = FIXED_START_TIME_RE.match(str(time_string).strip())
+        if not match:
+            continue
+        hour, minute = int(match.group(1)), int(match.group(2))
+        if hour > 23 or minute > 59:
+            continue
+        candidate_start = timezone.make_aware(
+            datetime.combine(selected_date, time(hour, minute)),
+            salon_tz,
+        )
+        if candidate_start < working_start:
+            continue
+        candidate_end = candidate_start + duration
+        if candidate_end <= working_end:
+            yield candidate_start, candidate_end
 
 
 def generate_candidate_slots(working_start, working_end, duration, slot_interval):

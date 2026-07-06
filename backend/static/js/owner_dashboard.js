@@ -1998,6 +1998,21 @@ function initOwnerDashboard(config) {
   }
   initToggles();
 
+  function syncFixedStartTimesPolicyFields() {
+    const toggle = document.getElementById("id_use_fixed_start_times");
+    const fixedField = document.getElementById("od-fixed-times-field");
+    const intervalField = document.getElementById("od-slot-interval-field");
+    if (!toggle) return;
+    const fixedOn = toggle.checked;
+    if (fixedField) fixedField.classList.toggle("od-field-disabled", !fixedOn);
+    if (intervalField) intervalField.classList.toggle("od-field-disabled", fixedOn);
+  }
+  const fixedStartToggle = document.getElementById("id_use_fixed_start_times");
+  if (fixedStartToggle) {
+    fixedStartToggle.addEventListener("change", syncFixedStartTimesPolicyFields);
+    syncFixedStartTimesPolicyFields();
+  }
+
   function rebindDashboardInteractions() {
     document.querySelectorAll("[data-bk-action]").forEach(bindBkAction);
     document.querySelectorAll("[data-edit-booking]").forEach(btn => {

@@ -1249,6 +1249,13 @@ body.od-sidebar-open {
 .od-input, .od-form input[type="text"], .od-form input[type="tel"], .od-form input[type="email"], .od-form input[type="date"], .od-form input[type="time"], .od-form select, .od-form textarea { width: 100%; border: 1px solid #E5E7EB; border-radius: 8px; padding: 8px 10px; font-size: 13px; font-family: inherit; }
 .od-field-check label { display: flex; align-items: center; gap: 8px; font-weight: 500; }
 .od-field-error { color: #EF4444; font-size: 12px; }
+.od-field-hint {
+  font-size: 12px;
+  color: #6B7280;
+  margin: 8px 0 0;
+  line-height: 1.5;
+}
+.od-field-disabled { opacity: 0.45; pointer-events: none; }
 .od-hours-edit-row { display: grid; grid-template-columns: 120px auto 1fr; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid #F3F4F6; }
 @media (max-width: 600px) {
   .od-hours-edit-row { grid-template-columns: 1fr auto; }

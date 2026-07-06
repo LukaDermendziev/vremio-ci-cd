@@ -145,6 +145,9 @@ msgstr "Активна"
 msgid "Add"
 msgstr "Додади"
 
+msgid "Add at least one fixed start time."
+msgstr "Додадете барем еден фиксен почетен термин."
+
 msgid "Add blocked date"
 msgstr "Додади блокиран датум"
 
@@ -206,6 +209,9 @@ msgstr "Веќе блокиран"
 
 msgid "Anti-abuse"
 msgstr "Anti-abuse"
+
+msgid "Any notes for the salon..."
+msgstr "Белешки за салонот..."
 
 msgid "Appointment"
 msgstr "Термин"
@@ -701,6 +707,14 @@ msgstr "Затворено денес"
 msgid "Collapse sidebar"
 msgstr "Собери странична лента"
 
+msgid ""
+"Comma-separated HH:MM times (e.g. 08:00, 10:30, 13:00, 15:30). Used only "
+"when fixed start times mode is on; slot interval is ignored."
+msgstr ""
+"Време одделено со запирка во формат HH:MM (на пр. 08:00, 10:30, 13:00, "
+"15:30). Се користи само кога се вклучени фиксни термини; интервалот на "
+"термини се игнорира."
+
 msgid "Communication between the customer and the business"
 msgstr "комуникација помеѓу клиентот и бизнисот"
 
@@ -1065,6 +1079,9 @@ msgstr "Фитнес / сала"
 
 msgid "Fitness / gyms"
 msgstr "Фитнес/сали"
+
+msgid "Fixed start times"
+msgstr "Почетни часови (HH:MM)"
 
 msgid "Follow the booking rules of the business you selected."
 msgstr "Да се почитуваат правилата за закажување на избраниот бизнис."
@@ -1556,6 +1573,9 @@ msgstr "Мени"
 
 msgid "Message copied."
 msgstr "Пораката е копирана."
+
+msgid "Message to salon (optional)"
+msgstr "Порака до салонот (опционално)"
 
 msgid "Messenger"
 msgstr "Messenger"
@@ -2687,6 +2707,9 @@ msgstr "Користете ги податоците од клиенти сам�
 
 msgid "Use dd/mm/yyyy"
 msgstr "Користете дд/мм/гггг"
+
+msgid "Use fixed start times"
+msgstr "Фиксни почетни термини"
 
 msgid "Use the platform honestly and do not abuse booking limits."
 msgstr "Да се користи платформата искрено и без злоупотреба на лимитите."

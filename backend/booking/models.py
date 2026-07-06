@@ -179,6 +179,20 @@ class BookingPolicy(TimeStampedModel):
     pending_holds_slot = models.BooleanField(default=True)
     pending_expiration_hours = models.PositiveSmallIntegerField(null=True, blank=True)
     max_appointments_per_day = models.PositiveSmallIntegerField(default=5)
+    use_fixed_start_times = models.BooleanField(
+        default=False,
+        verbose_name=_("Use fixed start times"),
+        help_text=_(
+            "When enabled, customers can only book at the configured start times. "
+            "Slot interval is ignored."
+        ),
+    )
+    fixed_start_times = models.JSONField(
+        default=list,
+        blank=True,
+        verbose_name=_("Fixed start times"),
+        help_text=_("List of HH:MM start times, e.g. 08:00, 10:30, 13:00, 15:30."),
+    )
     slot_interval_minutes = models.PositiveSmallIntegerField(default=30)
     buffer_minutes_between_bookings = models.PositiveSmallIntegerField(default=0)
     service_gap_minutes = models.PositiveSmallIntegerField(
@@ -316,6 +330,12 @@ class BookingPolicy(TimeStampedModel):
 
         if self.slot_interval_minutes < 1:
             errors["slot_interval_minutes"] = "Slot interval must be at least 1 minute."
+
+        if self.use_fixed_start_times:
+            if not self.fixed_start_times:
+                errors["fixed_start_times"] = "Add at least one fixed start time."
+            elif not isinstance(self.fixed_start_times, list):
+                errors["fixed_start_times"] = "Fixed start times must be a list of HH:MM values."
 
         if errors:
             raise ValidationError(errors)
