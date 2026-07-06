@@ -5820,6 +5820,12 @@ body.bk-step1-confirm-open .bk-toast {
   color: #6B7280;
   line-height: 1.5;
 }
+.bk-verify-resend-form {
+  margin-top: 20px;
+}
+.bk-verify-resend-form .bk-btn-outline {
+  width: 100%;
+}
 .od-bk-photo-thumb {
   display: inline-flex;
   align-items: center;

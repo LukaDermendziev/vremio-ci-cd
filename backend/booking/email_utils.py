@@ -124,9 +124,10 @@ def _send_email(*, subject, body, to_email, reply_to=None):
         html_body = escape(body).replace("\n", "<br>\n")
         message.attach_alternative(f"<html><body>{html_body}</body></html>", "text/html")
         message.send(fail_silently=False)
+        logger.info("Email sent to %s — subject: %s", to_email, subject)
         return True, "sent"
     except Exception as exc:
-        logger.warning("Email send failed to %s: %s", to_email, exc)
+        logger.warning("Email send failed to %s: %s", to_email, exc, exc_info=True)
         return False, "error"
 
 

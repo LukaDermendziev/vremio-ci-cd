@@ -2556,6 +2556,17 @@ class EmailVerificationTests(TestCase):
         return data
 
     @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_resend_verification_email(self):
+        from django.core import mail
+
+        self.client.post("/book/salon-v/request/", self._booking_post_data())
+        mail.outbox.clear()
+        response = self.client.post(reverse("booking:resend_booking_verification_email"))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn("verify@example.com", mail.outbox[0].to)
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
     def test_post_sends_verification_email_not_owner_email(self):
         from django.core import mail
 

@@ -26,6 +26,15 @@
     <p class="bk-verify-note">
       {% trans "Your appointment is not confirmed yet. The salon will review your request after you verify your email." %}
     </p>
+
+    {% if can_resend %}
+    <form method="post" action="{% url 'booking:resend_booking_verification_email' %}" class="bk-verify-resend-form">
+      {% csrf_token %}
+      <button type="submit" class="bk-btn bk-btn-outline">
+        {% trans "Resend verification email" %}
+      </button>
+    </form>
+    {% endif %}
   </div>
   <div class="bk-page-legal-footer">
     {% include "partials/legal_footer.html" with legal_footer_compact=True %}

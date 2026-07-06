@@ -371,6 +371,29 @@ On `www.fancyfingers.mk`, visiting `/` redirects to the Fancy Fingers salon page
 **Booking still slow after deploy**  
 → Check `CACHE_URL` uses Railway’s **private** Redis URL (`REDIS_PRIVATE_URL` or internal reference), not a public URL the app cannot reach. Wrong Redis can block rate-limit cache calls. With the latest code, cache failures are logged and bookings still proceed.
 
+**Verification email not received**  
+→ On Railway **web service → Variables**, confirm all of these are set (not only locally):
+
+```env
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp-relay.brevo.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=<brevo-login-email>
+EMAIL_HOST_PASSWORD=<brevo-smtp-key>
+DEFAULT_FROM_EMAIL=Fancy Fingers Booking <verified-sender@fancyfingers.mk>
+```
+
+`DEFAULT_FROM_EMAIL` must use an address **verified in Brevo** (domain or single sender). If SMTP vars are missing, Django falls back to **console** email — messages appear only in Railway logs, not in your inbox.
+
+Test from the running container:
+
+```bash
+railway ssh /opt/venv/bin/python manage.py test_email your@email.com
+```
+
+After a booking, check deploy logs for `Verification email sent` or `Email send failed`. On the “Check your email” page, use **Resend verification email** (once per minute).
+
 ---
 
 ## Local vs production

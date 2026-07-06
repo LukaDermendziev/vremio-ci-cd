@@ -83,7 +83,7 @@ from .services import (
     MSG_MULTI_SERVICE_NO_FIT,
     parse_service_ids_param,
     process_new_online_booking_emails,
-    process_verification_booking_emails,
+    send_verification_email_for_booking,
     release_booking_slot,
     resolve_services_for_salon,
     send_booking_notification,
@@ -1324,7 +1324,8 @@ def book_salon(request, salon_slug):
                 get_device_token(request),
             )
             if getattr(form, "verification_required", False):
-                defer_after_commit(process_verification_booking_emails, booking.pk)
+                request.session["booking_verify_id"] = booking.pk
+                send_verification_email_for_booking(booking)
                 response = redirect(reverse("booking:booking_verify_email_sent"))
             else:
                 defer_after_commit(process_new_online_booking_emails, booking.pk)
@@ -1384,7 +1385,63 @@ def booking_success_legacy(request, booking_id):
 
 
 def booking_verify_email_sent(request):
-    return render(request, "booking/booking_verify_email_sent.html")
+    booking_id = request.session.get("booking_verify_id")
+    booking = None
+    if booking_id:
+        booking = (
+            Booking.objects.filter(
+                pk=booking_id,
+                status=Booking.Status.UNVERIFIED,
+            )
+            .select_related("customer", "salon")
+            .first()
+        )
+    return render(
+        request,
+        "booking/booking_verify_email_sent.html",
+        {
+            "booking": booking,
+            "can_resend": booking is not None,
+        },
+    )
+
+
+@require_POST
+def resend_booking_verification_email(request):
+    booking_id = request.session.get("booking_verify_id")
+    if not booking_id:
+        raise Http404
+
+    booking = get_object_or_404(
+        Booking.objects.select_related("customer", "salon"),
+        pk=booking_id,
+        status=Booking.Status.UNVERIFIED,
+    )
+
+    last_resend = request.session.get("booking_verify_resend_at")
+    if last_resend and (timezone.now().timestamp() - float(last_resend)) < 60:
+        messages.error(
+            request,
+            _("Please wait a minute before requesting another verification email."),
+        )
+        return redirect(reverse("booking:booking_verify_email_sent"))
+
+    sent, _reason = send_verification_email_for_booking(booking)
+    request.session["booking_verify_resend_at"] = timezone.now().timestamp()
+    if sent:
+        messages.success(
+            request,
+            _("We sent another verification email. Please check your inbox and spam folder."),
+        )
+    else:
+        messages.error(
+            request,
+            _(
+                "We could not send the verification email right now. "
+                "Please try again in a few minutes or contact the salon."
+            ),
+        )
+    return redirect(reverse("booking:booking_verify_email_sent"))
 
 
 def _resolve_salon_for_verify(salon_slug):

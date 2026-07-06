@@ -1926,6 +1926,9 @@ msgstr "Внесете го вашиот телефонски број."
 msgid "Please upload a reference photo for this service."
 msgstr "Прикачете референтна фотографија за оваа услуга."
 
+msgid "Please wait a minute before requesting another verification email."
+msgstr "Почекајте една минута пред повторно да побарате email за потврда."
+
 msgid "Powered by"
 msgstr "Овозможено од"
 
@@ -2100,6 +2103,9 @@ msgstr "Побарано"
 
 msgid "Require email verification for online bookings"
 msgstr "Задолжителна email потврда за онлајн резервации"
+
+msgid "Resend verification email"
+msgstr "Испрати повторно email за потврда"
 
 msgid "Reset Link Sent"
 msgstr "Линкот е испратен"
@@ -2873,6 +2879,13 @@ msgstr "Сакате Vremio за вашиот бизнис?"
 msgid "We"
 msgstr "Ср"
 
+msgid ""
+"We could not send the verification email right now. Please try again in a "
+"few minutes or contact the salon."
+msgstr ""
+"Моментално не можевме да го испратиме email-от за потврда. Обидете се "
+"повторно за неколку минути или контактирајте го салонот."
+
 msgid "We couldn't find a business matching your search."
 msgstr "Не најдовме бизнис според вашето пребарување."
 
@@ -2887,6 +2900,12 @@ msgid ""
 msgstr ""
 "Испративме email за потврда со линк за преглед и управување со вашиот "
 "термин."
+
+msgid ""
+"We sent another verification email. Please check your inbox and spam folder."
+msgstr ""
+"Испративме уште еден email за потврда. Проверете ја поштата и папката за "
+"спам."
 
 msgid ""
 "We sent you a verification link. Click it to complete your booking request."

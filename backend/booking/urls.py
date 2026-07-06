@@ -31,6 +31,11 @@ urlpatterns = [
     ),
     path("booking/verify/<uuid:token>/", views.verify_booking_email, name="verify_booking_email_legacy"),
     path("booking/verify-email-sent/", views.booking_verify_email_sent, name="booking_verify_email_sent"),
+    path(
+        "booking/verify-email-sent/resend/",
+        views.resend_booking_verification_email,
+        name="resend_booking_verification_email",
+    ),
     path("booking/success/", views.booking_success, name="booking_success"),
     path(
         "booking/<int:booking_id>/success/",

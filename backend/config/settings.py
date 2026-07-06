@@ -261,16 +261,32 @@ LOGOUT_REDIRECT_URL = "/owner/login/"
 PASSWORD_RESET_TIMEOUT = 86400  # 24 hours
 
 # ── Email ──────────────────────────────────────────────────────────────────────
-# Development: print emails to console. Switch to SMTP for production.
-EMAIL_BACKEND = os.environ.get(
-    "EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
-)
+# Development: print emails to console. Production: set EMAIL_HOST_USER/PASSWORD or EMAIL_BACKEND.
 EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.gmail.com")
 EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
 EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True") == "True"
 EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", "False") == "True"
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+EMAIL_TIMEOUT = int(os.environ.get("EMAIL_TIMEOUT", "15"))
+
+_email_backend = os.environ.get("EMAIL_BACKEND", "").strip()
+if _email_backend:
+    EMAIL_BACKEND = _email_backend
+elif EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+else:
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+if not DEBUG and "console" in EMAIL_BACKEND:
+    import warnings
+
+    warnings.warn(
+        "EMAIL_BACKEND is console in production. Outgoing mail is logged only — "
+        "set EMAIL_HOST_USER, EMAIL_HOST_PASSWORD, and Brevo SMTP vars on Railway.",
+        stacklevel=1,
+    )
+
 DEFAULT_FROM_EMAIL = os.environ.get(
     "DEFAULT_FROM_EMAIL", "Vremio Booking <noreply@vremio.app>"
 )
@@ -314,7 +330,7 @@ LOGGING = {
         },
         "booking.email": {
             "handlers": ["console"],
-            "level": "WARNING",
+            "level": "INFO",
             "propagate": False,
         },
     },

@@ -1063,14 +1063,62 @@ def defer_after_commit(func, *args, **kwargs):
     """Run a task in a background thread after the DB transaction commits."""
 
     def _run():
+        from django.db import close_old_connections
+
+        close_old_connections()
         try:
             func(*args, **kwargs)
         except Exception:
             logger.exception("Deferred booking task failed: %s", getattr(func, "__name__", func))
+        finally:
+            close_old_connections()
 
     transaction.on_commit(
         lambda: threading.Thread(target=_run, daemon=True).start()
     )
+
+
+def send_verification_email_for_booking(booking):
+    """Send verification email and log activity. Returns (sent, reason)."""
+    from .email_utils import send_booking_verification_email
+
+    log_booking_activity(
+        booking,
+        BookingActivityLog.Action.VERIFICATION_SENT,
+        note="Email verification sent",
+    )
+    sent, reason = send_booking_verification_email(booking)
+    if sent:
+        log_booking_activity(
+            booking,
+            BookingActivityLog.Action.EMAIL_SENT,
+            note="Verification email sent to customer",
+        )
+        logger.info(
+            "Verification email sent for booking %s to %s",
+            booking.pk,
+            booking.customer.email,
+        )
+    else:
+        logger.warning(
+            "Verification email not sent for booking %s (%s)",
+            booking.pk,
+            reason,
+        )
+    return sent, reason
+
+
+def process_verification_booking_emails(booking_id):
+    """Send verification email for an unverified online booking (runs in background)."""
+    booking = (
+        Booking.objects.select_related("customer", "salon", "salon__booking_policy")
+        .filter(pk=booking_id)
+        .first()
+    )
+    if not booking:
+        return
+
+    send_verification_email_for_booking(booking)
 
 
 def process_new_online_booking_emails(booking_id):
@@ -1101,32 +1149,6 @@ def process_new_online_booking_emails(booking_id):
             booking,
             BookingActivityLog.Action.EMAIL_SENT,
             note="Owner notified of new request",
-        )
-
-
-def process_verification_booking_emails(booking_id):
-    """Send verification email for an unverified online booking (runs in background)."""
-    booking = (
-        Booking.objects.select_related("customer", "salon", "salon__booking_policy")
-        .filter(pk=booking_id)
-        .first()
-    )
-    if not booking:
-        return
-
-    from .email_utils import send_booking_verification_email
-
-    log_booking_activity(
-        booking,
-        BookingActivityLog.Action.VERIFICATION_SENT,
-        note="Email verification sent",
-    )
-    sent, _reason = send_booking_verification_email(booking)
-    if sent:
-        log_booking_activity(
-            booking,
-            BookingActivityLog.Action.EMAIL_SENT,
-            note="Verification email sent to customer",
         )
 
 

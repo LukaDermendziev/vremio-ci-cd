@@ -1915,6 +1915,9 @@ msgstr "Please enter your phone number."
 msgid "Please upload a reference photo for this service."
 msgstr "Please upload a reference photo for this service."
 
+msgid "Please wait a minute before requesting another verification email."
+msgstr "Please wait a minute before requesting another verification email."
+
 msgid "Powered by"
 msgstr "Powered by"
 
@@ -2088,6 +2091,9 @@ msgstr "Requested"
 
 msgid "Require email verification for online bookings"
 msgstr "Require email verification for online bookings"
+
+msgid "Resend verification email"
+msgstr "Resend verification email"
 
 msgid "Reset Link Sent"
 msgstr "Reset Link Sent"
@@ -2858,6 +2864,13 @@ msgstr "Want Vremio for your business?"
 msgid "We"
 msgstr "We"
 
+msgid ""
+"We could not send the verification email right now. Please try again in a "
+"few minutes or contact the salon."
+msgstr ""
+"We could not send the verification email right now. Please try again in a "
+"few minutes or contact the salon."
+
 msgid "We couldn't find a business matching your search."
 msgstr "We couldn't find a business matching your search."
 
@@ -2871,6 +2884,11 @@ msgid ""
 "We sent a confirmation email with a link to view and manage your booking."
 msgstr ""
 "We sent a confirmation email with a link to view and manage your booking."
+
+msgid ""
+"We sent another verification email. Please check your inbox and spam folder."
+msgstr ""
+"We sent another verification email. Please check your inbox and spam folder."
 
 msgid ""
 "We sent you a verification link. Click it to complete your booking request."
