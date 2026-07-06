@@ -1,5 +1,6 @@
 from datetime import datetime, time, timedelta
 import io
+from unittest.mock import patch
 
 from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
@@ -1872,6 +1873,17 @@ class AntiAbuseTests(TestCase):
         )
         self.assertEqual(second.status_code, 200)
         self.assertContains(second, "премногу барања")
+
+    def test_rate_limit_fails_open_when_cache_unavailable(self):
+        self.policy.booking_rate_limit_per_ip_per_hour = 1
+        self.policy.save()
+        with patch("booking.anti_abuse.cache.get", side_effect=OSError("redis down")):
+            response = self.client.post(
+                "/book/salon-a/request/",
+                self._post_data("070111001", "one@example.com"),
+            )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(Booking.objects.count(), 1)
 
     def test_owner_manual_booking_not_blocked_with_warning(self):
         self._create_booking("070111222", "owner@example.com")

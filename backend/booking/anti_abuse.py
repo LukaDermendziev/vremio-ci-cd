@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+import logging
 import re
 
 from django.core.cache import cache
@@ -6,6 +7,8 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from .models import Booking, Customer
+
+logger = logging.getLogger(__name__)
 
 ACTIVE_STATUSES = [Booking.Status.PENDING, Booking.Status.APPROVED]
 
@@ -44,6 +47,21 @@ class AntiAbuseResult:
     error_code: str = ""
     user_message: str = ""
     warnings: list = field(default_factory=list)
+
+
+def _safe_cache_get(key, default=0):
+    try:
+        return cache.get(key, default)
+    except Exception:
+        logger.warning("Cache read failed for %s; skipping rate limit", key, exc_info=True)
+        return default
+
+
+def _safe_cache_set(key, value, timeout):
+    try:
+        cache.set(key, value, timeout)
+    except Exception:
+        logger.warning("Cache write failed for %s; booking continues", key, exc_info=True)
 
 
 def normalize_phone(value):
@@ -182,19 +200,19 @@ def _rate_limit_exceeded(salon_id, policy, ip, phone, email):
 
     if ip and ip_limit:
         key = f"booking_rate:ip:{salon_id}:{ip}:{hour_bucket}"
-        if cache.get(key, 0) >= ip_limit:
+        if _safe_cache_get(key, 0) >= ip_limit:
             return True
 
     email = normalize_email(email)
     if email and email_limit:
         key = f"booking_rate:email:{salon_id}:{email}:{day_bucket}"
-        if cache.get(key, 0) >= email_limit:
+        if _safe_cache_get(key, 0) >= email_limit:
             return True
 
     phone = normalize_phone(phone)
     if phone and phone_limit:
         key = f"booking_rate:phone:{salon_id}:{phone}:{day_bucket}"
-        if cache.get(key, 0) >= phone_limit:
+        if _safe_cache_get(key, 0) >= phone_limit:
             return True
 
     return False
@@ -209,21 +227,21 @@ def record_booking_attempt(salon_id, policy, ip, phone, email, device_token=""):
 
     if ip:
         key = f"booking_rate:ip:{salon_id}:{ip}:{hour_bucket}"
-        cache.set(key, cache.get(key, 0) + 1, ttl_hour)
+        _safe_cache_set(key, _safe_cache_get(key, 0) + 1, ttl_hour)
 
     email = normalize_email(email)
     if email:
         key = f"booking_rate:email:{salon_id}:{email}:{day_bucket}"
-        cache.set(key, cache.get(key, 0) + 1, ttl_day)
+        _safe_cache_set(key, _safe_cache_get(key, 0) + 1, ttl_day)
 
     phone = normalize_phone(phone)
     if phone:
         key = f"booking_rate:phone:{salon_id}:{phone}:{day_bucket}"
-        cache.set(key, cache.get(key, 0) + 1, ttl_day)
+        _safe_cache_set(key, _safe_cache_get(key, 0) + 1, ttl_day)
 
     if device_token and ip:
         key = f"booking_rate:device:{salon_id}:{device_token}:{ip}:{hour_bucket}"
-        cache.set(key, cache.get(key, 0) + 1, ttl_hour)
+        _safe_cache_set(key, _safe_cache_get(key, 0) + 1, ttl_hour)
 
 
 def check_public_booking_allowed(

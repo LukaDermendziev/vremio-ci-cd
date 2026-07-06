@@ -45,9 +45,9 @@ The app already supports Redis: set `CACHE_URL` and Django uses the built-in `Re
 1. In the project canvas, click **+ New** → **Database** → **Redis**.
 2. Open your **web service** → **Variables** → **Add reference**.
 3. Pick the Redis service variable (usually `REDIS_URL`).
-4. Add a **new** variable on the web service named `CACHE_URL` and set its value to that Redis URL reference.
+4. Add a **new** variable on the web service named `CACHE_URL` and set its value to the Redis **private** URL reference (e.g. `REDIS_PRIVATE_URL` or `${{Redis.REDIS_PRIVATE_URL}}`).
 
-   Railway may let you reference `REDIS_URL` directly as `CACHE_URL` — either way, the web service must expose **`CACHE_URL`** (that is what `settings.py` reads).
+   Railway may expose both public and private URLs — use the **private** one so the web service can reach Redis on Railway’s internal network.
 
 5. Redeploy the web service.
 
@@ -364,6 +364,12 @@ On `www.fancyfingers.mk`, visiting `/` redirects to the Fancy Fingers salon page
 
 **DisallowedHost error**  
 → Add the hostname to `DJANGO_ALLOWED_HOSTS` or rely on `RAILWAY_PUBLIC_DOMAIN` auto-add for the Railway URL.
+
+**Booking hung or failed around deploy time**  
+→ Logs like `Handling signal: term` and `Worker exiting` mean Railway restarted the app (new deploy), not a booking bug. In-flight requests are killed mid-response. Wait ~1 minute after deploy, then try again. If a booking was saved but the browser never got the redirect, delete the stuck **Unverified** or **Pending** row in the owner dashboard before retrying.
+
+**Booking still slow after deploy**  
+→ Check `CACHE_URL` uses Railway’s **private** Redis URL (`REDIS_PRIVATE_URL` or internal reference), not a public URL the app cannot reach. Wrong Redis can block rate-limit cache calls. With the latest code, cache failures are logged and bookings still proceed.
 
 ---
 
