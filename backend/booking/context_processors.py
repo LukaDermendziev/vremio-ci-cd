@@ -1,3 +1,4 @@
+from .domain_utils import is_customer_domain
 from .legal_utils import get_vremio_contact_email
 
 
@@ -14,4 +15,5 @@ def vremio(request):
     return {
         "vremio_contact_email": contact_email,
         "vremio_contact_placeholder": not contact_email,
+        "is_customer_domain": is_customer_domain(request),
     }

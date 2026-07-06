@@ -10,7 +10,7 @@ from django.contrib.auth import logout as auth_logout
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.db.models import Prefetch, Q
-from django.http import FileResponse, Http404, HttpResponseForbidden, JsonResponse
+from django.http import FileResponse, Http404, HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -105,6 +105,10 @@ def _slots_json(slots, *, last_minute=False, release_unavailable=False):
             "release_unavailable": release_unavailable,
         }
     )
+
+
+def health(request):
+    return HttpResponse("ok", content_type="text/plain")
 
 
 def home(request):

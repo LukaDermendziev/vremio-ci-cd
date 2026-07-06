@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Django system check
+        env:
+          DJANGO_SECRET_KEY: ci-test-secret-key-not-for-production
+        run: python manage.py check
+
+      - name: Run tests
+        env:
+          DJANGO_SECRET_KEY: ci-test-secret-key-not-for-production
+        run: python manage.py test --verbosity=2
+
+  production-check:
+    name: Production settings check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Deploy readiness check
+        env:
+          DJANGO_SECRET_KEY: ci-production-check-secret-key-must-be-at-least-fifty-characters-long
+          DJANGO_DEBUG: "False"
+          DATABASE_URL: postgres://ci:ci@localhost:5432/ci
+          DJANGO_ALLOWED_HOSTS: www.example.com,example.com
+          SITE_URL: https://www.example.com
+          CUSTOMER_DOMAINS: www.example.com
+          CUSTOMER_DOMAIN_SALON_SLUG: example-salon
+          SECURE_HSTS_PRELOAD: "True"
+        run: python manage.py check --deploy --fail-level WARNING

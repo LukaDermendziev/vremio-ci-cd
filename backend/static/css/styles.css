@@ -262,6 +262,7 @@ button { font-family: inherit; cursor: pointer; }
   gap: 8px;
   margin-bottom: 16px;
   min-height: 44px;
+  width: 100%;
 }
 .bk-slots-hint {
   font-size: 13px;
@@ -3246,7 +3247,10 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
 }
 
 /* ── Slots ───────────────────────────────────────────────────────────────── */
-.bk-slots-section { margin: 16px 0 8px; }
+.bk-slots-section {
+  margin: 16px 0 8px;
+  flex-shrink: 0;
+}
 .bk-slot {
   border-radius: 10px;
   padding: 12px 8px;
@@ -3254,8 +3258,11 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
   font-weight: 600;
   text-align: center;
   min-height: 44px;
+  min-width: 0;
+  width: 100%;
+  opacity: 1;
   transition: border-color 0.14s, background 0.14s, transform 0.08s, box-shadow 0.14s;
-  animation: bk-slot-in 0.28s ease both;
+  animation: bk-slot-in 0.28s ease forwards;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
 }
@@ -3293,6 +3300,26 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
 }
 .bk-slots-loading i { animation: bk-spin 0.9s linear infinite; }
 @keyframes bk-spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 640px) {
+  .bk-slots-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .bk-slot {
+    padding: 13px 10px;
+    font-size: 14px;
+  }
+}
+
+/* Touch browsers: skip slot entrance animation (avoids hidden 4th slot in Chrome/Firefox/Samsung too). */
+@media (hover: none) and (pointer: coarse) {
+  .bk-slot {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
 
 /* ── Expandable service cards (with price sub-items) ─────────────────────── */
 .bk-svc-card {
@@ -3638,7 +3665,7 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
 @media (prefers-reduced-motion: reduce) {
   .bk-check-circle  { animation: none; stroke-dashoffset: 0; }
   .bk-check-mark    { animation: none; stroke-dashoffset: 0; }
-  .bk-slot          { animation: none; }
+  .bk-slot          { animation: none; opacity: 1; transform: none; }
   .bk-confirm-bar   { animation: none; }
 }
 
@@ -3876,7 +3903,6 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
   width: 100%;         /* full-width on mobile (behind text) */
   z-index: 1;
   overflow: hidden;
-  /* Clip only — filter lives on .sp-gallery-inner (Safari overflow + filter bug) */
 }
 
 .sp-gallery-inner {
@@ -3887,7 +3913,18 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
   height: 100%;
   min-height: 0;
   padding: 0 8px 0 0;
-  filter: brightness(0.68) saturate(0.82);
+  position: relative;
+  /* Avoid filter here — it breaks transform animations in WebKit/Blink/Firefox. */
+}
+
+/* Dim photos with an overlay instead of filter (works in all browsers). */
+.sp-gallery-inner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(20, 10, 16, 0.36);
+  pointer-events: none;
+  z-index: 2;
 }
 
 @media (min-width: 900px) {
@@ -3896,7 +3933,9 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
   }
   .sp-gallery-inner {
     padding: 0 24px 0 0;
-    filter: brightness(0.72) saturate(0.85);
+  }
+  .sp-gallery-inner::before {
+    background: rgba(20, 10, 16, 0.30);
   }
 }
 
@@ -3929,13 +3968,16 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
   height: 100%;
   overflow: hidden;
   position: relative;
+  z-index: 1;
   -webkit-transform: translateZ(0);
   transform: translateZ(0);
 }
 
-@supports (overflow: clip) {
-  .sp-gallery-col {
-    overflow: clip;
+@media (min-width: 900px) {
+  @supports (overflow: clip) {
+    .sp-gallery-col {
+      overflow: clip;
+    }
   }
 }
 
@@ -3955,56 +3997,52 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
   will-change: transform;
   -webkit-transform: translate3d(0, 0, 0);
   transform: translate3d(0, 0, 0);
-  /* Wait until loop distance is measured — avoids jump on load */
-  animation: none;
-  -webkit-animation: none;
 }
 
-.sp-gallery-track.sp-track-ready.sp-track-up {
-  -webkit-animation: sp-scroll-up var(--dur, 24s) var(--delay, 0s) linear infinite;
-  animation: sp-scroll-up var(--dur, 24s) var(--delay, 0s) linear infinite;
+.sp-gallery-track.sp-track-up {
+  -webkit-animation: sp-scroll-up var(--dur, 24s) linear infinite;
+  -moz-animation: sp-scroll-up var(--dur, 24s) linear infinite;
+  animation: sp-scroll-up var(--dur, 24s) linear infinite;
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
 }
-.sp-gallery-track.sp-track-ready.sp-track-down {
-  -webkit-animation: sp-scroll-up var(--dur, 24s) var(--delay, 0s) linear infinite reverse;
-  animation: sp-scroll-up var(--dur, 24s) var(--delay, 0s) linear infinite reverse;
+.sp-gallery-track.sp-track-down {
+  -webkit-animation: sp-scroll-up var(--dur, 24s) linear infinite reverse;
+  -moz-animation: sp-scroll-up var(--dur, 24s) linear infinite reverse;
+  animation: sp-scroll-up var(--dur, 24s) linear infinite reverse;
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
-}
-
-.sp-track-up {
-  /* class marker only — animation applied when .sp-track-ready */
-}
-.sp-track-down {
-  /* class marker only — animation applied when .sp-track-ready */
 }
 
 @-webkit-keyframes sp-scroll-up {
   from { -webkit-transform: translate3d(0, 0, 0); transform: translate3d(0, 0, 0); }
-  to   { -webkit-transform: translate3d(0, calc(-1 * var(--loop-distance, 50%)), 0); transform: translate3d(0, calc(-1 * var(--loop-distance, 50%)), 0); }
+  to   { -webkit-transform: translate3d(0, -50%, 0); transform: translate3d(0, -50%, 0); }
 }
 @keyframes sp-scroll-up {
   from { -webkit-transform: translate3d(0, 0, 0); transform: translate3d(0, 0, 0); }
-  to   { -webkit-transform: translate3d(0, calc(-1 * var(--loop-distance, 50%)), 0); transform: translate3d(0, calc(-1 * var(--loop-distance, 50%)), 0); }
+  to   { -webkit-transform: translate3d(0, -50%, 0); transform: translate3d(0, -50%, 0); }
 }
 
 /* Honour prefers-reduced-motion */
 @media (prefers-reduced-motion: reduce) {
-  .sp-gallery-track { animation: none !important; -webkit-animation: none !important; }
+  .sp-gallery-track {
+    -webkit-animation: none !important;
+    -moz-animation: none !important;
+    animation: none !important;
+  }
 }
 
 /* ── Individual card (now <img> tags with real photos) ───────────────────── */
 .sp-gal-card {
   border-radius: 14px;
   flex-shrink: 0;
-    width: 100%;
+  width: 100%;
+  min-height: 120px;
   display: block;
   object-fit: cover;
   object-position: center center;
-  overflow: hidden;
+  background: #1a1018;
   box-shadow: 0 4px 18px rgba(0,0,0,0.30);
-  transition: transform 0.3s ease;
 }
 
 /* ── Placeholder colour classes no longer needed (kept for fallback) ──────── */

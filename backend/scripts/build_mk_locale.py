@@ -80,6 +80,7 @@ TRANSLATIONS = {
     "(optional)": "(опционално)",
     "Via": "Преку",
     "min": "мин",
+    "Total": "Вкупно",
     "January": "Јануари",
     "February": "Февруари",
     "March": "Март",

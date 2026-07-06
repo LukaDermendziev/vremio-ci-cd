@@ -2606,6 +2606,9 @@ msgstr "Today"
 msgid "Today's appointments"
 msgstr "Today's appointments"
 
+msgid "Total"
+msgstr "Total"
+
 msgid "Total duration: %(minutes)s min"
 msgstr "Total duration: %(minutes)s min"
 

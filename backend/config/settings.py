@@ -42,6 +42,26 @@ CSRF_TRUSTED_ORIGINS = _env_list("CSRF_TRUSTED_ORIGINS")
 
 SITE_URL = os.environ.get("SITE_URL", "http://127.0.0.1:8000").rstrip("/")
 
+# Salon-branded customer domain(s) — homepage redirects to CUSTOMER_DOMAIN_SALON_SLUG.
+CUSTOMER_DOMAINS = _env_list("CUSTOMER_DOMAINS")
+CUSTOMER_DOMAIN_SALON_SLUG = os.environ.get("CUSTOMER_DOMAIN_SALON_SLUG", "").strip()
+
+for _host in CUSTOMER_DOMAINS:
+    if _host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(_host)
+
+_railway_domain = os.environ.get("RAILWAY_PUBLIC_DOMAIN", "").strip().lower()
+if _railway_domain and _railway_domain not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(_railway_domain)
+
+if not DEBUG:
+    for _host in ALLOWED_HOSTS:
+        if _host in ("*", "localhost", "127.0.0.1") or _host.startswith("."):
+            continue
+        _origin = f"https://{_host}"
+        if _origin not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS.append(_origin)
+
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -58,6 +78,7 @@ MIDDLEWARE = [
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
+    "booking.middleware.CustomerDomainMiddleware",
     "booking.middleware.DefaultMacedonianLocaleMiddleware",
     "booking.middleware.NeverCacheOwnerMiddleware",
     "django.middleware.common.CommonMiddleware",

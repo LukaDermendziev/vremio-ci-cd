@@ -134,6 +134,38 @@ class HomePageTests(TestCase):
         self.assertContains(response, "hello@vremio.test")
 
 
+class CustomerDomainTests(TestCase):
+    @override_settings(
+        ALLOWED_HOSTS=["www.fancyfingers.mk", "fancyfingers.mk", "testserver"],
+        CUSTOMER_DOMAINS=["www.fancyfingers.mk", "fancyfingers.mk"],
+        CUSTOMER_DOMAIN_SALON_SLUG="fancy-fingers",
+    )
+    def test_customer_domain_root_redirects_to_salon_page(self):
+        response = self.client.get("/", HTTP_HOST="www.fancyfingers.mk")
+        self.assertRedirects(
+            response,
+            "/book/fancy-fingers/",
+            fetch_redirect_response=False,
+        )
+
+    @override_settings(
+        ALLOWED_HOSTS=["vremio-production.up.railway.app", "testserver"],
+        CUSTOMER_DOMAINS=["www.fancyfingers.mk"],
+        CUSTOMER_DOMAIN_SALON_SLUG="fancy-fingers",
+    )
+    def test_railway_domain_still_shows_vremio_home(self):
+        response = self.client.get("/", HTTP_HOST="vremio-production.up.railway.app")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Vremio")
+
+
+class HealthCheckTests(TestCase):
+    def test_health_returns_ok(self):
+        response = self.client.get("/health/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content.decode(), "ok")
+
+
 class LegalComplianceTests(TestCase):
     def setUp(self):
         cache.clear()

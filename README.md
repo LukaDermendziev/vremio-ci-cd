@@ -270,6 +270,10 @@ Before giving the app to a real salon owner:
 
 See [`docs/beta-deployment.md`](docs/beta-deployment.md) for provider-neutral deployment steps.
 
+**Railway (production):** [`docs/railway-deployment.md`](docs/railway-deployment.md) — dual-domain setup, env vars, CI/CD.
+
+**CI:** GitHub Actions runs tests on every push/PR to `master` (see [`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
+
 ---
 
 ## Development Philosophy
