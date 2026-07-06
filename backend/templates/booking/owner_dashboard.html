@@ -444,8 +444,7 @@
               <button type="button" class="od-btn od-btn-ghost od-btn-sm" data-edit-service="{{ service.id }}">
                 <i class="bi bi-pencil"></i> {% trans "Edit" %}
               </button>
-              <form method="post" style="display:inline"
-                    onsubmit="return confirm('{% filter escapejs %}{% blocktrans with name=service.name %}Delete service "{{ name }}"? This cannot be undone.{% endblocktrans %}{% endfilter %}')">
+              <form method="post" style="display:inline">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="delete_service">
                 <input type="hidden" name="service_id" value="{{ service.id }}">
@@ -530,7 +529,7 @@
                                 data-item-group="{{ item.group|escapejs }}"
                                 data-item-sort="{{ item.sort_order }}"
                                 data-item-photo="{{ item.photo_required|yesno:'true,false' }}">{% trans "Edit" %}</button>
-                              <form method="post" style="display:inline" onsubmit="return confirm('{% filter escapejs %}{% trans "Delete this item?" %}{% endfilter %}')">
+                              <form method="post" style="display:inline">
                                 {% csrf_token %}
                                 <input type="hidden" name="action" value="delete_price_item">
                                 <input type="hidden" name="return_section" value="services">
@@ -819,6 +818,7 @@
 {% include "booking/partials/owner_block_customer_modal.html" %}
 {% include "booking/partials/owner_message_modal.html" %}
 {% include "booking/partials/owner_photo_modal.html" %}
+{% include "booking/partials/owner_confirm_modal.html" %}
 
 {% endif %}
 {% endblock %}
@@ -829,6 +829,7 @@
 {% if salon %}
 {% load static i18n %}
 <script src="{% static 'js/owner_ajax.js' %}"></script>
+<script src="{% static 'js/owner_confirm.js' %}"></script>
 <script src="{% static 'js/owner_block_customer.js' %}"></script>
 <script src="{% static 'js/owner_dashboard.js' %}"></script>
 <script src="{% static 'js/owner_calendar_mobile.js' %}"></script>
@@ -846,7 +847,12 @@ window.OD_I18N = {
   confirmDeleteBooking: "{% filter escapejs %}{% trans "Delete this booking permanently?" %}{% endfilter %}",
   addService: "{% filter escapejs %}{% trans "Add service" %}{% endfilter %}",
   editService: "{% filter escapejs %}{% trans "Edit service" %}{% endfilter %}",
-  confirmDeleteService: "{% filter escapejs %}{% trans "Delete this service?" %}{% endfilter %}",
+  confirmDeleteService: "{% filter escapejs %}{% trans "Delete this service? This cannot be undone." %}{% endfilter %}",
+  confirmDeleteServiceNamed: "{% filter escapejs %}{% trans 'Delete service \"%(name)s\"? This cannot be undone.' %}{% endfilter %}",
+  confirmDeletePriceItem: "{% filter escapejs %}{% trans "Delete this price item?" %}{% endfilter %}",
+  confirmTitle: "{% filter escapejs %}{% trans "Are you sure?" %}{% endfilter %}",
+  confirmCancel: "{% filter escapejs %}{% trans "Cancel" %}{% endfilter %}",
+  confirmDelete: "{% filter escapejs %}{% trans "Delete" %}{% endfilter %}",
   statusPending: "{% filter escapejs %}{% trans "Pending" %}{% endfilter %}",
   statusApproved: "{% filter escapejs %}{% trans "Approved" %}{% endfilter %}",
   statusRejected: "{% filter escapejs %}{% trans "Rejected" %}{% endfilter %}",

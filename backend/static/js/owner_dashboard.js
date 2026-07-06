@@ -767,7 +767,7 @@ function initOwnerDashboard(config) {
     serviceDeleteBtn.style.display = serviceId ? "" : "none";
 
     if (serviceId) {
-      const row = document.querySelector(`.od-svc-row[data-service-id="${serviceId}"]`);
+      const row = document.querySelector(`.od-svc-card[data-service-id="${serviceId}"]`);
       if (row) {
         serviceForm.querySelector('[name="service_id"]').value = serviceId;
         serviceForm.querySelector('[name="name"]').value = row.dataset.name || "";
@@ -1053,7 +1053,10 @@ function initOwnerDashboard(config) {
       const card = btn.closest(".od-bk-card");
       if (!card && action !== "delete_reference_photo") return;
       if (CONFIRM_ACTIONS[action]) {
-        if (!confirm(CONFIRM_ACTIONS[action])) return;
+        const ok = window.OwnerConfirm?.ask
+          ? await window.OwnerConfirm.ask(CONFIRM_ACTIONS[action])
+          : confirm(CONFIRM_ACTIONS[action]);
+        if (!ok) return;
       }
       if (window.OwnerAjax) {
         window.OwnerAjax.setButtonLoading(btn, true);

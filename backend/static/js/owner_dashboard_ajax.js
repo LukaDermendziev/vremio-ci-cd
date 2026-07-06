@@ -10,6 +10,36 @@
     return i18n[key] != null && i18n[key] !== "" ? i18n[key] : fallback;
   };
 
+  async function confirmAsk(message, options = {}) {
+    if (global.OwnerConfirm?.ask) {
+      return global.OwnerConfirm.ask(message, options);
+    }
+    return global.confirm(message);
+  }
+
+  function serviceCard(serviceId) {
+    return global.document.querySelector(`.od-svc-card[data-service-id="${serviceId}"]`);
+  }
+
+  function serviceDeleteMessage(serviceId) {
+    const card = serviceId ? serviceCard(serviceId) : null;
+    const serviceName = card?.dataset.name?.trim();
+    if (serviceName) {
+      return t(
+        "confirmDeleteServiceNamed",
+        `Delete service "${serviceName}"? This cannot be undone.`,
+      ).replace("%(name)s", serviceName);
+    }
+    return t("confirmDeleteService", "Delete this service? This cannot be undone.");
+  }
+
+  function removeServiceCard(serviceId) {
+    const card = serviceId ? serviceCard(serviceId) : null;
+    if (!card) return;
+    card.classList.add("od-removing");
+    global.setTimeout(() => card.remove(), 200);
+  }
+
   function syncStats(data) {
     const stats = data.payload?.stats || {};
     if (stats.pending_count !== undefined) {
@@ -29,7 +59,9 @@
 
   function closeModal(id) {
     global.document.getElementById(id)?.classList.remove("open");
-    global.document.body.classList.remove("od-modal-open");
+    if (!global.document.querySelector(".od-modal-overlay.open")) {
+      global.document.body.classList.remove("od-modal-open");
+    }
   }
 
   async function refreshSection(sectionId) {
@@ -67,13 +99,16 @@
       form.dataset.odInlineDeleteBound = "1";
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
-        const confirmMsg =
-          action === "delete_price_item"
-            ? t("confirmDeletePriceItem", "Delete this price item?")
-            : action === "delete_blocked_date"
-              ? t("confirmRemoveBlockedDate", "Remove this blocked date?")
-              : t("confirmDeleteService", "Delete this service?");
-        if (!confirm(confirmMsg)) return;
+        let confirmMsg;
+        if (action === "delete_price_item") {
+          confirmMsg = t("confirmDeletePriceItem", "Delete this price item?");
+        } else if (action === "delete_blocked_date") {
+          confirmMsg = t("confirmRemoveBlockedDate", "Remove this blocked date?");
+        } else {
+          const serviceId = form.querySelector('[name="service_id"]')?.value;
+          confirmMsg = serviceDeleteMessage(serviceId);
+        }
+        if (!(await confirmAsk(confirmMsg))) return;
         const submitBtn = form.querySelector('[type="submit"]');
         OA.setButtonLoading(submitBtn, true);
         try {
@@ -87,10 +122,10 @@
           } else if (action === "delete_blocked_date") {
             form.closest("li")?.remove();
           } else if (action === "delete_service") {
-            const serviceId = form.querySelector('[name="service_id"]')?.value;
-            global.document
-              .querySelector(`.od-svc-row[data-service-id="${serviceId}"]`)
-              ?.remove();
+            const serviceId =
+              data.payload?.deleted_service_id ||
+              form.querySelector('[name="service_id"]')?.value;
+            removeServiceCard(serviceId);
           }
           await calendarRefresh();
         } catch (err) {
@@ -108,7 +143,12 @@
     if (!form || !btn || btn.dataset.odDeleteBound) return;
     btn.dataset.odDeleteBound = "1";
     btn.addEventListener("click", async () => {
-      if (!confirm(t(confirmKey, confirmFallback))) return;
+      let confirmMsg = t(confirmKey, confirmFallback);
+      if (formId === "od-service-delete-form") {
+        const serviceId = form.querySelector('[name="service_id"]')?.value;
+        confirmMsg = serviceDeleteMessage(serviceId);
+      }
+      if (!(await confirmAsk(confirmMsg))) return;
       OA.setButtonLoading(btn, true);
       try {
         const body = new URLSearchParams(new FormData(form));
@@ -213,10 +253,16 @@
       "od-service-delete-form",
       "od-service-delete",
       "confirmDeleteService",
-      "Delete this service?",
-      async () => {
+      "Delete this service? This cannot be undone.",
+      async (data) => {
+        const deletedId =
+          data.payload?.deleted_service_id ||
+          global.document
+            .getElementById("od-service-delete-form")
+            ?.querySelector('[name="service_id"]')
+            ?.value;
+        removeServiceCard(deletedId);
         closeModal("od-service-modal");
-        await refreshSection("od-sec-services");
       },
     );
 
