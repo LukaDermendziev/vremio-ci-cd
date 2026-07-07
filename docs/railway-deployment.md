@@ -146,6 +146,7 @@ DJANGO_DEBUG=False
 
 DJANGO_ALLOWED_HOSTS=www.fancyfingers.mk,fancyfingers.mk
 SITE_URL=https://www.fancyfingers.mk
+USE_RAILWAY_SITE_URL=True
 
 CUSTOMER_DOMAINS=www.fancyfingers.mk,fancyfingers.mk
 CUSTOMER_DOMAIN_SALON_SLUG=fancy-fingers
@@ -202,6 +203,19 @@ MEDIA_ROOT=/app/media
 
 `RAILWAY_PUBLIC_DOMAIN` is injected by Railway and added to `ALLOWED_HOSTS` automatically.  
 `CSRF_TRUSTED_ORIGINS` is auto-built from `https://` + each allowed host when `DEBUG=False`.
+
+### Public URL for emails and verify links
+
+Until `fancyfingers.mk` is live, keep **`USE_RAILWAY_SITE_URL=True`**. Verify links, manage-booking links, and email URLs then use your `*.up.railway.app` domain automatically.
+
+When the custom domain is ready:
+
+```env
+SITE_URL=https://www.fancyfingers.mk
+USE_RAILWAY_SITE_URL=False
+```
+
+(or remove `USE_RAILWAY_SITE_URL` entirely)
 
 ### Email (Brevo — use HTTPS API on Railway)
 

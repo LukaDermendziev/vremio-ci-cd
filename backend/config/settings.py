@@ -40,7 +40,25 @@ ALLOWED_HOSTS = _env_list("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1")
 
 CSRF_TRUSTED_ORIGINS = _env_list("CSRF_TRUSTED_ORIGINS")
 
-SITE_URL = os.environ.get("SITE_URL", "http://127.0.0.1:8000").rstrip("/")
+_railway_public = os.environ.get("RAILWAY_PUBLIC_DOMAIN", "").strip().lower()
+_site_url_explicit = os.environ.get("SITE_URL", "").strip().rstrip("/")
+_use_railway_site = os.environ.get("USE_RAILWAY_SITE_URL", "").strip().lower() in (
+    "1",
+    "true",
+    "yes",
+)
+
+# Public URL for emails, verify links, and manage-booking links.
+# During Railway testing: USE_RAILWAY_SITE_URL=True (uses *.up.railway.app).
+# After custom domain is live: set SITE_URL=https://www.fancyfingers.mk and turn the flag off.
+if _use_railway_site and _railway_public:
+    SITE_URL = f"https://{_railway_public}"
+elif _site_url_explicit:
+    SITE_URL = _site_url_explicit
+elif _railway_public and os.environ.get("RAILWAY_ENVIRONMENT"):
+    SITE_URL = f"https://{_railway_public}"
+else:
+    SITE_URL = "http://127.0.0.1:8000"
 
 # Salon-branded customer domain(s) — homepage redirects to CUSTOMER_DOMAIN_SALON_SLUG.
 CUSTOMER_DOMAINS = _env_list("CUSTOMER_DOMAINS")
@@ -50,7 +68,7 @@ for _host in CUSTOMER_DOMAINS:
     if _host not in ALLOWED_HOSTS:
         ALLOWED_HOSTS.append(_host)
 
-_railway_domain = os.environ.get("RAILWAY_PUBLIC_DOMAIN", "").strip().lower()
+_railway_domain = _railway_public
 if _railway_domain and _railway_domain not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(_railway_domain)
 

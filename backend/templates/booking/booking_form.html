@@ -511,15 +511,43 @@ window.BK_I18N = {
     return sum + serviceGapMin * Math.max(0, state.selections.length - 1);
   }
 
+  function selectionPrices() {
+    return state.selections
+      .map(s => String(s.priceItem ? s.priceItem.price : s.service.price || '').trim())
+      .filter(Boolean);
+  }
+
+  function isSummablePrice(price) {
+    const p = String(price || '').trim().replace(',', '.');
+    if (!p) return false;
+    if (/^\d+(\.\d+)?$/.test(p)) return true;
+    if (/^\+\d+(\.\d+)?(\/\d+(\.\d+)?)?$/.test(p)) return true;
+    return false;
+  }
+
+  function priceLowerBound(price) {
+    const p = String(price || '').trim().replace(',', '.');
+    if (!p) return NaN;
+    if (p.startsWith('+')) {
+      return parseFloat(p.slice(1).split('/')[0].split('-')[0]);
+    }
+    if (/^\d+(\.\d+)?$/.test(p)) return parseFloat(p);
+    return parseFloat(p.split('/')[0].split('-')[0]);
+  }
+
   function totalPriceDisplay() {
+    const prices = selectionPrices();
+    if (!prices.length) return '';
+    if (prices.length === 1) return prices[0];
+    if (!prices.every(isSummablePrice)) {
+      return prices.join(' + ');
+    }
     let total = 0;
-    let hasPrice = false;
-    state.selections.forEach(s => {
-      const p = s.priceItem ? s.priceItem.price : s.service.price;
-      const n = parseFloat(String(p).replace(/[^0-9.+-]/g, '').split(/[+\/-]/)[0]);
-      if (!isNaN(n)) { total += n; hasPrice = true; }
+    prices.forEach(p => {
+      const n = priceLowerBound(p);
+      if (!isNaN(n)) total += n;
     });
-    return hasPrice ? String(Math.round(total)) : '';
+    return String(Math.round(total));
   }
 
   function displayName() {
