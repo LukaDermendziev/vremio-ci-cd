@@ -1325,7 +1325,8 @@ def book_salon(request, salon_slug):
             )
             if getattr(form, "verification_required", False):
                 request.session["booking_verify_id"] = booking.pk
-                send_verification_email_for_booking(booking)
+                sent, _reason = send_verification_email_for_booking(booking)
+                request.session["booking_verify_email_failed"] = not sent
                 response = redirect(reverse("booking:booking_verify_email_sent"))
             else:
                 defer_after_commit(process_new_online_booking_emails, booking.pk)
@@ -1396,12 +1397,14 @@ def booking_verify_email_sent(request):
             .select_related("customer", "salon")
             .first()
         )
+    email_failed = request.session.pop("booking_verify_email_failed", False)
     return render(
         request,
         "booking/booking_verify_email_sent.html",
         {
             "booking": booking,
             "can_resend": booking is not None,
+            "email_failed": email_failed,
         },
     )
 
@@ -1428,6 +1431,7 @@ def resend_booking_verification_email(request):
 
     sent, _reason = send_verification_email_for_booking(booking)
     request.session["booking_verify_resend_at"] = timezone.now().timestamp()
+    request.session["booking_verify_email_failed"] = not sent
     if sent:
         messages.success(
             request,

@@ -14,6 +14,13 @@
 
     <h1 class="bk-success-title">{% trans "Check your email" %}</h1>
 
+    {% if email_failed %}
+    <div class="bk-success-notice bk-success-notice--warn">
+      <i class="bi bi-exclamation-triangle"></i>
+      {% trans "We could not send the verification email. Use the button below to try again, or contact the salon." %}
+    </div>
+    {% endif %}
+
     <p class="bk-success-msg">
       {% trans "We sent you a verification link. Click it to complete your booking request." %}
     </p>

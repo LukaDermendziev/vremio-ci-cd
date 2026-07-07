@@ -17,6 +17,14 @@ class Command(BaseCommand):
         if not recipient or "@" not in recipient:
             raise CommandError("Provide a valid recipient email address.")
 
+        from django.conf import settings
+
+        self.stdout.write(f"Email backend: {settings.EMAIL_BACKEND}")
+        if getattr(settings, "BREVO_API_KEY", ""):
+            self.stdout.write("Brevo API key: configured")
+        elif settings.EMAIL_HOST_USER:
+            self.stdout.write(f"SMTP host: {settings.EMAIL_HOST}:{settings.EMAIL_PORT}")
+
         sent, reason = send_test_email(recipient)
         if sent:
             self.stdout.write(self.style.SUCCESS(f"Test email sent to {recipient}."))

@@ -3491,3 +3491,51 @@ class OwnerDashboardAjaxTests(TestCase):
         self.assertTrue(data["cancelled"])
         booking.refresh_from_db()
         self.assertEqual(booking.status, Booking.Status.CANCELLED)
+
+
+class BrevoAPIEmailBackendTests(TestCase):
+    @override_settings(
+        BREVO_API_KEY="test-key",
+        DEFAULT_FROM_EMAIL="Fancy Fingers <noreply@test.local>",
+        EMAIL_BACKEND="booking.backends.brevo_api.BrevoAPIEmailBackend",
+    )
+    @patch("booking.backends.brevo_api.urllib.request.urlopen")
+    def test_sends_via_brevo_api(self, mock_urlopen):
+        from unittest.mock import MagicMock
+
+        from django.core.mail import EmailMultiAlternatives
+
+        from booking.backends.brevo_api import BREVO_API_URL
+
+        mock_response = MagicMock()
+        mock_response.__enter__ = MagicMock(return_value=mock_response)
+        mock_response.__exit__ = MagicMock(return_value=False)
+        mock_response.status = 201
+        mock_response.read = MagicMock(return_value=b'{"messageId":"abc"}')
+        mock_urlopen.return_value = mock_response
+
+        msg = EmailMultiAlternatives(
+            subject="Test subject",
+            body="Hello body",
+            from_email="Fancy Fingers <noreply@test.local>",
+            to=["user@example.com"],
+            reply_to=["owner@test.local"],
+        )
+        msg.attach_alternative("<p>Hello body</p>", "text/html")
+        sent = msg.send()
+        self.assertEqual(sent, 1)
+        mock_urlopen.assert_called_once()
+        request = mock_urlopen.call_args[0][0]
+        self.assertEqual(request.get_method(), "POST")
+        self.assertEqual(request.full_url, BREVO_API_URL)
+        self.assertEqual(request.headers.get("Api-key"), "test-key")
+
+    @override_settings(
+        BREVO_API_KEY="",
+        EMAIL_BACKEND="booking.backends.brevo_api.BrevoAPIEmailBackend",
+    )
+    def test_missing_api_key_returns_zero(self):
+        from django.core.mail import send_mail
+
+        sent = send_mail("Subject", "Body", None, ["user@example.com"], fail_silently=True)
+        self.assertEqual(sent, 0)

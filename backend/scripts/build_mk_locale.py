@@ -230,7 +230,7 @@ TRANSLATIONS = {
     "Resend verification email": "Испрати повторно email за потврда",
     "Please wait a minute before requesting another verification email.": "Почекајте една минута пред повторно да побарате email за потврда.",
     "We sent another verification email. Please check your inbox and spam folder.": "Испративме уште еден email за потврда. Проверете ја поштата и папката за спам.",
-    "We could not send the verification email right now. Please try again in a few minutes or contact the salon.": "Моментално не можевме да го испратиме email-от за потврда. Обидете се повторно за неколку минути или контактирајте го салонот.",
+    "We could not send the verification email. Use the button below to try again, or contact the salon.": "Не можевме да го испратиме email-от за потврда. Користете го копчето подолу за повторен обид или контактирајте го салонот.",
     "Verification failed": "Потврдата не успеа",
     "The verification link has expired. Please submit a new booking request.": "Линкот за потврда е истечен. Ве молиме испратете ново барање за термин.",
     "The selected time slot is no longer available. Please choose another time.": "Избраниот термин повеќе не е достапен. Ве молиме изберете друг термин.",

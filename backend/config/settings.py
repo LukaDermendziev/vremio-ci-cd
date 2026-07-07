@@ -269,10 +269,13 @@ EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", "False") == "True"
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 EMAIL_TIMEOUT = int(os.environ.get("EMAIL_TIMEOUT", "15"))
+BREVO_API_KEY = os.environ.get("BREVO_API_KEY", "").strip()
 
 _email_backend = os.environ.get("EMAIL_BACKEND", "").strip()
 if _email_backend:
     EMAIL_BACKEND = _email_backend
+elif BREVO_API_KEY:
+    EMAIL_BACKEND = "booking.backends.brevo_api.BrevoAPIEmailBackend"
 elif EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
     EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 else:
@@ -283,7 +286,16 @@ if not DEBUG and "console" in EMAIL_BACKEND:
 
     warnings.warn(
         "EMAIL_BACKEND is console in production. Outgoing mail is logged only — "
-        "set EMAIL_HOST_USER, EMAIL_HOST_PASSWORD, and Brevo SMTP vars on Railway.",
+        "set BREVO_API_KEY (recommended on Railway) or SMTP credentials.",
+        stacklevel=1,
+    )
+
+if os.environ.get("RAILWAY_ENVIRONMENT") and "smtp" in EMAIL_BACKEND.lower():
+    import warnings
+
+    warnings.warn(
+        "SMTP email on Railway requires a Pro plan — Hobby/Free block ports 587/465. "
+        "Use BREVO_API_KEY with booking.backends.brevo_api.BrevoAPIEmailBackend instead.",
         stacklevel=1,
     )
 

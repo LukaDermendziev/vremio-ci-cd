@@ -152,15 +152,8 @@ CUSTOMER_DOMAIN_SALON_SLUG=fancy-fingers
 
 MEDIA_ROOT=/app/media
 
-EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
-EMAIL_HOST=smtp-relay.brevo.com
-EMAIL_PORT=587
-EMAIL_USE_TLS=True
-EMAIL_USE_SSL=False
-EMAIL_HOST_USER=<your-brevo-login-email>
-EMAIL_HOST_PASSWORD=<your-brevo-smtp-key>
-DEFAULT_FROM_EMAIL=Fancy Fingers Booking <vremio.booking@gmail.com>
-SERVER_EMAIL=Fancy Fingers Booking <vremio.booking@gmail.com>
+BREVO_API_KEY=<your-brevo-api-key>
+DEFAULT_FROM_EMAIL=Fancy Fingers Booking <noreply@fancyfingers.mk>
 OWNER_NOTIFICATION_EMAIL=fancyfingers97@gmail.com
 VREMIO_CONTACT_EMAIL=contact.vremio@gmail.com
 ```
@@ -210,21 +203,29 @@ MEDIA_ROOT=/app/media
 `RAILWAY_PUBLIC_DOMAIN` is injected by Railway and added to `ALLOWED_HOSTS` automatically.  
 `CSRF_TRUSTED_ORIGINS` is auto-built from `https://` + each allowed host when `DEBUG=False`.
 
-### Email (you already use Brevo locally)
+### Email (Brevo — use HTTPS API on Railway)
+
+**Railway Hobby/Free blocks outbound SMTP** (ports 587/465). Brevo SMTP will not work unless you are on Railway **Pro**. Use the **Brevo API key** instead (HTTPS on port 443).
+
+In Brevo: **SMTP & API** → create/copy your **API key** (starts with `xkeysib-`). Verify your sender domain or email under **Senders**.
 
 ```env
-EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
-EMAIL_HOST=smtp-relay.brevo.com
-EMAIL_PORT=587
-EMAIL_USE_TLS=True
-EMAIL_HOST_USER=<your-brevo-login>
-EMAIL_HOST_PASSWORD=<your-brevo-smtp-key>
+BREVO_API_KEY=<your-brevo-api-key>
 DEFAULT_FROM_EMAIL=Fancy Fingers Booking <noreply@fancyfingers.mk>
 OWNER_NOTIFICATION_EMAIL=fancyfingers97@gmail.com
 VREMIO_CONTACT_EMAIL=contact.vremio@gmail.com
+SITE_URL=https://www.fancyfingers.mk
 ```
 
-Use a verified sender in Brevo (domain or email).
+Do **not** set `EMAIL_BACKEND=smtp` on Railway Hobby — the app auto-selects the Brevo API backend when `BREVO_API_KEY` is set.
+
+Test after deploy:
+
+```bash
+railway ssh /opt/venv/bin/python manage.py test_email your@email.com
+```
+
+Look for `Brevo API email sent` in logs. On failure you will see `Brevo API HTTP 4xx` with the reason (e.g. unverified sender).
 
 ---
 
@@ -372,27 +373,15 @@ On `www.fancyfingers.mk`, visiting `/` redirects to the Fancy Fingers salon page
 → Check `CACHE_URL` uses Railway’s **private** Redis URL (`REDIS_PRIVATE_URL` or internal reference), not a public URL the app cannot reach. Wrong Redis can block rate-limit cache calls. With the latest code, cache failures are logged and bookings still proceed.
 
 **Verification email not received**  
-→ On Railway **web service → Variables**, confirm all of these are set (not only locally):
+→ **Most common on Railway Hobby:** SMTP is blocked. Remove `EMAIL_BACKEND=smtp` and set **`BREVO_API_KEY`** (Brevo dashboard → SMTP & API → API keys). `DEFAULT_FROM_EMAIL` must use a **verified sender** in Brevo.
 
 ```env
-EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
-EMAIL_HOST=smtp-relay.brevo.com
-EMAIL_PORT=587
-EMAIL_USE_TLS=True
-EMAIL_HOST_USER=<brevo-login-email>
-EMAIL_HOST_PASSWORD=<brevo-smtp-key>
-DEFAULT_FROM_EMAIL=Fancy Fingers Booking <verified-sender@fancyfingers.mk>
+BREVO_API_KEY=xkeysib-...
+DEFAULT_FROM_EMAIL=Fancy Fingers Booking <noreply@fancyfingers.mk>
 ```
 
-`DEFAULT_FROM_EMAIL` must use an address **verified in Brevo** (domain or single sender). If SMTP vars are missing, Django falls back to **console** email — messages appear only in Railway logs, not in your inbox.
-
-Test from the running container:
-
-```bash
-railway ssh /opt/venv/bin/python manage.py test_email your@email.com
-```
-
-After a booking, check deploy logs for `Verification email sent` or `Email send failed`. On the “Check your email” page, use **Resend verification email** (once per minute).
+Test: `railway ssh /opt/venv/bin/python manage.py test_email your@email.com`  
+Logs: `Brevo API email sent` = success; `Brevo API HTTP 400` = usually unverified sender.
 
 ---
 

@@ -3901,6 +3901,11 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
   line-height: 1.6;
 }
 .bk-success-notice i { flex-shrink: 0; margin-top: 1px; }
+.bk-success-notice--warn {
+  background: #FEF3C7;
+  border-color: #FCD34D;
+  color: #92400E;
+}
 
 /* ── Success page btn-primary (full-width link) ──────────────────────────── */
 .bk-success-card .bk-btn-primary {
