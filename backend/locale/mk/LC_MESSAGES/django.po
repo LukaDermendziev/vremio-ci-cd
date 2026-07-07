@@ -822,6 +822,12 @@ msgstr "Клиентот мора да прикачи референтна фо�
 msgid "Customer name and surname"
 msgstr "Име и презиме на клиентот"
 
+msgid "Customer note"
+msgstr "Порака од клиент"
+
+msgid "Customer note:"
+msgstr "Порака од клиент:"
+
 msgid "Customer responsibilities"
 msgstr "Обврски на клиентот"
 
@@ -3070,6 +3076,13 @@ msgstr "Побаравте ресетирање на лозинката за в�
 
 msgid "You requested a password reset for your Vremio owner account."
 msgstr "Побаравте ресетирање на лозинката за вашата Vremio сметка."
+
+msgid ""
+"You requested an appointment at %(salon_name)s. To send your request to the "
+"salon, please confirm your email address:"
+msgstr ""
+"Побаравте термин во %(salon_name)s. За да го испратите барањето до салонот, "
+"потврдете ја вашата email адреса:"
 
 msgid ""
 "You understand that the request is not an automatically confirmed "

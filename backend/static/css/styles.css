@@ -1323,6 +1323,14 @@ body.od-sidebar-open {
 .od-inline-actions { display: contents; }
 .od-tag-muted { font-size: 11px; background: #F3F4F6; color: #6B7280; padding: 2px 8px; border-radius: 20px; font-weight: 500; }
 .od-bk-note { font-size: 12px; color: #6B7280; margin-top: 6px; }
+.od-bk-note-readonly {
+  background: #F9FAFB;
+  border: 1px solid var(--od-line, #E5E7EB);
+  border-radius: 8px;
+  padding: 10px 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
 .od-standalone { max-width: 900px; margin: 0 auto; padding: 32px 24px; }
 .od-standalone-top h1 { margin: 8px 0; font-size: 24px; }
 .od-back-link { color: var(--od-accent); text-decoration: none; font-size: 13px; font-weight: 600; }

@@ -12,6 +12,7 @@
   data-start-time="{{ booking.start_at|date:'H:i' }}"
   data-source="{{ booking.source }}"
   data-owner-note="{{ booking.owner_note|escape }}"
+  data-customer-note="{{ booking.customer_note|escape }}"
   {% if booking.reference_photo %}data-has-photo="true" data-photo-url="{% url 'booking:owner_booking_photo' booking.id %}"{% endif %}>
   <div class="od-bk-badges">
     <span class="od-bk-name">{{ booking.customer.full_name }}</span>
@@ -34,6 +35,9 @@
     <span>{{ booking.total_duration_minutes }} {% trans "min" %}</span>
     <span>{{ booking.customer.phone_number }}</span>
   </div>
+  {% if booking.customer_note %}
+  <div class="od-bk-note"><strong>{% trans "Customer note:" %}</strong> {{ booking.customer_note }}</div>
+  {% endif %}
   {% include "booking/partials/owner_reference_photo_controls.html" %}
   {% if show_actions %}
   <div class="od-bk-actions od-bk-actions-live">

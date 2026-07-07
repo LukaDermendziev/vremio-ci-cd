@@ -34,6 +34,7 @@ def serialize_booking_card(booking):
         "start_time": local_start.strftime("%H:%M"),
         "source": booking.source,
         "owner_note": booking.owner_note or "",
+        "customer_note": booking.customer_note or "",
         "has_reference_photo": bool(booking.reference_photo),
         "photo_url": (
             f"/owner/booking/{booking.id}/photo/" if booking.reference_photo else ""

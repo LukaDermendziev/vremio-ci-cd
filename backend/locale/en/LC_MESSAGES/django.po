@@ -814,6 +814,12 @@ msgstr "Customer must upload a reference photo when booking this sub-service"
 msgid "Customer name and surname"
 msgstr "Customer name and surname"
 
+msgid "Customer note"
+msgstr "Customer note"
+
+msgid "Customer note:"
+msgstr "Customer note:"
+
 msgid "Customer responsibilities"
 msgstr "Customer responsibilities"
 
@@ -3053,6 +3059,13 @@ msgstr ""
 
 msgid "You requested a password reset for your Vremio owner account."
 msgstr "You requested a password reset for your Vremio owner account."
+
+msgid ""
+"You requested an appointment at %(salon_name)s. To send your request to the "
+"salon, please confirm your email address:"
+msgstr ""
+"You requested an appointment at %(salon_name)s. To send your request to the "
+"salon, please confirm your email address:"
 
 msgid ""
 "You understand that the request is not an automatically confirmed "

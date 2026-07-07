@@ -565,6 +565,18 @@ function initOwnerDashboard(config) {
     bookingForm.querySelector('[name="status"]').value = data.status || "approved";
     bookingForm.querySelector('[name="source"]').value = data.source || "owner_manual";
     bookingForm.querySelector('[name="owner_note"]').value = data.owner_note || "";
+    const customerNoteWrap = document.getElementById("od-booking-customer-note-wrap");
+    const customerNoteEl = document.getElementById("od-booking-customer-note");
+    if (customerNoteWrap && customerNoteEl) {
+      const note = (data.customer_note || "").trim();
+      if (note) {
+        customerNoteEl.textContent = note;
+        customerNoteWrap.hidden = false;
+      } else {
+        customerNoteEl.textContent = "";
+        customerNoteWrap.hidden = true;
+      }
+    }
     updateReferencePhotoSection(data);
     updateBookingCustomerActions(data);
     renderBookingSchedule(data);
@@ -740,6 +752,7 @@ function initOwnerDashboard(config) {
           status: card.dataset.status,
           source: card.dataset.source,
           owner_note: card.dataset.ownerNote,
+          customer_note: card.dataset.customerNote,
           has_reference_photo: card.dataset.hasPhoto === "true",
           reference_photo_url: card.dataset.photoUrl || null,
         });

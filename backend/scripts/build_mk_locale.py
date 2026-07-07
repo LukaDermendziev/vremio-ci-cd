@@ -114,6 +114,8 @@ TRANSLATIONS = {
     # booking_success.html
     "Request Sent": "Барањето е испратено",
     "Message to salon (optional)": "Порака до салонот (опционално)",
+    "Customer note": "Порака од клиент",
+    "Customer note:": "Порака од клиент:",
     "Any notes for the salon...": "Белешки за салонот...",
     "Request sent!": "Барањето е испратено!",
     "Your booking request has been submitted.<br> The appointment is <strong>not confirmed yet</strong>.<br> %(salon_name)s will review your request and contact you.": (
@@ -728,6 +730,10 @@ TRANSLATIONS = {
         "Вашиот термин за %(date)s во %(time)s е потврден."
     ),
     "We look forward to seeing you.": "Ве очекуваме.",
+    "You requested an appointment at %(salon_name)s. To send your request to the salon, please confirm your email address:": (
+        "Побаравте термин во %(salon_name)s. За да го испратите барањето до салонот, "
+        "потврдете ја вашата email адреса:"
+    ),
     "Hello %(name)s,\n\nYou requested an appointment at %(salon_name)s. To send your request to the salon, please confirm your email address:": (
         "Здраво %(name)s,\n\n"
         "Побаравте термин во %(salon_name)s. За да го испратите барањето до салонот, "
