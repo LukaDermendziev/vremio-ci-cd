@@ -300,6 +300,15 @@ Example Railway cron start command:
 python manage.py send_booking_reminders
 ```
 
+Because the web service uses `backend/railway.toml` (Gunicorn), the cron service must use a **separate config file** or it will also try to start Gunicorn. Point the cron service to `backend/railway.cron.toml`:
+
+1. Open the **reminders-cron** service → **Settings**
+2. Find **Config-as-code** / **Railway Config File** (path is from **repo root**, not `backend/`)
+3. Set: `/backend/railway.cron.toml`
+4. Redeploy
+
+That file runs reminders, then cleanup (`&&` — cleanup runs only if reminders succeed).
+
 Use `railway ssh` to test manually:
 
 ```bash
