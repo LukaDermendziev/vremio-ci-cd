@@ -485,6 +485,9 @@ TRANSLATIONS = {
     "I have read and agree to the booking rules and privacy policy.": (
         "Ги прочитав и се согласувам со правилата за закажување и политиката за приватност."
     ),
+    "I have read, understood, and agree to all rules and policies.": (
+        "Ги прочитав, разбирам и се согласувам со сите правила и политики."
+    ),
     "I accept the salon rules and understand this is only a request.": (
         "Ги прочитав и се согласувам со правилата за закажување и политиката за приватност."
     ),

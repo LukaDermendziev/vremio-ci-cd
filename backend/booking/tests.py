@@ -299,6 +299,70 @@ class BookingViewTests(TestCase):
         )
         BookingPolicy.objects.create(salon=self.salon, email_verification_required=False)
 
+    def _policy_post_data(self, **overrides):
+        policy = self.salon.booking_policy
+        data = {
+            "action": "save_policy",
+            "return_section": "policy",
+            "minimum_notice_days": str(policy.minimum_notice_days),
+            "maximum_booking_window_days": str(policy.maximum_booking_window_days),
+            "late_arrival_limit_minutes": str(policy.late_arrival_limit_minutes),
+            "reminder_hours_before": str(policy.reminder_hours_before),
+            "max_appointments_per_day": str(policy.max_appointments_per_day),
+            "slot_interval_minutes": str(policy.slot_interval_minutes),
+            "buffer_minutes_between_bookings": str(policy.buffer_minutes_between_bookings),
+            "service_gap_minutes": str(policy.service_gap_minutes),
+            "customer_cancellation_notice_hours": str(policy.customer_cancellation_notice_hours),
+            "max_pending_bookings_per_customer": str(policy.max_pending_bookings_per_customer),
+            "max_active_future_bookings_per_customer": str(policy.max_active_future_bookings_per_customer),
+            "booking_rate_limit_per_ip_per_hour": str(policy.booking_rate_limit_per_ip_per_hour),
+            "booking_rate_limit_per_email_per_day": str(policy.booking_rate_limit_per_email_per_day),
+            "booking_rate_limit_per_phone_per_day": str(policy.booking_rate_limit_per_phone_per_day),
+            "max_reference_photo_size_mb": str(policy.max_reference_photo_size_mb),
+            "email_verification_expiration_minutes": str(policy.email_verification_expiration_minutes),
+            "fixed_start_times_text": ", ".join(policy.fixed_start_times or []),
+            "salon_rules": policy.salon_rules,
+            "salon_rules_en": policy.salon_rules_en,
+            "msg_approved": policy.msg_approved,
+            "msg_rejected": policy.msg_rejected,
+            "msg_cancelled": policy.msg_cancelled,
+            "msg_edited": policy.msg_edited,
+            "msg_no_show": policy.msg_no_show,
+            "msg_pending": policy.msg_pending,
+            "msg_reminder": policy.msg_reminder,
+        }
+        checkbox_fields = {
+            "allow_same_day_booking": policy.allow_same_day_booking,
+            "allow_next_day_booking": policy.allow_next_day_booking,
+            "allow_last_minute_reopen": policy.allow_last_minute_reopen,
+            "auto_approve_bookings": policy.auto_approve_bookings,
+            "pending_holds_slot": policy.pending_holds_slot,
+            "use_fixed_start_times": policy.use_fixed_start_times,
+            "enable_honeypot_protection": policy.enable_honeypot_protection,
+            "email_verification_required": policy.email_verification_required,
+        }
+        for field_name, is_enabled in checkbox_fields.items():
+            if is_enabled:
+                data[field_name] = "on"
+        data.update(overrides)
+        return data
+
+    def _booking_payload(self, phone="071111222", email="customer@example.com"):
+        selected_date = timezone.localdate() + timedelta(days=20)
+        if selected_date.weekday() == WorkingHours.Weekday.SUNDAY:
+            selected_date += timedelta(days=1)
+        service = self.salon.services.get(name="Manicure")
+        return {
+            "service": service.id,
+            "date": selected_date.isoformat(),
+            "start_time": "08:00",
+            "full_name": "New Customer",
+            "phone_number": phone,
+            "email": email,
+            "preferred_contact_method": Customer.PreferredContactMethod.VIBER,
+            "rules_accepted": "on",
+        }
+
     def test_booking_page_loads_step_flow(self):
         response = self.client.get("/book/fancy-fingers/request/")
 
@@ -306,6 +370,152 @@ class BookingViewTests(TestCase):
         self.assertContains(response, "data-slots-url")
         self.assertContains(response, _("Review request"))
         self.assertContains(response, _("Book appointment"))
+
+    def test_booking_form_uses_single_rules_checkbox(self):
+        response = self.client.get("/book/fancy-fingers/request/")
+        self.assertContains(response, "id=\"bk-rules-consent-check\"")
+        self.assertContains(response, "class=\"bk-rules-list\"")
+        self.assertContains(response, "class=\"bk-consent-check\"")
+        self.assertContains(response, "class=\"bk-rules-legal-line\"")
+        self.assertContains(response, reverse("booking:privacy_policy"))
+        self.assertEqual(response.content.decode().count("type=\"checkbox\""), 2)
+        self.assertNotContains(response, "bk-rule-box")
+        with override("mk"):
+            mk_response = self.client.get("/book/fancy-fingers/request/")
+        self.assertContains(
+            mk_response,
+            "Ги прочитав, разбирам и се согласувам со сите правила и политики.",
+        )
+        with override("en"):
+            self.assertEqual(
+                _("I have read, understood, and agree to all rules and policies."),
+                "I have read, understood, and agree to all rules and policies.",
+            )
+
+    def test_booking_form_does_not_render_instagram_field(self):
+        response = self.client.get("/book/fancy-fingers/request/")
+        self.assertNotContains(response, "id_instagram_username")
+
+    def test_disabling_email_verification_in_owner_policy_applies_immediately(self):
+        policy = self.salon.booking_policy
+        policy.email_verification_required = True
+        policy.save(update_fields=["email_verification_required"])
+
+        self.client.login(username="owner", password="password")
+        policy_data = self._policy_post_data()
+        policy_data.pop("email_verification_required", None)
+        response = self.client.post(
+            "/owner/dashboard/",
+            policy_data,
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+
+        policy.refresh_from_db()
+        self.assertFalse(policy.email_verification_required)
+
+        submit = self.client.post("/book/fancy-fingers/request/", self._booking_payload())
+        self.assertEqual(submit.status_code, 302)
+        booking = Booking.objects.get(customer__phone_number="071111222")
+        self.assertEqual(booking.status, Booking.Status.PENDING)
+
+    def test_save_policy_ajax_disables_email_verification_with_fixed_times(self):
+        policy = self.salon.booking_policy
+        policy.use_fixed_start_times = True
+        policy.fixed_start_times = ["08:00", "10:30", "13:00", "15:30"]
+        policy.email_verification_required = True
+        policy.save()
+
+        self.client.login(username="owner", password="password")
+        policy_data = self._policy_post_data()
+        policy_data.pop("email_verification_required", None)
+        policy_data["fixed_start_times_text"] = ""
+        response = self.client.post(
+            "/owner/dashboard/",
+            policy_data,
+            HTTP_X_REQUESTED_WITH="fetch",
+        )
+        self.assertEqual(response.status_code, 200, response.content.decode())
+        self.assertTrue(response.json()["ok"])
+
+        policy.refresh_from_db()
+        self.assertFalse(policy.email_verification_required)
+        self.assertEqual(policy.fixed_start_times, ["08:00", "10:30", "13:00", "15:30"])
+
+    def test_policy_toggle_off_persists_after_dashboard_reload(self):
+        policy = self.salon.booking_policy
+        policy.email_verification_required = True
+        policy.enable_honeypot_protection = True
+        policy.save()
+
+        self.client.login(username="owner", password="password")
+        policy_data = self._policy_post_data()
+        policy_data.pop("email_verification_required", None)
+        policy_data.pop("enable_honeypot_protection", None)
+        save_response = self.client.post(
+            "/owner/dashboard/",
+            policy_data,
+            HTTP_X_REQUESTED_WITH="fetch",
+        )
+        self.assertEqual(save_response.status_code, 200, save_response.content.decode())
+        self.assertTrue(save_response.json()["ok"])
+
+        reload_response = self.client.get("/owner/dashboard/")
+        self.assertEqual(reload_response.status_code, 200)
+        self.assertNotContains(
+            reload_response,
+            'id="id_email_verification_required" checked',
+        )
+        self.assertNotContains(
+            reload_response,
+            'id="id_enable_honeypot_protection" checked',
+        )
+
+        policy.refresh_from_db()
+        self.assertFalse(policy.email_verification_required)
+        self.assertFalse(policy.enable_honeypot_protection)
+
+    def test_policy_save_returns_field_errors_when_fixed_times_missing(self):
+        policy = self.salon.booking_policy
+        policy.use_fixed_start_times = True
+        policy.fixed_start_times = []
+        policy.save()
+
+        self.client.login(username="owner", password="password")
+        policy_data = self._policy_post_data()
+        policy_data["use_fixed_start_times"] = "on"
+        policy_data["fixed_start_times_text"] = ""
+        response = self.client.post(
+            "/owner/dashboard/",
+            policy_data,
+            HTTP_X_REQUESTED_WITH="fetch",
+        )
+        self.assertEqual(response.status_code, 400, response.content.decode())
+        payload = response.json()
+        self.assertFalse(payload["ok"])
+        self.assertIn("fixed_start_times_text", payload.get("form_errors", {}))
+
+    def test_policy_save_works_without_expiration_field_in_post(self):
+        """Browser form omitted email_verification_expiration_minutes before template fix."""
+        policy = self.salon.booking_policy
+        policy.email_verification_required = True
+        policy.save()
+
+        self.client.login(username="owner", password="password")
+        policy_data = self._policy_post_data()
+        policy_data.pop("email_verification_expiration_minutes", None)
+        policy_data.pop("email_verification_required", None)
+        response = self.client.post(
+            "/owner/dashboard/",
+            policy_data,
+            HTTP_X_REQUESTED_WITH="fetch",
+        )
+        self.assertEqual(response.status_code, 200, response.content.decode())
+        self.assertTrue(response.json()["ok"])
+
+        policy.refresh_from_db()
+        self.assertFalse(policy.email_verification_required)
+        self.assertEqual(policy.email_verification_expiration_minutes, 60)
 
     def test_owner_dashboard_loads_for_owner(self):
         self.client.login(username="owner", password="password")
@@ -891,6 +1101,61 @@ class FixedStartTimesTests(TestCase):
             saved.fixed_start_times,
             ["08:00", "10:30", "15:30"],
         )
+
+    def test_policy_form_checkbox_fields_toggle_on_off(self):
+        base_data = {
+            "minimum_notice_days": 14,
+            "maximum_booking_window_days": 60,
+            "late_arrival_limit_minutes": 15,
+            "reminder_hours_before": 24,
+            "max_appointments_per_day": 4,
+            "slot_interval_minutes": 30,
+            "buffer_minutes_between_bookings": 0,
+            "service_gap_minutes": 30,
+            "customer_cancellation_notice_hours": 24,
+            "max_pending_bookings_per_customer": 1,
+            "max_active_future_bookings_per_customer": 2,
+            "booking_rate_limit_per_ip_per_hour": 5,
+            "booking_rate_limit_per_email_per_day": 3,
+            "booking_rate_limit_per_phone_per_day": 3,
+            "max_reference_photo_size_mb": 5,
+            "email_verification_expiration_minutes": 60,
+            "use_fixed_start_times": "on",
+            "fixed_start_times_text": "08:00, 10:30, 13:00, 15:30",
+            "salon_rules": "Rule",
+            "salon_rules_en": "Rule EN",
+            "msg_approved": "ok",
+            "msg_rejected": "no",
+            "msg_cancelled": "cancel",
+            "msg_edited": "edit",
+            "msg_no_show": "noshow",
+            "msg_pending": "pending",
+            "msg_reminder": "reminder",
+        }
+        checkbox_fields = [
+            "allow_same_day_booking",
+            "allow_next_day_booking",
+            "allow_last_minute_reopen",
+            "auto_approve_bookings",
+            "pending_holds_slot",
+            "use_fixed_start_times",
+            "enable_honeypot_protection",
+            "email_verification_required",
+        ]
+        for field_name in checkbox_fields:
+            enabled_data = dict(base_data)
+            enabled_data[field_name] = "on"
+            enabled_form = BookingPolicyForm(data=enabled_data, instance=self.policy)
+            self.assertTrue(enabled_form.is_valid(), enabled_form.errors)
+            enabled_policy = enabled_form.save()
+            self.assertTrue(getattr(enabled_policy, field_name))
+
+            disabled_data = dict(base_data)
+            disabled_data.pop(field_name, None)
+            disabled_form = BookingPolicyForm(data=disabled_data, instance=self.policy)
+            self.assertTrue(disabled_form.is_valid(), disabled_form.errors)
+            disabled_policy = disabled_form.save()
+            self.assertFalse(getattr(disabled_policy, field_name))
 
 
 class LastMinuteReopenTests(TestCase):

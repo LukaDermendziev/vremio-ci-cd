@@ -6,7 +6,9 @@ import uuid
 from django import forms
 from django.core.exceptions import ValidationError
 from django.forms import modelformset_factory
+from django.forms.models import construct_instance
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
@@ -117,7 +119,6 @@ class BookingRequestForm(forms.Form):
     start_time = forms.CharField(widget=forms.HiddenInput())
     full_name = forms.CharField(max_length=160, label=_("Full name"))
     phone_number = forms.CharField(max_length=30, label=_("Phone number"))
-    instagram_username = forms.CharField(max_length=80, label=_("Instagram username"))
     email = forms.EmailField(required=True, label=_("Email"))
     preferred_contact_method = forms.ChoiceField(
         choices=Customer.PreferredContactMethod.choices,
@@ -140,7 +141,7 @@ class BookingRequestForm(forms.Form):
     selected_price_item_id = forms.IntegerField(required=False, widget=forms.HiddenInput())
     rules_accepted = forms.BooleanField(
         required=True,
-        label=_("I have read and agree to the booking rules and privacy policy."),
+        label=_("I have read, understood, and agree to all rules and policies."),
         widget=forms.CheckboxInput(attrs={"class": "bk-rules-hidden"}),
     )
     company_website = forms.CharField(
@@ -172,9 +173,6 @@ class BookingRequestForm(forms.Form):
                 "required": "required",
                 "autocomplete": "tel",
             }
-        )
-        self.fields["instagram_username"].widget.attrs.update(
-            {"placeholder": "@username", "required": "required", "autocomplete": "username"}
         )
         self.fields["email"].widget.attrs.update(
             {
@@ -224,8 +222,6 @@ class BookingRequestForm(forms.Form):
         start_time = cleaned_data.get("start_time")
         phone = cleaned_data.get("phone_number", "")
         email = cleaned_data.get("email", "")
-        instagram = cleaned_data.get("instagram_username", "")
-
         if honeypot_triggered(cleaned_data.get("company_website"), self.policy):
             self.add_error(None, str(MSG_GENERIC_INVALID))
             return cleaned_data
@@ -237,7 +233,7 @@ class BookingRequestForm(forms.Form):
             self.policy,
             phone=phone,
             email=email,
-            instagram=instagram,
+            instagram="",
             ip=ip,
             device_token=device_token,
             check_rate_limit=True,
@@ -308,7 +304,6 @@ class BookingRequestForm(forms.Form):
             phone_number=phone,
             defaults={
                 "full_name": self.cleaned_data["full_name"],
-                "instagram_username": self.cleaned_data["instagram_username"],
                 "email": self.cleaned_data["email"],
                 "preferred_contact_method": self.cleaned_data["preferred_contact_method"],
             },
@@ -606,7 +601,27 @@ WorkingHoursFormSet = modelformset_factory(
 )
 
 
+class ExplicitBooleanCheckboxInput(forms.CheckboxInput):
+    """Always submit a value: hidden false + checkbox on (no JS required)."""
+
+    def render(self, name, value, attrs=None, renderer=None):
+        hidden = format_html('<input type="hidden" name="{}" value="false">', name)
+        checkbox = super().render(name, value, attrs, renderer)
+        return mark_safe(hidden + checkbox)
+
+
 class BookingPolicyForm(forms.ModelForm):
+    POLICY_CHECKBOX_FIELDS = (
+        "allow_same_day_booking",
+        "allow_next_day_booking",
+        "allow_last_minute_reopen",
+        "auto_approve_bookings",
+        "pending_holds_slot",
+        "use_fixed_start_times",
+        "enable_honeypot_protection",
+        "email_verification_required",
+    )
+
     fixed_start_times_text = forms.CharField(
         required=False,
         label=_("Fixed start times"),
@@ -708,13 +723,25 @@ class BookingPolicyForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        for field_name in self.POLICY_CHECKBOX_FIELDS:
+            self.fields[field_name].required = False
+            self.fields[field_name].widget = ExplicitBooleanCheckboxInput()
+        self.fields["email_verification_expiration_minutes"].required = False
         if self.instance and self.instance.pk:
             times = self.instance.fixed_start_times or []
-            if isinstance(times, list):
-                self.fields["fixed_start_times_text"].initial = ", ".join(times)
+            if isinstance(times, list) and times:
+                joined = ", ".join(times)
+                self.fields["fixed_start_times_text"].initial = joined
+                if not self.is_bound:
+                    self.fields["fixed_start_times_text"].widget.attrs["value"] = joined
 
     def clean(self):
         cleaned_data = super().clean()
+        for field_name in self.POLICY_CHECKBOX_FIELDS:
+            cleaned_data[field_name] = coerce_checkbox_value(
+                cleaned_data.get(field_name)
+            )
+
         use_fixed = cleaned_data.get("use_fixed_start_times")
         text = cleaned_data.get("fixed_start_times_text", "")
         try:
@@ -722,21 +749,85 @@ class BookingPolicyForm(forms.ModelForm):
         except ValueError as exc:
             self.add_error("fixed_start_times_text", str(exc))
             parsed_times = []
+        if use_fixed and not parsed_times and self.instance and self.instance.pk:
+            existing = self.instance.fixed_start_times or []
+            if isinstance(existing, list) and existing:
+                parsed_times = list(existing)
         if use_fixed and not parsed_times:
             self.add_error(
                 "fixed_start_times_text",
                 _("Add at least one fixed start time."),
             )
+        expiry = cleaned_data.get("email_verification_expiration_minutes")
+        if expiry in (None, ""):
+            if self.instance and self.instance.pk:
+                cleaned_data["email_verification_expiration_minutes"] = (
+                    self.instance.email_verification_expiration_minutes
+                )
+            else:
+                cleaned_data["email_verification_expiration_minutes"] = 60
         cleaned_data["_parsed_fixed_start_times"] = parsed_times
         return cleaned_data
 
+    def _post_clean(self):
+        if self.errors:
+            return
+        opts = self._meta
+        exclude = self._get_validation_exclusions()
+        self.instance = construct_instance(
+            self, self.instance, opts.fields, opts.exclude
+        )
+        parsed_times = self.cleaned_data.get("_parsed_fixed_start_times", [])
+        if self.cleaned_data.get("use_fixed_start_times"):
+            self.instance.fixed_start_times = parsed_times
+        else:
+            self.instance.fixed_start_times = []
+        try:
+            self.instance.full_clean(exclude=exclude, validate_unique=False)
+        except ValidationError as exc:
+            error_dict = getattr(exc, "error_dict", None) or {}
+            if "fixed_start_times" in error_dict:
+                for error in error_dict["fixed_start_times"]:
+                    self.add_error("fixed_start_times_text", error)
+                other = {
+                    key: value
+                    for key, value in error_dict.items()
+                    if key != "fixed_start_times"
+                }
+                if other:
+                    self.add_error(None, ValidationError(other))
+                return
+            self._update_errors(exc)
+
     def save(self, commit=True):
         instance = super().save(commit=False)
-        if "_parsed_fixed_start_times" in self.cleaned_data:
-            instance.fixed_start_times = self.cleaned_data["_parsed_fixed_start_times"]
+        parsed_times = self.cleaned_data.get("_parsed_fixed_start_times", [])
+        if self.cleaned_data.get("use_fixed_start_times"):
+            instance.fixed_start_times = parsed_times
+        else:
+            instance.fixed_start_times = []
         if commit:
             instance.save()
         return instance
+
+
+def coerce_checkbox_value(value):
+    if value is True:
+        return True
+    if value in (False, None, ""):
+        return False
+    if isinstance(value, str):
+        return value.strip().lower() in {"true", "1", "on", "yes"}
+    return bool(value)
+
+
+def normalize_policy_post_data(post):
+    """Unchecked HTML checkboxes are omitted from POST; make toggles explicit."""
+    data = post.copy()
+    for field_name in BookingPolicyForm.POLICY_CHECKBOX_FIELDS:
+        if field_name not in data:
+            data[field_name] = "false"
+    return data
 
 
 class UnavailableTimeBlockForm(forms.ModelForm):

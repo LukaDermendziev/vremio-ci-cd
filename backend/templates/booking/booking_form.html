@@ -224,13 +224,6 @@
       </div>
 
       <div class="bk-field">
-        <label class="bk-field-label" for="{{ form.instagram_username.id_for_label }}">{% trans "Instagram username" %} <span class="bk-req">*</span></label>
-        {{ form.instagram_username }}
-        <span class="bk-field-error bk-field-live-error" id="bk-err-instagram_username" hidden></span>
-        {% for err in form.instagram_username.errors %}<span class="bk-field-error">{{ err }}</span>{% endfor %}
-      </div>
-
-      <div class="bk-field">
         <label class="bk-field-label" for="{{ form.email.id_for_label }}">{% trans "Email" %} <span class="bk-req">*</span></label>
         {{ form.email }}
         <span class="bk-field-error bk-field-live-error" id="bk-err-email" hidden></span>
@@ -299,50 +292,30 @@
       <div class="bk-section-label" style="margin-top:0">{% trans "Salon rules" %}</div>
       <p class="bk-rules-intro">{% trans "I understand:" %}</p>
 
-      {# Always-present base rule #}
-      <label class="bk-rule-row">
-        <input type="checkbox" class="bk-rule-check">
-        <span class="bk-rule-box"><i class="bi bi-check"></i></span>
-        <span class="bk-rule-text">{% trans "This is a request only — not confirmed until the salon approves it." %}</span>
-      </label>
-
-      {% if booking_policy %}
-        {# Rules configured by the owner in Booking Policy (language-aware) #}
-        {% for rule in booking_policy.get_salon_rules_lines %}
-          <label class="bk-rule-row">
-            <input type="checkbox" class="bk-rule-check">
-            <span class="bk-rule-box"><i class="bi bi-check"></i></span>
-            <span class="bk-rule-text">{{ rule }}</span>
-          </label>
-        {% endfor %}
-      {% else %}
-        {# Fallback rules when no policy is configured #}
-        <label class="bk-rule-row">
-          <input type="checkbox" class="bk-rule-check">
-          <span class="bk-rule-box"><i class="bi bi-check"></i></span>
-          <span class="bk-rule-text">{% trans "Cancellations require at least 24–48 hours notice." %}</span>
-        </label>
-        <label class="bk-rule-row">
-          <input type="checkbox" class="bk-rule-check">
-          <span class="bk-rule-box"><i class="bi bi-check"></i></span>
-          <span class="bk-rule-text">{% trans "Being more than 15 minutes late without notice may result in cancellation." %}</span>
-        </label>
-        <label class="bk-rule-row">
-          <input type="checkbox" class="bk-rule-check">
-          <span class="bk-rule-box"><i class="bi bi-check"></i></span>
-          <span class="bk-rule-text">{% trans "I agree to the selected time and understand it cannot be changed without notice." %}</span>
-        </label>
-      {% endif %}
-
-      <label class="bk-rule-row bk-legal-consent">
-        <input type="checkbox" class="bk-rule-check">
-        <span class="bk-rule-box"><i class="bi bi-check"></i></span>
-        <span class="bk-rule-text">
+      <ul class="bk-rules-list">
+        <li>{% trans "This is a request only — not confirmed until the salon approves it." %}</li>
+        {% if booking_policy %}
+          {% for rule in booking_policy.get_salon_rules_lines %}
+            <li>{{ rule }}</li>
+          {% endfor %}
+        {% else %}
+          <li>{% trans "Cancellations require at least 24–48 hours notice." %}</li>
+          <li>{% trans "Being more than 15 minutes late without notice may result in cancellation." %}</li>
+          <li>{% trans "I agree to the selected time and understand it cannot be changed without notice." %}</li>
+        {% endif %}
+        <li class="bk-rules-legal-line">
           {% trans "I have read and agree to the" %}
           <a href="{% url 'booking:booking_rules' %}" target="_blank" rel="noopener">{% trans "booking rules" %}</a>,
           <a href="{% url 'booking:privacy_policy' %}" target="_blank" rel="noopener">{% trans "privacy policy" %}</a>
           {% trans "and" %}
           <a href="{% url 'booking:photo_policy' %}" target="_blank" rel="noopener">{% trans "photo policy" %}</a>.
+        </li>
+      </ul>
+
+      <label class="bk-legal-consent">
+        <input type="checkbox" class="bk-consent-check" id="bk-rules-consent-check">
+        <span class="bk-consent-text">
+          {% trans "I have read, understood, and agree to all rules and policies." %}
         </span>
       </label>
 
@@ -392,7 +365,6 @@ window.BK_I18N = {
   phoneRequired: "{% filter escapejs %}{% trans 'Please enter your phone number.' %}{% endfilter %}",
   emailRequired: "{% filter escapejs %}{% trans 'Please enter your email address.' %}{% endfilter %}",
   emailInvalid: "{% filter escapejs %}{% trans 'Please enter a valid email address.' %}{% endfilter %}",
-  instagramRequired: "{% filter escapejs %}{% trans 'Please enter your Instagram username.' %}{% endfilter %}",
   photoRequiredError: "{% filter escapejs %}{% trans 'Please upload a reference photo for this service.' %}{% endfilter %}",
   detailsIncomplete: "{% filter escapejs %}{% trans 'Please complete all required fields before continuing.' %}{% endfilter %}",
   months: [
@@ -847,8 +819,8 @@ window.BK_I18N = {
   }
 
   function refreshSubmit() {
-    const checks     = [...document.querySelectorAll('.bk-rule-check')];
-    const allDone    = checks.every(c => c.checked);
+    const consentCheck = document.getElementById('bk-rules-consent-check');
+    const allDone = Boolean(consentCheck?.checked);
     const rulesField = document.getElementById('id_rules_accepted');
     const submitBtn  = document.getElementById('bk-submit');
     if (rulesField) rulesField.checked = allDone;
@@ -875,7 +847,7 @@ window.BK_I18N = {
   }
 
   function clearDetailsFieldErrors() {
-    ['full_name', 'phone_number', 'email', 'instagram_username', 'reference_photo'].forEach(key => {
+    ['full_name', 'phone_number', 'email', 'reference_photo'].forEach(key => {
       setDetailsFieldError(key, '');
     });
   }
@@ -892,8 +864,6 @@ window.BK_I18N = {
     const name = document.getElementById('id_full_name')?.value.trim() || '';
     const phone = document.getElementById('id_phone_number')?.value.trim() || '';
     const email = document.getElementById('id_email')?.value.trim() || '';
-    const instagram = document.getElementById('id_instagram_username')?.value.trim() || '';
-
     if (!name) {
       setDetailsFieldError('full_name', I18N.nameRequired);
       firstInvalid = firstInvalid || document.getElementById('id_full_name');
@@ -911,11 +881,6 @@ window.BK_I18N = {
     } else if (!isValidEmail(email)) {
       setDetailsFieldError('email', I18N.emailInvalid);
       firstInvalid = firstInvalid || document.getElementById('id_email');
-      valid = false;
-    }
-    if (!instagram) {
-      setDetailsFieldError('instagram_username', I18N.instagramRequired);
-      firstInvalid = firstInvalid || document.getElementById('id_instagram_username');
       valid = false;
     }
     if (photoRequiredForBooking()) {
@@ -1125,7 +1090,7 @@ window.BK_I18N = {
     }
   });
 
-  ['id_full_name', 'id_phone_number', 'id_email', 'id_instagram_username'].forEach(id => {
+  ['id_full_name', 'id_phone_number', 'id_email'].forEach(id => {
     document.getElementById(id)?.addEventListener('input', () => {
       const key = id.replace('id_', '');
       setDetailsFieldError(key, '');
@@ -1161,7 +1126,7 @@ window.BK_I18N = {
     });
   }
 
-  document.querySelectorAll('.bk-rule-check').forEach(cb => cb.addEventListener('change', refreshSubmit));
+  document.getElementById('bk-rules-consent-check')?.addEventListener('change', refreshSubmit);
 
   form?.addEventListener('submit', () => {
     const submitBtn = document.getElementById('bk-submit');

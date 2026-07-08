@@ -81,6 +81,14 @@
     OA.bindForm(form, options);
   }
 
+  function bindPolicyForm() {
+    bindAjaxForm(global.document.getElementById("od-policy-form"), {
+      onSuccess: async () => {
+        await refreshSection("od-sec-policy");
+      },
+    });
+  }
+
   function bindInlineDeleteForms() {
     global.document.querySelectorAll('form input[name="action"]').forEach((input) => {
       const form = input.closest("form");
@@ -228,9 +236,7 @@
       },
     });
 
-    bindAjaxForm(global.document.getElementById("od-policy-form"), {
-      onSuccess: async () => {},
-    });
+    bindPolicyForm();
 
     bindDeleteViaPostForm(
       "od-booking-delete-form",
@@ -297,5 +303,7 @@
 
   global.initOwnerDashboardAjax = initOwnerDashboardAjax;
   global.odBindInlineDeleteForms = bindInlineDeleteForms;
+  global.odBindPolicyForm = bindPolicyForm;
   initOwnerDashboardAjax();
+  global.document.addEventListener("od:rebind", bindPolicyForm);
 })(window);

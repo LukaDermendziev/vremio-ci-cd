@@ -1375,6 +1375,9 @@ msgstr ""
 "Ги прочитав и се согласувам со правилата за закажување и политиката за "
 "приватност."
 
+msgid "I have read, understood, and agree to all rules and policies."
+msgstr "Ги прочитав, разбирам и се согласувам со сите правила и политики."
+
 msgid "I understand:"
 msgstr "Разбирам дека:"
 

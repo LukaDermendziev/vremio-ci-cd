@@ -2064,10 +2064,22 @@ function initOwnerDashboard(config) {
     if (fixedField) fixedField.classList.toggle("od-field-disabled", !fixedOn);
     if (intervalField) intervalField.classList.toggle("od-field-disabled", fixedOn);
   }
+
+  function syncEmailVerificationPolicyFields() {
+    const toggle = document.getElementById("id_email_verification_required");
+    const expiryField = document.getElementById("od-email-verification-expiry-field");
+    if (!toggle || !expiryField) return;
+    expiryField.classList.toggle("od-field-disabled", !toggle.checked);
+  }
   const fixedStartToggle = document.getElementById("id_use_fixed_start_times");
   if (fixedStartToggle) {
     fixedStartToggle.addEventListener("change", syncFixedStartTimesPolicyFields);
     syncFixedStartTimesPolicyFields();
+  }
+  const emailVerifyToggle = document.getElementById("id_email_verification_required");
+  if (emailVerifyToggle) {
+    emailVerifyToggle.addEventListener("change", syncEmailVerificationPolicyFields);
+    syncEmailVerificationPolicyFields();
   }
 
   function rebindDashboardInteractions() {
@@ -2119,6 +2131,8 @@ function initOwnerDashboard(config) {
     });
     if (window.odBindInlineDeleteForms) window.odBindInlineDeleteForms();
     initToggles();
+    syncFixedStartTimesPolicyFields();
+    syncEmailVerificationPolicyFields();
   }
   window.odRebindDashboard = rebindDashboardInteractions;
   document.addEventListener("od:rebind", rebindDashboardInteractions);

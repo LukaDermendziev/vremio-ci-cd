@@ -738,6 +738,13 @@
                 {% endif %}
               {% endfor %}
             </div>
+            {% with f=policy_form.email_verification_expiration_minutes %}
+              <div class="od-field od-field-full" id="od-email-verification-expiry-field">
+                <label for="{{ f.id_for_label }}">{{ f.label }}</label>
+                {{ f }}
+                {% if f.errors %}<span class="od-field-error">{{ f.errors.0 }}</span>{% endif %}
+              </div>
+            {% endwith %}
           </div>
 
           {# ── Salon rules ── #}

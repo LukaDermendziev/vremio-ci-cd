@@ -1363,6 +1363,9 @@ msgstr "I have read and agree to the"
 msgid "I have read and agree to the booking rules and privacy policy."
 msgstr "I have read and agree to the booking rules and privacy policy."
 
+msgid "I have read, understood, and agree to all rules and policies."
+msgstr "I have read, understood, and agree to all rules and policies."
+
 msgid "I understand:"
 msgstr "I understand:"
 

@@ -37,6 +37,7 @@ from .legal_utils import get_vremio_contact_email
 from .forms import (
     BlockedDateForm,
     BookingPolicyForm,
+    normalize_policy_post_data,
     BookingRequestForm,
     OwnerBookingForm,
     OwnerCustomerForm,
@@ -317,6 +318,7 @@ def owner_dashboard(request):
 
     if request.method == "POST":
         action = request.POST.get("action")
+        policy_form_errors = None
 
         if action in {"approve", "reject"}:
             booking = get_object_or_404(
@@ -414,12 +416,30 @@ def owner_dashboard(request):
             if not policy:
                 messages.error(request, _("No booking policy found for this salon."))
             else:
-                form = BookingPolicyForm(request.POST, instance=policy)
+                form = BookingPolicyForm(
+                    normalize_policy_post_data(request.POST),
+                    instance=policy,
+                )
                 if form.is_valid():
                     form.save()
                     messages.success(request, _("Booking policy saved."))
                 else:
                     messages.error(request, _("Could not save booking policy."))
+                    policy_form_errors = {
+                        field: [str(error) for error in errors]
+                        for field, errors in form.errors.items()
+                    }
+                    for field_name, errors in form.errors.items():
+                        if field_name == "__all__":
+                            field_label = _("General")
+                        else:
+                            field_label = form.fields.get(field_name).label if form.fields.get(field_name) else field_name
+                        for error in errors:
+                            messages.error(
+                                request,
+                                _("%(field)s: %(error)s")
+                                % {"field": field_label, "error": error},
+                            )
 
         elif action == "add_blocked_date":
             form = BlockedDateForm(request.POST)
@@ -691,6 +711,8 @@ def owner_dashboard(request):
                         "has_reference_photo": booking_data["has_reference_photo"],
                     }
                 )
+            if policy_form_errors is not None:
+                response_data["form_errors"] = policy_form_errors
             return JsonResponse(response_data, status=200 if ok else 400)
 
         section = request.POST.get("return_section", "dashboard")

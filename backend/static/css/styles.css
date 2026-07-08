@@ -3597,8 +3597,65 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
   margin: -6px 0 12px;
   line-height: 1.4;
 }
-.bk-rule-row:has(input:checked) .bk-rule-box i { display: block !important; }
-.bk-rule-box i { display: none; color: #fff; font-size: 13px; font-weight: 900; }
+.bk-rules-list {
+  list-style: disc;
+  padding-left: 20px;
+  margin: 0 0 16px;
+}
+.bk-rules-list li {
+  font-size: 12px;
+  color: var(--bk-text);
+  line-height: 1.55;
+  margin-bottom: 8px;
+}
+.bk-rules-list li:last-child { margin-bottom: 0; }
+.bk-legal-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 4px;
+  cursor: pointer;
+  user-select: none;
+}
+.bk-consent-check {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  flex-shrink: 0;
+  border: 1.5px solid var(--bk-line, #D1D5DB);
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  position: relative;
+  display: inline-grid;
+  place-content: center;
+}
+.bk-consent-check:checked {
+  background: var(--bk-accent);
+  border-color: var(--bk-accent);
+}
+.bk-consent-check:checked::before {
+  content: "";
+  width: 5px;
+  height: 9px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  margin-top: -2px;
+}
+.bk-consent-text {
+  font-size: 12px;
+  color: var(--bk-text);
+  line-height: 1.55;
+}
+.bk-rules-legal-line a {
+  color: var(--bk-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.bk-rules-legal-line a:hover { opacity: 0.85; }
 
 /* ── Notice strip ────────────────────────────────────────────────────────── */
 .bk-notice {

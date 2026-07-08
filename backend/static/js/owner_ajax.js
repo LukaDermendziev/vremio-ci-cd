@@ -43,6 +43,25 @@
     return msg ? msg[1] : "";
   }
 
+  function allMessages(data, level) {
+    return (data.messages || [])
+      .filter((m) => m[0] === level)
+      .map((m) => m[1])
+      .join(" ");
+  }
+
+  function formatPolicyErrors(data) {
+    const formErrors = data.form_errors;
+    if (!formErrors || typeof formErrors !== "object") return "";
+    return Object.entries(formErrors)
+      .map(([field, errors]) => {
+        const label = field === "__all__" ? "Policy" : field;
+        const text = Array.isArray(errors) ? errors.join(" ") : String(errors);
+        return `${label}: ${text}`;
+      })
+      .join(" ");
+  }
+
   async function postDashboard(body) {
     const resp = await fetch(DASHBOARD_URL, {
       method: "POST",
@@ -62,8 +81,9 @@
     if (!resp.ok || data.ok === false) {
       const errMsg =
         data.error ||
-        firstMessage(data, "error") ||
-        firstMessage(data, "danger") ||
+        allMessages(data, "error") ||
+        allMessages(data, "danger") ||
+        formatPolicyErrors(data) ||
         "Something went wrong.";
       const err = new Error(errMsg);
       err.data = data;
@@ -89,6 +109,15 @@
     if (typeof rebind === "function") rebind();
   }
 
+  function appendUncheckedCheckboxValues(form, body) {
+    form.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+      if (!cb.name || cb.disabled) return;
+      if (!body.has(cb.name)) {
+        body.append(cb.name, "false");
+      }
+    });
+  }
+
   function bindForm(form, options = {}) {
     if (!form) return;
     if (form._odSubmitHandler) {
@@ -105,6 +134,7 @@
       setButtonLoading(submitBtn, true);
       try {
         const body = new URLSearchParams(new FormData(form));
+        appendUncheckedCheckboxValues(form, body);
         const data = await postDashboard(body);
         const msg =
           firstMessage(data, "success") ||
