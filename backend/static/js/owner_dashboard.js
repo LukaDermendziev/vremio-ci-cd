@@ -2071,6 +2071,26 @@ function initOwnerDashboard(config) {
     if (!toggle || !expiryField) return;
     expiryField.classList.toggle("od-field-disabled", !toggle.checked);
   }
+
+  function syncSmsVerificationPolicyFields() {
+    const toggle = document.getElementById("id_sms_verification_required");
+    const expiryField = document.getElementById("od-sms-verification-expiry-field");
+    if (!toggle || !expiryField) return;
+    expiryField.classList.toggle("od-field-disabled", !toggle.checked);
+  }
+
+  function syncVerificationPolicyMutualExclusion(changed) {
+    const emailToggle = document.getElementById("id_email_verification_required");
+    const smsToggle = document.getElementById("id_sms_verification_required");
+    if (!emailToggle || !smsToggle) return;
+    if (changed === "sms" && smsToggle.checked) {
+      emailToggle.checked = false;
+    } else if (changed === "email" && emailToggle.checked) {
+      smsToggle.checked = false;
+    }
+    syncEmailVerificationPolicyFields();
+    syncSmsVerificationPolicyFields();
+  }
   const fixedStartToggle = document.getElementById("id_use_fixed_start_times");
   if (fixedStartToggle) {
     fixedStartToggle.addEventListener("change", syncFixedStartTimesPolicyFields);
@@ -2078,8 +2098,13 @@ function initOwnerDashboard(config) {
   }
   const emailVerifyToggle = document.getElementById("id_email_verification_required");
   if (emailVerifyToggle) {
-    emailVerifyToggle.addEventListener("change", syncEmailVerificationPolicyFields);
+    emailVerifyToggle.addEventListener("change", () => syncVerificationPolicyMutualExclusion("email"));
     syncEmailVerificationPolicyFields();
+  }
+  const smsVerifyToggle = document.getElementById("id_sms_verification_required");
+  if (smsVerifyToggle) {
+    smsVerifyToggle.addEventListener("change", () => syncVerificationPolicyMutualExclusion("sms"));
+    syncSmsVerificationPolicyFields();
   }
 
   function rebindDashboardInteractions() {
@@ -2133,6 +2158,7 @@ function initOwnerDashboard(config) {
     initToggles();
     syncFixedStartTimesPolicyFields();
     syncEmailVerificationPolicyFields();
+    syncSmsVerificationPolicyFields();
   }
   window.odRebindDashboard = rebindDashboardInteractions;
   document.addEventListener("od:rebind", rebindDashboardInteractions);

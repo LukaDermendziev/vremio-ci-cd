@@ -50,6 +50,7 @@ from .services import (
     release_interval,
     consume_released_slot,
     ensure_default_working_hours,
+    send_booking_notification,
 )
 
 
@@ -320,6 +321,7 @@ class BookingViewTests(TestCase):
             "booking_rate_limit_per_phone_per_day": str(policy.booking_rate_limit_per_phone_per_day),
             "max_reference_photo_size_mb": str(policy.max_reference_photo_size_mb),
             "email_verification_expiration_minutes": str(policy.email_verification_expiration_minutes),
+            "sms_verification_expiration_minutes": str(policy.sms_verification_expiration_minutes),
             "fixed_start_times_text": ", ".join(policy.fixed_start_times or []),
             "salon_rules": policy.salon_rules,
             "salon_rules_en": policy.salon_rules_en,
@@ -340,6 +342,8 @@ class BookingViewTests(TestCase):
             "use_fixed_start_times": policy.use_fixed_start_times,
             "enable_honeypot_protection": policy.enable_honeypot_protection,
             "email_verification_required": policy.email_verification_required,
+            "sms_verification_required": policy.sms_verification_required,
+            "sms_notifications_enabled": policy.sms_notifications_enabled,
         }
         for field_name, is_enabled in checkbox_fields.items():
             if is_enabled:
@@ -3804,3 +3808,169 @@ class BrevoAPIEmailBackendTests(TestCase):
 
         sent = send_mail("Subject", "Body", None, ["user@example.com"], fail_silently=True)
         self.assertEqual(sent, 0)
+
+
+class SmsVerificationTests(TestCase):
+    def setUp(self):
+        cache.clear()
+        User = get_user_model()
+        self.owner = User.objects.create_user(
+            username="owner_sms",
+            email="owner_sms@example.com",
+            password="pass",
+        )
+        self.salon = Salon.objects.create(owner=self.owner, name="Salon SMS", slug="salon-sms")
+        self.policy = BookingPolicy.objects.create(
+            salon=self.salon,
+            minimum_notice_days=0,
+            email_verification_required=False,
+            sms_verification_required=True,
+            sms_verification_expiration_minutes=10,
+        )
+        self.service = Service.objects.create(
+            salon=self.salon,
+            name="Manicure",
+            duration_minutes=120,
+            base_price=600,
+        )
+        for weekday in range(6):
+            WorkingHours.objects.create(
+                salon=self.salon,
+                weekday=weekday,
+                is_working_day=True,
+                start_time=time(8, 0),
+                end_time=time(18, 0),
+            )
+
+    def _future_date(self):
+        selected = timezone.localdate() + timedelta(days=20)
+        while selected.weekday() == WorkingHours.Weekday.SUNDAY:
+            selected += timedelta(days=1)
+        return selected
+
+    def _booking_post_data(self, **extra):
+        data = {
+            "service": self.service.id,
+            "date": self._future_date().isoformat(),
+            "start_time": "08:00",
+            "full_name": "SMS Customer",
+            "phone_number": "070555999",
+            "preferred_contact_method": Customer.PreferredContactMethod.VIBER,
+            "rules_accepted": "on",
+        }
+        data.update(extra)
+        return data
+
+    @patch("booking.sms_utils.send_brevo_transactional_sms", return_value=(True, "sent"))
+    def test_post_redirects_to_sms_verify_without_email(self, mock_send):
+        response = self.client.post("/book/salon-sms/request/", self._booking_post_data())
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse("booking:booking_verify_sms"))
+        booking = Booking.objects.get(customer__phone_number="070555999")
+        self.assertEqual(booking.status, Booking.Status.UNVERIFIED)
+        self.assertTrue(booking.sms_otp_digest)
+        mock_send.assert_called_once()
+
+    @patch("booking.sms_utils.send_brevo_transactional_sms", return_value=(True, "sent"))
+    def test_valid_otp_promotes_to_pending(self, mock_send):
+        self.client.post("/book/salon-sms/request/", self._booking_post_data(phone_number="070555998"))
+        booking = Booking.objects.get(customer__phone_number="070555998")
+        self.assertEqual(booking.status, Booking.Status.UNVERIFIED)
+
+        with patch("booking.sms_utils.verify_booking_sms_otp", return_value=True):
+            response = self.client.post(
+                reverse("booking:booking_verify_sms"),
+                {"otp_code": "123456"},
+            )
+        self.assertEqual(response.status_code, 200)
+        booking.refresh_from_db()
+        self.assertEqual(booking.status, Booking.Status.PENDING)
+        self.assertIsNotNone(booking.phone_verified_at)
+        self.assertEqual(booking.sms_otp_digest, "")
+
+    def test_booking_form_hides_email_when_sms_verification_on(self):
+        response = self.client.get("/book/salon-sms/request/")
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'id="id_email"')
+        self.assertContains(response, 'data-sms-verification="true"')
+
+    def test_enabling_sms_verification_disables_email_in_policy_form(self):
+        policy = self.salon.booking_policy
+        policy.email_verification_required = True
+        policy.sms_verification_required = False
+        policy.save()
+        form = BookingPolicyForm(
+            data={
+                "minimum_notice_days": policy.minimum_notice_days,
+                "maximum_booking_window_days": policy.maximum_booking_window_days,
+                "late_arrival_limit_minutes": policy.late_arrival_limit_minutes,
+                "reminder_hours_before": policy.reminder_hours_before,
+                "max_appointments_per_day": policy.max_appointments_per_day,
+                "slot_interval_minutes": policy.slot_interval_minutes,
+                "buffer_minutes_between_bookings": policy.buffer_minutes_between_bookings,
+                "service_gap_minutes": policy.service_gap_minutes,
+                "customer_cancellation_notice_hours": policy.customer_cancellation_notice_hours,
+                "max_pending_bookings_per_customer": policy.max_pending_bookings_per_customer,
+                "max_active_future_bookings_per_customer": policy.max_active_future_bookings_per_customer,
+                "booking_rate_limit_per_ip_per_hour": policy.booking_rate_limit_per_ip_per_hour,
+                "booking_rate_limit_per_email_per_day": policy.booking_rate_limit_per_email_per_day,
+                "booking_rate_limit_per_phone_per_day": policy.booking_rate_limit_per_phone_per_day,
+                "max_reference_photo_size_mb": policy.max_reference_photo_size_mb,
+                "email_verification_expiration_minutes": policy.email_verification_expiration_minutes,
+                "sms_verification_expiration_minutes": policy.sms_verification_expiration_minutes,
+                "fixed_start_times_text": "",
+                "salon_rules": policy.salon_rules,
+                "salon_rules_en": policy.salon_rules_en,
+                "msg_approved": policy.msg_approved,
+                "msg_rejected": policy.msg_rejected,
+                "msg_cancelled": policy.msg_cancelled,
+                "msg_edited": policy.msg_edited,
+                "msg_no_show": policy.msg_no_show,
+                "msg_pending": policy.msg_pending,
+                "msg_reminder": policy.msg_reminder,
+                "email_verification_required": True,
+                "sms_verification_required": True,
+            },
+            instance=policy,
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+        saved = form.save()
+        self.assertTrue(saved.sms_verification_required)
+        self.assertFalse(saved.email_verification_required)
+
+    @patch("booking.sms_utils.send_brevo_transactional_sms", return_value=(True, "sent"))
+    @override_settings(BREVO_API_KEY="test-key", BREVO_SMS_SENDER="SalonSMS")
+    def test_transactional_sms_on_approve(self, mock_send):
+        self.policy.sms_notifications_enabled = True
+        self.policy.save()
+        customer = Customer.objects.create(
+            salon=self.salon,
+            full_name="Notify Me",
+            phone_number="070111222",
+            email="",
+        )
+        booking = Booking.objects.create(
+            salon=self.salon,
+            customer=customer,
+            status=Booking.Status.PENDING,
+            start_at=timezone.now() + timedelta(days=21),
+            end_at=timezone.now() + timedelta(days=21, hours=2),
+            total_duration_minutes=120,
+            source=Booking.Source.ONLINE,
+            rules_accepted=True,
+        )
+        booking.booking_services.create(
+            service=self.service,
+            service_name_snapshot=self.service.name,
+            duration_minutes_snapshot=120,
+            price_snapshot=600,
+        )
+        sent, reason = send_booking_notification(booking, "approved")
+        self.assertTrue(sent)
+        mock_send.assert_called_once()
+
+    def test_format_phone_for_brevo_macedonia(self):
+        from booking.sms_utils import format_phone_for_brevo
+
+        self.assertEqual(format_phone_for_brevo("070 123 456"), "38970123456")
+        self.assertEqual(format_phone_for_brevo("+389 70 123 456"), "38970123456")

@@ -39,6 +39,7 @@ from .forms import (
     BookingPolicyForm,
     normalize_policy_post_data,
     BookingRequestForm,
+    BookingSmsOtpForm,
     OwnerBookingForm,
     OwnerCustomerForm,
     ServiceForm,
@@ -85,6 +86,8 @@ from .services import (
     parse_service_ids_param,
     process_new_online_booking_emails,
     send_verification_email_for_booking,
+    send_verification_sms_for_booking,
+    complete_booking_verification,
     release_booking_slot,
     resolve_services_for_salon,
     send_booking_notification,
@@ -1345,7 +1348,12 @@ def book_salon(request, salon_slug):
                 form.cleaned_data.get("email", ""),
                 get_device_token(request),
             )
-            if getattr(form, "verification_required", False):
+            if getattr(form, "sms_verification_required", False):
+                request.session["booking_verify_id"] = booking.pk
+                sent, _reason = send_verification_sms_for_booking(booking)
+                request.session["booking_verify_sms_failed"] = not sent
+                response = redirect(reverse("booking:booking_verify_sms"))
+            elif getattr(form, "verification_required", False):
                 request.session["booking_verify_id"] = booking.pk
                 sent, _reason = send_verification_email_for_booking(booking)
                 request.session["booking_verify_email_failed"] = not sent
@@ -1468,6 +1476,170 @@ def resend_booking_verification_email(request):
             ),
         )
     return redirect(reverse("booking:booking_verify_email_sent"))
+
+
+def booking_verify_sms(request):
+    booking_id = request.session.get("booking_verify_id")
+    booking = None
+    if booking_id:
+        booking = (
+            Booking.objects.filter(
+                pk=booking_id,
+                status=Booking.Status.UNVERIFIED,
+            )
+            .select_related("customer", "salon")
+            .first()
+        )
+
+    sms_failed = request.session.pop("booking_verify_sms_failed", False)
+    form = BookingSmsOtpForm()
+    otp_error = ""
+
+    if request.method == "POST" and booking:
+        form = BookingSmsOtpForm(request.POST)
+        if form.is_valid():
+            from .sms_utils import verify_booking_sms_otp
+
+            if booking.verification_expires_at and booking.verification_expires_at < timezone.now():
+                log_booking_activity(
+                    booking,
+                    BookingActivityLog.Action.VERIFICATION_EXPIRED,
+                    note="SMS verification code expired",
+                )
+                delete_unverified_booking(booking)
+                request.session.pop("booking_verify_id", None)
+                return render(
+                    request,
+                    "booking/booking_verify_failed.html",
+                    {
+                        "reason": "expired",
+                        "message": _(
+                            "The verification code has expired. Please submit a new booking request."
+                        ),
+                        "salon": booking.salon,
+                    },
+                )
+
+            code = form.cleaned_data["otp_code"]
+            if not verify_booking_sms_otp(booking, code):
+                otp_error = _("The code is incorrect. Please try again.")
+            else:
+                success, reason = complete_booking_verification(booking, channel="sms")
+                if not success:
+                    if reason == "slot_unavailable":
+                        delete_unverified_booking(booking)
+                        request.session.pop("booking_verify_id", None)
+                        return render(
+                            request,
+                            "booking/booking_verify_failed.html",
+                            {
+                                "reason": "slot_unavailable",
+                                "message": _(
+                                    "The selected time slot is no longer available. "
+                                    "Please choose another time."
+                                ),
+                                "salon": booking.salon,
+                            },
+                        )
+                    delete_unverified_booking(booking)
+                    request.session.pop("booking_verify_id", None)
+                    return render(
+                        request,
+                        "booking/booking_verify_failed.html",
+                        {
+                            "reason": reason,
+                            "message": _(
+                                "Something went wrong. Please submit a new booking request."
+                            ),
+                            "salon": booking.salon,
+                        },
+                    )
+
+                booking.refresh_from_db()
+                request.session.pop("booking_verify_id", None)
+                log_booking_activity(
+                    booking,
+                    BookingActivityLog.Action.PHONE_VERIFIED,
+                    note="Phone verified — booking request submitted",
+                )
+                log_booking_activity(
+                    booking,
+                    BookingActivityLog.Action.REQUESTED,
+                    note="Online booking request",
+                )
+                sent, _reason = send_booking_notification(booking, "request_received")
+                if sent:
+                    log_booking_activity(
+                        booking,
+                        BookingActivityLog.Action.EMAIL_SENT,
+                        note="Request received notification sent to customer",
+                    )
+                sent, _reason = send_owner_new_booking_notification(booking)
+                if sent:
+                    log_booking_activity(
+                        booking,
+                        BookingActivityLog.Action.EMAIL_SENT,
+                        note="Owner notified of new request",
+                    )
+                return render(
+                    request,
+                    "booking/booking_verify_success.html",
+                    {
+                        "booking": booking,
+                        "salon": booking.salon,
+                    },
+                )
+
+    return render(
+        request,
+        "booking/booking_verify_sms.html",
+        {
+            "booking": booking,
+            "form": form,
+            "can_resend": booking is not None,
+            "sms_failed": sms_failed,
+            "otp_error": otp_error,
+        },
+    )
+
+
+@require_POST
+def resend_booking_verification_sms(request):
+    booking_id = request.session.get("booking_verify_id")
+    if not booking_id:
+        raise Http404
+
+    booking = get_object_or_404(
+        Booking.objects.select_related("customer", "salon"),
+        pk=booking_id,
+        status=Booking.Status.UNVERIFIED,
+    )
+
+    last_resend = request.session.get("booking_verify_sms_resend_at")
+    if last_resend and (timezone.now().timestamp() - float(last_resend)) < 60:
+        messages.error(
+            request,
+            _("Please wait a minute before requesting another verification code."),
+        )
+        return redirect(reverse("booking:booking_verify_sms"))
+
+    sent, _reason = send_verification_sms_for_booking(booking)
+    request.session["booking_verify_sms_resend_at"] = timezone.now().timestamp()
+    request.session["booking_verify_sms_failed"] = not sent
+    if sent:
+        messages.success(
+            request,
+            _("We sent a new verification code to your phone."),
+        )
+    else:
+        messages.error(
+            request,
+            _(
+                "We could not send the verification SMS right now. "
+                "Please try again in a few minutes or contact the salon."
+            ),
+        )
+    return redirect(reverse("booking:booking_verify_sms"))
 
 
 def _resolve_salon_for_verify(salon_slug):

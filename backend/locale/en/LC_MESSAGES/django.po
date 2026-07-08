@@ -1032,6 +1032,9 @@ msgstr "End"
 msgid "Enter accurate contact details so the business can reach you."
 msgstr "Enter accurate contact details so the business can reach you."
 
+msgid "Enter verification code"
+msgstr "Enter verification code"
+
 msgid "Enter your email and we'll send a reset link."
 msgstr "Enter your email and we'll send a reset link."
 
@@ -1846,6 +1849,9 @@ msgstr "Phone call"
 msgid "Phone number"
 msgstr "Phone number"
 
+msgid "Phone verified"
+msgstr "Phone verified"
+
 msgid "Photo Policy"
 msgstr "Photo Policy"
 
@@ -1923,6 +1929,9 @@ msgstr "Please enter your phone number."
 
 msgid "Please upload a reference photo for this service."
 msgstr "Please upload a reference photo for this service."
+
+msgid "Please wait a minute before requesting another verification code."
+msgstr "Please wait a minute before requesting another verification code."
 
 msgid "Please wait a minute before requesting another verification email."
 msgstr "Please wait a minute before requesting another verification email."
@@ -2098,8 +2107,14 @@ msgstr "Request sent!"
 msgid "Requested"
 msgstr "Requested"
 
+msgid "Require SMS verification for online bookings"
+msgstr "Require SMS verification for online bookings"
+
 msgid "Require email verification for online bookings"
 msgstr "Require email verification for online bookings"
+
+msgid "Resend verification code"
+msgstr "Resend verification code"
 
 msgid "Resend verification email"
 msgstr "Resend verification email"
@@ -2139,6 +2154,12 @@ msgstr "Review request"
 
 msgid "SMS"
 msgstr "SMS"
+
+msgid "SMS sent"
+msgstr "SMS sent"
+
+msgid "SMS verification code expiry (minutes)"
+msgstr "SMS verification code expiry (minutes)"
 
 msgid "Sa"
 msgstr "Sa"
@@ -2248,6 +2269,9 @@ msgstr "Send email"
 
 msgid "Send reset link"
 msgstr "Send reset link"
+
+msgid "Send transactional SMS to customers"
+msgstr "Send transactional SMS to customers"
 
 msgid "Sending appointment-related notifications"
 msgstr "Sending appointment-related notifications"
@@ -2429,6 +2453,9 @@ msgstr "The business owner or administrator may delete inappropriate images."
 msgid "The business where the request was submitted"
 msgstr "The business where the request was submitted"
 
+msgid "The code is incorrect. Please try again."
+msgstr "The code is incorrect. Please try again."
+
 msgid ""
 "The customer %(name)s cancelled their appointment.\n"
 "\n"
@@ -2481,6 +2508,11 @@ msgstr "The time %(time)s is no longer available. Please select another slot."
 
 msgid "The user agrees to:"
 msgstr "The user agrees to:"
+
+msgid ""
+"The verification code has expired. Please submit a new booking request."
+msgstr ""
+"The verification code has expired. Please submit a new booking request."
 
 msgid ""
 "The verification link has expired. Please submit a new booking request."
@@ -2722,8 +2754,17 @@ msgstr "Use the platform honestly and do not abuse booking limits."
 msgid "Username"
 msgstr "Username"
 
+msgid "Verification code"
+msgstr "Verification code"
+
 msgid "Verification failed"
 msgstr "Verification failed"
+
+msgid "Verify and submit request"
+msgstr "Verify and submit request"
+
+msgid "Verify your phone"
+msgstr "Verify your phone"
 
 msgid "Verifying customer email addresses"
 msgstr "Verifying customer email addresses"
@@ -2874,6 +2915,20 @@ msgid "We"
 msgstr "We"
 
 msgid ""
+"We could not send the verification SMS right now. Please try again in a few "
+"minutes or contact the salon."
+msgstr ""
+"We could not send the verification SMS right now. Please try again in a few "
+"minutes or contact the salon."
+
+msgid ""
+"We could not send the verification SMS. Use the button below to try again, "
+"or contact the salon."
+msgstr ""
+"We could not send the verification SMS. Use the button below to try again, "
+"or contact the salon."
+
+msgid ""
 "We could not send the verification email. Use the button below to try again,"
 " or contact the salon."
 msgstr ""
@@ -2890,9 +2945,19 @@ msgid "We received your booking request"
 msgstr "We received your booking request"
 
 msgid ""
+"We sent a 6-digit code to your phone. Enter it below to complete your "
+"booking request."
+msgstr ""
+"We sent a 6-digit code to your phone. Enter it below to complete your "
+"booking request."
+
+msgid ""
 "We sent a confirmation email with a link to view and manage your booking."
 msgstr ""
 "We sent a confirmation email with a link to view and manage your booking."
+
+msgid "We sent a new verification code to your phone."
+msgstr "We sent a new verification code to your phone."
 
 msgid ""
 "We sent another verification email. Please check your inbox and spam folder."
@@ -2992,6 +3057,13 @@ msgid ""
 msgstr ""
 "You already started a booking request. Please check your email inbox (and "
 "spam folder) to confirm it before submitting again."
+
+msgid ""
+"You already started a booking request. Please enter the SMS verification "
+"code we sent to your phone before submitting again."
+msgstr ""
+"You already started a booking request. Please enter the SMS verification "
+"code we sent to your phone before submitting again."
 
 msgid ""
 "You are responsible for the actual service delivery, prices, and customer "
@@ -3112,6 +3184,13 @@ msgstr ""
 "after you verify your email."
 
 msgid ""
+"Your appointment is not confirmed yet. The salon will review your request "
+"after you verify your phone."
+msgstr ""
+"Your appointment is not confirmed yet. The salon will review your request "
+"after you verify your phone."
+
+msgid ""
 "Your appointment is not confirmed yet. The salon will review your request."
 msgstr ""
 "Your appointment is not confirmed yet. The salon will review your request."
@@ -3159,6 +3238,13 @@ msgstr ""
 
 msgid "Your rights"
 msgstr "Your rights"
+
+msgid ""
+"Your verification code for %(salon)s is %(code)s. Valid for %(minutes)s "
+"minutes. Do not share this code."
+msgstr ""
+"Your verification code for %(salon)s is %(code)s. Valid for %(minutes)s "
+"minutes. Do not share this code."
 
 msgid "and"
 msgstr "and"

@@ -119,7 +119,7 @@ class BookingRequestForm(forms.Form):
     start_time = forms.CharField(widget=forms.HiddenInput())
     full_name = forms.CharField(max_length=160, label=_("Full name"))
     phone_number = forms.CharField(max_length=30, label=_("Phone number"))
-    email = forms.EmailField(required=True, label=_("Email"))
+    email = forms.EmailField(required=False, label=_("Email"))
     preferred_contact_method = forms.ChoiceField(
         choices=Customer.PreferredContactMethod.choices,
         initial=Customer.PreferredContactMethod.VIBER,
@@ -161,6 +161,12 @@ class BookingRequestForm(forms.Form):
         self.request = request
         self.policy = getattr(salon, "booking_policy", None)
         self.customer_warnings = []
+        self.uses_sms_verification = bool(self.policy and self.policy.sms_verification_required)
+        self.uses_email_verification = bool(
+            self.policy
+            and self.policy.email_verification_required
+            and not self.uses_sms_verification
+        )
         self.fields["service"].queryset = salon.services.filter(is_active=True)
 
         self.fields["full_name"].widget.attrs.update(
@@ -178,10 +184,14 @@ class BookingRequestForm(forms.Form):
             {
                 "placeholder": "email@example.com",
                 "type": "email",
-                "required": "required",
                 "autocomplete": "email",
             }
         )
+        if self.uses_sms_verification:
+            self.fields["email"].required = False
+        else:
+            self.fields["email"].required = True
+            self.fields["email"].widget.attrs["required"] = "required"
 
     def _parse_service_ids(self, cleaned_data):
         raw = (cleaned_data.get("service_ids") or "").strip()
@@ -221,7 +231,11 @@ class BookingRequestForm(forms.Form):
         date = cleaned_data.get("date")
         start_time = cleaned_data.get("start_time")
         phone = cleaned_data.get("phone_number", "")
-        email = cleaned_data.get("email", "")
+        email = (cleaned_data.get("email") or "").strip()
+        cleaned_data["email"] = email
+        if not self.uses_sms_verification and not email:
+            self.add_error("email", _("Please enter your email address."))
+            return cleaned_data
         if honeypot_triggered(cleaned_data.get("company_website"), self.policy):
             self.add_error(None, str(MSG_GENERIC_INVALID))
             return cleaned_data
@@ -304,7 +318,7 @@ class BookingRequestForm(forms.Form):
             phone_number=phone,
             defaults={
                 "full_name": self.cleaned_data["full_name"],
-                "email": self.cleaned_data["email"],
+                "email": (self.cleaned_data.get("email") or "").strip(),
                 "preferred_contact_method": self.cleaned_data["preferred_contact_method"],
             },
         )
@@ -316,7 +330,11 @@ class BookingRequestForm(forms.Form):
             minutes=calculate_combined_duration_minutes(services, self.salon)
         )
         policy = self.policy
-        needs_verification = bool(policy and policy.email_verification_required)
+        needs_sms_verification = bool(policy and policy.sms_verification_required)
+        needs_email_verification = bool(
+            policy and policy.email_verification_required and not needs_sms_verification
+        )
+        needs_verification = needs_sms_verification or needs_email_verification
         if needs_verification:
             status = Booking.Status.UNVERIFIED
         else:
@@ -338,10 +356,14 @@ class BookingRequestForm(forms.Form):
             client_ip=get_client_ip(self.request) or None,
         )
 
-        if needs_verification:
+        if needs_email_verification:
             booking.email_verification_token = uuid.uuid4()
             booking.verification_expires_at = timezone.now() + timedelta(
                 minutes=policy.email_verification_expiration_minutes
+            )
+        elif needs_sms_verification:
+            booking.verification_expires_at = timezone.now() + timedelta(
+                minutes=policy.sms_verification_expiration_minutes
             )
 
         photo = self.cleaned_data.get("reference_photo")
@@ -376,7 +398,26 @@ class BookingRequestForm(forms.Form):
         if not needs_verification:
             consume_released_slot(self.salon, start_at, end_at)
         self.verification_required = needs_verification
+        self.sms_verification_required = needs_sms_verification
+        self.email_verification_required = needs_email_verification
         return booking
+
+
+class BookingSmsOtpForm(forms.Form):
+    otp_code = forms.CharField(
+        max_length=6,
+        min_length=6,
+        label=_("Verification code"),
+        widget=forms.TextInput(
+            attrs={
+                "class": "bk-input bk-otp-input",
+                "inputmode": "numeric",
+                "pattern": "[0-9]{6}",
+                "autocomplete": "one-time-code",
+                "placeholder": "000000",
+            }
+        ),
+    )
 
 
 class OwnerBookingForm(forms.Form):
@@ -620,6 +661,8 @@ class BookingPolicyForm(forms.ModelForm):
         "use_fixed_start_times",
         "enable_honeypot_protection",
         "email_verification_required",
+        "sms_verification_required",
+        "sms_notifications_enabled",
     )
 
     fixed_start_times_text = forms.CharField(
@@ -664,6 +707,9 @@ class BookingPolicyForm(forms.ModelForm):
             "max_reference_photo_size_mb",
             "email_verification_required",
             "email_verification_expiration_minutes",
+            "sms_verification_required",
+            "sms_verification_expiration_minutes",
+            "sms_notifications_enabled",
             "salon_rules",
             "salon_rules_en",
             "msg_approved",
@@ -699,6 +745,9 @@ class BookingPolicyForm(forms.ModelForm):
             "max_reference_photo_size_mb": _("Max reference photo size (MB)"),
             "email_verification_required": _("Require email verification for online bookings"),
             "email_verification_expiration_minutes": _("Email verification link expiry (minutes)"),
+            "sms_verification_required": _("Require SMS verification for online bookings"),
+            "sms_verification_expiration_minutes": _("SMS verification code expiry (minutes)"),
+            "sms_notifications_enabled": _("Send transactional SMS to customers"),
             "salon_rules": _("Salon rules (Macedonian)"),
             "salon_rules_en": _("Salon rules (English)"),
             "msg_approved": _("Approved message"),
@@ -727,6 +776,7 @@ class BookingPolicyForm(forms.ModelForm):
             self.fields[field_name].required = False
             self.fields[field_name].widget = ExplicitBooleanCheckboxInput()
         self.fields["email_verification_expiration_minutes"].required = False
+        self.fields["sms_verification_expiration_minutes"].required = False
         if self.instance and self.instance.pk:
             times = self.instance.fixed_start_times or []
             if isinstance(times, list) and times:
@@ -766,6 +816,18 @@ class BookingPolicyForm(forms.ModelForm):
                 )
             else:
                 cleaned_data["email_verification_expiration_minutes"] = 60
+        sms_expiry = cleaned_data.get("sms_verification_expiration_minutes")
+        if sms_expiry in (None, ""):
+            if self.instance and self.instance.pk:
+                cleaned_data["sms_verification_expiration_minutes"] = (
+                    self.instance.sms_verification_expiration_minutes
+                )
+            else:
+                cleaned_data["sms_verification_expiration_minutes"] = 10
+        if cleaned_data.get("sms_verification_required"):
+            cleaned_data["email_verification_required"] = False
+        elif cleaned_data.get("email_verification_required"):
+            cleaned_data["sms_verification_required"] = False
         cleaned_data["_parsed_fixed_start_times"] = parsed_times
         return cleaned_data
 

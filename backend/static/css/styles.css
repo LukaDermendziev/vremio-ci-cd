@@ -5879,6 +5879,7 @@ body.bk-step1-confirm-open .bk-toast {
   color: #6B7280;
 }
 .bk-verify-email-icon,
+.bk-verify-sms-icon,
 .bk-verify-failed-icon {
   font-size: 48px;
   color: #C4878A;
@@ -5895,6 +5896,16 @@ body.bk-step1-confirm-open .bk-toast {
 }
 .bk-verify-resend-form .bk-btn-outline {
   width: 100%;
+}
+.bk-verify-otp-form {
+  margin-top: 20px;
+  text-align: left;
+}
+.bk-otp-input {
+  letter-spacing: 0.35em;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 600;
 }
 .od-bk-photo-thumb {
   display: inline-flex;

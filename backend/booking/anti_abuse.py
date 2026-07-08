@@ -20,6 +20,10 @@ MSG_PENDING_VERIFY = _(
     "You already started a booking request. Please check your email inbox "
     "(and spam folder) to confirm it before submitting again."
 )
+MSG_PENDING_VERIFY_SMS = _(
+    "You already started a booking request. Please enter the SMS verification code "
+    "we sent to your phone before submitting again."
+)
 MSG_ACTIVE_LIMIT = _(
     "You already have the maximum number of active appointments. "
     "To book a new one, please cancel or complete an existing appointment."
@@ -291,7 +295,10 @@ def check_public_booking_allowed(
 
     if max_pending and pending_count >= max_pending:
         if unverified_count and not pending_active:
-            user_message = str(MSG_PENDING_VERIFY)
+            if policy and policy.sms_verification_required:
+                user_message = str(MSG_PENDING_VERIFY_SMS)
+            else:
+                user_message = str(MSG_PENDING_VERIFY)
         else:
             user_message = str(MSG_PENDING_LIMIT)
         return AntiAbuseResult(

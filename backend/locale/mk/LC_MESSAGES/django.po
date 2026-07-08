@@ -1040,6 +1040,9 @@ msgstr "Крај"
 msgid "Enter accurate contact details so the business can reach you."
 msgstr "Внесете точни контакт податоци за да може бизнисот да ве контактира."
 
+msgid "Enter verification code"
+msgstr "Внесете код за потврда"
+
 msgid "Enter your email and we'll send a reset link."
 msgstr "Внесете ја вашата е-пошта и ќе ви испратиме линк за ресетирање."
 
@@ -1856,6 +1859,9 @@ msgstr "Телефонски повик"
 msgid "Phone number"
 msgstr "Телефонски број"
 
+msgid "Phone verified"
+msgstr "Телефонот е потврден"
+
 msgid "Photo Policy"
 msgstr "Политика за фотографии"
 
@@ -1934,6 +1940,9 @@ msgstr "Внесете го вашиот телефонски број."
 
 msgid "Please upload a reference photo for this service."
 msgstr "Прикачете референтна фотографија за оваа услуга."
+
+msgid "Please wait a minute before requesting another verification code."
+msgstr "Почекајте една минута пред повторно да побарате код за потврда."
 
 msgid "Please wait a minute before requesting another verification email."
 msgstr "Почекајте една минута пред повторно да побарате email за потврда."
@@ -2110,8 +2119,14 @@ msgstr "Барањето е испратено!"
 msgid "Requested"
 msgstr "Побарано"
 
+msgid "Require SMS verification for online bookings"
+msgstr "Задолжителна SMS потврда за онлајн резервации"
+
 msgid "Require email verification for online bookings"
 msgstr "Задолжителна email потврда за онлајн резервации"
+
+msgid "Resend verification code"
+msgstr "Испрати повторно код за потврда"
 
 msgid "Resend verification email"
 msgstr "Испрати повторно email за потврда"
@@ -2151,6 +2166,12 @@ msgstr "Преглед на барањето"
 
 msgid "SMS"
 msgstr "SMS"
+
+msgid "SMS sent"
+msgstr "SMS испратен"
+
+msgid "SMS verification code expiry (minutes)"
+msgstr "Важност на SMS кодот за потврда (минути)"
 
 msgid "Sa"
 msgstr "Са"
@@ -2261,6 +2282,9 @@ msgstr "Испрати email"
 
 msgid "Send reset link"
 msgstr "Испрати линк за ресетирање"
+
+msgid "Send transactional SMS to customers"
+msgstr "Испраќај трансакциски SMS до клиентите"
 
 msgid "Sending appointment-related notifications"
 msgstr "испраќање известувања поврзани со термини"
@@ -2441,6 +2465,9 @@ msgstr "Сопственикот или администраторот може 
 msgid "The business where the request was submitted"
 msgstr "бизнисот кај кој е испратено барањето"
 
+msgid "The code is incorrect. Please try again."
+msgstr "Кодот е неточен. Обидете се повторно."
+
 msgid ""
 "The customer %(name)s cancelled their appointment.\n"
 "\n"
@@ -2494,6 +2521,11 @@ msgstr "Терминот %(time)s веќе не е достапен. Избер�
 
 msgid "The user agrees to:"
 msgstr "Корисникот се согласува дека ќе:"
+
+msgid ""
+"The verification code has expired. Please submit a new booking request."
+msgstr ""
+"Кодот за потврда е истечен. Ве молиме испратете ново барање за термин."
 
 msgid ""
 "The verification link has expired. Please submit a new booking request."
@@ -2735,8 +2767,17 @@ msgstr "Да се користи платформата искрено и без
 msgid "Username"
 msgstr "Корисничко име"
 
+msgid "Verification code"
+msgstr "Код за потврда"
+
 msgid "Verification failed"
 msgstr "Потврдата не успеа"
+
+msgid "Verify and submit request"
+msgstr "Потврди и испрати барање"
+
+msgid "Verify your phone"
+msgstr "Потврдете го телефонот"
 
 msgid "Verifying customer email addresses"
 msgstr "Потврдување на email адреси на клиенти"
@@ -2889,6 +2930,20 @@ msgid "We"
 msgstr "Ср"
 
 msgid ""
+"We could not send the verification SMS right now. Please try again in a few "
+"minutes or contact the salon."
+msgstr ""
+"Не можевме да го испратиме SMS-от за потврда во моментов. Обидете се "
+"повторно за неколку минути или контактирајте го салонот."
+
+msgid ""
+"We could not send the verification SMS. Use the button below to try again, "
+"or contact the salon."
+msgstr ""
+"Не можевме да го испратиме SMS-от за потврда. Користете го копчето подолу за"
+" повторен обид или контактирајте го салонот."
+
+msgid ""
 "We could not send the verification email. Use the button below to try again,"
 " or contact the salon."
 msgstr ""
@@ -2905,10 +2960,20 @@ msgid "We received your booking request"
 msgstr "Го примивме вашето барање за термин"
 
 msgid ""
+"We sent a 6-digit code to your phone. Enter it below to complete your "
+"booking request."
+msgstr ""
+"Испративме 6-цифрен код на вашиот телефон. Внесете го подолу за да го "
+"завршите барањето за термин."
+
+msgid ""
 "We sent a confirmation email with a link to view and manage your booking."
 msgstr ""
 "Испративме email за потврда со линк за преглед и управување со вашиот "
 "термин."
+
+msgid "We sent a new verification code to your phone."
+msgstr "Испративме нов код за потврда на вашиот телефон."
 
 msgid ""
 "We sent another verification email. Please check your inbox and spam folder."
@@ -3009,6 +3074,13 @@ msgid ""
 msgstr ""
 "Веќе започнавте барање за термин. Проверете ја е-поштата (и спам папката) за"
 " да го потврдите, пред да испратите повторно."
+
+msgid ""
+"You already started a booking request. Please enter the SMS verification "
+"code we sent to your phone before submitting again."
+msgstr ""
+"Веќе започнавте барање за термин. Внесете го SMS кодот за потврда што го "
+"испративме на вашиот телефон пред повторно да испратите барање."
 
 msgid ""
 "You are responsible for the actual service delivery, prices, and customer "
@@ -3127,6 +3199,13 @@ msgstr ""
 " потврдите email адресата."
 
 msgid ""
+"Your appointment is not confirmed yet. The salon will review your request "
+"after you verify your phone."
+msgstr ""
+"Терминот сè уште не е потврден. Салонот ќе го прегледа барањето откако ќе го"
+" потврдите телефонот."
+
+msgid ""
 "Your appointment is not confirmed yet. The salon will review your request."
 msgstr "Терминот сè уште не е потврден. Салонот ќе го прегледа барањето."
 
@@ -3175,6 +3254,13 @@ msgstr ""
 
 msgid "Your rights"
 msgstr "Вашите права"
+
+msgid ""
+"Your verification code for %(salon)s is %(code)s. Valid for %(minutes)s "
+"minutes. Do not share this code."
+msgstr ""
+"Вашиот код за потврда за %(salon)s е %(code)s. Важи %(minutes)s минути. Не "
+"го споделувајте овој код."
 
 msgid "and"
 msgstr "и"

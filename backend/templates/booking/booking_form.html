@@ -19,6 +19,7 @@
   data-salon-url="{% url 'booking:salon_page' salon.slug %}"
   data-max-photo-mb="{{ booking_policy.max_reference_photo_size_mb|default:5 }}"
   data-service-gap="{{ booking_policy.service_gap_minutes|default:30 }}"
+  data-sms-verification="{{ booking_policy.sms_verification_required|yesno:'true,false' }}"
   novalidate
 >
   {% csrf_token %}
@@ -223,12 +224,14 @@
         {% for err in form.phone_number.errors %}<span class="bk-field-error">{{ err }}</span>{% endfor %}
       </div>
 
-      <div class="bk-field">
+      {% if not booking_policy.sms_verification_required %}
+      <div class="bk-field" id="bk-email-field">
         <label class="bk-field-label" for="{{ form.email.id_for_label }}">{% trans "Email" %} <span class="bk-req">*</span></label>
         {{ form.email }}
         <span class="bk-field-error bk-field-live-error" id="bk-err-email" hidden></span>
         {% for err in form.email.errors %}<span class="bk-field-error">{{ err }}</span>{% endfor %}
       </div>
+      {% endif %}
     </div>
 
     <div class="bk-field">
@@ -418,6 +421,7 @@ window.BK_I18N = {
   };
 
   const form           = document.querySelector('.bk-form');
+  const smsVerificationRequired = form?.dataset.smsVerification === 'true';
   const steps          = [...document.querySelectorAll('[data-step]')];
   const progressSteps  = [...document.querySelectorAll('[data-dot]')];
   const progressLines  = [...document.querySelectorAll('.bk-progress-line')];
@@ -874,14 +878,16 @@ window.BK_I18N = {
       firstInvalid = firstInvalid || document.getElementById('id_phone_number');
       valid = false;
     }
-    if (!email) {
-      setDetailsFieldError('email', I18N.emailRequired);
-      firstInvalid = firstInvalid || document.getElementById('id_email');
-      valid = false;
-    } else if (!isValidEmail(email)) {
-      setDetailsFieldError('email', I18N.emailInvalid);
-      firstInvalid = firstInvalid || document.getElementById('id_email');
-      valid = false;
+    if (!smsVerificationRequired) {
+      if (!email) {
+        setDetailsFieldError('email', I18N.emailRequired);
+        firstInvalid = firstInvalid || document.getElementById('id_email');
+        valid = false;
+      } else if (!isValidEmail(email)) {
+        setDetailsFieldError('email', I18N.emailInvalid);
+        firstInvalid = firstInvalid || document.getElementById('id_email');
+        valid = false;
+      }
     }
     if (photoRequiredForBooking()) {
       const photoFile = document.getElementById('id_reference_photo')?.files?.[0];

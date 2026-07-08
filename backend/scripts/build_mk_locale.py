@@ -241,6 +241,42 @@ TRANSLATIONS = {
     "Confirm your email to complete your booking request": "Потврдете го вашиот email за да го завршите барањето за термин",
     "Require email verification for online bookings": "Задолжителна email потврда за онлајн резервации",
     "Email verification link expiry (minutes)": "Важност на линкот за потврда (минути)",
+    "Require SMS verification for online bookings": "Задолжителна SMS потврда за онлајн резервации",
+    "SMS verification code expiry (minutes)": "Важност на SMS кодот за потврда (минути)",
+    "Send transactional SMS to customers": "Испраќај трансакциски SMS до клиентите",
+    "Verify your phone": "Потврдете го телефонот",
+    "Enter verification code": "Внесете код за потврда",
+    "We could not send the verification SMS. Use the button below to try again, or contact the salon.": (
+        "Не можевме да го испратиме SMS-от за потврда. Користете го копчето подолу за повторен обид или контактирајте го салонот."
+    ),
+    "We sent a 6-digit code to your phone. Enter it below to complete your booking request.": (
+        "Испративме 6-цифрен код на вашиот телефон. Внесете го подолу за да го завршите барањето за термин."
+    ),
+    "Verification code": "Код за потврда",
+    "Verify and submit request": "Потврди и испрати барање",
+    "Your appointment is not confirmed yet. The salon will review your request after you verify your phone.": (
+        "Терминот сè уште не е потврден. Салонот ќе го прегледа барањето откако ќе го потврдите телефонот."
+    ),
+    "Resend verification code": "Испрати повторно код за потврда",
+    "Please wait a minute before requesting another verification code.": (
+        "Почекајте една минута пред повторно да побарате код за потврда."
+    ),
+    "We sent a new verification code to your phone.": "Испративме нов код за потврда на вашиот телефон.",
+    "We could not send the verification SMS right now. Please try again in a few minutes or contact the salon.": (
+        "Не можевме да го испратиме SMS-от за потврда во моментов. Обидете се повторно за неколку минути или контактирајте го салонот."
+    ),
+    "The verification code has expired. Please submit a new booking request.": (
+        "Кодот за потврда е истечен. Ве молиме испратете ново барање за термин."
+    ),
+    "The code is incorrect. Please try again.": "Кодот е неточен. Обидете се повторно.",
+    "Your verification code for %(salon)s is %(code)s. Valid for %(minutes)s minutes. Do not share this code.": (
+        "Вашиот код за потврда за %(salon)s е %(code)s. Важи %(minutes)s минути. Не го споделувајте овој код."
+    ),
+    "You already started a booking request. Please enter the SMS verification code we sent to your phone before submitting again.": (
+        "Веќе започнавте барање за термин. Внесете го SMS кодот за потврда што го испративме на вашиот телефон пред повторно да испратите барање."
+    ),
+    "Phone verified": "Телефонот е потврден",
+    "SMS sent": "SMS испратен",
     "Awaiting email verification": "Се чека email потврда",
     "Open full size": "Отвори целосна големина",
     "Welcome back — %(salon_name)s": "Добредојде — %(salon_name)s",

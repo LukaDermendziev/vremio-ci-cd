@@ -217,6 +217,15 @@ class BookingPolicy(TimeStampedModel):
         help_text="Online bookings require email verification before becoming pending.",
     )
     email_verification_expiration_minutes = models.PositiveSmallIntegerField(default=60)
+    sms_verification_required = models.BooleanField(
+        default=False,
+        help_text="Online bookings require SMS OTP verification before becoming pending.",
+    )
+    sms_verification_expiration_minutes = models.PositiveSmallIntegerField(default=10)
+    sms_notifications_enabled = models.BooleanField(
+        default=False,
+        help_text="Send transactional SMS to customers on booking status changes.",
+    )
     auto_complete_hours_after_end = models.PositiveSmallIntegerField(
         default=4,
         help_text="Hours after appointment end to auto-mark approved bookings as completed (0 = disabled).",
@@ -556,6 +565,8 @@ class Booking(TimeStampedModel):
         db_index=True,
     )
     email_verified_at = models.DateTimeField(null=True, blank=True)
+    phone_verified_at = models.DateTimeField(null=True, blank=True)
+    sms_otp_digest = models.CharField(max_length=128, blank=True)
     verification_expires_at = models.DateTimeField(null=True, blank=True)
     rules_accepted = models.BooleanField(default=False)
     rules_accepted_at = models.DateTimeField(null=True, blank=True)
@@ -673,6 +684,7 @@ class BookingActivityLog(models.Model):
         REQUESTED  = "requested",  _("Requested")
         VERIFICATION_SENT = "verification_sent", _("Verification sent")
         EMAIL_VERIFIED = "email_verified", _("Email verified")
+        PHONE_VERIFIED = "phone_verified", _("Phone verified")
         VERIFICATION_EXPIRED = "verification_expired", _("Verification expired")
         APPROVED   = "approved",   _("Approved")
         REJECTED   = "rejected",   _("Rejected")
@@ -682,6 +694,7 @@ class BookingActivityLog(models.Model):
         COMPLETED  = "completed",  _("Completed")
         NO_SHOW    = "no_show",    _("No Show")
         EMAIL_SENT = "email_sent", _("Email sent")
+        SMS_SENT = "sms_sent", _("SMS sent")
         PHOTO_REMOVED = "photo_removed", _("Photo removed")
         CUSTOMER_BLOCKED = "customer_blocked", _("Customer blocked")
 

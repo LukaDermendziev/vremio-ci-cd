@@ -36,6 +36,12 @@ urlpatterns = [
         views.resend_booking_verification_email,
         name="resend_booking_verification_email",
     ),
+    path("booking/verify-sms/", views.booking_verify_sms, name="booking_verify_sms"),
+    path(
+        "booking/verify-sms/resend/",
+        views.resend_booking_verification_sms,
+        name="resend_booking_verification_sms",
+    ),
     path("booking/success/", views.booking_success, name="booking_success"),
     path(
         "booking/<int:booking_id>/success/",

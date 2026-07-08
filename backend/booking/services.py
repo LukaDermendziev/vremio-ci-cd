@@ -1021,10 +1021,14 @@ def can_customer_cancel_booking(booking, now=None):
 
 def send_booking_notification(booking, action, request=None):
     """
-    Send an email to the customer if they have one.
+    Notify the customer by email and/or SMS based on salon policy.
     Returns (sent: bool, reason: str).
     """
     from . import email_utils
+    from . import sms_utils
+
+    policy = getattr(booking.salon, "booking_policy", None)
+    sms_enabled = bool(policy and policy.sms_notifications_enabled)
 
     send_map = {
         "approved": email_utils.send_booking_approved_email,
@@ -1037,9 +1041,24 @@ def send_booking_notification(booking, action, request=None):
         "customer_cancelled": email_utils.send_customer_cancellation_confirmation_email,
     }
     sender = send_map.get(action)
-    if not sender:
+    if not sender and not sms_enabled:
         return False, "unknown_action"
-    return sender(booking)
+
+    email_sent = False
+    email_reason = "skipped"
+    if sender:
+        email_sent, email_reason = sender(booking)
+
+    sms_sent = False
+    sms_reason = "skipped"
+    if sms_enabled and (booking.customer.phone_number or "").strip():
+        sms_sent, sms_reason = sms_utils.send_booking_status_sms(booking, action)
+
+    if email_sent or sms_sent:
+        return True, "sent"
+    if email_reason == "no_email" and sms_reason in ("skipped", "no_api_key", "no_sender"):
+        return False, email_reason
+    return False, email_reason or sms_reason
 
 
 def send_owner_new_booking_notification(booking):
@@ -1076,6 +1095,47 @@ def defer_after_commit(func, *args, **kwargs):
     transaction.on_commit(
         lambda: threading.Thread(target=_run, daemon=True).start()
     )
+
+
+def send_verification_sms_for_booking(booking):
+    """Generate OTP, send SMS, and log activity. Returns (sent, reason)."""
+    from . import sms_utils
+
+    policy = getattr(booking.salon, "booking_policy", None)
+    if not policy or not policy.sms_verification_required:
+        return False, "sms_verification_disabled"
+
+    code = sms_utils.generate_otp_code()
+    sms_utils.set_booking_sms_otp(booking, code)
+    booking.verification_expires_at = timezone.now() + timedelta(
+        minutes=policy.sms_verification_expiration_minutes
+    )
+    booking.save(update_fields=["verification_expires_at"])
+
+    log_booking_activity(
+        booking,
+        BookingActivityLog.Action.VERIFICATION_SENT,
+        note="SMS verification sent",
+    )
+    sent, reason = sms_utils.send_otp_sms(booking, code)
+    if sent:
+        log_booking_activity(
+            booking,
+            BookingActivityLog.Action.SMS_SENT,
+            note="Verification SMS sent to customer",
+        )
+        logger.info(
+            "Verification SMS sent for booking %s to %s",
+            booking.pk,
+            booking.customer.phone_number,
+        )
+    else:
+        logger.warning(
+            "Verification SMS not sent for booking %s (%s)",
+            booking.pk,
+            reason,
+        )
+    return sent, reason
 
 
 def send_verification_email_for_booking(booking):
@@ -1183,9 +1243,10 @@ def cleanup_expired_unverified_bookings(*, salon=None):
         delete_unverified_booking(booking)
 
 
-def complete_email_verification(booking):
+def complete_booking_verification(booking, *, channel="email"):
     """
-    Promote UNVERIFIED booking to PENDING/APPROVED after email verification.
+    Promote UNVERIFIED booking to PENDING/APPROVED after verification.
+    channel is 'email' or 'sms'.
     Returns (success: bool, reason: str).
     """
     if booking.status != Booking.Status.UNVERIFIED:
@@ -1214,12 +1275,22 @@ def complete_email_verification(booking):
         status = Booking.Status.APPROVED
 
     booking.status = status
-    booking.email_verified_at = timezone.now()
+    verified_at = timezone.now()
+    if channel == "sms":
+        booking.phone_verified_at = verified_at
+    else:
+        booking.email_verified_at = verified_at
     booking.email_verification_token = None
+    booking.sms_otp_digest = ""
     booking.verification_expires_at = None
     booking.save()
     consume_released_slot(booking.salon, booking.start_at, booking.end_at)
     return True, "verified"
+
+
+def complete_email_verification(booking):
+    """Backward-compatible wrapper for email verification completion."""
+    return complete_booking_verification(booking, channel="email")
 
 
 def log_booking_activity(booking, action, user=None, note=""):

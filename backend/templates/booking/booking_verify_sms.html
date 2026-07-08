@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Verify your phone" %}{% endblock %}
+{% block body_class %}bk-page bk-success-page{% endblock %}
+
+{% block lang_switcher %}{% endblock %}
+
+{% block content %}
+<div class="bk-success-wrap">
+  <div class="bk-success-card">
+    <div class="bk-success-icon-wrap">
+      <i class="bi bi-phone-vibrate bk-verify-sms-icon" aria-hidden="true"></i>
+    </div>
+
+    <h1 class="bk-success-title">{% trans "Enter verification code" %}</h1>
+
+    {% if sms_failed %}
+    <div class="bk-success-notice bk-success-notice--warn">
+      <i class="bi bi-exclamation-triangle"></i>
+      {% trans "We could not send the verification SMS. Use the button below to try again, or contact the salon." %}
+    </div>
+    {% endif %}
+
+    <p class="bk-success-msg">
+      {% trans "We sent a 6-digit code to your phone. Enter it below to complete your booking request." %}
+    </p>
+
+    {% if otp_error %}
+    <div class="bk-success-notice bk-success-notice--warn">
+      <i class="bi bi-exclamation-triangle"></i>
+      {{ otp_error }}
+    </div>
+    {% endif %}
+
+    {% if form.non_field_errors %}
+    <div class="bk-success-notice bk-success-notice--warn">
+      {% for err in form.non_field_errors %}{{ err }}{% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="post" class="bk-verify-otp-form">
+      {% csrf_token %}
+      <div class="bk-field">
+        <label class="bk-field-label" for="{{ form.otp_code.id_for_label }}">{{ form.otp_code.label }}</label>
+        {{ form.otp_code }}
+        {% for err in form.otp_code.errors %}<span class="bk-field-error">{{ err }}</span>{% endfor %}
+      </div>
+      <button type="submit" class="bk-btn bk-btn-primary bk-btn-block">
+        {% trans "Verify and submit request" %}
+      </button>
+    </form>
+
+    <p class="bk-verify-note">
+      {% trans "Your appointment is not confirmed yet. The salon will review your request after you verify your phone." %}
+    </p>
+
+    {% if can_resend %}
+    <form method="post" action="{% url 'booking:resend_booking_verification_sms' %}" class="bk-verify-resend-form">
+      {% csrf_token %}
+      <button type="submit" class="bk-btn bk-btn-outline">
+        {% trans "Resend verification code" %}
+      </button>
+    </form>
+    {% endif %}
+  </div>
+  <div class="bk-page-legal-footer">
+    {% include "partials/legal_footer.html" with legal_footer_compact=True %}
+  </div>
+</div>
+{% endblock %}
