@@ -1314,6 +1314,8 @@ body.od-sidebar-open {
   .od-hours-fields input { min-width: 100px; flex: 1; }
 }
 .od-hours-fields { display: flex; gap: 8px; }
+.od-public-hours-form { margin-top: 16px; }
+.od-public-hours-intro { margin-bottom: 12px; }
 .od-check-label { font-size: 13px; display: flex; align-items: center; gap: 6px; }
 .od-grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .od-list { list-style: none; padding: 0; margin: 16px 0 0; }

@@ -780,6 +780,9 @@ msgstr "Не можеше да се зачува политиката."
 msgid "Could not save customer."
 msgstr "Не можеше да се зачува клиентот."
 
+msgid "Could not save public salon page hours."
+msgstr "Не можеше да се зачуваат часовите на јавната страница."
+
 msgid "Could not save service. Check the form."
 msgstr "Не можеше да се зачува услугата. Проверете го формуларот."
 
@@ -1522,6 +1525,13 @@ msgstr "Лимит за доцнење: <strong>%(minutes)s минути</strong
 msgid "Leave blank if not in a group"
 msgstr "Остави празно ако не е во група"
 
+msgid ""
+"Leave empty to show the same end time as working hours. Booking availability"
+" is not affected."
+msgstr ""
+"Оставете празно за да се прикаже истото време на затворање како работното "
+"време. Достапноста за резервации не се менува."
+
 msgid "Legal links"
 msgstr "Правни линкови"
 
@@ -1778,6 +1788,13 @@ msgstr "Отвори целосна големина"
 msgid "Open now"
 msgstr "Отворено сега"
 
+msgid ""
+"Optional display-only closing time for the customer-facing page. Does not "
+"affect booking slots or the owner calendar."
+msgstr ""
+"Опционално време на затворање само за приказ на страницата за клиенти. Не "
+"влијае на слободните термини ниту на календарот на сопственикот."
+
 msgid "Other"
 msgstr "Друго"
 
@@ -2007,6 +2024,15 @@ msgstr "Да се внесат точни контакт податоци."
 msgid "Provide accurate information"
 msgstr "внесува точни информации"
 
+msgid "Public page closing time"
+msgstr "Време на затворање на јавната страница"
+
+msgid "Public salon page"
+msgstr "Јавна страница на салонот"
+
+msgid "Public salon page hours saved."
+msgstr "Часовите на јавната страница се зачувани."
+
 msgid "Quality of the service"
 msgstr "квалитетот на услугата"
 
@@ -2229,6 +2255,9 @@ msgstr "Зачувај клиент"
 
 msgid "Save policy"
 msgstr "Зачувај политика"
+
+msgid "Save public page hours"
+msgstr "Зачувај часови на јавната страница"
 
 msgid "Save service"
 msgstr "Зачувај услуга"
@@ -2548,6 +2577,12 @@ msgid ""
 msgstr ""
 "Ова се стандардните правила за закажување на Vremio. Поединечен бизнис може "
 "да додаде дополнителни правила на својата страница."
+
+msgid ""
+"These hours control online booking availability and the owner calendar."
+msgstr ""
+"Овие часови го одредуваат достапноста за онлајн резервации и календарот на "
+"сопственикот."
 
 msgid ""
 "These terms describe the private pilot period for the first business owners "

@@ -50,6 +50,7 @@ from .services import (
     release_interval,
     consume_released_slot,
     ensure_default_working_hours,
+    get_salon_page_hours_rows,
     send_booking_notification,
     send_due_booking_reminders,
 )
@@ -1161,6 +1162,79 @@ class FixedStartTimesTests(TestCase):
             self.assertTrue(disabled_form.is_valid(), disabled_form.errors)
             disabled_policy = disabled_form.save()
             self.assertFalse(getattr(disabled_policy, field_name))
+
+
+class SalonPublicHoursDisplayTests(TestCase):
+    def setUp(self):
+        user = get_user_model().objects.create_user(
+            username="display_owner",
+            password="password",
+        )
+        self.salon = Salon.objects.create(
+            owner=user,
+            name="Display Salon",
+            slug="display-salon",
+        )
+        ensure_default_working_hours(self.salon)
+        self.working_hours = list(self.salon.working_hours.order_by("weekday"))
+        for row in self.working_hours:
+            if row.is_working_day:
+                row.start_time = time(8, 0)
+                row.end_time = time(18, 0)
+                row.save(update_fields=["start_time", "end_time"])
+        self.service = Service.objects.create(
+            salon=self.salon,
+            name="Manicure",
+            duration_minutes=120,
+            base_price=1000,
+        )
+        BookingPolicy.objects.create(
+            salon=self.salon,
+            minimum_notice_days=0,
+            maximum_booking_window_days=60,
+            allow_same_day_booking=True,
+            allow_next_day_booking=True,
+            use_fixed_start_times=True,
+            fixed_start_times=["08:00", "10:30", "13:00", "15:30"],
+            email_verification_required=False,
+        )
+        self.selected_date = timezone.localdate() + timedelta(days=7)
+        while self.selected_date.weekday() == WorkingHours.Weekday.SUNDAY:
+            self.selected_date += timedelta(days=1)
+
+    def test_hours_rows_use_working_end_without_override(self):
+        rows = get_salon_page_hours_rows(self.salon, self.working_hours)
+        monday = next(item for item in rows if item["row"].weekday == WorkingHours.Weekday.MONDAY)
+        self.assertEqual(monday["display_start_time"], time(8, 0))
+        self.assertEqual(monday["display_end_time"], time(18, 0))
+
+    def test_hours_rows_use_public_display_end_when_set(self):
+        self.salon.public_hours_end_display = time(16, 0)
+        self.salon.save(update_fields=["public_hours_end_display"])
+
+        rows = get_salon_page_hours_rows(self.salon, self.working_hours)
+        monday = next(item for item in rows if item["row"].weekday == WorkingHours.Weekday.MONDAY)
+        sunday = next(item for item in rows if item["row"].weekday == WorkingHours.Weekday.SUNDAY)
+
+        self.assertEqual(monday["display_end_time"], time(16, 0))
+        self.assertFalse(sunday["row"].is_working_day)
+
+    def test_salon_page_shows_public_display_end_not_booking_end(self):
+        self.salon.public_hours_end_display = time(16, 0)
+        self.salon.save(update_fields=["public_hours_end_display"])
+
+        response = self.client.get(reverse("booking:salon_page", args=[self.salon.slug]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "08:00 – 16:00")
+        self.assertNotContains(response, "08:00 – 18:00")
+
+    def test_booking_slots_ignore_public_display_end(self):
+        self.salon.public_hours_end_display = time(16, 0)
+        self.salon.save(update_fields=["public_hours_end_display"])
+
+        slots = get_available_slots(self.salon, self.service, self.selected_date)
+        values = {slot["value"] for slot in slots}
+        self.assertIn("15:30", values)
 
 
 class LastMinuteReopenTests(TestCase):
@@ -3766,6 +3840,21 @@ class OwnerDashboardAjaxTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.json()["ok"])
+
+    def test_save_public_hours_display_returns_json(self):
+        response = self._fetch_post(
+            {
+                "action": "save_public_hours_display",
+                "public_hours_end_display": "16:00",
+                "return_section": "hours",
+            }
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data["ok"])
+        self.assertEqual(data["action"], "save_public_hours_display")
+        self.salon.refresh_from_db()
+        self.assertEqual(self.salon.public_hours_end_display, time(16, 0))
 
     def test_invalid_customer_save_returns_400_json(self):
         response = self._fetch_post(

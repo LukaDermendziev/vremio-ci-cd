@@ -49,6 +49,15 @@ class Salon(TimeStampedModel):
     )
     timezone = models.CharField(max_length=64, default="Europe/Skopje")
     is_active = models.BooleanField(default=True)
+    public_hours_end_display = models.TimeField(
+        null=True,
+        blank=True,
+        verbose_name=_("Public page closing time"),
+        help_text=_(
+            "Optional end time shown on the public salon page only. "
+            "Online booking still uses the working hours configured in the dashboard."
+        ),
+    )
 
     class Meta:
         ordering = ["name"]

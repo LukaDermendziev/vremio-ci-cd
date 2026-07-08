@@ -42,6 +42,7 @@ from .forms import (
     BookingSmsOtpForm,
     OwnerBookingForm,
     OwnerCustomerForm,
+    SalonPublicHoursDisplayForm,
     ServiceForm,
     UnavailableTimeBlockForm,
     WorkingHoursFormSet,
@@ -76,6 +77,7 @@ from .services import (
     get_manage_booking_url,
     get_revenue_stats,
     get_salon_local_today,
+    get_salon_page_hours_rows,
     get_active_released_intervals,
     get_last_minute_open_dates_for_services,
     get_unbookable_dates_for_customer,
@@ -414,6 +416,14 @@ def owner_dashboard(request):
             else:
                 messages.error(request, _("Could not save working hours. Check the times."))
 
+        elif action == "save_public_hours_display":
+            form = SalonPublicHoursDisplayForm(request.POST, instance=salon)
+            if form.is_valid():
+                form.save()
+                messages.success(request, _("Public salon page hours saved."))
+            else:
+                messages.error(request, _("Could not save public salon page hours."))
+
         elif action == "save_policy":
             policy = getattr(salon, "booking_policy", None)
             if not policy:
@@ -725,6 +735,7 @@ def owner_dashboard(request):
     context["hours_formset"] = WorkingHoursFormSet(
         queryset=salon.working_hours.order_by("weekday")
     )
+    context["public_hours_form"] = SalonPublicHoursDisplayForm(instance=salon)
     context["hide_base_messages"] = True
     return render(request, "booking/owner_dashboard.html", context)
 
@@ -1296,6 +1307,7 @@ def salon_page(request, salon_slug):
             "salon": salon,
             "services": services,
             "working_hours": working_hours,
+            "hours_display_rows": get_salon_page_hours_rows(salon, working_hours),
             "booking_policy": policy,
         },
     )

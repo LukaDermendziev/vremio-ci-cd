@@ -772,6 +772,9 @@ msgstr "Could not save booking policy."
 msgid "Could not save customer."
 msgstr "Could not save customer."
 
+msgid "Could not save public salon page hours."
+msgstr "Could not save public salon page hours."
+
 msgid "Could not save service. Check the form."
 msgstr "Could not save service. Check the form."
 
@@ -1509,6 +1512,13 @@ msgstr "Late arrival limit: <strong>%(minutes)s minutes</strong>"
 msgid "Leave blank if not in a group"
 msgstr "Leave blank if not in a group"
 
+msgid ""
+"Leave empty to show the same end time as working hours. Booking availability"
+" is not affected."
+msgstr ""
+"Leave empty to show the same end time as working hours. Booking availability"
+" is not affected."
+
 msgid "Legal links"
 msgstr "Legal links"
 
@@ -1768,6 +1778,13 @@ msgstr "Open full size"
 msgid "Open now"
 msgstr "Open now"
 
+msgid ""
+"Optional display-only closing time for the customer-facing page. Does not "
+"affect booking slots or the owner calendar."
+msgstr ""
+"Optional display-only closing time for the customer-facing page. Does not "
+"affect booking slots or the owner calendar."
+
 msgid "Other"
 msgstr "Other"
 
@@ -1996,6 +2013,15 @@ msgstr "Provide accurate contact information."
 msgid "Provide accurate information"
 msgstr "Provide accurate information"
 
+msgid "Public page closing time"
+msgstr "Public page closing time"
+
+msgid "Public salon page"
+msgstr "Public salon page"
+
+msgid "Public salon page hours saved."
+msgstr "Public salon page hours saved."
+
 msgid "Quality of the service"
 msgstr "Quality of the service"
 
@@ -2217,6 +2243,9 @@ msgstr "Save customer"
 
 msgid "Save policy"
 msgstr "Save policy"
+
+msgid "Save public page hours"
+msgstr "Save public page hours"
 
 msgid "Save service"
 msgstr "Save service"
@@ -2535,6 +2564,11 @@ msgid ""
 msgstr ""
 "These are the default customer booking rules for Vremio. An individual "
 "business may add additional rules on its booking page."
+
+msgid ""
+"These hours control online booking availability and the owner calendar."
+msgstr ""
+"These hours control online booking availability and the owner calendar."
 
 msgid ""
 "These terms describe the private pilot period for the first business owners "

@@ -565,7 +565,7 @@
 
     <div class="od-section" id="od-sec-hours">
       <div class="od-page-top"><div class="od-page-title">{% trans "Working hours" %}</div></div>
-      <form method="post" class="od-card od-form">
+      <form method="post" class="od-card od-form" id="od-working-hours-form">
         {% csrf_token %}
         <input type="hidden" name="action" value="save_working_hours">
         <input type="hidden" name="return_section" value="hours">
@@ -578,8 +578,28 @@
             <div class="od-hours-fields">{{ form.start_time }} {{ form.end_time }}</div>
           </div>
         {% endfor %}
+        <p class="od-field-hint">{% trans "These hours control online booking availability and the owner calendar." %}</p>
         <button type="submit" class="od-btn od-btn-primary">{% trans "Save working hours" %}</button>
       </form>
+
+      {% if public_hours_form %}
+      <form method="post" class="od-card od-form od-public-hours-form" id="od-public-hours-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="save_public_hours_display">
+        <input type="hidden" name="return_section" value="hours">
+        <div class="od-card-title">{% trans "Public salon page" %}</div>
+        <p class="od-muted od-public-hours-intro">{% trans "Optional display-only closing time for the customer-facing page. Does not affect booking slots or the owner calendar." %}</p>
+        {% with f=public_hours_form.public_hours_end_display %}
+          <div class="od-field">
+            <label for="{{ f.id_for_label }}">{{ f.label }}</label>
+            {{ f }}
+            {% if f.help_text %}<p class="od-field-hint">{{ f.help_text }}</p>{% endif %}
+            {% if f.errors %}<span class="od-field-error">{{ f.errors.0 }}</span>{% endif %}
+          </div>
+        {% endwith %}
+        <button type="submit" class="od-btn od-btn-primary">{% trans "Save public page hours" %}</button>
+      </form>
+      {% endif %}
     </div>
 
     <div class="od-section" id="od-sec-availability">

@@ -163,15 +163,17 @@
       </div>
       <h3 class="sp-info-title">{% trans "Working" %} <em>{% trans "hours" %}</em></h3>
       <ul class="sp-hours-list">
-        {% for row in working_hours %}
+        {% for item in hours_display_rows %}
+          {% with row=item.row %}
           <li class="sp-hours-row {% if not row.is_working_day %}sp-hours-closed{% endif %}" data-day="{{ row.weekday }}">
             <span class="sp-hours-day">{{ row.get_weekday_display }}<span class="sp-today-badge">{% trans "Today" %}</span></span>
             {% if row.is_working_day %}
-              <span class="sp-hours-time">{{ row.start_time|time:"H:i" }} – {{ row.end_time|time:"H:i" }}</span>
+              <span class="sp-hours-time">{{ item.display_start_time|time:"H:i" }} – {{ item.display_end_time|time:"H:i" }}</span>
             {% else %}
               <span class="sp-closed-label">{% trans "Closed" %}</span>
             {% endif %}
           </li>
+          {% endwith %}
         {% endfor %}
       </ul>
     </div>

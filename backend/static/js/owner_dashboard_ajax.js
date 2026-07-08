@@ -230,10 +230,14 @@
       },
     });
 
-    bindAjaxForm(global.document.querySelector("#od-sec-hours form"), {
+    bindAjaxForm(global.document.getElementById("od-working-hours-form"), {
       onSuccess: async () => {
         await calendarRefresh();
       },
+    });
+
+    bindAjaxForm(global.document.getElementById("od-public-hours-form"), {
+      onSuccess: async () => {},
     });
 
     bindPolicyForm();

@@ -69,6 +69,12 @@ class SalonAdmin(admin.ModelAdmin):
                 )
             },
         ),
+        (
+            "Public salon page",
+            {
+                "fields": ("public_hours_end_display",),
+            },
+        ),
     )
 
 

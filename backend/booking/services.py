@@ -917,6 +917,22 @@ def is_slot_available(
     return next((slot for slot in slots if slot["value"] == start_time_value), None)
 
 
+def get_salon_page_hours_rows(salon, working_hours):
+    """Build display rows for the public salon page (may differ from booking hours)."""
+    override_end = salon.public_hours_end_display
+    rows = []
+    for row in working_hours:
+        display_end = override_end if override_end and row.is_working_day else row.end_time
+        rows.append(
+            {
+                "row": row,
+                "display_start_time": row.start_time,
+                "display_end_time": display_end,
+            }
+        )
+    return rows
+
+
 def ensure_default_working_hours(salon):
     for weekday in range(7):
         WorkingHours.objects.get_or_create(

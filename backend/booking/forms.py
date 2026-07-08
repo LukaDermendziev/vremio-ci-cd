@@ -27,6 +27,7 @@ from .models import (
     BookingPolicy,
     Customer,
     DateWorkingHoursOverride,
+    Salon,
     Service,
     ServicePriceItem,
     UnavailableTimeBlock,
@@ -640,6 +641,26 @@ WorkingHoursFormSet = modelformset_factory(
     extra=0,
     can_delete=False,
 )
+
+
+class SalonPublicHoursDisplayForm(forms.ModelForm):
+    class Meta:
+        model = Salon
+        fields = ["public_hours_end_display"]
+        labels = {
+            "public_hours_end_display": _("Public page closing time"),
+        }
+        help_texts = {
+            "public_hours_end_display": _(
+                "Leave empty to show the same end time as working hours. "
+                "Booking availability is not affected."
+            ),
+        }
+        widgets = {
+            "public_hours_end_display": forms.TimeInput(
+                attrs={"type": "time", "class": "od-input"},
+            ),
+        }
 
 
 class ExplicitBooleanCheckboxInput(forms.CheckboxInput):
