@@ -2061,6 +2061,9 @@ msgstr "Потсетник (часови однапред)"
 msgid "Reminder message"
 msgstr "Порака за потсетник"
 
+msgid "Reminder: your upcoming appointment"
+msgstr "Потсетник: вашиот претстоен термин"
+
 msgid "Remove"
 msgstr "Отстрани"
 
@@ -2611,6 +2614,10 @@ msgstr ""
 msgid "This is a last-minute opening from a cancelled appointment."
 msgstr "Ова е последен слободен термин од откажување."
 
+msgid ""
+"This is a reminder that you have an appointment on %(date)s at %(time)s."
+msgstr "Ова е потсетник дека имате термин на %(date)s во %(time)s."
+
 msgid "This is a request only — not confirmed until the salon approves it."
 msgstr "Ова е само барање — не е потврдено додека салонот не одобри."
 
@@ -3094,6 +3101,9 @@ msgstr "Можете да го откажете терминот онлајн."
 
 msgid "You can track your appointment here:"
 msgstr "Вашиот термин можете да го следите тука:"
+
+msgid "You can view or cancel your appointment here:"
+msgstr "Можете да го прегледате или откажете терминот тука:"
 
 msgid ""
 "You have a new booking request.\n"

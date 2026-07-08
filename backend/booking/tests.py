@@ -51,6 +51,7 @@ from .services import (
     consume_released_slot,
     ensure_default_working_hours,
     send_booking_notification,
+    send_due_booking_reminders,
 )
 
 
@@ -3334,6 +3335,100 @@ class AutoCompleteAndCalendarHistoryTests(TestCase):
             Booking.objects.filter(salon=self.salon, status=Booking.Status.COMPLETED).count(),
             1,
         )
+
+
+class BookingReminderTests(TestCase):
+    def setUp(self):
+        cache.clear()
+        User = get_user_model()
+        self.owner = User.objects.create_user(
+            username="owner_reminder",
+            email="owner_reminder@example.com",
+            password="pass",
+        )
+        self.salon = Salon.objects.create(owner=self.owner, name="Reminder Salon", slug="reminder-salon")
+        self.policy = BookingPolicy.objects.create(
+            salon=self.salon,
+            reminder_hours_before=24,
+        )
+        self.customer = Customer.objects.create(
+            salon=self.salon,
+            full_name="Reminder Client",
+            phone_number="070888777",
+            email="reminder@example.com",
+        )
+        self.service = Service.objects.create(
+            salon=self.salon,
+            name="Manicure",
+            duration_minutes=120,
+            base_price=600,
+        )
+
+    def _make_booking(self, *, hours_until_start):
+        start = timezone.now() + timedelta(hours=hours_until_start)
+        booking = Booking.objects.create(
+            salon=self.salon,
+            customer=self.customer,
+            status=Booking.Status.APPROVED,
+            source=Booking.Source.OWNER_MANUAL,
+            start_at=start,
+            end_at=start + timedelta(hours=2),
+            total_duration_minutes=120,
+        )
+        BookingService.objects.create(
+            booking=booking,
+            service=self.service,
+            service_name_snapshot=self.service.name,
+            duration_minutes_snapshot=self.service.duration_minutes,
+            price_snapshot=self.service.base_price,
+        )
+        return booking
+
+    def test_reminder_not_due_yet(self):
+        self._make_booking(hours_until_start=30)
+        self.assertEqual(send_due_booking_reminders(dry_run=True), 0)
+
+    def test_reminder_due_within_policy_window(self):
+        self._make_booking(hours_until_start=20)
+        self.assertEqual(send_due_booking_reminders(dry_run=True), 1)
+
+    @patch("booking.services.send_booking_notification", return_value=(True, "sent"))
+    def test_reminder_sent_marks_booking(self, mock_send):
+        booking = self._make_booking(hours_until_start=20)
+        count = send_due_booking_reminders()
+        self.assertEqual(count, 1)
+        mock_send.assert_called_once_with(booking, "reminder")
+        booking.refresh_from_db()
+        self.assertIsNotNone(booking.reminder_sent_at)
+
+    @patch("booking.services.send_booking_notification", return_value=(True, "sent"))
+    def test_reminder_not_sent_twice(self, mock_send):
+        booking = self._make_booking(hours_until_start=20)
+        send_due_booking_reminders()
+        send_due_booking_reminders()
+        mock_send.assert_called_once()
+
+    def test_reminder_disabled_when_hours_zero(self):
+        self.policy.reminder_hours_before = 0
+        self.policy.save(update_fields=["reminder_hours_before"])
+        self._make_booking(hours_until_start=20)
+        self.assertEqual(send_due_booking_reminders(dry_run=True), 0)
+
+    @patch("booking.services.send_booking_notification", return_value=(False, "no_email"))
+    def test_reminder_skipped_without_contact_channel(self, mock_send):
+        booking = self._make_booking(hours_until_start=20)
+        booking.customer.email = ""
+        booking.customer.save(update_fields=["email"])
+        count = send_due_booking_reminders()
+        self.assertEqual(count, 1)
+        booking.refresh_from_db()
+        self.assertIsNotNone(booking.reminder_sent_at)
+
+    @patch("booking.services.send_booking_notification", return_value=(True, "sent"))
+    def test_management_command_sends_reminders(self, mock_send):
+        self._make_booking(hours_until_start=20)
+        call_command("send_booking_reminders")
+        mock_send.assert_called_once()
 
 
 class CustomerBlockingTests(TestCase):

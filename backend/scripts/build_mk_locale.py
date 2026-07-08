@@ -849,6 +849,12 @@ TRANSLATIONS = {
     "Missed appointment": "Пропуштен термин",
     "Request received": "Барањето е примено",
     "Your appointment is confirmed": "Вашиот термин е потврден",
+    "Reminder: your upcoming appointment": "Потсетник: вашиот претстоен термин",
+    "This is a reminder that you have an appointment on %(date)s at %(time)s.": (
+        "Ова е потсетник дека имате термин на %(date)s во %(time)s."
+    ),
+    "You can view or cancel your appointment here:": "Можете да го прегледате или откажете терминот тука:",
+    "We look forward to seeing you.": "Ве очекуваме.",
     "Your appointment request was declined": "Вашето барање за термин е одбиено",
     "Your appointment was changed": "Вашиот термин е променет",
     "Your appointment was cancelled": "Вашиот термин е откажан",

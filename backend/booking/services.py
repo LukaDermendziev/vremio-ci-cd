@@ -633,6 +633,68 @@ def auto_complete_past_bookings(*, salon=None, dry_run=False):
     return updated
 
 
+def send_due_booking_reminders(*, salon=None, dry_run=False):
+    """
+    Send appointment reminders for approved bookings when the salon policy window is due.
+    Returns the number of bookings reminded (or that would be reminded when dry_run=True).
+    """
+    now = timezone.now()
+    qs = Booking.objects.filter(
+        status=Booking.Status.APPROVED,
+        reminder_sent_at__isnull=True,
+        start_at__gt=now,
+    ).select_related("customer", "salon", "salon__booking_policy")
+    if salon is not None:
+        qs = qs.filter(salon=salon)
+
+    reminded = 0
+    for booking in qs:
+        hours = get_policy_value(booking.salon, "reminder_hours_before", 24)
+        if hours <= 0:
+            continue
+
+        reminder_due_at = booking.start_at - timedelta(hours=hours)
+        if now < reminder_due_at:
+            continue
+
+        if dry_run:
+            reminded += 1
+            continue
+
+        sent, reason = send_booking_notification(booking, "reminder")
+        if sent:
+            booking.reminder_sent_at = now
+            booking.save(update_fields=["reminder_sent_at"])
+            log_booking_activity(
+                booking,
+                BookingActivityLog.Action.EMAIL_SENT,
+                note="Appointment reminder sent to customer",
+            )
+            reminded += 1
+            continue
+
+        policy = getattr(booking.salon, "booking_policy", None)
+        has_email = bool((booking.customer.email or "").strip())
+        sms_enabled = bool(policy and policy.sms_notifications_enabled)
+        has_phone = bool((booking.customer.phone_number or "").strip())
+        if not has_email and not (sms_enabled and has_phone):
+            booking.reminder_sent_at = now
+            booking.save(update_fields=["reminder_sent_at"])
+            log_booking_activity(
+                booking,
+                BookingActivityLog.Action.EMAIL_SENT,
+                note="Appointment reminder skipped — no customer contact channel",
+            )
+            logger.info(
+                "Reminder skipped for booking %s — no email and SMS not available (%s)",
+                booking.pk,
+                reason,
+            )
+            reminded += 1
+
+    return reminded
+
+
 def get_salon_timezone(salon):
     try:
         return ZoneInfo(salon.timezone)
@@ -1039,6 +1101,7 @@ def send_booking_notification(booking, action, request=None):
         "pending": lambda b: email_utils.send_customer_booking_email(b, "pending"),
         "request_received": email_utils.send_booking_request_received_email,
         "customer_cancelled": email_utils.send_customer_cancellation_confirmation_email,
+        "reminder": email_utils.send_booking_reminder_email,
     }
     sender = send_map.get(action)
     if not sender and not sms_enabled:

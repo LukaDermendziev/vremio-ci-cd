@@ -212,7 +212,7 @@ Set `SECURE_SSL_REDIRECT=False` only if testing production settings locally with
 - Login rate limiting (django-axes or reverse-proxy)
 - Two-factor authentication for owners
 - Automated SMS reminders
-- Automated 24h reminder cron job (policy field exists, scheduler not yet implemented)
+- Automated 24h reminder cron job — run `python manage.py send_booking_reminders` every 15–30 minutes (see README)
 - Payments / deposits
 
 ## Troubleshooting

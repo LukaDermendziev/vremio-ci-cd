@@ -284,6 +284,28 @@ Check **Deployments → View logs** for errors.
 
 Health check: `GET /health/` → `ok`
 
+### Scheduled tasks (cron)
+
+These commands are **not** run automatically on deploy. Add a **Cron Job** service in Railway (or an external scheduler) pointing at the same repo/image:
+
+| Command | Suggested schedule | Purpose |
+|---------|-------------------|---------|
+| `python manage.py send_booking_reminders` | Every 15–30 minutes | Email/SMS reminders before appointments |
+| `python manage.py cleanup_unverified_bookings` | Every 15–30 minutes | Remove expired unverified bookings |
+| `python manage.py auto_complete_past_bookings` | Hourly | Mark past approved bookings completed |
+
+Example Railway cron start command:
+
+```bash
+python manage.py send_booking_reminders
+```
+
+Use `railway ssh` to test manually:
+
+```bash
+railway ssh /opt/venv/bin/python manage.py send_booking_reminders --dry-run
+```
+
 ---
 
 ## 7. Bootstrap salon data (one time)

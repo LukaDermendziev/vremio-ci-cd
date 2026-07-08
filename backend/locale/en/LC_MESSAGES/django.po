@@ -2050,6 +2050,9 @@ msgstr "Reminder hours before"
 msgid "Reminder message"
 msgstr "Reminder message"
 
+msgid "Reminder: your upcoming appointment"
+msgstr "Reminder: your upcoming appointment"
+
 msgid "Remove"
 msgstr "Remove"
 
@@ -2598,6 +2601,11 @@ msgstr ""
 msgid "This is a last-minute opening from a cancelled appointment."
 msgstr "This is a last-minute opening from a cancelled appointment."
 
+msgid ""
+"This is a reminder that you have an appointment on %(date)s at %(time)s."
+msgstr ""
+"This is a reminder that you have an appointment on %(date)s at %(time)s."
+
 msgid "This is a request only — not confirmed until the salon approves it."
 msgstr "This is a request only — not confirmed until the salon approves it."
 
@@ -3077,6 +3085,9 @@ msgstr "You can cancel this appointment online."
 
 msgid "You can track your appointment here:"
 msgstr "You can track your appointment here:"
+
+msgid "You can view or cancel your appointment here:"
+msgstr "You can view or cancel your appointment here:"
 
 msgid ""
 "You have a new booking request.\n"

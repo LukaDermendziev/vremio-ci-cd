@@ -19,6 +19,7 @@ CUSTOMER_EMAIL_TEMPLATES = {
     "cancelled": ("booking/emails/subject_cancelled.txt", "booking/emails/customer_cancelled.txt"),
     "no_show": ("booking/emails/subject_no_show.txt", "booking/emails/customer_no_show.txt"),
     "pending": ("booking/emails/subject_pending.txt", "booking/emails/customer_pending.txt"),
+    "reminder": ("booking/emails/subject_reminder.txt", "booking/emails/customer_reminder.txt"),
 }
 
 OWNER_NEW_BOOKING_TEMPLATES = (
@@ -168,6 +169,10 @@ def send_booking_updated_email(booking):
 
 def send_booking_cancelled_email(booking):
     return send_customer_booking_email(booking, "cancelled")
+
+
+def send_booking_reminder_email(booking):
+    return send_customer_booking_email(booking, "reminder")
 
 
 def send_owner_new_booking_email(booking):

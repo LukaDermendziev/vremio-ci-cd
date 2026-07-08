@@ -217,7 +217,14 @@ python manage.py auto_complete_past_bookings
 python manage.py auto_complete_past_bookings --dry-run
 ```
 
-Recommended interval: every 15–30 minutes for cleanup; hourly for auto-complete.
+Send appointment reminders before approved bookings (default: 24 hours before, per salon policy):
+
+```bash
+python manage.py send_booking_reminders
+python manage.py send_booking_reminders --dry-run
+```
+
+Recommended interval: every 15–30 minutes for cleanup and reminders; hourly for auto-complete.
 
 Completed/cancelled bookings stay on the owner calendar for up to one year (default 365 days, configurable per salon). Older bookings remain in the database for history and revenue but drop off the calendar.
 
