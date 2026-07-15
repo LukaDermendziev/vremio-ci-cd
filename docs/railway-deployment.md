@@ -147,6 +147,7 @@ DJANGO_DEBUG=False
 DJANGO_ALLOWED_HOSTS=www.fancyfingers.mk,fancyfingers.mk
 SITE_URL=https://www.fancyfingers.mk
 USE_RAILWAY_SITE_URL=True
+PLATFORM_URL=https://vremio.up.railway.app
 
 CUSTOMER_DOMAINS=www.fancyfingers.mk,fancyfingers.mk
 CUSTOMER_DOMAIN_SALON_SLUG=fancy-fingers

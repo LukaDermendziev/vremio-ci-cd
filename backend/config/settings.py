@@ -60,18 +60,26 @@ elif _railway_public and os.environ.get("RAILWAY_ENVIRONMENT"):
 else:
     SITE_URL = "http://127.0.0.1:8000"
 
-# Public Vremio platform URL (footer "Powered by" on salon domains, etc.).
-_platform_url = os.environ.get("PLATFORM_URL", "").strip().rstrip("/")
-if _platform_url:
-    PLATFORM_URL = _platform_url
-elif _railway_public:
-    PLATFORM_URL = f"https://{_railway_public}"
-else:
-    PLATFORM_URL = SITE_URL
-
-# Salon-branded customer domain(s) — homepage redirects to CUSTOMER_DOMAIN_SALON_SLUG.
+# Salon-branded customer domain(s) — homepage maps to CUSTOMER_DOMAIN_SALON_SLUG.
 CUSTOMER_DOMAINS = _env_list("CUSTOMER_DOMAINS")
 CUSTOMER_DOMAIN_SALON_SLUG = os.environ.get("CUSTOMER_DOMAIN_SALON_SLUG", "").strip()
+_customer_hosts = {h.lower() for h in CUSTOMER_DOMAINS}
+
+# Public Vremio platform URL (footer "Powered by" on salon domains, etc.).
+# Do not use RAILWAY_PUBLIC_DOMAIN when it is the salon custom domain (e.g. www.fancyfingers.mk).
+_platform_url = os.environ.get("PLATFORM_URL", "").strip().rstrip("/")
+_platform_host = os.environ.get("PLATFORM_HOST", "").strip().lower()
+if _platform_url:
+    PLATFORM_URL = _platform_url
+elif _platform_host:
+    PLATFORM_URL = f"https://{_platform_host}"
+elif _railway_public.endswith(".up.railway.app") and _railway_public not in _customer_hosts:
+    PLATFORM_URL = f"https://{_railway_public}"
+elif os.environ.get("RAILWAY_ENVIRONMENT"):
+    # Custom domain often becomes RAILWAY_PUBLIC_DOMAIN; keep platform on the *.up.railway.app host.
+    PLATFORM_URL = "https://vremio.up.railway.app"
+else:
+    PLATFORM_URL = SITE_URL
 
 for _host in CUSTOMER_DOMAINS:
     if _host not in ALLOWED_HOSTS:
