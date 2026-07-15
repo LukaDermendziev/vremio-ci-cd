@@ -371,7 +371,7 @@ Railway provisions HTTPS automatically once DNS propagates (often 5–30 minutes
 | Vremio platform (private) | `https://YOUR-APP.up.railway.app/` |
 | Django admin | `https://YOUR-APP.up.railway.app/admin/` |
 
-On `www.fancyfingers.mk`, visiting `/` redirects to the Fancy Fingers salon page. The Vremio homepage only appears on the Railway domain.
+On `www.fancyfingers.mk`, visiting `/` shows the Fancy Fingers salon page (URL stays `/`). The Vremio homepage only appears on the Railway domain.
 
 ---
 

@@ -1,8 +1,6 @@
 """Booking app middleware."""
 
 from django.conf import settings
-from django.http import HttpResponseRedirect
-from django.urls import reverse
 from django.utils import translation
 
 from .domain_utils import is_customer_domain
@@ -31,10 +29,10 @@ class DefaultMacedonianLocaleMiddleware:
 
 class CustomerDomainMiddleware:
     """
-    On salon-branded domains, show the salon page at / instead of the Vremio homepage.
+    On salon-branded domains, serve the salon page at / (URL stays clean).
 
-    Example: www.fancyfingers.mk/ → /book/fancy-fingers/
-    The Vremio platform stays on the Railway *.up.railway.app domain.
+    Example: www.fancyfingers.mk/ shows Fancy Fingers without redirecting to
+    /book/fancy-fingers/. The Vremio platform stays on *.up.railway.app.
     """
 
     def __init__(self, get_response):
@@ -46,12 +44,9 @@ class CustomerDomainMiddleware:
             and request.path == "/"
             and settings.CUSTOMER_DOMAIN_SALON_SLUG
         ):
-            return HttpResponseRedirect(
-                reverse(
-                    "booking:salon_page",
-                    args=[settings.CUSTOMER_DOMAIN_SALON_SLUG],
-                )
-            )
+            from .views import salon_page
+
+            return salon_page(request, settings.CUSTOMER_DOMAIN_SALON_SLUG)
         return self.get_response(request)
 
 

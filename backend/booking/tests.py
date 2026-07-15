@@ -144,13 +144,20 @@ class CustomerDomainTests(TestCase):
         CUSTOMER_DOMAINS=["www.fancyfingers.mk", "fancyfingers.mk"],
         CUSTOMER_DOMAIN_SALON_SLUG="fancy-fingers",
     )
-    def test_customer_domain_root_redirects_to_salon_page(self):
-        response = self.client.get("/", HTTP_HOST="www.fancyfingers.mk")
-        self.assertRedirects(
-            response,
-            "/book/fancy-fingers/",
-            fetch_redirect_response=False,
+    def test_customer_domain_root_serves_salon_page(self):
+        owner = get_user_model().objects.create_user(
+            username="ff_owner", password="pass"
         )
+        Salon.objects.create(
+            owner=owner,
+            name="Fancy Fingers",
+            slug="fancy-fingers",
+            is_active=True,
+        )
+        response = self.client.get("/", HTTP_HOST="www.fancyfingers.mk")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Fancy Fingers")
+        self.assertNotEqual(response.status_code, 302)
 
     @override_settings(
         ALLOWED_HOSTS=["vremio-production.up.railway.app", "testserver"],

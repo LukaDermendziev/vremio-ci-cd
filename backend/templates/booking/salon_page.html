@@ -9,7 +9,7 @@
 
 {# ── Sticky nav ───────────────────────────────────────────────────────────── #}
 <nav class="sp-nav">
-  <a class="sp-nav-brand" href="{% url 'booking:salon_page' salon.slug %}">{{ salon.name }}</a>
+  <a class="sp-nav-brand" href="{% if is_customer_domain %}/{% else %}{% url 'booking:salon_page' salon.slug %}{% endif %}">{{ salon.name }}</a>
   <div class="sp-nav-links">
     <a href="#services">{% trans "Services" %}</a>
     <a href="#hours">{% trans "Hours" %}</a>
