@@ -2272,7 +2272,7 @@ msgid "Scheduling rules"
 msgstr "Правила за закажување"
 
 msgid "School gyms"
-msgstr "Школски спортски сали"
+msgstr "Училишни спортски сали"
 
 msgid "Search"
 msgstr "Пребарај"

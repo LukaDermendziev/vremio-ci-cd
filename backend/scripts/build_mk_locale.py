@@ -347,7 +347,7 @@ TRANSLATIONS = {
     "Hair salons": "Фризерски салони",
     "Massage & physiotherapy": "Масажа и физиотерапија",
     "Sports halls": "Спортски сали",
-    "School gyms": "Школски спортски сали",
+    "School gyms": "Училишни спортски сали",
     "Courts & pitches": "Терени",
     "Car wash & detailing": "Авто услуги",
     "Private lessons": "Приватни часови",

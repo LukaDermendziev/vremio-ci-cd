@@ -60,6 +60,15 @@ elif _railway_public and os.environ.get("RAILWAY_ENVIRONMENT"):
 else:
     SITE_URL = "http://127.0.0.1:8000"
 
+# Public Vremio platform URL (footer "Powered by" on salon domains, etc.).
+_platform_url = os.environ.get("PLATFORM_URL", "").strip().rstrip("/")
+if _platform_url:
+    PLATFORM_URL = _platform_url
+elif _railway_public:
+    PLATFORM_URL = f"https://{_railway_public}"
+else:
+    PLATFORM_URL = SITE_URL
+
 # Salon-branded customer domain(s) — homepage redirects to CUSTOMER_DOMAIN_SALON_SLUG.
 CUSTOMER_DOMAINS = _env_list("CUSTOMER_DOMAINS")
 CUSTOMER_DOMAIN_SALON_SLUG = os.environ.get("CUSTOMER_DOMAIN_SALON_SLUG", "").strip()

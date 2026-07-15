@@ -336,7 +336,7 @@ window.SP_I18N = {
     <div class="sp-footer-bottom-right">
       <span class="sp-footer-copy">&copy; {% now "Y" %} {{ salon.name }}</span>
       <span class="sp-footer-sep">·</span>
-      <span class="sp-footer-credit">{% trans "Powered by" %} {% if is_customer_domain %}Vremio{% else %}<a href="{% url 'booking:home' %}">Vremio</a>{% endif %}</span>
+      <span class="sp-footer-credit">{% trans "Powered by" %} <a href="{% if is_customer_domain %}{{ vremio_home_url }}/{% else %}{% url 'booking:home' %}{% endif %}"{% if is_customer_domain %} target="_blank" rel="noopener"{% endif %}>Vremio</a></span>
     </div>
   </div>
   <div class="sp-footer-legal">
