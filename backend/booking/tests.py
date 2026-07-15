@@ -154,10 +154,34 @@ class CustomerDomainTests(TestCase):
             slug="fancy-fingers",
             is_active=True,
         )
-        response = self.client.get("/", HTTP_HOST="www.fancyfingers.mk")
+        response = self.client.get(
+            "/",
+            HTTP_HOST="www.fancyfingers.mk",
+            HTTP_ACCEPT_LANGUAGE="en-US,en;q=0.9",
+        )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Fancy Fingers")
+        self.assertContains(response, 'lang="mk"')
         self.assertNotEqual(response.status_code, 302)
+
+    @override_settings(
+        ALLOWED_HOSTS=["www.fancyfingers.mk", "testserver"],
+        CUSTOMER_DOMAINS=["www.fancyfingers.mk"],
+        CUSTOMER_DOMAIN_SALON_SLUG="fancy-fingers",
+    )
+    def test_customer_domain_root_sets_csrf_cookie(self):
+        owner = get_user_model().objects.create_user(
+            username="ff_owner2", password="pass"
+        )
+        Salon.objects.create(
+            owner=owner,
+            name="Fancy Fingers",
+            slug="fancy-fingers",
+            is_active=True,
+        )
+        response = self.client.get("/", HTTP_HOST="www.fancyfingers.mk")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("csrftoken", response.cookies)
 
     @override_settings(
         ALLOWED_HOSTS=["vremio-production.up.railway.app", "testserver"],

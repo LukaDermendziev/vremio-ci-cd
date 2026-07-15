@@ -22,6 +22,7 @@ class DefaultMacedonianLocaleMiddleware:
         cookie_name = settings.LANGUAGE_COOKIE_NAME
         if cookie_name not in request.COOKIES:
             translation.activate(settings.LANGUAGE_CODE)
+            request.LANGUAGE_CODE = settings.LANGUAGE_CODE
 
         response = self.get_response(request)
         return response
@@ -29,10 +30,10 @@ class DefaultMacedonianLocaleMiddleware:
 
 class CustomerDomainMiddleware:
     """
-    On salon-branded domains, serve the salon page at / (URL stays clean).
+    On salon-branded domains, map / to the salon page without a browser redirect.
 
-    Example: www.fancyfingers.mk/ shows Fancy Fingers without redirecting to
-    /book/fancy-fingers/. The Vremio platform stays on *.up.railway.app.
+    Rewrites the path internally so later middleware (locale default, CSRF, etc.)
+    still runs. The address bar stays https://www.example.mk/.
     """
 
     def __init__(self, get_response):
@@ -44,9 +45,9 @@ class CustomerDomainMiddleware:
             and request.path == "/"
             and settings.CUSTOMER_DOMAIN_SALON_SLUG
         ):
-            from .views import salon_page
-
-            return salon_page(request, settings.CUSTOMER_DOMAIN_SALON_SLUG)
+            salon_path = f"/book/{settings.CUSTOMER_DOMAIN_SALON_SLUG}/"
+            request.path = salon_path
+            request.path_info = salon_path
         return self.get_response(request)
 
 
