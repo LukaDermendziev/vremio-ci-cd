@@ -316,9 +316,9 @@ TRANSLATIONS = {
     "See plans": "Види планови",
     "Questions from business owners": "Прашања од сопственици",
     "Send a request": "Испратете барање",
-    "Tell us which plan you want": "Кажете ни кој план ве интересира",
+    "Tell us which plan you want": "Изберете го планот што најмногу ви одговара.",
     "Leave your name and Instagram or phone. We’ll get back to you.": (
-        "Оставете го вашето име и Instagram или телефон. Ќе ве контактираме."
+        "Оставете ни го вашето име и Instagram профил или телефонски број, а ние ќе ве контактираме наскоро."
     ),
     "Your name": "Вашето име",
     "Plan": "План",
@@ -334,7 +334,7 @@ TRANSLATIONS = {
     "Request sent": "Барањето е испратено",
     "Thanks — we’ll be in touch": "Ви благодариме — ќе ве контактираме",
     "Thanks — we received your request and will contact you soon.": (
-        "Ви благодариме — го добивме барањето и наскоро ќе ве контактираме."
+        "Го добивме вашето барање и наскоро ќе ве контактираме."
     ),
     "Please check the form.": "Проверете ја формата.",
     "We couldn’t send your request right now. Please email us or try again later.": (

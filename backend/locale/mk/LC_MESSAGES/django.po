@@ -1620,7 +1620,9 @@ msgstr ""
 "време. Достапноста за резервации не се менува."
 
 msgid "Leave your name and Instagram or phone. We’ll get back to you."
-msgstr "Оставете го вашето име и Instagram или телефон. Ќе ве контактираме."
+msgstr ""
+"Оставете ни го вашето име и Instagram профил или телефонски број, а ние ќе "
+"ве контактираме наскоро."
 
 msgid "Legal links"
 msgstr "Правни линкови"
@@ -2679,7 +2681,7 @@ msgstr ""
 "спречување злоупотреба)"
 
 msgid "Tell us which plan you want"
-msgstr "Кажете ни кој план ве интересира"
+msgstr "Изберете го планот што најмногу ви одговара."
 
 msgid "Terms of Use"
 msgstr "Услови за користење"
@@ -2691,7 +2693,7 @@ msgid "Thank you for letting us know. The salon has been notified."
 msgstr "Ви благодариме што нè известивте. Салонот е известен."
 
 msgid "Thanks — we received your request and will contact you soon."
-msgstr "Ви благодариме — го добивме барањето и наскоро ќе ве контактираме."
+msgstr "Го добивме вашето барање и наскоро ќе ве контактираме."
 
 msgid "Thanks — we’ll be in touch"
 msgstr "Ви благодариме — ќе ве контактираме"
