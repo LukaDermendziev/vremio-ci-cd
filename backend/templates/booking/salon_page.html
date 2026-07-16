@@ -3,6 +3,13 @@
 {% block title %}{{ salon.name }}{% endblock %}
 {% block body_class %}sp-page{% endblock %}
 
+{% block favicons %}
+  {# Always salon brand on the public salon page (customer domain or /book/<slug>/). #}
+  <link rel="icon" href="{% static 'salon-favicon.ico' %}" sizes="any">
+  <link rel="icon" href="{% static 'images/salon-favicon.svg' %}" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="{% static 'images/salon-apple-touch-icon.png' %}">
+{% endblock %}
+
 {% block lang_switcher %}{% endblock %}
 
 {% block content %}

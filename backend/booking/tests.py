@@ -193,6 +193,46 @@ class CustomerDomainTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Vremio")
 
+    @override_settings(
+        ALLOWED_HOSTS=["www.fancyfingers.mk", "testserver"],
+        CUSTOMER_DOMAINS=["www.fancyfingers.mk"],
+        CUSTOMER_DOMAIN_SALON_SLUG="fancy-fingers",
+    )
+    def test_customer_domain_html_uses_salon_favicon(self):
+        owner = get_user_model().objects.create_user(
+            username="ff_owner_fav", password="pass"
+        )
+        Salon.objects.create(
+            owner=owner,
+            name="Fancy Fingers",
+            slug="fancy-fingers",
+            is_active=True,
+        )
+        response = self.client.get("/", HTTP_HOST="www.fancyfingers.mk")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "salon-favicon")
+        self.assertNotContains(response, "vremio-favicon.svg")
+
+    @override_settings(
+        ALLOWED_HOSTS=["www.fancyfingers.mk", "vremio.up.railway.app", "testserver"],
+        CUSTOMER_DOMAINS=["www.fancyfingers.mk"],
+    )
+    def test_favicon_ico_is_host_aware(self):
+        salon_resp = self.client.get("/favicon.ico", HTTP_HOST="www.fancyfingers.mk")
+        self.assertEqual(salon_resp.status_code, 200)
+        self.assertEqual(salon_resp["Content-Type"], "image/x-icon")
+        salon_bytes = b"".join(salon_resp.streaming_content)
+
+        platform_resp = self.client.get(
+            "/favicon.ico", HTTP_HOST="vremio.up.railway.app"
+        )
+        self.assertEqual(platform_resp.status_code, 200)
+        self.assertEqual(platform_resp["Content-Type"], "image/x-icon")
+        platform_bytes = b"".join(platform_resp.streaming_content)
+        self.assertNotEqual(salon_bytes, platform_bytes)
+        self.assertTrue(salon_bytes)
+        self.assertTrue(platform_bytes)
+
 
 class HealthCheckTests(TestCase):
     def test_health_returns_ok(self):

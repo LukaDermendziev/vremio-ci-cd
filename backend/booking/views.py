@@ -10,6 +10,7 @@ from django.contrib.auth import logout as auth_logout
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.db.models import Prefetch, Q
+from django.contrib.staticfiles import finders
 from django.http import FileResponse, Http404, HttpResponse, HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -123,6 +124,20 @@ def _slots_json(slots, *, last_minute=False, release_unavailable=False):
 
 def health(request):
     return HttpResponse("ok", content_type="text/plain")
+
+
+@require_GET
+def favicon(request):
+    """Serve the salon or platform .ico based on Host (browsers often hit /favicon.ico)."""
+    from .domain_utils import is_customer_domain
+
+    name = "salon-favicon.ico" if is_customer_domain(request) else "vremio-favicon.ico"
+    path = finders.find(name) or finders.find("favicon.ico")
+    if not path:
+        raise Http404("favicon not found")
+    response = FileResponse(open(path, "rb"), content_type="image/x-icon")
+    response["Cache-Control"] = "public, max-age=86400"
+    return response
 
 
 def home(request):
