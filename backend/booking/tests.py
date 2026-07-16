@@ -137,6 +137,61 @@ class HomePageTests(TestCase):
         response = self.client.get("/")
         self.assertContains(response, "hello@vremio.test")
 
+    @override_settings(VREMIO_INSTAGRAM="vremio.mk")
+    def test_home_shows_pricing_plans_for_owners(self):
+        response = self.client.get("/")
+        self.assertContains(response, 'id="plans"')
+        self.assertContains(response, "Starter")
+        self.assertContains(response, "990")
+        self.assertContains(response, "1,990")
+        self.assertContains(response, "2,990")
+        self.assertContains(response, "data-plan-interest")
+        self.assertContains(response, 'id="vm-lead-form"')
+        self.assertContains(response, reverse("booking:plan_interest"))
+
+    @override_settings(
+        VREMIO_CONTACT_EMAIL="leads@vremio.test",
+        EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+    )
+    def test_plan_interest_sends_email(self):
+        from django.core import mail
+
+        response = self.client.post(
+            reverse("booking:plan_interest"),
+            {
+                "name": "Ana Owner",
+                "plan": "pro",
+                "contact_method": "instagram",
+                "contact_value": "ana.nails",
+                "website": "",
+            },
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+            HTTP_ACCEPT="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload["ok"])
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn("Pro", mail.outbox[0].subject)
+        self.assertIn("Ana Owner", mail.outbox[0].body)
+        self.assertIn("@ana.nails", mail.outbox[0].body)
+
+    def test_plan_interest_requires_contact_value(self):
+        response = self.client.post(
+            reverse("booking:plan_interest"),
+            {
+                "name": "Ana Owner",
+                "plan": "starter",
+                "contact_method": "phone",
+                "contact_value": "",
+                "website": "",
+            },
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+            HTTP_ACCEPT="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(response.json()["ok"])
+
 
 class CustomerDomainTests(TestCase):
     @override_settings(

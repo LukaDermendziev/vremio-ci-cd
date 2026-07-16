@@ -10,6 +10,7 @@ app_name = "booking"
 urlpatterns = [
     path("health/", views.health, name="health"),
     path("", views.home, name="home"),
+    path("plan-interest/", views.plan_interest, name="plan_interest"),
     path("privacy/", views.privacy_policy, name="privacy_policy"),
     path("terms/", views.terms_of_use, name="terms_of_use"),
     path("booking-rules/", views.booking_rules, name="booking_rules"),

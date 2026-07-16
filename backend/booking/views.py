@@ -35,6 +35,7 @@ from .customer_blocking import (
     update_customer_block,
 )
 from .legal_utils import get_vremio_contact_email
+from .email_utils import send_plan_interest_email
 from .forms import (
     BlockedDateForm,
     BookingPolicyForm,
@@ -43,11 +44,13 @@ from .forms import (
     BookingSmsOtpForm,
     OwnerBookingForm,
     OwnerCustomerForm,
+    PlanInterestForm,
     SalonPublicHoursDisplayForm,
     ServiceForm,
     UnavailableTimeBlockForm,
     WorkingHoursFormSet,
 )
+from .pricing_plans import PRICING_FAQ, PRICING_PLANS
 from .models import (
     Booking,
     BookingActivityLog,
@@ -154,8 +157,81 @@ def home(request):
             "category": category,
             "category_choices": Salon.BusinessCategory,
             "contact_email": get_vremio_contact_email(),
+            "pricing_plans": PRICING_PLANS,
+            "pricing_faq": PRICING_FAQ,
+            "plan_interest_form": PlanInterestForm(),
         },
     )
+
+
+@require_POST
+def plan_interest(request):
+    """Receive owner plan-interest leads from the landing page."""
+    from django.core.cache import cache
+
+    wants_json = (
+        request.headers.get("X-Requested-With") == "XMLHttpRequest"
+        or "application/json" in (request.headers.get("Accept") or "")
+    )
+
+    ip = get_client_ip(request) or "unknown"
+    rate_key = f"plan_interest:{ip}"
+    try:
+        hits = cache.get(rate_key, 0) or 0
+    except Exception:
+        hits = 0
+    if hits >= 5:
+        message = _("You have sent too many requests in a short time. Please try again later.")
+        if wants_json:
+            return JsonResponse({"ok": False, "error": str(message)}, status=429)
+        messages.error(request, message)
+        return redirect("/#plans")
+
+    form = PlanInterestForm(request.POST)
+    if not form.is_valid():
+        if wants_json:
+            errors = {
+                field: [str(e) for e in errs] for field, errs in form.errors.items()
+            }
+            non_field = [str(e) for e in form.non_field_errors()]
+            return JsonResponse(
+                {
+                    "ok": False,
+                    "errors": errors,
+                    "error": non_field[0] if non_field else _("Please check the form."),
+                },
+                status=400,
+            )
+        messages.error(request, _("Please check the form."))
+        return redirect("/#plans")
+
+    data = form.cleaned_data
+    plan_label = dict(form.fields["plan"].choices).get(data["plan"], data["plan"])
+    sent, reason = send_plan_interest_email(
+        name=data["name"],
+        plan_label=str(plan_label),
+        instagram=data.get("instagram") or "",
+        phone=data.get("phone") or "",
+    )
+    try:
+        cache.set(rate_key, hits + 1, timeout=3600)
+    except Exception:
+        pass
+
+    if not sent:
+        message = _(
+            "We couldn’t send your request right now. Please email us or try again later."
+        )
+        if wants_json:
+            return JsonResponse({"ok": False, "error": str(message)}, status=503)
+        messages.error(request, message)
+        return redirect("/#plans")
+
+    success = _("Thanks — we received your request and will contact you soon.")
+    if wants_json:
+        return JsonResponse({"ok": True, "message": str(success)})
+    messages.success(request, success)
+    return redirect("/#plans")
 
 
 def _legal_page_context():

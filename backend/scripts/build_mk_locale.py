@@ -301,6 +301,137 @@ TRANSLATIONS = {
     ),
     "Book appointment": "Закажи термин",
     "I have a business": "Имам бизнис",
+    "Plans that free up your day": "Планови што ви го ослободуваат денот",
+    "Stop juggling Instagram messages and phone notes. Pick a plan, send a short request, and we’ll help you get set up.": (
+        "Престанете да жонглирате со Instagram пораки и белешки на телефонот. "
+        "Изберете план, испратете кратко барање и ќе ви помогнеме со поставувањето."
+    ),
+    "Most popular": "Најпопуларен",
+    "Starting from": "Почнува од",
+    "month": "месец",
+    "What’s included": "Што е вклучено",
+    "Perfect for": "Идеално за",
+    "More details": "Повеќе детали",
+    "Less details": "Помалку детали",
+    "See plans": "Види планови",
+    "Questions from business owners": "Прашања од сопственици",
+    "Send a request": "Испратете барање",
+    "Tell us which plan you want": "Кажете ни кој план ве интересира",
+    "Leave your name and Instagram or phone. We’ll get back to you.": (
+        "Оставете го вашето име и Instagram или телефон. Ќе ве контактираме."
+    ),
+    "Your name": "Вашето име",
+    "Plan": "План",
+    "Instagram": "Instagram",
+    "Phone": "Телефон",
+    "How should we contact you?": "Како да ве контактираме?",
+    "Contact": "Контакт",
+    "Instagram username": "Instagram корисничко име",
+    "Phone number": "Телефонски број",
+    "Please enter your phone number.": "Внесете го вашиот телефонски број.",
+    "Please enter your Instagram username.": "Внесете го вашето Instagram корисничко име.",
+    "Send request": "Испрати барање",
+    "Request sent": "Барањето е испратено",
+    "Thanks — we’ll be in touch": "Ви благодариме — ќе ве контактираме",
+    "Thanks — we received your request and will contact you soon.": (
+        "Ви благодариме — го добивме барањето и наскоро ќе ве контактираме."
+    ),
+    "Please check the form.": "Проверете ја формата.",
+    "We couldn’t send your request right now. Please email us or try again later.": (
+        "Моментално не можевме да го испратиме барањето. Испратете ни email или обидете се повторно."
+    ),
+    "Something went wrong. Please try again.": "Нешто тргна наопаку. Обидете се повторно.",
+    "Close": "Затвори",
+    "Starter": "Starter",
+    "Pro": "Pro",
+    "Premium": "Premium",
+    "For businesses that want to stop managing bookings through Instagram messages and Notes.": (
+        "За бизниси што сакаат да престанат да управуваат со термини преку Instagram пораки и Notes."
+    ),
+    "Get an online booking page instead of endless chat threads": (
+        "Добијте онлајн страница за закажување наместо бесконечни разговори во чет"
+    ),
+    "See requests in one dashboard — approve or reject in seconds": (
+        "Гледајте ги барањата на една контролна табла — одобрете или одбијте за секунди"
+    ),
+    "Set your services, hours, and booking rules once": (
+        "Поставете ги услугите, работното време и правилата за закажување еднаш"
+    ),
+    "Business profile on Vremio": "Бизнис профил на Vremio",
+    "Services and working schedule": "Услуги и работен распоред",
+    "Booking requests with customer details": "Барања за термин со податоци за клиентот",
+    "Owner dashboard": "Контролна табла за сопственик",
+    "Email notifications": "Email известувања",
+    "Booking rules and policies": "Правила и политики за закажување",
+    "Nail salons, beauty studios, barbershops, trainers, and small service businesses.": (
+        "Салони за нокти, студија за убавина, берберници, тренери и мали услужни бизниси."
+    ),
+    "Request Starter": "Побарај Starter",
+    "Your own brand. Your own domain. A professional online presence.": (
+        "Ваш бренд. Ваш домен. Професионално онлајн присуство."
+    ),
+    "Look like a real brand with your own domain and booking page": (
+        "Изгледајте како вистински бренд со сопствен домен и страница за закажување"
+    ),
+    "We help connect DNS so customers land on your site": (
+        "Помагаме со поврзување на DNS за клиентите да стигнат на вашата страница"
+    ),
+    "Priority support when you need setup help": (
+        "Приоритетна поддршка кога ви треба помош при поставување"
+    ),
+    "Everything in Starter": "Сè од Starter",
+    "Custom domain connection": "Поврзување на сопствен домен",
+    "Branded salon landing page": "Брендирана страница за салонот",
+    "DNS setup included": "Вклучено поставување на DNS",
+    "Priority support": "Приоритетна поддршка",
+    "Businesses ready to look professional online and move off Instagram-only booking.": (
+        "Бизниси што сакаат професионален онлајн изглед и да излезат од закажување само преку Instagram."
+    ),
+    "Request Pro": "Побарај Pro",
+    "Spend less time managing appointments and more time running your business.": (
+        "Трошете помалку време на термини и повеќе време на водење на бизнисот."
+    ),
+    "Stronger protection against no-shows and abusive bookings": (
+        "Посилна заштита од недоаѓања и злоупотреба на термини"
+    ),
+    "Monthly consultation to tune your booking flow": (
+        "Месечна консултација за подобрување на процесот на закажување"
+    ),
+    "SMS reminders coming soon — included when available": (
+        "SMS потсетници наскоро — вклучени кога ќе бидат достапни"
+    ),
+    "Everything in Pro": "Сè од Pro",
+    "SMS reminders (coming soon)": "SMS потсетници (наскоро)",
+    "Advanced booking rules": "Напредни правила за закажување",
+    "Anti-abuse protection": "Заштита од злоупотреба",
+    "Customer blocklist": "Блокада на клиенти",
+    "Monthly consultation": "Месечна консултација",
+    "Priority feature requests": "Приоритетни барања за нови функции",
+    "Growing businesses that want less admin and more control every month.": (
+        "Бизниси што растат и сакаат помалку администрација и повеќе контрола секој месец."
+    ),
+    "Request Premium": "Побарај Premium",
+    "Do I need my own website?": "Дали ми треба сопствена веб-страница?",
+    "No. Every business automatically receives its own booking page on Vremio.": (
+        "Не. Секој бизнис автоматски добива своја страница за закажување на Vremio."
+    ),
+    "Can I connect my own domain?": "Дали можам да го поврзам мојот домен?",
+    "Yes. The Pro and Premium plans support connecting your own domain.": (
+        "Да. Плановите Pro и Premium поддржуваат поврзување на сопствен домен."
+    ),
+    "Can customers book appointments 24/7?": "Дали клиентите можат да закажуваат 24/7?",
+    "Yes. Customers can request appointments anytime while you stay in control of approvals and availability.": (
+        "Да. Клиентите можат да испратат барање во секое време, а вие останувате во контрола на одобрувањата и достапноста."
+    ),
+    "Can I cancel anytime?": "Дали можам да откажам во секое време?",
+    "Yes. There are no long-term contracts.": "Да. Нема долгорочни договори.",
+    "Can I upgrade later?": "Дали можам да надградам подоцна?",
+    "Absolutely. You can upgrade your plan whenever your business grows.": (
+        "Апсолутно. Можете да го надградите планот во било кое време."
+    ),
+    "Hi, I’m interested in the Vremio %(plan_name)s plan. Please tell me more about setup and next steps.": (
+        "Здраво, заинтересиран сум за Vremio планот %(plan_name)s. Кажете ми повеќе за поставувањето и следните чекори."
+    ),
     "Directory": "Директориум",
     "Businesses on Vremio": "Бизниси на Vremio",
     "Search and book appointments at local businesses.": "Пребарајте и закажете термин кај локални бизниси.",

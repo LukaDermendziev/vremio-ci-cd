@@ -341,6 +341,7 @@ DEFAULT_FROM_EMAIL = os.environ.get(
 SERVER_EMAIL = os.environ.get("SERVER_EMAIL", DEFAULT_FROM_EMAIL)
 OWNER_NOTIFICATION_EMAIL = os.environ.get("OWNER_NOTIFICATION_EMAIL", "").strip()
 VREMIO_CONTACT_EMAIL = os.environ.get("VREMIO_CONTACT_EMAIL", "").strip()
+VREMIO_INSTAGRAM = os.environ.get("VREMIO_INSTAGRAM", "vremio.mk").strip().lstrip("@")
 
 IMAGE_MODERATION_ENABLED = os.environ.get("IMAGE_MODERATION_ENABLED", "False") == "True"
 IMAGE_MODERATION_PROVIDER = os.environ.get("IMAGE_MODERATION_PROVIDER", "").strip()

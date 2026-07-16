@@ -127,6 +127,9 @@ msgstr "Испратеното барање за термин не претст�
 msgid "About Vremio"
 msgstr "За Vremio"
 
+msgid "Absolutely. You can upgrade your plan whenever your business grows."
+msgstr "Апсолутно. Можете да го надградите планот во било кое време."
+
 msgid "Abuse"
 msgstr "Злоупотреба"
 
@@ -172,6 +175,9 @@ msgstr "Додади блок"
 msgid "Additional details for your records…"
 msgstr "Дополнителни детали за вашите записи…"
 
+msgid "Advanced booking rules"
+msgstr "Напредни правила за закажување"
+
 msgid "After the pilot"
 msgstr "По пилотот"
 
@@ -209,6 +215,9 @@ msgstr "Веќе блокиран"
 
 msgid "Anti-abuse"
 msgstr "Anti-abuse"
+
+msgid "Anti-abuse protection"
+msgstr "Заштита од злоупотреба"
 
 msgid "Any notes for the salon..."
 msgstr "Белешки за салонот..."
@@ -509,6 +518,12 @@ msgstr "Терминот е одбиен. Е-пошта е испратена д
 msgid "Booking request received"
 msgstr "Примено барање за резервација"
 
+msgid "Booking requests with customer details"
+msgstr "Барања за термин со податоци за клиентот"
+
+msgid "Booking rules and policies"
+msgstr "Правила и политики за закажување"
+
 msgid "Booking settings"
 msgstr "Поставки за резервации"
 
@@ -536,6 +551,9 @@ msgstr "Термини"
 msgid "Bookings and approval"
 msgstr "Резервации и одобрување"
 
+msgid "Branded salon landing page"
+msgstr "Брендирана страница за салонот"
+
 msgid "Browse businesses"
 msgstr "Пребарај бизниси"
 
@@ -549,6 +567,9 @@ msgstr ""
 msgid "Business owner pilot terms"
 msgstr "Услови за пилот за сопственици на бизнис"
 
+msgid "Business profile on Vremio"
+msgstr "Бизнис профил на Vremio"
+
 msgid "Business responsibilities"
 msgstr "Обврски на бизнисот"
 
@@ -557,6 +578,13 @@ msgstr "работното време на бизнисот"
 
 msgid "Businesses on Vremio"
 msgstr "Бизниси на Vremio"
+
+msgid ""
+"Businesses ready to look professional online and move off Instagram-only "
+"booking."
+msgstr ""
+"Бизниси што сакаат професионален онлајн изглед и да излезат од закажување "
+"само преку Instagram."
 
 msgid "By submitting an appointment request, you confirm that:"
 msgstr "Со испраќање барање за термин потврдувате дека:"
@@ -581,6 +609,18 @@ msgstr "Повикај"
 
 msgid "Call customer"
 msgstr "Повикај клиент"
+
+msgid "Can I cancel anytime?"
+msgstr "Дали можам да откажам во секое време?"
+
+msgid "Can I connect my own domain?"
+msgstr "Дали можам да го поврзам мојот домен?"
+
+msgid "Can I upgrade later?"
+msgstr "Дали можам да надградам подоцна?"
+
+msgid "Can customers book appointments 24/7?"
+msgstr "Дали клиентите можат да закажуваат 24/7?"
 
 msgid "Cancel"
 msgstr "Откажи"
@@ -798,6 +838,9 @@ msgstr "Терени"
 msgid "Creating and managing booking requests"
 msgstr "Креирање и управување со барања за резервација"
 
+msgid "Custom domain connection"
+msgstr "Поврзување на сопствен домен"
+
 msgid "Customer actions"
 msgstr "Акции за клиент"
 
@@ -806,6 +849,9 @@ msgstr "Клиентот е успешно додаден."
 
 msgid "Customer blocked."
 msgstr "Клиентот е блокиран."
+
+msgid "Customer blocklist"
+msgstr "Блокада на клиенти"
 
 msgid "Customer cancellation notice (hours)"
 msgstr "Одредба за откажување од клиент (часови)"
@@ -852,6 +898,9 @@ msgstr "Клиенти кои не можат да испратат нови б�
 msgid ""
 "Customers who upload abusive content may be blocked from future bookings."
 msgstr "Клиенти кои прикачуваат непримерна содржина може да бидат блокирани."
+
+msgid "DNS setup included"
+msgstr "Вклучено поставување на DNS"
 
 msgid "Dashboard"
 msgstr "Контролна табла"
@@ -927,6 +976,9 @@ msgstr "Опис"
 
 msgid "Directory"
 msgstr "Директориум"
+
+msgid "Do I need my own website?"
+msgstr "Дали ми треба сопствена веб-страница?"
 
 msgid ""
 "Do not share customer photos or contact details outside what is necessary "
@@ -1022,6 +1074,9 @@ msgstr "Email до клиент"
 msgid "Email messages"
 msgstr "Email пораки"
 
+msgid "Email notifications"
+msgstr "Email известувања"
+
 msgid "Email notifications and reminders"
 msgstr "Email известувања и потсетници"
 
@@ -1048,6 +1103,12 @@ msgstr "Внесете код за потврда"
 
 msgid "Enter your email and we'll send a reset link."
 msgstr "Внесете ја вашата е-пошта и ќе ви испратиме линк за ресетирање."
+
+msgid "Everything in Pro"
+msgstr "Сè од Pro"
+
+msgid "Everything in Starter"
+msgstr "Сè од Starter"
 
 msgid "Expand sidebar"
 msgstr "Прошири странична лента"
@@ -1104,6 +1165,13 @@ msgstr "Подножје навигација"
 msgid "For business owners"
 msgstr "За сопственици"
 
+msgid ""
+"For businesses that want to stop managing bookings through Instagram "
+"messages and Notes."
+msgstr ""
+"За бизниси што сакаат да престанат да управуваат со термини преку Instagram "
+"пораки и Notes."
+
 msgid "For customers"
 msgstr "За клиенти"
 
@@ -1131,11 +1199,20 @@ msgstr "Име и презиме"
 msgid "Gap between services in same booking (minutes)"
 msgstr "Пауза меѓу услуги во иста резервација (минути)"
 
+msgid "Get an online booking page instead of endless chat threads"
+msgstr ""
+"Добијте онлајн страница за закажување наместо бесконечни разговори во чет"
+
 msgid "Get started"
 msgstr "Започнете"
 
 msgid "Go to login"
 msgstr "Оди на најава"
+
+msgid "Growing businesses that want less admin and more control every month."
+msgstr ""
+"Бизниси што растат и сакаат помалку администрација и повеќе контрола секој "
+"месец."
 
 msgid "Hair salons"
 msgstr "Фризерски салони"
@@ -1349,6 +1426,13 @@ msgstr ""
 msgid "Hello,"
 msgstr "Здраво,"
 
+msgid ""
+"Hi, I’m interested in the Vremio %(plan_name)s plan. Please tell me more "
+"about setup and next steps."
+msgstr ""
+"Здраво, заинтересиран сум за Vremio планот %(plan_name)s. Кажете ми повеќе "
+"за поставувањето и следните чекори."
+
 msgid "History"
 msgstr "Историја"
 
@@ -1357,6 +1441,9 @@ msgstr "Работно време"
 
 msgid "How it works"
 msgstr "Како функционира"
+
+msgid "How should we contact you?"
+msgstr "Како да ве контактираме?"
 
 msgid "I accept the salon rules and understand this is only a request."
 msgstr ""
@@ -1532,11 +1619,21 @@ msgstr ""
 "Оставете празно за да се прикаже истото време на затворање како работното "
 "време. Достапноста за резервации не се менува."
 
+msgid "Leave your name and Instagram or phone. We’ll get back to you."
+msgstr "Оставете го вашето име и Instagram или телефон. Ќе ве контактираме."
+
 msgid "Legal links"
 msgstr "Правни линкови"
 
+msgid "Less details"
+msgstr "Помалку детали"
+
 msgid "Loading times…"
 msgstr "Се вчитуваат термини…"
+
+msgid "Look like a real brand with your own domain and booking page"
+msgstr ""
+"Изгледајте како вистински бренд со сопствен домен и страница за закажување"
 
 msgid "Made by"
 msgstr "Направено од"
@@ -1623,8 +1720,27 @@ msgstr "Пон – Саб"
 msgid "Monday"
 msgstr "Понеделник"
 
+msgid "Monthly consultation"
+msgstr "Месечна консултација"
+
+msgid "Monthly consultation to tune your booking flow"
+msgstr "Месечна консултација за подобрување на процесот на закажување"
+
 msgid "More"
 msgstr "Повеќе"
+
+msgid "More details"
+msgstr "Повеќе детали"
+
+msgid "Most popular"
+msgstr "Најпопуларен"
+
+msgid ""
+"Nail salons, beauty studios, barbershops, trainers, and small service "
+"businesses."
+msgstr ""
+"Салони за нокти, студија за убавина, берберници, тренери и мали услужни "
+"бизниси."
 
 msgid "Name"
 msgstr "Име"
@@ -1725,6 +1841,11 @@ msgstr "Порака за не се појави"
 msgid "No-shows"
 msgstr "Не се појавија"
 
+msgid ""
+"No. Every business automatically receives its own booking page on Vremio."
+msgstr ""
+"Не. Секој бизнис автоматски добива своја страница за закажување на Vremio."
+
 msgid "Not allowed"
 msgstr "Не е дозволено"
 
@@ -1810,6 +1931,9 @@ msgstr "Најава за сопственик"
 msgid "Owner Pilot Terms"
 msgstr "Услови за пилот — сопственици"
 
+msgid "Owner dashboard"
+msgstr "Контролна табла за сопственик"
+
 msgid "Owner dashboard and calendar"
 msgstr "Контролна табла и календар"
 
@@ -1866,6 +1990,9 @@ msgstr "Барања на чекање"
 
 msgid "Pending/received message"
 msgstr "Порака за примено барање"
+
+msgid "Perfect for"
+msgstr "Идеално за"
 
 msgid "Phone"
 msgstr "Телефон"
@@ -1931,8 +2058,17 @@ msgstr "фотографии што не се поврзани со услуга
 msgid "Pilot period"
 msgstr "Пилот период"
 
+msgid "Plan"
+msgstr "План"
+
+msgid "Plans that free up your day"
+msgstr "Планови што ви го ослободуваат денот"
+
 msgid "Platform changes and availability"
 msgstr "Промени и достапност на платформата"
+
+msgid "Please check the form."
+msgstr "Проверете ја формата."
 
 msgid "Please complete all required fields before continuing."
 msgstr "Пополнете ги сите задолжителни полиња пред да продолжите."
@@ -1973,6 +2109,9 @@ msgstr "Претпочитан контакт"
 msgid "Preferred contact method"
 msgstr "Претпочитан начин на контакт"
 
+msgid "Premium"
+msgstr "Premium"
+
 msgid "Prepared message"
 msgstr "Подготвена порака"
 
@@ -2003,11 +2142,23 @@ msgstr "Ценовник"
 msgid "Prices"
 msgstr "цените"
 
+msgid "Priority feature requests"
+msgstr "Приоритетни барања за нови функции"
+
+msgid "Priority support"
+msgstr "Приоритетна поддршка"
+
+msgid "Priority support when you need setup help"
+msgstr "Приоритетна поддршка кога ви треба помош при поставување"
+
 msgid "Privacy Policy"
 msgstr "Политика за приватност"
 
 msgid "Private lessons"
 msgstr "Приватни часови"
+
+msgid "Pro"
+msgstr "Pro"
 
 msgid "Processing appointment requests"
 msgstr "обработка на барања за термин"
@@ -2038,6 +2189,9 @@ msgstr "квалитетот на услугата"
 
 msgid "Questions about how your data is used"
 msgstr "Прашања за тоа како се користат вашите податоци"
+
+msgid "Questions from business owners"
+msgstr "Прашања од сопственици"
 
 msgid "Ready for"
 msgstr "Подготвени за"
@@ -2115,8 +2269,17 @@ msgid "Report bugs, incorrect bookings, or security concerns promptly."
 msgstr ""
 "Пријавете грешки, неточни резервации или безбедносни проблеми навреме."
 
+msgid "Request Premium"
+msgstr "Побарај Premium"
+
+msgid "Request Pro"
+msgstr "Побарај Pro"
+
 msgid "Request Sent"
 msgstr "Барањето е испратено"
+
+msgid "Request Starter"
+msgstr "Побарај Starter"
 
 msgid "Request a new one."
 msgstr "Побарајте нов."
@@ -2141,6 +2304,9 @@ msgstr "Барањето е примено"
 
 msgid "Request received — %(salon)s"
 msgstr "Барањето е примено — %(salon)s"
+
+msgid "Request sent"
+msgstr "Барањето е испратено"
 
 msgid "Request sent!"
 msgstr "Барањето е испратено!"
@@ -2195,6 +2361,12 @@ msgstr "Преглед на барањето"
 
 msgid "SMS"
 msgstr "SMS"
+
+msgid "SMS reminders (coming soon)"
+msgstr "SMS потсетници (наскоро)"
+
+msgid "SMS reminders coming soon — included when available"
+msgstr "SMS потсетници наскоро — вклучени кога ќе бидат достапни"
 
 msgid "SMS sent"
 msgstr "SMS испратен"
@@ -2289,6 +2461,14 @@ msgstr "Пребарај по име, телефон или email…"
 msgid "Section / Group"
 msgstr "Секција / група"
 
+msgid "See plans"
+msgstr "Види планови"
+
+msgid "See requests in one dashboard — approve or reject in seconds"
+msgstr ""
+"Гледајте ги барањата на една контролна табла — одобрете или одбијте за "
+"секунди"
+
 msgid "Select a date above to see available times."
 msgstr "Изберете датум погоре за да ги видите слободните термини."
 
@@ -2301,6 +2481,9 @@ msgstr "избрана услуга"
 msgid "Selected service, date, and time"
 msgstr "Избрана услуга, датум и време"
 
+msgid "Send a request"
+msgstr "Испратете барање"
+
 msgid "Send a request and wait for confirmation"
 msgstr "Испратете барање и почекајте потврда"
 
@@ -2311,6 +2494,9 @@ msgstr ""
 
 msgid "Send email"
 msgstr "Испрати email"
+
+msgid "Send request"
+msgstr "Испрати барање"
 
 msgid "Send reset link"
 msgstr "Испрати линк за ресетирање"
@@ -2351,6 +2537,9 @@ msgstr "Услуга: %(service)s"
 msgid "Services"
 msgstr "Услуги"
 
+msgid "Services and working schedule"
+msgstr "Услуги и работен распоред"
+
 msgid "Services will be listed here soon."
 msgstr "Услугите наскоро ќе бидат објавени тука."
 
@@ -2365,6 +2554,10 @@ msgstr "Постави лозинка"
 
 msgid "Set up services and working hours"
 msgstr "Поставете услуги и работно време"
+
+msgid "Set your services, hours, and booking rules once"
+msgstr ""
+"Поставете ги услугите, работното време и правилата за закажување еднаш"
 
 msgid "Show photo"
 msgstr "Прикажи слика"
@@ -2415,6 +2608,11 @@ msgstr "Извор"
 msgid "Spam"
 msgstr "Спам"
 
+msgid ""
+"Spend less time managing appointments and more time running your business."
+msgstr ""
+"Трошете помалку време на термини и повеќе време на водење на бизнисот."
+
 msgid "Sports halls"
 msgstr "Спортски сали"
 
@@ -2430,11 +2628,27 @@ msgstr "Почеток"
 msgid "Start time"
 msgstr "Почеток"
 
+msgid "Starter"
+msgstr "Starter"
+
+msgid "Starting from"
+msgstr "Почнува од"
+
 msgid "Status"
 msgstr "Статус"
 
 msgid "Still scheduling through messages?"
 msgstr "Дали вашиот бизнис сè уште закажува преку пораки?"
+
+msgid ""
+"Stop juggling Instagram messages and phone notes. Pick a plan, send a short "
+"request, and we’ll help you get set up."
+msgstr ""
+"Престанете да жонглирате со Instagram пораки и белешки на телефонот. "
+"Изберете план, испратете кратко барање и ќе ви помогнеме со поставувањето."
+
+msgid "Stronger protection against no-shows and abusive bookings"
+msgstr "Посилна заштита од недоаѓања и злоупотреба на термини"
 
 msgid "Su"
 msgstr "Не"
@@ -2464,6 +2678,9 @@ msgstr ""
 "Технички и безбедносни записи (на пр. IP адреса за ограничување на барања и "
 "спречување злоупотреба)"
 
+msgid "Tell us which plan you want"
+msgstr "Кажете ни кој план ве интересира"
+
 msgid "Terms of Use"
 msgstr "Услови за користење"
 
@@ -2472,6 +2689,12 @@ msgstr "Че"
 
 msgid "Thank you for letting us know. The salon has been notified."
 msgstr "Ви благодариме што нè известивте. Салонот е известен."
+
+msgid "Thanks — we received your request and will contact you soon."
+msgstr "Ви благодариме — го добивме барањето и наскоро ќе ве контактираме."
+
+msgid "Thanks — we’ll be in touch"
+msgstr "Ви благодариме — ќе ве контактираме"
 
 msgid "The appointment becomes valid only after approval by the business."
 msgstr "Терминот станува важечки само по одобрување од страна на бизнисот."
@@ -2995,6 +3218,16 @@ msgstr ""
 msgid "We couldn't find a business matching your search."
 msgstr "Не најдовме бизнис според вашето пребарување."
 
+msgid ""
+"We couldn’t send your request right now. Please email us or try again later."
+msgstr ""
+"Моментално не можевме да го испратиме барањето. Испратете ни email или "
+"обидете се повторно."
+
+msgid "We help connect DNS so customers land on your site"
+msgstr ""
+"Помагаме со поврзување на DNS за клиентите да стигнат на вашата страница"
+
 msgid "We look forward to seeing you."
 msgstr "Ве очекуваме."
 
@@ -3056,6 +3289,9 @@ msgstr "Што можете да побарате"
 msgid "WhatsApp"
 msgstr "WhatsApp"
 
+msgid "What’s included"
+msgstr "Што е вклучено"
+
 msgid "Who operates Vremio"
 msgstr "Кој управува со Vremio"
 
@@ -3082,6 +3318,19 @@ msgstr "Работното време е зачувано."
 
 msgid "Yes, cancel appointment"
 msgstr "Да, откажи термин"
+
+msgid ""
+"Yes. Customers can request appointments anytime while you stay in control of"
+" approvals and availability."
+msgstr ""
+"Да. Клиентите можат да испратат барање во секое време, а вие останувате во "
+"контрола на одобрувањата и достапноста."
+
+msgid "Yes. The Pro and Premium plans support connecting your own domain."
+msgstr "Да. Плановите Pro и Premium поддржуваат поврзување на сопствен домен."
+
+msgid "Yes. There are no long-term contracts."
+msgstr "Да. Нема долгорочни договори."
 
 msgid ""
 "You accept that significant lateness may result in cancellation of the "
@@ -3284,6 +3533,12 @@ msgstr "Вашето барање за термин е одбиено."
 msgid "Your data is used exclusively for:"
 msgstr "Вашите податоци се користат исклучиво за:"
 
+msgid "Your name"
+msgstr "Вашето име"
+
+msgid "Your own brand. Your own domain. A professional online presence."
+msgstr "Ваш бренд. Ваш домен. Професионално онлајн присуство."
+
 msgid "Your password has been set. You can now sign in."
 msgstr "Вашата лозинка е поставена. Сега можете да се најавите."
 
@@ -3336,6 +3591,9 @@ msgstr "направени само за вас."
 
 msgid "min"
 msgstr "мин"
+
+msgid "month"
+msgstr "месец"
 
 msgid "next appointment?"
 msgstr "следен термин?"

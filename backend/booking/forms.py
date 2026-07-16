@@ -1026,3 +1026,78 @@ class OwnerCustomerForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
+
+
+PLAN_INTEREST_CHOICES = (
+    ("starter", _("Starter")),
+    ("pro", _("Pro")),
+    ("premium", _("Premium")),
+)
+
+PLAN_CONTACT_METHOD_CHOICES = (
+    ("instagram", _("Instagram")),
+    ("phone", _("Phone")),
+)
+
+
+class PlanInterestForm(forms.Form):
+    name = forms.CharField(
+        max_length=120,
+        label=_("Your name"),
+        widget=forms.TextInput(
+            attrs={
+                "class": "vm-lead-input",
+                "autocomplete": "name",
+                "placeholder": _("Your name"),
+            }
+        ),
+    )
+    plan = forms.ChoiceField(
+        choices=PLAN_INTEREST_CHOICES,
+        label=_("Plan"),
+        widget=forms.RadioSelect(attrs={"class": "vm-lead-choice-input"}),
+    )
+    contact_method = forms.ChoiceField(
+        choices=PLAN_CONTACT_METHOD_CHOICES,
+        label=_("How should we contact you?"),
+        initial="instagram",
+        widget=forms.RadioSelect(attrs={"class": "vm-lead-choice-input"}),
+    )
+    contact_value = forms.CharField(
+        max_length=80,
+        label=_("Contact"),
+        widget=forms.TextInput(
+            attrs={
+                "class": "vm-lead-input",
+                "autocomplete": "off",
+            }
+        ),
+    )
+    # Honeypot — leave empty.
+    website = forms.CharField(required=False, widget=forms.HiddenInput())
+
+    def clean_name(self):
+        return (self.cleaned_data.get("name") or "").strip()
+
+    def clean_contact_value(self):
+        return (self.cleaned_data.get("contact_value") or "").strip()
+
+    def clean(self):
+        cleaned = super().clean()
+        if (cleaned.get("website") or "").strip():
+            raise ValidationError(_("Something went wrong. Please try again."))
+
+        method = cleaned.get("contact_method") or "instagram"
+        value = cleaned.get("contact_value") or ""
+        if not value:
+            if method == "phone":
+                raise ValidationError(_("Please enter your phone number."))
+            raise ValidationError(_("Please enter your Instagram username."))
+
+        if method == "instagram":
+            cleaned["instagram"] = value.lstrip("@")
+            cleaned["phone"] = ""
+        else:
+            cleaned["phone"] = value
+            cleaned["instagram"] = ""
+        return cleaned
