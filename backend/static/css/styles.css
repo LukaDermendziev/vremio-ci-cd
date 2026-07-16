@@ -6983,7 +6983,6 @@ body.bk-step1-confirm-open .bk-toast {
   .vm-split { grid-template-columns: 1fr; }
   .vm-steps-grid { grid-template-columns: 1fr; }
   .vm-footer-inner { grid-template-columns: 1fr; gap: 24px; }
-  .vm-plans-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 768px) {
   .vm-nav-toggle { display: flex; }
@@ -7010,9 +7009,6 @@ body.bk-step1-confirm-open .bk-toast {
   .vm-search-bar { flex-direction: column; }
   .vm-search-bar .vm-btn { width: 100%; }
   .vm-business-grid { grid-template-columns: 1fr; }
-  .vm-plans-grid { grid-template-columns: 1fr; }
-  .vm-plan-actions { flex-direction: column; }
-  .vm-plan-actions .vm-btn { width: 100%; }
   .vm-lead-actions { flex-direction: column; }
   .vm-lead-actions .vm-btn { width: 100%; }
 }
@@ -7020,13 +7016,17 @@ body.bk-step1-confirm-open .bk-toast {
 /* Pricing plans */
 .vm-plans-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 20px;
   margin-top: 8px;
   align-items: start;
+  width: 100%;
+  max-width: 100%;
 }
 .vm-plan-card {
   position: relative;
+  min-width: 0;
+  max-width: 100%;
   background: var(--vm-white);
   border: 1px solid var(--vm-line);
   border-radius: 20px;
@@ -7091,7 +7091,9 @@ body.bk-step1-confirm-open .bk-toast {
   line-height: 1.55;
   color: var(--vm-text-muted);
   margin: 0 0 18px;
-  min-height: 4.6em;
+}
+@media (min-width: 1101px) {
+  .vm-plan-blurb { min-height: 4.6em; }
 }
 .vm-plan-highlights {
   list-style: none;
@@ -7151,6 +7153,26 @@ body.bk-step1-confirm-open .bk-toast {
   flex-wrap: wrap;
   gap: 10px;
   margin-top: auto;
+}
+@media (max-width: 1100px) {
+  .vm-plans-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .vm-plan-card {
+    padding: 22px 18px 18px;
+  }
+  .vm-plan-card:hover {
+    transform: none;
+  }
+  .vm-plan-name { font-size: 26px; }
+  .vm-plan-price-value { font-size: 24px; }
+  .vm-plan-actions {
+    flex-direction: column;
+  }
+  .vm-plan-actions .vm-btn {
+    width: 100%;
+  }
 }
 .vm-faq {
   max-width: 720px;
