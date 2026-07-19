@@ -29,6 +29,15 @@ class Salon(TimeStampedModel):
         SERVICES = "services", _("Services")
         OTHER = "other", _("Other")
 
+    class Plan(models.TextChoices):
+        STARTER = "starter", _("Starter")
+        PRO = "pro", _("Pro")
+        PREMIUM = "premium", _("Premium")
+
+    class WebsiteTemplate(models.TextChoices):
+        STARTER = "starter", _("Starter (Vremio template)")
+        PRO = "pro", _("Pro (custom branded)")
+
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -47,6 +56,26 @@ class Salon(TimeStampedModel):
         default=BusinessCategory.SALON,
         db_index=True,
     )
+    plan = models.CharField(
+        max_length=20,
+        choices=Plan.choices,
+        default=Plan.STARTER,
+        db_index=True,
+        help_text=_(
+            "Subscription plan for this business. "
+            "Controls website template and future plan features."
+        ),
+    )
+    website_template = models.CharField(
+        max_length=20,
+        choices=WebsiteTemplate.choices,
+        default=WebsiteTemplate.STARTER,
+        db_index=True,
+        help_text=_(
+            "Synced from plan automatically. "
+            "Starter plan → Vremio template; Pro/Premium → custom branded page."
+        ),
+    )
     timezone = models.CharField(max_length=64, default="Europe/Skopje")
     is_active = models.BooleanField(default=True)
     public_hours_end_display = models.TimeField(
@@ -64,6 +93,28 @@ class Salon(TimeStampedModel):
 
     def __str__(self):
         return self.name
+
+    @property
+    def uses_starter_website(self):
+        return self.plan == self.Plan.STARTER
+
+    @property
+    def uses_pro_website(self):
+        return self.plan in (self.Plan.PRO, self.Plan.PREMIUM)
+
+    def sync_website_template_from_plan(self):
+        """Keep public website style aligned with the subscription plan."""
+        if self.plan == self.Plan.STARTER:
+            self.website_template = self.WebsiteTemplate.STARTER
+        else:
+            self.website_template = self.WebsiteTemplate.PRO
+
+    def save(self, *args, **kwargs):
+        self.sync_website_template_from_plan()
+        update_fields = kwargs.get("update_fields")
+        if update_fields is not None:
+            kwargs["update_fields"] = list(set(update_fields) | {"website_template"})
+        super().save(*args, **kwargs)
 
 
 class Service(TimeStampedModel):

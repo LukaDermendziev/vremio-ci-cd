@@ -18,6 +18,7 @@ urlpatterns = [
     path("contact/", views.contact_data_requests, name="contact"),
     path("owner/pilot-terms/", views.owner_pilot_terms, name="owner_pilot_terms"),
     path("book/<slug:salon_slug>/", views.salon_page, name="salon_page"),
+    path("business/<slug:salon_slug>/", views.salon_page, name="business_page"),
     path("book/<slug:salon_slug>/request/", views.book_salon, name="book_salon"),
     path("book/<slug:salon_slug>/slots/", views.available_slots, name="available_slots"),
     path(
@@ -54,6 +55,11 @@ urlpatterns = [
 
     # ── Owner dashboard ─────────────────────────────────────────────────────────
     path("owner/dashboard/", views.owner_dashboard, name="owner_dashboard"),
+    path(
+        "owner/plan-change/",
+        views.owner_request_plan_change,
+        name="owner_request_plan_change",
+    ),
     path("owner/calendar/events/", views.owner_calendar_events, name="owner_calendar_events"),
     path("owner/slots/", views.owner_available_slots, name="owner_available_slots"),
     path(

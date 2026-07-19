@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load i18n %}
 {% block title %}{% trans "Your appointment" %} — {{ booking.salon.name }}{% endblock %}
-{% block body_class %}bk-page bk-manage-page{% endblock %}
+{% block body_class %}bk-page bk-manage-page{% if booking.salon.uses_starter_website %} bk-theme-starter{% endif %}{% endblock %}
 
 {% block lang_switcher %}{% endblock %}
 

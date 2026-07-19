@@ -149,6 +149,84 @@ class HomePageTests(TestCase):
         self.assertContains(response, 'id="vm-lead-form"')
         self.assertContains(response, reverse("booking:plan_interest"))
 
+
+class StarterWebsiteTemplateTests(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            username="starter_owner",
+            password="password",
+        )
+        self.salon = Salon.objects.create(
+            owner=self.user,
+            name="City Studio",
+            slug="city-studio",
+            short_description="Modern booking studio",
+            business_category=Salon.BusinessCategory.SALON,
+            phone_number="070111222",
+            plan=Salon.Plan.STARTER,
+            is_active=True,
+        )
+        Service.objects.create(
+            salon=self.salon,
+            name="Haircut",
+            duration_minutes=45,
+            base_price=500,
+            is_active=True,
+        )
+        BookingPolicy.objects.create(salon=self.salon, email_verification_required=False)
+
+    def test_starter_template_renders_vremio_style_site(self):
+        response = self.client.get(reverse("booking:salon_page", args=[self.salon.slug]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'class="st-page')
+        self.assertContains(response, "City Studio")
+        self.assertContains(response, "Modern booking studio")
+        self.assertContains(response, "Haircut")
+        self.assertContains(response, "st-footer-powered")
+        self.assertContains(response, "Vremio")
+        self.assertContains(response, _("Reviews coming soon."))
+        self.assertNotContains(
+            response, _("Care, style, and an appointment that suits you.")
+        )
+
+    def test_business_url_alias_uses_same_starter_page(self):
+        response = self.client.get(
+            reverse("booking:business_page", args=[self.salon.slug])
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'class="st-page')
+
+    def test_pro_plan_keeps_custom_salon_page(self):
+        self.salon.plan = Salon.Plan.PRO
+        self.salon.save(update_fields=["plan"])
+        self.assertEqual(self.salon.website_template, Salon.WebsiteTemplate.PRO)
+        response = self.client.get(reverse("booking:salon_page", args=[self.salon.slug]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'class="sp-page')
+        self.assertNotContains(response, 'class="st-page')
+
+    def test_premium_plan_uses_pro_website(self):
+        self.salon.plan = Salon.Plan.PREMIUM
+        self.salon.save(update_fields=["plan"])
+        self.assertTrue(self.salon.uses_pro_website)
+        self.assertEqual(self.salon.website_template, Salon.WebsiteTemplate.PRO)
+        response = self.client.get(reverse("booking:salon_page", args=[self.salon.slug]))
+        self.assertContains(response, 'class="sp-page')
+
+    def test_starter_booking_flow_uses_vremio_theme(self):
+        response = self.client.get(reverse("booking:book_salon", args=[self.salon.slug]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "bk-theme-starter")
+        self.assertContains(response, 'data-step="1"')
+        self.assertContains(response, 'id="bk-progress"')
+
+    def test_pro_booking_flow_keeps_salon_theme(self):
+        self.salon.plan = Salon.Plan.PRO
+        self.salon.save(update_fields=["plan"])
+        response = self.client.get(reverse("booking:book_salon", args=[self.salon.slug]))
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "bk-theme-starter")
+
     @override_settings(
         VREMIO_CONTACT_EMAIL="leads@vremio.test",
         EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
@@ -208,6 +286,7 @@ class CustomerDomainTests(TestCase):
             name="Fancy Fingers",
             slug="fancy-fingers",
             is_active=True,
+            plan=Salon.Plan.PRO,
         )
         response = self.client.get(
             "/",
@@ -233,6 +312,7 @@ class CustomerDomainTests(TestCase):
             name="Fancy Fingers",
             slug="fancy-fingers",
             is_active=True,
+            plan=Salon.Plan.PRO,
         )
         response = self.client.get("/", HTTP_HOST="www.fancyfingers.mk")
         self.assertEqual(response.status_code, 200)
@@ -262,6 +342,7 @@ class CustomerDomainTests(TestCase):
             name="Fancy Fingers",
             slug="fancy-fingers",
             is_active=True,
+            plan=Salon.Plan.PRO,
         )
         response = self.client.get("/", HTTP_HOST="www.fancyfingers.mk")
         self.assertEqual(response.status_code, 200)
@@ -419,6 +500,7 @@ class BookingViewTests(TestCase):
             owner=self.user,
             name="Fancy Fingers",
             slug="fancy-fingers",
+            plan=Salon.Plan.PRO,
         )
         Service.objects.create(
             salon=self.salon,
@@ -657,6 +739,42 @@ class BookingViewTests(TestCase):
         self.assertContains(response, _("Owner panel"))
         self.assertContains(response, _("Pending booking requests"))
         self.assertContains(response, _("Booking policy"))
+        self.assertContains(response, _("Current plan"))
+        self.assertContains(response, _("Request plan change"))
+        self.assertContains(response, 'id="od-plan-change-modal"')
+        self.assertContains(
+            response,
+            _("We’ll use your salon phone and Instagram from your account — no need to enter them again."),
+        )
+
+    @override_settings(
+        VREMIO_CONTACT_EMAIL="leads@vremio.test",
+        EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+    )
+    def test_owner_plan_change_uses_salon_contact_from_db(self):
+        from django.core import mail
+
+        self.salon.plan = Salon.Plan.STARTER
+        self.salon.phone_number = "070111222"
+        self.salon.instagram_username = "city.studio"
+        self.salon.save(update_fields=["plan", "phone_number", "instagram_username"])
+        self.client.login(username="owner", password="password")
+
+        response = self.client.post(
+            reverse("booking:owner_request_plan_change"),
+            {"plan": "pro"},
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+            HTTP_ACCEPT="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["ok"])
+        self.assertEqual(len(mail.outbox), 1)
+        body = mail.outbox[0].body
+        self.assertIn("Pro", mail.outbox[0].subject)
+        self.assertIn("070111222", body)
+        self.assertIn("@city.studio", body)
+        self.assertIn("owner_dashboard", body)
+        self.assertIn("Starter", body)
 
     def test_booking_request_requires_email(self):
         selected_date = timezone.localdate() + timedelta(days=20)
@@ -3928,6 +4046,77 @@ class OwnerDashboardAjaxTests(TestCase):
         self.assertEqual(data["action"], "save_service")
         self.assertIn("service", data["payload"])
         self.assertTrue(self.salon.services.filter(name="Pedicure").exists())
+
+    def test_save_service_respects_unchecked_photo_toggles(self):
+        """OwnerAjax sends unchecked checkboxes as 'false'; do not treat presence as True."""
+        response = self._fetch_post(
+            {
+                "action": "save_service",
+                "name": "Gel manicure",
+                "duration_minutes": "90",
+                "base_price": "800",
+                "sort_order": "0",
+                "is_active": "on",
+                "requires_photo": "false",
+                "photo_recommended": "false",
+                "return_section": "services",
+            }
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["ok"])
+        service = self.salon.services.get(name="Gel manicure")
+        self.assertTrue(service.is_active)
+        self.assertFalse(service.requires_photo)
+        self.assertFalse(service.photo_recommended)
+
+    def test_edit_service_can_turn_photo_toggles_off(self):
+        service = Service.objects.create(
+            salon=self.salon,
+            name="Design",
+            duration_minutes=120,
+            base_price=1500,
+            requires_photo=True,
+            photo_recommended=True,
+            is_active=True,
+        )
+        response = self._fetch_post(
+            {
+                "action": "save_service",
+                "service_id": str(service.pk),
+                "name": "Design",
+                "duration_minutes": "120",
+                "base_price": "1500",
+                "sort_order": "0",
+                "is_active": "on",
+                "requires_photo": "false",
+                "photo_recommended": "false",
+                "return_section": "services",
+            }
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["ok"])
+        service.refresh_from_db()
+        self.assertFalse(service.requires_photo)
+        self.assertFalse(service.photo_recommended)
+
+    def test_save_service_can_enable_photo_toggles(self):
+        response = self._fetch_post(
+            {
+                "action": "save_service",
+                "name": "Medical pedicure",
+                "duration_minutes": "120",
+                "base_price": "2000",
+                "sort_order": "0",
+                "is_active": "on",
+                "requires_photo": "on",
+                "photo_recommended": "on",
+                "return_section": "services",
+            }
+        )
+        self.assertEqual(response.status_code, 200)
+        service = self.salon.services.get(name="Medical pedicure")
+        self.assertTrue(service.requires_photo)
+        self.assertTrue(service.photo_recommended)
 
     def test_save_working_hours_returns_json(self):
         response = self._fetch_post(

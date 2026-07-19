@@ -54,6 +54,15 @@
     </nav>
 
     <div class="od-sidebar-foot">
+      <div class="od-sidebar-plan" title="{% blocktrans with plan=salon.get_plan_display %}Current plan: {{ plan }}{% endblocktrans %}">
+        <div class="od-sidebar-plan-meta">
+          <span class="od-sidebar-plan-label">{% trans "Current plan" %}</span>
+          <span class="od-sidebar-plan-value">{{ salon.get_plan_display }}</span>
+        </div>
+        <button type="button" class="od-sidebar-plan-change" data-open-plan-change>
+          {% trans "Request plan change" %}
+        </button>
+      </div>
       <a href="{% url 'booking:salon_page' salon.slug %}"><i class="bi bi-box-arrow-up-right"></i><span>{% trans "Customer view" %}</span></a>
     </div>
     </div>
@@ -853,6 +862,7 @@
 {% include "booking/partials/owner_message_modal.html" %}
 {% include "booking/partials/owner_photo_modal.html" %}
 {% include "booking/partials/owner_confirm_modal.html" %}
+{% include "booking/partials/owner_plan_change_modal.html" %}
 
 {% endif %}
 {% endblock %}

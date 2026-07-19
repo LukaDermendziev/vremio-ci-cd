@@ -31,6 +31,13 @@ msgstr "%(field)s: %(error)s"
 msgid "%(minutes)s min"
 msgstr "%(minutes)s min"
 
+msgid ""
+"%(name)s uses Vremio for online booking requests, schedule management, and "
+"clearer communication with clients."
+msgstr ""
+"%(name)s uses Vremio for online booking requests, schedule management, and "
+"clearer communication with clients."
+
 msgid "(optional)"
 msgstr "(optional)"
 
@@ -128,6 +135,9 @@ msgstr ""
 msgid "About Vremio"
 msgstr "About Vremio"
 
+msgid "About this business"
+msgstr "About this business"
+
 msgid "Absolutely. You can upgrade your plan whenever your business grows."
 msgstr "Absolutely. You can upgrade your plan whenever your business grows."
 
@@ -175,6 +185,9 @@ msgstr "Add time block"
 
 msgid "Additional details for your records…"
 msgstr "Additional details for your records…"
+
+msgid "Address"
+msgstr "Address"
 
 msgid "Advanced booking rules"
 msgstr "Advanced booking rules"
@@ -418,14 +431,27 @@ msgstr "Book"
 msgid "Book an appointment"
 msgstr "Book an appointment"
 
+msgid ""
+"Book an appointment online — clear times, fewer messages, professional "
+"booking."
+msgstr ""
+"Book an appointment online — clear times, fewer messages, professional "
+"booking."
+
 msgid "Book appointment"
 msgstr "Book appointment"
 
 msgid "Book now"
 msgstr "Book now"
 
+msgid "Book online"
+msgstr "Book online"
+
 msgid "Book this service"
 msgstr "Book this service"
+
+msgid "Book up to %(days)s days ahead"
+msgstr "Book up to %(days)s days ahead"
 
 msgid "Book up to <strong>%(days)s days</strong> in advance"
 msgstr "Book up to <strong>%(days)s days</strong> in advance"
@@ -517,6 +543,12 @@ msgstr "Booking request received"
 msgid "Booking requests with customer details"
 msgstr "Booking requests with customer details"
 
+msgid "Booking rules"
+msgstr "Booking rules"
+
+msgid "Booking rules & policies"
+msgstr "Booking rules & policies"
+
 msgid "Booking rules and policies"
 msgstr "Booking rules and policies"
 
@@ -547,6 +579,13 @@ msgstr "Bookings"
 msgid "Bookings and approval"
 msgstr "Bookings and approval"
 
+msgid ""
+"Bookings usually open from %(days)s days ahead, up to %(max_days)s days in "
+"the future."
+msgstr ""
+"Bookings usually open from %(days)s days ahead, up to %(max_days)s days in "
+"the future."
+
 msgid "Branded salon landing page"
 msgstr "Branded salon landing page"
 
@@ -555,6 +594,9 @@ msgstr "Browse businesses"
 
 msgid "Buffer minutes between bookings"
 msgstr "Buffer minutes between bookings"
+
+msgid "Business information"
+msgstr "Business information"
 
 msgid "Business owner account data (username, email, password hash)"
 msgstr "Business owner account data (username, email, password hash)"
@@ -602,11 +644,17 @@ msgstr "Calendar"
 msgid "Call"
 msgstr "Call"
 
+msgid "Call business"
+msgstr "Call business"
+
 msgid "Call customer"
 msgstr "Call customer"
 
 msgid "Can I cancel anytime?"
 msgstr "Can I cancel anytime?"
+
+msgid "Can I cancel?"
+msgstr "Can I cancel?"
 
 msgid "Can I connect my own domain?"
 msgstr "Can I connect my own domain?"
@@ -682,6 +730,9 @@ msgstr "Check your inbox"
 msgid "Choose a business"
 msgstr "Choose a business"
 
+msgid "Choose a different plan than your current one."
+msgstr "Choose a different plan than your current one."
+
 msgid "Choose a reason…"
 msgstr "Choose a reason…"
 
@@ -702,6 +753,9 @@ msgstr ""
 "Choose a service, date and available time. Your request will be reviewed by "
 "the salon."
 
+msgid "Choose a service, then pick a date and time that works for you."
+msgstr "Choose a service, then pick a date and time that works for you."
+
 msgid "Choose a strong password for your account."
 msgstr "Choose a strong password for your account."
 
@@ -716,6 +770,9 @@ msgstr "Choose today or a future date."
 
 msgid "Choose your salon"
 msgstr "Choose your salon"
+
+msgid "Clear available time slots"
+msgstr "Clear available time slots"
 
 msgid "Clear form"
 msgstr "Clear form"
@@ -747,6 +804,9 @@ msgid ""
 msgstr ""
 "Comma-separated HH:MM times (e.g. 08:00, 10:30, 13:00, 15:30). Used only "
 "when fixed start times mode is on; slot interval is ignored."
+
+msgid "Common questions"
+msgstr "Common questions"
 
 msgid "Communication between the customer and the business"
 msgstr "Communication between the customer and the business"
@@ -829,6 +889,15 @@ msgstr "Courts & pitches"
 
 msgid "Creating and managing booking requests"
 msgstr "Creating and managing booking requests"
+
+msgid "Current"
+msgstr "Current"
+
+msgid "Current plan"
+msgstr "Current plan"
+
+msgid "Current plan: %(plan)s"
+msgstr "Current plan: %(plan)s"
 
 msgid "Custom domain connection"
 msgstr "Custom domain connection"
@@ -968,6 +1037,9 @@ msgstr "Description"
 
 msgid "Directory"
 msgstr "Directory"
+
+msgid "Do I need an appointment?"
+msgstr "Do I need an appointment?"
 
 msgid "Do I need my own website?"
 msgstr "Do I need my own website?"
@@ -1115,6 +1187,9 @@ msgstr ""
 msgid "Extra duration note"
 msgstr "Extra duration note"
 
+msgid "FAQ"
+msgstr "FAQ"
+
 msgid "Fake bookings"
 msgstr "Fake bookings"
 
@@ -1126,6 +1201,9 @@ msgstr "Feb"
 
 msgid "February"
 msgstr "February"
+
+msgid "Fewer chat threads and mix-ups"
+msgstr "Fewer chat threads and mix-ups"
 
 msgid ""
 "Find a service, choose an available time slot, and send a booking request. "
@@ -1187,6 +1265,12 @@ msgstr "Friday"
 
 msgid "Full name"
 msgstr "Full name"
+
+msgid "Gallery"
+msgstr "Gallery"
+
+msgid "Gallery coming soon."
+msgstr "Gallery coming soon."
 
 msgid "Gap between services in same booking (minutes)"
 msgstr "Gap between services in same booking (minutes)"
@@ -1428,6 +1512,12 @@ msgstr "History"
 msgid "Hours"
 msgstr "Hours"
 
+msgid "Hours will be published soon."
+msgstr "Hours will be published soon."
+
+msgid "How far in advance can I book?"
+msgstr "How far in advance can I book?"
+
 msgid "How it works"
 msgstr "How it works"
 
@@ -1566,6 +1656,9 @@ msgstr "Invalid image format. Allowed formats are JPG, PNG, and WEBP."
 msgid "Invalid username or password."
 msgstr "Invalid username or password."
 
+msgid "Is my booking confirmed immediately?"
+msgstr "Is my booking confirmed immediately?"
+
 msgid "Jan"
 msgstr "Jan"
 
@@ -1590,6 +1683,9 @@ msgstr "Last updated: %(date)s"
 msgid "Late arrival limit minutes"
 msgstr "Late arrival limit minutes"
 
+msgid "Late arrival limit: %(minutes)s minutes"
+msgstr "Late arrival limit: %(minutes)s minutes"
+
 msgid "Late arrival limit: <strong>%(minutes)s minutes</strong>"
 msgstr "Late arrival limit: <strong>%(minutes)s minutes</strong>"
 
@@ -1605,6 +1701,9 @@ msgstr ""
 
 msgid "Leave your name and Instagram or phone. We’ll get back to you."
 msgstr "Leave your name and Instagram or phone. We’ll get back to you."
+
+msgid "Legal"
+msgstr "Legal"
 
 msgid "Legal links"
 msgstr "Legal links"
@@ -1626,6 +1725,9 @@ msgstr "Malicious content"
 
 msgid "Manage calendar and clients"
 msgstr "Manage calendar and clients"
+
+msgid "Manual approval by the business"
+msgstr "Manual approval by the business"
 
 msgid "Manual review"
 msgstr "Manual review"
@@ -1687,6 +1789,9 @@ msgstr "Minimum booking notice: <strong>%(days)s days</strong>"
 
 msgid "Minimum notice days"
 msgstr "Minimum notice days"
+
+msgid "Minimum notice: %(days)s days"
+msgstr "Minimum notice: %(days)s days"
 
 msgid "Missed appointment"
 msgstr "Missed appointment"
@@ -1831,6 +1936,13 @@ msgid ""
 msgstr ""
 "No. Every business automatically receives its own booking page on Vremio."
 
+msgid ""
+"No. Your request is reviewed first. You will be contacted after it is "
+"approved or if another time is needed."
+msgstr ""
+"No. Your request is reviewed first. You will be contacted after it is "
+"approved or if another time is needed."
+
 msgid "Not allowed"
 msgstr "Not allowed"
 
@@ -1867,6 +1979,9 @@ msgstr "Online booking"
 msgid "Online booking requests"
 msgstr "Online booking requests"
 
+msgid "Online booking requests anytime"
+msgstr "Online booking requests anytime"
+
 msgid "Online booking, made simple."
 msgstr "Online booking, made simple."
 
@@ -1894,6 +2009,9 @@ msgstr "Open full size"
 
 msgid "Open now"
 msgstr "Open now"
+
+msgid "Opening hours"
+msgstr "Opening hours"
 
 msgid ""
 "Optional display-only closing time for the customer-facing page. Does not "
@@ -1937,6 +2055,9 @@ msgstr "Owner panel"
 
 msgid "Owner responsibilities"
 msgstr "Owner responsibilities"
+
+msgid "Owner review before confirmation"
+msgstr "Owner review before confirmation"
 
 msgid "Owner sign in"
 msgstr "Owner sign in"
@@ -2022,6 +2143,9 @@ msgstr "Photo review"
 msgid "Photo uploaded"
 msgstr "Photo uploaded"
 
+msgid "Photos"
+msgstr "Photos"
+
 msgid "Photos are used solely as a reference for the selected service."
 msgstr "Photos are used solely as a reference for the selected service."
 
@@ -2040,6 +2164,9 @@ msgstr "Photos that offend or harass others"
 msgid "Photos unrelated to the service"
 msgstr "Photos unrelated to the service"
 
+msgid "Pick a service and send a request in a few steps."
+msgstr "Pick a service and send a request in a few steps."
+
 msgid "Pilot period"
 msgstr "Pilot period"
 
@@ -2054,6 +2181,9 @@ msgstr "Platform changes and availability"
 
 msgid "Please check the form."
 msgstr "Please check the form."
+
+msgid "Please choose a plan."
+msgstr "Please choose a plan."
 
 msgid "Please complete all required fields before continuing."
 msgstr "Please complete all required fields before continuing."
@@ -2084,6 +2214,9 @@ msgstr "Please wait a minute before requesting another verification code."
 
 msgid "Please wait a minute before requesting another verification email."
 msgstr "Please wait a minute before requesting another verification email."
+
+msgid "Policies"
+msgstr "Policies"
 
 msgid "Powered by"
 msgstr "Powered by"
@@ -2180,6 +2313,9 @@ msgstr "Questions from business owners"
 
 msgid "Ready for"
 msgstr "Ready for"
+
+msgid "Ready to book?"
+msgstr "Ready to book?"
 
 msgid "Reason"
 msgstr "Reason"
@@ -2283,6 +2419,9 @@ msgstr "Request declined. Customer did not provide an email."
 msgid "Request declined. Email sent to customer."
 msgstr "Request declined. Email sent to customer."
 
+msgid "Request plan change"
+msgstr "Request plan change"
+
 msgid "Request received"
 msgstr "Request received"
 
@@ -2297,6 +2436,9 @@ msgstr "Request sent!"
 
 msgid "Requested"
 msgstr "Requested"
+
+msgid "Requests are reviewed before confirmation."
+msgstr "Requests are reviewed before confirmation."
 
 msgid "Require SMS verification for online bookings"
 msgstr "Require SMS verification for online bookings"
@@ -2342,6 +2484,12 @@ msgstr "Review new requests and approve or reject."
 
 msgid "Review request"
 msgstr "Review request"
+
+msgid "Reviews"
+msgstr "Reviews"
+
+msgid "Reviews coming soon."
+msgstr "Reviews coming soon."
 
 msgid "SMS"
 msgstr "SMS"
@@ -2520,6 +2668,9 @@ msgstr "Services"
 
 msgid "Services and working schedule"
 msgstr "Services and working schedule"
+
+msgid "Services will appear here soon."
+msgstr "Services will appear here soon."
 
 msgid "Services will be listed here soon."
 msgstr "Services will be listed here soon."
@@ -3250,11 +3401,24 @@ msgstr "Welcome back — %(salon_name)s"
 msgid "Welcome to Vremio."
 msgstr "Welcome to Vremio."
 
+msgid ""
+"We’ll use your salon phone and Instagram from your account — no need to "
+"enter them again."
+msgstr ""
+"We’ll use your salon phone and Instagram from your account — no need to "
+"enter them again."
+
+msgid "What clients say"
+msgstr "What clients say"
+
 msgid "What data we may process"
 msgstr "What data we may process"
 
 msgid "What we offer"
 msgstr "What we offer"
+
+msgid "What you can book"
+msgstr "What you can book"
 
 msgid "What you can request"
 msgstr "What you can request"
@@ -3267,6 +3431,9 @@ msgstr "What’s included"
 
 msgid "Who operates Vremio"
 msgstr "Who operates Vremio"
+
+msgid "Why book here"
+msgstr "Why book here"
 
 msgid "Why we process data"
 msgstr "Why we process data"
@@ -3299,6 +3466,13 @@ msgstr ""
 "Yes. Customers can request appointments anytime while you stay in control of"
 " approvals and availability."
 
+msgid ""
+"Yes. Please send a booking request so the business can review the time and "
+"confirm it."
+msgstr ""
+"Yes. Please send a booking request so the business can review the time and "
+"confirm it."
+
 msgid "Yes. The Pro and Premium plans support connecting your own domain."
 msgstr "Yes. The Pro and Premium plans support connecting your own domain."
 
@@ -3306,6 +3480,13 @@ msgid "Yes. There are no long-term contracts."
 msgstr "Yes. There are no long-term contracts."
 
 msgid ""
+"Yes. Use the manage link from your confirmation message when available, or "
+"contact the business directly."
+msgstr ""
+"Yes. Use the manage link from your confirmation message when available, or "
+"contact the business directly."
+
+msgid ""
 "You accept that significant lateness may result in cancellation of the "
 "appointment"
 msgstr ""
@@ -3346,6 +3527,13 @@ msgid ""
 msgstr ""
 "You already started a booking request. Please enter the SMS verification "
 "code we sent to your phone before submitting again."
+
+msgid ""
+"You are currently on <strong>%(plan)s</strong>. Tell us which plan you want "
+"— we’ll follow up."
+msgstr ""
+"You are currently on <strong>%(plan)s</strong>. Tell us which plan you want "
+"— we’ll follow up."
 
 msgid ""
 "You are responsible for the actual service delivery, prices, and customer "

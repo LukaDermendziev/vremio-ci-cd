@@ -345,6 +345,20 @@ TRANSLATIONS = {
     "Starter": "Starter",
     "Pro": "Pro",
     "Premium": "Premium",
+    "Current plan": "Тековен план",
+    "Current plan: %(plan)s": "Тековен план: %(plan)s",
+    "Request plan change": "Барај промена на план",
+    "Current": "Тековен",
+    "You are currently on <strong>%(plan)s</strong>. Tell us which plan you want — we’ll follow up.": (
+        "Моментално сте на план <strong>%(plan)s</strong>. Кажете ни кој план го сакате — ќе ве контактираме."
+    ),
+    "We’ll use your salon phone and Instagram from your account — no need to enter them again.": (
+        "Ќе ги користиме телефонот и Instagram од вашиот профил — не треба повторно да ги внесувате."
+    ),
+    "Please choose a plan.": "Изберете план.",
+    "Choose a different plan than your current one.": (
+        "Изберете друг план од тековниот."
+    ),
     "For businesses that want to stop managing bookings through Instagram messages and Notes.": (
         "За бизниси што сакаат да престанат да управуваат со термини преку Instagram пораки и Notes."
     ),
@@ -432,6 +446,65 @@ TRANSLATIONS = {
     "Hi, I’m interested in the Vremio %(plan_name)s plan. Please tell me more about setup and next steps.": (
         "Здраво, заинтересиран сум за Vremio планот %(plan_name)s. Кажете ми повеќе за поставувањето и следните чекори."
     ),
+    "Book online": "Закажи онлајн",
+    "Book an appointment online — clear times, fewer messages, professional booking.": (
+        "Закажете термин онлајн — јасни термини, помалку пораки, професионално закажување."
+    ),
+    "Requests are reviewed before confirmation.": "Барањата се прегледуваат пред потврда.",
+    "Call business": "Јави се",
+    "About this business": "За овој бизнис",
+    "%(name)s uses Vremio for online booking requests, schedule management, and clearer communication with clients.": (
+        "%(name)s го користи Vremio за онлајн барања за термин, управување со распоред и појасна комуникација со клиентите."
+    ),
+    "Why book here": "Зошто да закажете тука",
+    "Online booking requests anytime": "Онлајн барања за термин во секое време",
+    "Clear available time slots": "Јасни слободни термини",
+    "Owner review before confirmation": "Преглед од сопственикот пред потврда",
+    "Fewer chat threads and mix-ups": "Помалку разговори и забуни",
+    "What you can book": "Што можете да закажете",
+    "Choose a service, then pick a date and time that works for you.": (
+        "Изберете услуга, потоа датум и време што ви одговара."
+    ),
+    "Services will appear here soon.": "Услугите наскоро ќе се појават тука.",
+    "Gallery": "Галерија",
+    "Photos": "Фотографии",
+    "Gallery coming soon.": "Галеријата наскоро.",
+    "Opening hours": "Работно време",
+    "Hours will be published soon.": "Работното време наскоро ќе биде објавено.",
+    "Business information": "Информации за бизнисот",
+    "Address": "Адреса",
+    "Call": "Повикај",
+    "Reviews": "Рецензии",
+    "What clients say": "Што велат клиентите",
+    "Reviews coming soon.": "Рецензиите наскоро.",
+    "FAQ": "ЧПП",
+    "Common questions": "Чести прашања",
+    "Do I need an appointment?": "Дали ми треба термин?",
+    "Yes. Please send a booking request so the business can review the time and confirm it.": (
+        "Да. Испратете барање за термин за бизнисот да го прегледа времето и да го потврди."
+    ),
+    "Is my booking confirmed immediately?": "Дали терминот се потврдува веднаш?",
+    "No. Your request is reviewed first. You will be contacted after it is approved or if another time is needed.": (
+        "Не. Барањето прво се прегледува. Ќе ве контактираат откако ќе биде одобрено или ако треба друго време."
+    ),
+    "Can I cancel?": "Дали можам да откажам?",
+    "Yes. Use the manage link from your confirmation message when available, or contact the business directly.": (
+        "Да. Користете го линкот за управување од пораката за потврда кога е достапен, или контактирајте го бизнисот директно."
+    ),
+    "How far in advance can I book?": "Колку однапред можам да закажам?",
+    "Bookings usually open from %(days)s days ahead, up to %(max_days)s days in the future.": (
+        "Закажувањето обично се отвора од %(days)s дена однапред, до %(max_days)s дена во иднина."
+    ),
+    "Policies": "Политики",
+    "Booking rules & policies": "Правила и политики за закажување",
+    "Booking rules": "Правила за закажување",
+    "Minimum notice: %(days)s days": "Минимална најава: %(days)s дена",
+    "Book up to %(days)s days ahead": "Закажете до %(days)s дена однапред",
+    "Late arrival limit: %(minutes)s minutes": "Лимит за доцнење: %(minutes)s минути",
+    "Manual approval by the business": "Рачно одобрување од бизнисот",
+    "Legal": "Правни",
+    "Ready to book?": "Спремни за закажување?",
+    "Pick a service and send a request in a few steps.": "Изберете услуга и испратете барање во неколку чекори.",
     "Directory": "Директориум",
     "Businesses on Vremio": "Бизниси на Vremio",
     "Search and book appointments at local businesses.": "Пребарајте и закажете термин кај локални бизниси.",

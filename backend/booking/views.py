@@ -44,6 +44,7 @@ from .forms import (
     BookingSmsOtpForm,
     OwnerBookingForm,
     OwnerCustomerForm,
+    OwnerPlanChangeForm,
     PlanInterestForm,
     SalonPublicHoursDisplayForm,
     ServiceForm,
@@ -207,11 +208,25 @@ def plan_interest(request):
 
     data = form.cleaned_data
     plan_label = dict(form.fields["plan"].choices).get(data["plan"], data["plan"])
+    salon_name = ""
+    salon_slug = ""
+    current_plan = ""
+    if request.user.is_authenticated:
+        owner_salon = (
+            request.user.salons.filter(is_active=True).order_by("name").first()
+        )
+        if owner_salon:
+            salon_name = owner_salon.name
+            salon_slug = owner_salon.slug
+            current_plan = owner_salon.get_plan_display()
     sent, reason = send_plan_interest_email(
         name=data["name"],
         plan_label=str(plan_label),
         instagram=data.get("instagram") or "",
         phone=data.get("phone") or "",
+        salon_name=salon_name,
+        salon_slug=salon_slug,
+        current_plan=str(current_plan) if current_plan else "",
     )
     try:
         cache.set(rate_key, hits + 1, timeout=3600)
@@ -232,6 +247,93 @@ def plan_interest(request):
         return JsonResponse({"ok": True, "message": str(success)})
     messages.success(request, success)
     return redirect("/#plans")
+
+
+@login_required
+@require_POST
+def owner_request_plan_change(request):
+    """Logged-in owner asks to change plan; contact info comes from salon DB."""
+    from django.core.cache import cache
+
+    salon = _get_owner_salon(request.user)
+    if not salon:
+        return JsonResponse(
+            {"ok": False, "error": _("No active salon is assigned to your account yet.")},
+            status=403,
+        )
+
+    form = OwnerPlanChangeForm(request.POST)
+    if not form.is_valid():
+        return JsonResponse(
+            {"ok": False, "error": _("Please choose a plan.")},
+            status=400,
+        )
+
+    requested = form.cleaned_data["plan"]
+    if requested == salon.plan:
+        return JsonResponse(
+            {
+                "ok": False,
+                "error": _("Choose a different plan than your current one."),
+            },
+            status=400,
+        )
+
+    rate_key = f"owner_plan_change:{request.user.pk}"
+    try:
+        hits = cache.get(rate_key, 0) or 0
+    except Exception:
+        hits = 0
+    if hits >= 5:
+        return JsonResponse(
+            {
+                "ok": False,
+                "error": _(
+                    "You have sent too many requests in a short time. Please try again later."
+                ),
+            },
+            status=429,
+        )
+
+    plan_label = dict(Salon.Plan.choices).get(requested, requested)
+    owner = salon.owner
+    name = (owner.get_full_name() or owner.username or salon.name).strip()
+    sent, _reason = send_plan_interest_email(
+        name=name,
+        plan_label=str(plan_label),
+        instagram=salon.instagram_username or "",
+        phone=salon.phone_number or "",
+        salon_name=salon.name,
+        salon_slug=salon.slug,
+        current_plan=str(salon.get_plan_display()),
+        owner_username=owner.username,
+        owner_email=owner.email or "",
+        source="owner_dashboard",
+    )
+    try:
+        cache.set(rate_key, hits + 1, timeout=3600)
+    except Exception:
+        pass
+
+    if not sent:
+        return JsonResponse(
+            {
+                "ok": False,
+                "error": _(
+                    "We couldn’t send your request right now. Please email us or try again later."
+                ),
+            },
+            status=503,
+        )
+
+    return JsonResponse(
+        {
+            "ok": True,
+            "message": str(
+                _("Thanks — we received your request and will contact you soon.")
+            ),
+        }
+    )
 
 
 def _legal_page_context():
@@ -365,6 +467,14 @@ def _owner_dashboard_context(salon):
         "service_form": ServiceForm(salon=salon),
         "customer_form": OwnerCustomerForm(salon=salon),
         "block_reason_choices": CustomerBlocklist.ReasonCode.choices,
+        "plan_change_choices": Salon.Plan.choices,
+        "suggested_plan": (
+            Salon.Plan.PREMIUM
+            if salon.plan == Salon.Plan.PRO
+            else Salon.Plan.PRO
+            if salon.plan == Salon.Plan.STARTER
+            else Salon.Plan.PRO
+        ),
     }
 
 
@@ -657,9 +767,11 @@ def owner_dashboard(request):
             service_id = request.POST.get("service_id")
             if service_id:
                 service = get_object_or_404(Service, pk=service_id, salon=salon)
+            # AJAX appends unchecked boxes as "false"; presence alone must not mean True.
             post_data = request.POST.copy()
             for field_name in ("is_active", "requires_photo", "photo_recommended"):
-                post_data[field_name] = field_name in request.POST
+                raw = str(post_data.get(field_name, "")).strip().lower()
+                post_data[field_name] = raw in {"1", "true", "on", "yes"}
             form = ServiceForm(post_data, instance=service, salon=salon)
             if form.is_valid():
                 form.save()
@@ -1391,9 +1503,14 @@ def salon_page(request, salon_slug):
         working_hours = salon.working_hours.order_by("weekday")
 
     services = salon.services.filter(is_active=True).prefetch_related("price_items")
+    template_name = (
+        "booking/salon_page.html"
+        if salon.uses_pro_website
+        else "booking/starter_site.html"
+    )
     return render(
         request,
-        "booking/salon_page.html",
+        template_name,
         {
             "salon": salon,
             "services": services,

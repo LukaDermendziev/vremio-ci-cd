@@ -797,6 +797,8 @@ function initOwnerDashboard(config) {
     serviceForm.reset();
     serviceForm.querySelector('[name="service_id"]').value = "";
     serviceForm.querySelector('[name="is_active"]').checked = true;
+    serviceForm.querySelector('[name="requires_photo"]').checked = false;
+    serviceForm.querySelector('[name="photo_recommended"]').checked = false;
     document.getElementById("od-service-modal-title").textContent = serviceId ? t("editService", "Edit service") : t("addService", "Add service");
     serviceDeleteBtn.style.display = serviceId ? "" : "none";
 
@@ -2162,4 +2164,79 @@ function initOwnerDashboard(config) {
   }
   window.odRebindDashboard = rebindDashboardInteractions;
   document.addEventListener("od:rebind", rebindDashboardInteractions);
+
+  // ── Plan change request (sidebar → modal; contact from salon DB) ───────────
+  const planChangeModal = document.getElementById("od-plan-change-modal");
+  const planChangeForm = document.getElementById("od-plan-change-form");
+  const planChangeFormView = document.getElementById("od-plan-change-form-view");
+  const planChangeSuccessView = document.getElementById("od-plan-change-success-view");
+  const planChangeSuccessText = document.getElementById("od-plan-change-success-text");
+  const planChangeError = document.getElementById("od-plan-change-error");
+  const planChangeSubmit = document.getElementById("od-plan-change-submit");
+
+  function openPlanChangeModal() {
+    if (!planChangeModal) return;
+    // Mobile "More" drawer stays open under modals — close it first.
+    if (sidebar?.classList.contains("is-open")) closeSidebar();
+    if (planChangeFormView) planChangeFormView.hidden = false;
+    if (planChangeSuccessView) planChangeSuccessView.hidden = true;
+    if (planChangeError) {
+      planChangeError.hidden = true;
+      planChangeError.textContent = "";
+    }
+    openModal("od-plan-change-modal");
+  }
+
+  document.querySelectorAll("[data-open-plan-change]").forEach((btn) => {
+    btn.addEventListener("click", openPlanChangeModal);
+  });
+
+  planChangeForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!planChangeForm) return;
+    if (planChangeError) {
+      planChangeError.hidden = true;
+      planChangeError.textContent = "";
+    }
+    if (planChangeSubmit) planChangeSubmit.disabled = true;
+    try {
+      const resp = await fetch(planChangeForm.action, {
+        method: "POST",
+        body: new FormData(planChangeForm),
+        headers: {
+          "X-Requested-With": "XMLHttpRequest",
+          Accept: "application/json",
+        },
+        credentials: "same-origin",
+      });
+      const data = await resp.json().catch(() => ({}));
+      if (resp.ok && data.ok) {
+        if (planChangeFormView) planChangeFormView.hidden = true;
+        if (planChangeSuccessView) planChangeSuccessView.hidden = false;
+        if (planChangeSuccessText && data.message) {
+          planChangeSuccessText.textContent = data.message;
+        }
+        return;
+      }
+      const msg =
+        data.error ||
+        t("somethingWentWrong", "Something went wrong. Please try again.");
+      if (planChangeError) {
+        planChangeError.hidden = false;
+        planChangeError.textContent = msg;
+      } else {
+        showToast(msg, true);
+      }
+    } catch (_) {
+      const msg = t("somethingWentWrong", "Something went wrong. Please try again.");
+      if (planChangeError) {
+        planChangeError.hidden = false;
+        planChangeError.textContent = msg;
+      } else {
+        showToast(msg, true);
+      }
+    } finally {
+      if (planChangeSubmit) planChangeSubmit.disabled = false;
+    }
+  });
 }

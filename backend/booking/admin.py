@@ -33,16 +33,20 @@ class BookingServiceInline(admin.TabularInline):
 class SalonAdmin(admin.ModelAdmin):
     list_display = (
         "name",
+        "plan",
         "business_category",
+        "website_template",
         "city",
         "owner",
         "phone_number",
         "is_active",
         "created_at",
     )
-    list_filter = ("is_active", "business_category")
+    list_filter = ("plan", "is_active", "business_category", "website_template")
+    list_editable = ("plan", "is_active")
     search_fields = ("name", "phone_number", "instagram_username", "city")
     prepopulated_fields = {"slug": ("name",)}
+    readonly_fields = ("website_template",)
     fieldsets = (
         (
             None,
@@ -51,10 +55,16 @@ class SalonAdmin(admin.ModelAdmin):
                     "owner",
                     "name",
                     "slug",
+                    "plan",
                     "business_category",
+                    "website_template",
                     "short_description",
                     "is_active",
-                )
+                ),
+                "description": (
+                    "Set Plan to Starter, Pro, or Premium. "
+                    "Website template updates automatically from the plan."
+                ),
             },
         ),
         (

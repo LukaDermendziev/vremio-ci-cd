@@ -1040,6 +1040,15 @@ PLAN_CONTACT_METHOD_CHOICES = (
 )
 
 
+class OwnerPlanChangeForm(forms.Form):
+    """Logged-in owner request — contact details come from the salon record."""
+
+    plan = forms.ChoiceField(
+        choices=PLAN_INTEREST_CHOICES,
+        label=_("Plan"),
+    )
+
+
 class PlanInterestForm(forms.Form):
     name = forms.CharField(
         max_length=120,

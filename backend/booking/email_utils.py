@@ -57,7 +57,19 @@ def get_owner_notification_email(salon):
     return (owner.email or "").strip()
 
 
-def send_plan_interest_email(*, name, plan_label, instagram="", phone=""):
+def send_plan_interest_email(
+    *,
+    name,
+    plan_label,
+    instagram="",
+    phone="",
+    salon_name="",
+    salon_slug="",
+    current_plan="",
+    owner_username="",
+    owner_email="",
+    source="",
+):
     """Notify Vremio contact inbox about a pricing-plan interest lead."""
     from .legal_utils import get_vremio_contact_email
 
@@ -70,8 +82,18 @@ def send_plan_interest_email(*, name, plan_label, instagram="", phone=""):
         "New Vremio plan interest",
         "",
         f"Name: {name}",
-        f"Plan: {plan_label}",
+        f"Requested plan: {plan_label}",
     ]
+    if source:
+        lines.append(f"Source: {source}")
+    if salon_name:
+        lines.append(f"Salon: {salon_name}" + (f" ({salon_slug})" if salon_slug else ""))
+    if current_plan:
+        lines.append(f"Current plan: {current_plan}")
+    if owner_username:
+        lines.append(f"Owner account: {owner_username}")
+    if owner_email:
+        lines.append(f"Owner email: {owner_email}")
     if instagram:
         lines.append(f"Instagram: @{instagram.lstrip('@')}")
     if phone:
