@@ -3819,3 +3819,6 @@ msgstr "— Available"
 
 msgid "— Occupied"
 msgstr "— Occupied"
+
+msgid "Please choose a start time."
+msgstr "Please choose a start time."

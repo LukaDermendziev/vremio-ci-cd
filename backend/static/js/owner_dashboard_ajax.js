@@ -93,8 +93,10 @@
       Object.entries(extra).forEach(([key, value]) => {
         body.set(key, value);
       });
+      // Only coerce boolean policy-style checkboxes. Never send services=false —
+      // ModelMultipleChoiceField treats that as an invalid choice.
       form.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
-        if (!cb.name || cb.disabled) return;
+        if (!cb.name || cb.disabled || cb.name === "services") return;
         if (!body.has(cb.name)) body.append(cb.name, "false");
       });
       return OA.postDashboard(body);
@@ -117,6 +119,29 @@
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       if (submitting) return;
+
+      const hasService = !!form.querySelector('input[name="services"]:checked');
+      if (!hasService) {
+        OA.showToast(
+          t("chooseAtLeastOneService", "Please choose at least one service."),
+          "error",
+        );
+        return;
+      }
+      const startTime = form.querySelector("#od-booking-start-time")?.value?.trim();
+      const slotsSelect = form.querySelector("#od-owner-slots");
+      if (slotsSelect?.value) {
+        const hiddenStart = form.querySelector("#od-booking-start-time");
+        if (hiddenStart) hiddenStart.value = slotsSelect.value;
+      }
+      if (!(startTime || slotsSelect?.value)) {
+        OA.showToast(
+          t("chooseStartTime", "Please choose a start time."),
+          "error",
+        );
+        return;
+      }
+
       submitting = true;
       const submitBtn = form.querySelector('[type="submit"]');
       const confirmedInput = form.querySelector("#od-same-client-confirmed");

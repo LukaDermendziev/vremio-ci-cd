@@ -767,10 +767,23 @@ function initOwnerDashboard(config) {
       if (preset.time) startInput.value = preset.time;
       bookingForm.querySelector('[name="status"]').value = "approved";
       bookingForm.querySelector('[name="source"]').value = "owner_manual";
+      // New bookings need a service before slots/save work — preselect the first one.
+      const firstService = servicesContainer?.querySelector('input[name="services"]');
+      if (firstService) {
+        firstService.checked = true;
+        updateOwnerServicesSummary();
+      }
       updateReferencePhotoSection({});
       updateBookingCustomerActions({});
       renderBookingSchedule({});
     } else {
+      bookingForm.querySelector('[name="status"]').value = "approved";
+      bookingForm.querySelector('[name="source"]').value = "owner_manual";
+      const firstService = servicesContainer?.querySelector('input[name="services"]');
+      if (firstService) {
+        firstService.checked = true;
+        updateOwnerServicesSummary();
+      }
       updateReferencePhotoSection({});
       updateBookingCustomerActions({});
       renderBookingSchedule({});
