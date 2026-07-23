@@ -194,7 +194,7 @@ class Customer(TimeStampedModel):
         related_name="customers",
     )
     full_name = models.CharField(max_length=160)
-    phone_number = models.CharField(max_length=30)
+    phone_number = models.CharField(max_length=30, blank=True)
     instagram_username = models.CharField(max_length=80)
     email = models.EmailField(blank=True)
     preferred_contact_method = models.CharField(
@@ -208,6 +208,7 @@ class Customer(TimeStampedModel):
         constraints = [
             models.UniqueConstraint(
                 fields=["salon", "phone_number"],
+                condition=~Q(phone_number=""),
                 name="unique_customer_phone_per_salon",
             )
         ]

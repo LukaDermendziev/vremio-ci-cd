@@ -10,9 +10,10 @@
       <input type="hidden" name="action" value="save_booking">
       <input type="hidden" name="return_section" value="calendar">
       <input type="hidden" name="booking_id" value="">
+      <input type="hidden" name="same_client_confirmed" id="od-same-client-confirmed" value="">
       <div class="od-form-grid od-form-grid-2">
         <div class="od-field"><label>{% trans "Full name" %}</label><input type="text" name="full_name" required class="od-input"></div>
-        <div class="od-field"><label>{% trans "Phone" %}</label><input type="tel" name="phone_number" required class="od-input"></div>
+        <div class="od-field"><label>{% trans "Phone" %} <span class="od-optional">({% trans "optional" %})</span></label><input type="tel" name="phone_number" class="od-input" autocomplete="tel"></div>
         <div class="od-field"><label>{% trans "Instagram" %}</label><input type="text" name="instagram_username" class="od-input"></div>
         <div class="od-field"><label>{% trans "Email" %}</label><input type="email" name="email" class="od-input"></div>
         <div class="od-field">

@@ -1019,6 +1019,9 @@ msgstr "Трајно избриши го терминот?"
 msgid "Delete this customer?"
 msgstr "Избриши го клиентот?"
 
+msgid "Different person"
+msgstr "Друга личност"
+
 msgid "Delete this reference photo?"
 msgstr "Дали да се избрише референтната слика?"
 
@@ -2539,6 +2542,9 @@ msgstr "Vremio — Резервирај онлајн"
 msgid "Salon rules"
 msgstr "Правила на салонот"
 
+msgid "Same client?"
+msgstr "Ист клиент?"
+
 msgid "Salon rules (English)"
 msgstr "Правила на салонот (англиски)"
 
@@ -2927,6 +2933,20 @@ msgstr ""
 msgid "The time %(time)s is no longer available. Please select another slot."
 msgstr "Терминот %(time)s веќе не е достапен. Изберете друг."
 
+msgid ""
+"This phone belongs to %(existing_name)s. Confirm it is the same client, or "
+"use a different phone."
+msgstr ""
+"Овој телефон припаѓа на %(existing_name)s. Потврдете дека е ист клиент, "
+"или користете друг телефон."
+
+msgid ""
+"This phone belongs to %(existing)s. You entered %(typed)s. Is this the same "
+"client?"
+msgstr ""
+"Овој телефон припаѓа на %(existing)s. Внесовте %(typed)s. Дали е ист "
+"клиент?"
+
 msgid "The user agrees to:"
 msgstr "Корисникот се согласува дека ќе:"
 
@@ -3175,6 +3195,9 @@ msgstr "Користете ги податоците од клиенти сам�
 
 msgid "Use dd/mm/yyyy"
 msgstr "Користете дд/мм/гггг"
+
+msgid "Use a different phone number for a different person."
+msgstr "Користете друг телефонски број за друга личност."
 
 msgid "Use fixed start times"
 msgstr "Фиксни почетни термини"
@@ -3487,6 +3510,9 @@ msgstr "Работното време е зачувано."
 
 msgid "Yes, cancel appointment"
 msgstr "Да, откажи термин"
+
+msgid "Yes, same client"
+msgstr "Да, ист клиент"
 
 msgid ""
 "Yes. Customers can request appointments anytime while you stay in control of"

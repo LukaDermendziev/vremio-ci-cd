@@ -155,6 +155,22 @@ def get_matching_customer_ids(salon, phone, email=None):
     return matched
 
 
+def find_customer_by_phone(salon, phone):
+    """Return the earliest matching customer for this salon phone, or None."""
+    customer_ids = get_matching_customer_ids(salon, phone)
+    if not customer_ids:
+        return None
+    return (
+        Customer.objects.filter(salon=salon, id__in=customer_ids)
+        .order_by("id")
+        .first()
+    )
+
+
+def customer_names_differ(left, right):
+    return (left or "").strip().casefold() != (right or "").strip().casefold()
+
+
 def _unverified_booking_count(salon, customer_ids):
     if not customer_ids:
         return 0

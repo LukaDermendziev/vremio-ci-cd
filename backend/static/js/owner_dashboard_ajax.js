@@ -81,6 +81,100 @@
     OA.bindForm(form, options);
   }
 
+  function bindBookingForm() {
+    const form = global.document.getElementById("od-booking-form");
+    if (!form || form.dataset.odBookingSameClientBound) return;
+    form.dataset.odBookingSameClientBound = "1";
+
+    let submitting = false;
+
+    async function submitBooking(extra = {}) {
+      const body = new URLSearchParams(new FormData(form));
+      Object.entries(extra).forEach(([key, value]) => {
+        body.set(key, value);
+      });
+      form.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+        if (!cb.name || cb.disabled) return;
+        if (!body.has(cb.name)) body.append(cb.name, "false");
+      });
+      return OA.postDashboard(body);
+    }
+
+    async function handleSuccess(data) {
+      const msg =
+        OA.firstMessage(data, "success") ||
+        OA.firstMessage(data, "warning") ||
+        OA.firstMessage(data, "info") ||
+        "";
+      if (msg) OA.showToast(msg, "success");
+      syncStats(data);
+      closeModal("od-booking-modal");
+      await calendarRefresh();
+      await refreshSection("od-sec-bookings");
+      await refreshSection("od-sec-dashboard");
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (submitting) return;
+      submitting = true;
+      const submitBtn = form.querySelector('[type="submit"]');
+      const confirmedInput = form.querySelector("#od-same-client-confirmed");
+      if (confirmedInput) confirmedInput.value = "";
+      OA.setButtonLoading(submitBtn, true);
+      try {
+        const data = await submitBooking();
+        await handleSuccess(data);
+      } catch (err) {
+        if (err.data?.code === "phone_match") {
+          const existing = err.data.phone_match?.existing_name || "";
+          const typed = err.data.phone_match?.typed_name || "";
+          const message = t(
+            "sameClientConfirm",
+            "This phone belongs to %(existing)s. You entered %(typed)s. Is this the same client?",
+          )
+            .replace("%(existing)s", existing)
+            .replace("%(typed)s", typed);
+          const same = await confirmAsk(message, {
+            title: t("sameClientTitle", "Same client?"),
+            confirmLabel: t("sameClientYes", "Yes, same client"),
+            cancelLabel: t("sameClientNo", "Different person"),
+            danger: false,
+          });
+          if (same) {
+            if (confirmedInput) confirmedInput.value = "1";
+            try {
+              const data = await submitBooking({ same_client_confirmed: "1" });
+              await handleSuccess(data);
+            } catch (retryErr) {
+              OA.showToast(
+                retryErr.message || t("somethingWentWrong", "Something went wrong."),
+                "error",
+              );
+            }
+          } else {
+            OA.showToast(
+              t(
+                "sameClientUseDifferentPhone",
+                "Use a different phone number for a different person.",
+              ),
+              "error",
+            );
+            form.querySelector('[name="phone_number"]')?.focus();
+          }
+        } else {
+          OA.showToast(
+            err.message || t("somethingWentWrong", "Something went wrong."),
+            "error",
+          );
+        }
+      } finally {
+        submitting = false;
+        OA.setButtonLoading(submitBtn, false);
+      }
+    });
+  }
+
   function bindPolicyForm() {
     bindAjaxForm(global.document.getElementById("od-policy-form"), {
       onSuccess: async () => {
@@ -173,16 +267,7 @@
   }
 
   function initOwnerDashboardAjax() {
-    bindAjaxForm(global.document.getElementById("od-booking-form"), {
-      closeModal: "od-booking-modal",
-      onSuccess: async (data) => {
-        syncStats(data);
-        closeModal("od-booking-modal");
-        await calendarRefresh();
-        await refreshSection("od-sec-bookings");
-        await refreshSection("od-sec-dashboard");
-      },
-    });
+    bindBookingForm();
 
     bindAjaxForm(global.document.getElementById("od-service-form"), {
       closeModal: "od-service-modal",

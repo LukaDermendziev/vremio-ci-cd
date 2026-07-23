@@ -15,6 +15,8 @@ from django.utils.translation import gettext_lazy as _
 from .anti_abuse import (
     MSG_GENERIC_INVALID,
     check_public_booking_allowed,
+    customer_names_differ,
+    find_customer_by_phone,
     get_client_ip,
     get_device_token,
     honeypot_triggered,
@@ -424,7 +426,7 @@ class BookingSmsOtpForm(forms.Form):
 class OwnerBookingForm(forms.Form):
     booking_id = forms.IntegerField(required=False, widget=forms.HiddenInput())
     full_name = forms.CharField(max_length=160, label=_("Full name"))
-    phone_number = forms.CharField(max_length=30, label=_("Phone"))
+    phone_number = forms.CharField(max_length=30, required=False, label=_("Phone"))
     instagram_username = forms.CharField(max_length=80, required=False, label=_("Instagram"))
     email = forms.EmailField(required=False, label=_("Email"))
     preferred_contact_method = forms.ChoiceField(
@@ -547,17 +549,61 @@ class OwnerBookingForm(forms.Form):
         return cleaned_data
 
     def save(self):
-        phone = normalize_phone(self.cleaned_data["phone_number"])
-        customer, _created = Customer.objects.update_or_create(
-            salon=self.salon,
-            phone_number=phone,
-            defaults={
-                "full_name": self.cleaned_data["full_name"],
-                "instagram_username": self.cleaned_data.get("instagram_username", ""),
-                "email": self.cleaned_data.get("email", ""),
-                "preferred_contact_method": self.cleaned_data["preferred_contact_method"],
-            },
-        )
+        phone = normalize_phone(self.cleaned_data.get("phone_number") or "")
+        typed_name = (self.cleaned_data["full_name"] or "").strip()
+        confirmed = str(self.data.get("same_client_confirmed") or "").lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
+        existing = find_customer_by_phone(self.salon, phone) if phone else None
+
+        if existing:
+            editing_same = bool(self.booking and self.booking.customer_id == existing.id)
+            if (
+                not editing_same
+                and customer_names_differ(existing.full_name, typed_name)
+                and not confirmed
+            ):
+                raise ValidationError(
+                    _(
+                        "This phone belongs to %(existing_name)s. "
+                        "Confirm it is the same client, or use a different phone."
+                    ),
+                    code="phone_match",
+                    params={
+                        "existing_name": existing.full_name,
+                        "typed_name": typed_name,
+                    },
+                )
+
+            customer = existing
+            # Keep the stored name when owner confirms "same client" with a typo/different spelling.
+            if editing_same or not customer_names_differ(existing.full_name, typed_name):
+                customer.full_name = typed_name
+            customer.instagram_username = self.cleaned_data.get("instagram_username", "")
+            customer.email = self.cleaned_data.get("email", "")
+            customer.preferred_contact_method = self.cleaned_data["preferred_contact_method"]
+            customer.save()
+        elif self.booking and not phone:
+            # Owner manual booking without phone: keep/update this booking's customer.
+            customer = self.booking.customer
+            customer.full_name = typed_name
+            customer.phone_number = ""
+            customer.instagram_username = self.cleaned_data.get("instagram_username", "")
+            customer.email = self.cleaned_data.get("email", "")
+            customer.preferred_contact_method = self.cleaned_data["preferred_contact_method"]
+            customer.save()
+        else:
+            customer = Customer.objects.create(
+                salon=self.salon,
+                phone_number=phone,
+                full_name=typed_name,
+                instagram_username=self.cleaned_data.get("instagram_username", ""),
+                email=self.cleaned_data.get("email", ""),
+                preferred_contact_method=self.cleaned_data["preferred_contact_method"],
+            )
 
         services = self.cleaned_data["_services"]
         start_at = self.cleaned_data["start_at"]
@@ -1018,6 +1064,8 @@ class OwnerCustomerForm(forms.ModelForm):
     def __init__(self, *args, salon=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.salon = salon
+        # Customer directory still requires a phone; only owner manual bookings allow blank.
+        self.fields["phone_number"].required = True
 
     def save(self, commit=True):
         instance = super().save(commit=False)

@@ -1012,6 +1012,9 @@ msgstr "Delete this booking permanently?"
 msgid "Delete this customer?"
 msgstr "Delete this customer?"
 
+msgid "Different person"
+msgstr "Different person"
+
 msgid "Delete this reference photo?"
 msgstr "Delete this reference photo?"
 
@@ -2521,6 +2524,9 @@ msgstr "Salon Scheduler — Book Online"
 msgid "Salon rules"
 msgstr "Salon rules"
 
+msgid "Same client?"
+msgstr "Same client?"
+
 msgid "Salon rules (English)"
 msgstr "Salon rules (English)"
 
@@ -2905,6 +2911,20 @@ msgstr ""
 msgid "The time %(time)s is no longer available. Please select another slot."
 msgstr "The time %(time)s is no longer available. Please select another slot."
 
+msgid ""
+"This phone belongs to %(existing_name)s. Confirm it is the same client, or "
+"use a different phone."
+msgstr ""
+"This phone belongs to %(existing_name)s. Confirm it is the same client, or "
+"use a different phone."
+
+msgid ""
+"This phone belongs to %(existing)s. You entered %(typed)s. Is this the same "
+"client?"
+msgstr ""
+"This phone belongs to %(existing)s. You entered %(typed)s. Is this the same "
+"client?"
+
 msgid "The user agrees to:"
 msgstr "The user agrees to:"
 
@@ -3153,6 +3173,9 @@ msgstr "Use customer data only for booking and service purposes."
 
 msgid "Use dd/mm/yyyy"
 msgstr "Use dd/mm/yyyy"
+
+msgid "Use a different phone number for a different person."
+msgstr "Use a different phone number for a different person."
 
 msgid "Use fixed start times"
 msgstr "Use fixed start times"
@@ -3458,6 +3481,9 @@ msgstr "Working hours saved."
 
 msgid "Yes, cancel appointment"
 msgstr "Yes, cancel appointment"
+
+msgid "Yes, same client"
+msgstr "Yes, same client"
 
 msgid ""
 "Yes. Customers can request appointments anytime while you stay in control of"

@@ -525,6 +525,7 @@ def owner_dashboard(request):
     if request.method == "POST":
         action = request.POST.get("action")
         policy_form_errors = None
+        phone_match = None
 
         if action in {"approve", "reject"}:
             booking = get_object_or_404(
@@ -576,6 +577,12 @@ def owner_dashboard(request):
                 try:
                     saved = form.save()
                 except ValidationError as exc:
+                    if getattr(exc, "code", None) == "phone_match":
+                        params = getattr(exc, "params", None) or {}
+                        phone_match = {
+                            "existing_name": params.get("existing_name", ""),
+                            "typed_name": params.get("typed_name", ""),
+                        }
                     messages.error(request, _validation_error_to_text(exc))
                 else:
                     for warning in form.customer_warnings:
@@ -929,7 +936,11 @@ def owner_dashboard(request):
                 )
             if policy_form_errors is not None:
                 response_data["form_errors"] = policy_form_errors
-            return JsonResponse(response_data, status=200 if ok else 400)
+            if phone_match is not None:
+                response_data["ok"] = False
+                response_data["code"] = "phone_match"
+                response_data["phone_match"] = phone_match
+            return JsonResponse(response_data, status=200 if response_data["ok"] else 400)
 
         section = request.POST.get("return_section", "dashboard")
         return redirect(f"{reverse('booking:owner_dashboard')}#{section}")

@@ -13,6 +13,11 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _, override
 
+
+def _run_deferred_immediately(func, *args, **kwargs):
+    """TestCase rolls back transactions, so on_commit callbacks never fire — run inline."""
+    return func(*args, **kwargs)
+
 from .forms import BookingPolicyForm, BookingRequestForm
 from .models import (
     Booking,
@@ -1942,8 +1947,12 @@ class BetaReadinessTests(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn("reference_photo", form.errors)
 
-    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
-    def test_new_booking_sends_customer_request_email(self):
+    @override_settings(
+        EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+        OWNER_NOTIFICATION_EMAIL="",
+    )
+    @patch("booking.views.defer_after_commit", side_effect=_run_deferred_immediately)
+    def test_new_booking_sends_customer_request_email(self, _defer):
         from django.core import mail
 
         selected_date = timezone.localdate() + timedelta(days=20)
@@ -1969,8 +1978,12 @@ class BetaReadinessTests(TestCase):
         self.assertEqual(len(customer_messages), 1)
         self.assertIn(_("We received your booking request"), customer_messages[0].subject)
 
-    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
-    def test_new_booking_sends_owner_email_when_configured(self):
+    @override_settings(
+        EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+        OWNER_NOTIFICATION_EMAIL="",
+    )
+    @patch("booking.views.defer_after_commit", side_effect=_run_deferred_immediately)
+    def test_new_booking_sends_owner_email_when_configured(self, _defer):
         from django.core import mail
 
         self.owner_a.email = "owner_notify@example.com"
@@ -2002,7 +2015,8 @@ class BetaReadinessTests(TestCase):
         EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
         OWNER_NOTIFICATION_EMAIL="override_owner@example.com",
     )
-    def test_owner_notification_prefers_env_email(self):
+    @patch("booking.views.defer_after_commit", side_effect=_run_deferred_immediately)
+    def test_owner_notification_prefers_env_email(self, _defer):
         from django.core import mail
 
         self.owner_a.email = "owner_a@example.com"
@@ -2491,12 +2505,116 @@ class AntiAbuseTests(TestCase):
                 "start_time": "14:00",
                 "status": Booking.Status.APPROVED,
                 "source": Booking.Source.OWNER_MANUAL,
+                "same_client_confirmed": "1",
             },
             follow=True,
         )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "активен")
+        customer = Customer.objects.get(salon=self.salon, phone_number="070111222")
+        self.assertEqual(customer.full_name, "Existing")
 
+    def test_owner_manual_booking_asks_same_client_when_phone_name_differ(self):
+        self._create_booking("070111222", "owner@example.com")
+        self.client.login(username="owner", password="pass")
+        selected = self._future_date()
+        before = Booking.objects.count()
+        response = self.client.post(
+            "/owner/dashboard/",
+            {
+                "action": "save_booking",
+                "full_name": "Simona Maneva",
+                "phone_number": "070111222",
+                "instagram_username": "simona",
+                "email": "simona@example.com",
+                "preferred_contact_method": Customer.PreferredContactMethod.VIBER,
+                "services": [self.service.id],
+                "date": selected.isoformat(),
+                "start_time": "14:00",
+                "status": Booking.Status.APPROVED,
+                "source": Booking.Source.OWNER_MANUAL,
+            },
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Booking.objects.count(), before)
+        customer = Customer.objects.get(salon=self.salon, phone_number="070111222")
+        self.assertEqual(customer.full_name, "Existing")
+        self.assertContains(response, "Existing")
+
+    def test_owner_manual_booking_same_name_reuses_customer_without_confirm(self):
+        self._create_booking("070111222", "owner@example.com")
+        self.client.login(username="owner", password="pass")
+        selected = self._future_date()
+        response = self.client.post(
+            "/owner/dashboard/",
+            {
+                "action": "save_booking",
+                "full_name": "Existing",
+                "phone_number": "070111222",
+                "instagram_username": "existing",
+                "email": "owner@example.com",
+                "preferred_contact_method": Customer.PreferredContactMethod.VIBER,
+                "services": [self.service.id],
+                "date": selected.isoformat(),
+                "start_time": "14:00",
+                "status": Booking.Status.APPROVED,
+                "source": Booking.Source.OWNER_MANUAL,
+            },
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            Booking.objects.filter(customer__phone_number="070111222").count(),
+            2,
+        )
+
+    def test_owner_manual_booking_allows_empty_phone(self):
+        self.client.login(username="owner", password="pass")
+        selected = self._future_date()
+        response = self.client.post(
+            "/owner/dashboard/",
+            {
+                "action": "save_booking",
+                "full_name": "Walk In Client",
+                "phone_number": "",
+                "instagram_username": "",
+                "email": "",
+                "preferred_contact_method": Customer.PreferredContactMethod.VIBER,
+                "services": [self.service.id],
+                "date": selected.isoformat(),
+                "start_time": "14:00",
+                "status": Booking.Status.APPROVED,
+                "source": Booking.Source.OWNER_MANUAL,
+            },
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        booking = Booking.objects.get(customer__full_name="Walk In Client")
+        self.assertEqual(booking.customer.phone_number, "")
+        # Multiple no-phone customers are allowed for owner manual bookings.
+        response2 = self.client.post(
+            "/owner/dashboard/",
+            {
+                "action": "save_booking",
+                "full_name": "Another Walk In",
+                "phone_number": "",
+                "instagram_username": "",
+                "email": "",
+                "preferred_contact_method": Customer.PreferredContactMethod.VIBER,
+                "services": [self.service.id],
+                "date": selected.isoformat(),
+                "start_time": "16:00",
+                "status": Booking.Status.APPROVED,
+                "source": Booking.Source.OWNER_MANUAL,
+            },
+            follow=True,
+        )
+        self.assertEqual(response2.status_code, 200)
+        self.assertEqual(
+            Customer.objects.filter(salon=self.salon, phone_number="").count(),
+            2,
+        )
     def test_honeypot_filled_does_not_create_booking(self):
         before = Booking.objects.count()
         response = self.client.post(
@@ -3185,7 +3303,10 @@ class EmailVerificationTests(TestCase):
         values = [slot["value"] for slot in slots]
         self.assertIn("08:00", values)
 
-    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    @override_settings(
+        EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+        OWNER_NOTIFICATION_EMAIL="",
+    )
     def test_valid_token_promotes_to_pending_and_sends_emails(self):
         from django.core import mail
 
@@ -4028,6 +4149,78 @@ class OwnerDashboardAjaxTests(TestCase):
             data,
             HTTP_X_REQUESTED_WITH="fetch",
         )
+
+    def _future_date(self, days=20):
+        selected = timezone.localdate() + timedelta(days=days)
+        while selected.weekday() == 6:
+            selected += timedelta(days=1)
+        return selected
+
+    def test_save_booking_phone_match_returns_structured_error(self):
+        customer = Customer.objects.create(
+            salon=self.salon,
+            full_name="Biljana Stojanovska",
+            phone_number="070999888",
+            preferred_contact_method=Customer.PreferredContactMethod.VIBER,
+        )
+        selected = self._future_date()
+        response = self._fetch_post(
+            {
+                "action": "save_booking",
+                "full_name": "Simona Maneva",
+                "phone_number": "070999888",
+                "instagram_username": "",
+                "email": "",
+                "preferred_contact_method": Customer.PreferredContactMethod.VIBER,
+                "services": [self.service.id],
+                "date": selected.isoformat(),
+                "start_time": "10:00",
+                "status": Booking.Status.APPROVED,
+                "source": Booking.Source.OWNER_MANUAL,
+                "return_section": "calendar",
+            }
+        )
+        self.assertEqual(response.status_code, 400)
+        data = response.json()
+        self.assertFalse(data["ok"])
+        self.assertEqual(data["code"], "phone_match")
+        self.assertEqual(data["phone_match"]["existing_name"], "Biljana Stojanovska")
+        self.assertEqual(data["phone_match"]["typed_name"], "Simona Maneva")
+        customer.refresh_from_db()
+        self.assertEqual(customer.full_name, "Biljana Stojanovska")
+        self.assertFalse(Booking.objects.filter(customer=customer).exists())
+
+    def test_save_booking_phone_match_confirmed_keeps_existing_name(self):
+        customer = Customer.objects.create(
+            salon=self.salon,
+            full_name="Biljana Stojanovska",
+            phone_number="070999888",
+            preferred_contact_method=Customer.PreferredContactMethod.VIBER,
+        )
+        selected = self._future_date()
+        response = self._fetch_post(
+            {
+                "action": "save_booking",
+                "full_name": "Simona Maneva",
+                "phone_number": "070999888",
+                "instagram_username": "biljana",
+                "email": "",
+                "preferred_contact_method": Customer.PreferredContactMethod.VIBER,
+                "services": [self.service.id],
+                "date": selected.isoformat(),
+                "start_time": "10:00",
+                "status": Booking.Status.APPROVED,
+                "source": Booking.Source.OWNER_MANUAL,
+                "same_client_confirmed": "1",
+                "return_section": "calendar",
+            }
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data["ok"])
+        customer.refresh_from_db()
+        self.assertEqual(customer.full_name, "Biljana Stojanovska")
+        self.assertTrue(Booking.objects.filter(customer=customer).exists())
 
     def test_save_service_returns_json(self):
         response = self._fetch_post(
