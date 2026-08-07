@@ -2203,6 +2203,21 @@ msgstr "Please enter your Instagram username."
 msgid "Please enter your email address."
 msgstr "Please enter your email address."
 
+msgid "Did you mean %(suggestion)s? Please check your email address."
+msgstr "Did you mean %(suggestion)s? Please check your email address."
+
+msgid "Did you mean"
+msgstr "Did you mean"
+
+msgid "Please check your email address."
+msgstr "Please check your email address."
+
+msgid "Use"
+msgstr "Use"
+
+msgid "Keep my email"
+msgstr "Keep my email"
+
 msgid "Please enter your full name."
 msgstr "Please enter your full name."
 
@@ -3025,6 +3040,15 @@ msgstr "This is a last-minute opening from a cancelled appointment."
 msgid ""
 "This is a reminder that you have an appointment on %(date)s at %(time)s."
 msgstr ""
+"This is a reminder that you have an appointment on %(date)s at %(time)s."
+
+msgid ""
+"Hello %(name)s,\n"
+"\n"
+"This is a reminder that you have an appointment on %(date)s at %(time)s."
+msgstr ""
+"Hello %(name)s,\n"
+"\n"
 "This is a reminder that you have an appointment on %(date)s at %(time)s."
 
 msgid "This is a request only — not confirmed until the salon approves it."

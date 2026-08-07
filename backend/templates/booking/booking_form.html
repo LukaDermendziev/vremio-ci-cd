@@ -240,6 +240,16 @@
         {% for err in form.email.errors %}<span class="bk-field-error">{{ err }}</span>{% endfor %}
       </div>
       {% endif %}
+      {# Email typo popup modal #}
+      <div id="bk-email-typo-modal" class="bk-typo-modal" hidden aria-modal="true" role="dialog">
+        <div class="bk-typo-modal-inner">
+          <p class="bk-typo-modal-msg" id="bk-typo-modal-msg"></p>
+          <div class="bk-typo-modal-actions">
+            <button type="button" class="bk-btn-primary bk-typo-use" id="bk-typo-use-btn"></button>
+            <button type="button" class="bk-btn-ghost bk-typo-keep" id="bk-typo-keep-btn"></button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="bk-field">
@@ -376,6 +386,10 @@ window.BK_I18N = {
   phoneRequired: "{% filter escapejs %}{% trans 'Please enter your phone number.' %}{% endfilter %}",
   emailRequired: "{% filter escapejs %}{% trans 'Please enter your email address.' %}{% endfilter %}",
   emailInvalid: "{% filter escapejs %}{% trans 'Please enter a valid email address.' %}{% endfilter %}",
+  emailTypoWarning: "{% filter escapejs %}{% trans 'Did you mean' %}{% endfilter %}",
+  emailTypoQuestion: "{% filter escapejs %}{% trans 'Please check your email address.' %}{% endfilter %}",
+  emailTypoUse: "{% filter escapejs %}{% trans 'Use' %}{% endfilter %}",
+  emailTypoKeep: "{% filter escapejs %}{% trans 'Keep my email' %}{% endfilter %}",
   photoRequiredError: "{% filter escapejs %}{% trans 'Please upload a reference photo for this service.' %}{% endfilter %}",
   detailsIncomplete: "{% filter escapejs %}{% trans 'Please complete all required fields before continuing.' %}{% endfilter %}",
   months: [
@@ -847,6 +861,109 @@ window.BK_I18N = {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
   }
 
+  // ── Email domain typo detection ───────────────────────────────────────────
+  const EMAIL_TYPO_MAP = {
+    // Gmail
+    "gmai.com":"gmail.com","gmil.com":"gmail.com","gmial.com":"gmail.com",
+    "gmaill.com":"gmail.com","gmal.com":"gmail.com","gnail.com":"gmail.com",
+    "gamil.com":"gmail.com","gmail.con":"gmail.com","gmail.co":"gmail.com",
+    "gmail.cm":"gmail.com","gmail.om":"gmail.com","gmail.cpm":"gmail.com",
+    "gmail.comm":"gmail.com","gmail.coml":"gmail.com","gmail.coma":"gmail.com",
+    "gmaul.com":"gmail.com","gmeil.com":"gmail.com","gmsil.com":"gmail.com",
+    "gmai.lcom":"gmail.com","gmail.cok":"gmail.com","gmailcom":"gmail.com",
+    "googlemail.co":"googlemail.com","googlemail.con":"googlemail.com",
+    // Yahoo
+    "yaho.com":"yahoo.com","yahooo.com":"yahoo.com","yhaoo.com":"yahoo.com",
+    "yaoo.com":"yahoo.com","yahoo.con":"yahoo.com","yahoo.co":"yahoo.com",
+    "yahoo.cm":"yahoo.com",
+    // Hotmail / Outlook / Live
+    "hotmial.com":"hotmail.com","hotnail.com":"hotmail.com","hotmai.com":"hotmail.com",
+    "hotmail.con":"hotmail.com","hotmail.co":"hotmail.com",
+    "outlok.com":"outlook.com","outloo.com":"outlook.com",
+    "outlook.con":"outlook.com","outlook.co":"outlook.com",
+    "live.con":"live.com",
+    // iCloud
+    "icloud.con":"icloud.com","icoud.com":"icloud.com",
+    // Proton
+    "protonmail.con":"protonmail.com","proton.me.":"proton.me",
+  };
+
+  const KNOWN_DOMAINS = new Set([
+    "gmail.com","googlemail.com","yahoo.com","yahoo.co.uk",
+    "hotmail.com","outlook.com","live.com","msn.com",
+    "icloud.com","me.com","mac.com","mail.com",
+    "protonmail.com","proton.me","aol.com","gmx.com","gmx.de",
+    "yandex.com","yandex.ru","zoho.com","tutanota.com","fastmail.com",
+    "t.mk","telekom.mk","mt.net.mk","unet.com.mk","mail.mk",
+  ]);
+
+  function _levenshtein(a, b) {
+    if (a === b) return 0;
+    const m = a.length, n = b.length;
+    let prev = Array.from({length: n + 1}, (_, i) => i);
+    for (let i = 1; i <= m; i++) {
+      const curr = [i];
+      for (let j = 1; j <= n; j++) {
+        curr.push(Math.min(curr[j-1]+1, prev[j]+1, prev[j-1]+(a[i-1]===b[j-1]?0:1)));
+      }
+      prev = curr;
+    }
+    return prev[n];
+  }
+
+  function suggestEmailCorrection(email) {
+    const val = (email || '').trim().toLowerCase();
+    const at = val.lastIndexOf('@');
+    if (at < 1) return null;
+    const local = val.slice(0, at);
+    const domain = val.slice(at + 1).replace(/\.$/, '');
+    if (!local || !domain || domain.includes(' ')) return null;
+    if (KNOWN_DOMAINS.has(domain)) return null;
+    if (EMAIL_TYPO_MAP[domain]) return `${local}@${EMAIL_TYPO_MAP[domain]}`;
+    // Fuzzy: Levenshtein 1 (or 2 for longer domains)
+    let bestDomain = null, bestDist = 99;
+    for (const known of KNOWN_DOMAINS) {
+      if (Math.abs(known.length - domain.length) > 2) continue;
+      const d = _levenshtein(domain, known);
+      if (d < bestDist) { bestDist = d; bestDomain = known; }
+    }
+    if (bestDomain && (bestDist === 1 || (bestDist === 2 && domain.length >= 6))) {
+      return `${local}@${bestDomain}`;
+    }
+    return null;
+  }
+
+  // ── Email typo modal logic ────────────────────────────────────────────────
+  const emailTypoModal  = document.getElementById('bk-email-typo-modal');
+  const emailTypoMsg    = document.getElementById('bk-typo-modal-msg');
+  const emailTypoUseBtn = document.getElementById('bk-typo-use-btn');
+  const emailTypoKeepBtn= document.getElementById('bk-typo-keep-btn');
+  let _emailTypoResolveFn = null;
+
+  function showEmailTypoPrompt(suggestion) {
+    return new Promise(resolve => {
+      _emailTypoResolveFn = resolve;
+      if (emailTypoMsg) emailTypoMsg.textContent =
+        `${I18N.emailTypoWarning} "${suggestion}"? ${I18N.emailTypoQuestion}`;
+      if (emailTypoUseBtn) emailTypoUseBtn.textContent = `${I18N.emailTypoUse} ${suggestion}`;
+      if (emailTypoKeepBtn) emailTypoKeepBtn.textContent = I18N.emailTypoKeep;
+      if (emailTypoModal) emailTypoModal.hidden = false;
+    });
+  }
+
+  function hideEmailTypoModal() {
+    if (emailTypoModal) emailTypoModal.hidden = true;
+  }
+
+  emailTypoUseBtn?.addEventListener('click', () => {
+    if (_emailTypoResolveFn) { _emailTypoResolveFn('use'); _emailTypoResolveFn = null; }
+    hideEmailTypoModal();
+  });
+  emailTypoKeepBtn?.addEventListener('click', () => {
+    if (_emailTypoResolveFn) { _emailTypoResolveFn('keep'); _emailTypoResolveFn = null; }
+    hideEmailTypoModal();
+  });
+
   function setDetailsFieldError(fieldKey, message) {
     const input = document.getElementById(`id_${fieldKey}`);
     const errEl = document.getElementById(`bk-err-${fieldKey}`);
@@ -1029,7 +1146,7 @@ window.BK_I18N = {
     goBackOneStep();
   });
 
-  document.addEventListener('click', e => {
+  document.addEventListener('click', async e => {
 
     // ── Expandable card header: toggle open/close ──
     const cardHeader = e.target.closest('.bk-svc-card-header');
@@ -1090,6 +1207,16 @@ window.BK_I18N = {
 
     if (e.target === document.getElementById('bk-step3-next')) {
       if (!validateDetailsStep()) return;
+      const emailInput = document.getElementById('id_email');
+      const emailVal = emailInput?.value.trim() || '';
+      const suggestion = suggestEmailCorrection(emailVal);
+      if (suggestion) {
+        const choice = await showEmailTypoPrompt(suggestion);
+        if (choice === 'use' && emailInput) {
+          emailInput.value = suggestion;
+        }
+        // 'keep' → continue with what they typed
+      }
       updateReview();
       goTo(4);
       return;

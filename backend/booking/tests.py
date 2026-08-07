@@ -19,6 +19,7 @@ def _run_deferred_immediately(func, *args, **kwargs):
     return func(*args, **kwargs)
 
 from .forms import BookingPolicyForm, BookingRequestForm
+from .email_validation import suggest_email_correction, validate_email_no_common_typos
 from .models import (
     Booking,
     BookingActivityLog,
@@ -494,6 +495,36 @@ class LegalComplianceTests(TestCase):
         self.assertTrue(Booking.objects.filter(customer__phone_number="071000222").exists())
 
 
+class EmailValidationTests(TestCase):
+    def test_suggests_gmail_typo_gmai(self):
+        self.assertEqual(
+            suggest_email_correction("marija@gmai.com"),
+            "marija@gmail.com",
+        )
+
+    def test_suggests_gmail_typo_con(self):
+        self.assertEqual(
+            suggest_email_correction("user@gmail.con"),
+            "user@gmail.com",
+        )
+
+    def test_accepts_valid_gmail(self):
+        self.assertIsNone(suggest_email_correction("marija@gmail.com"))
+        self.assertEqual(
+            validate_email_no_common_typos("marija@gmail.com"),
+            "marija@gmail.com",
+        )
+
+    def test_accepts_example_and_empty(self):
+        self.assertIsNone(suggest_email_correction("customer@example.com"))
+        self.assertEqual(validate_email_no_common_typos(""), "")
+
+    def test_validate_raises_with_suggestion(self):
+        with self.assertRaises(ValidationError) as ctx:
+            validate_email_no_common_typos("client@gmial.com")
+        self.assertIn("gmail.com", str(ctx.exception))
+
+
 class BookingViewTests(TestCase):
     def setUp(self):
         cache.clear()
@@ -803,6 +834,30 @@ class BookingViewTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "email")
+
+    def test_booking_request_rejects_common_email_typo(self):
+        selected_date = timezone.localdate() + timedelta(days=20)
+        if selected_date.weekday() == WorkingHours.Weekday.SUNDAY:
+            selected_date += timedelta(days=1)
+
+        service = self.salon.services.get(name="Manicure")
+        response = self.client.post(
+            "/book/fancy-fingers/request/",
+            {
+                "service": service.id,
+                "date": selected_date.isoformat(),
+                "start_time": "08:00",
+                "full_name": "Typo Email",
+                "phone_number": "079888777",
+                "instagram_username": "typo_email",
+                "email": "customer@gmai.com",
+                "preferred_contact_method": Customer.PreferredContactMethod.VIBER,
+                "rules_accepted": "on",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "gmail.com")
+        self.assertFalse(Booking.objects.filter(customer__phone_number="079888777").exists())
 
     def test_salon_page_shows_updated_hero(self):
         response = self.client.get("/book/fancy-fingers/")

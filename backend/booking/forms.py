@@ -22,6 +22,7 @@ from .anti_abuse import (
     honeypot_triggered,
     normalize_phone,
 )
+from .email_validation import validate_email_no_common_typos
 from .image_moderation import moderate_reference_photo
 from .image_utils import FORMAT_TO_EXT, prepare_reference_photo, validate_reference_photo
 from .models import (
@@ -195,6 +196,9 @@ class BookingRequestForm(forms.Form):
         else:
             self.fields["email"].required = True
             self.fields["email"].widget.attrs["required"] = "required"
+
+    def clean_email(self):
+        return validate_email_no_common_typos(self.cleaned_data.get("email", ""))
 
     def _parse_service_ids(self, cleaned_data):
         raw = (cleaned_data.get("service_ids") or "").strip()
@@ -480,6 +484,9 @@ class OwnerBookingForm(forms.Form):
             self.fields["status"].initial = booking.status
             self.fields["source"].initial = booking.source
             self.fields["owner_note"].initial = booking.owner_note
+
+    def clean_email(self):
+        return validate_email_no_common_typos(self.cleaned_data.get("email", ""))
 
     def clean(self):
         cleaned_data = super().clean()
@@ -1066,6 +1073,9 @@ class OwnerCustomerForm(forms.ModelForm):
         self.salon = salon
         # Customer directory still requires a phone; only owner manual bookings allow blank.
         self.fields["phone_number"].required = True
+
+    def clean_email(self):
+        return validate_email_no_common_typos(self.cleaned_data.get("email", ""))
 
     def save(self, commit=True):
         instance = super().save(commit=False)

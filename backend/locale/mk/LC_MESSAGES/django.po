@@ -2220,6 +2220,21 @@ msgstr "Внесете го вашето Instagram корисничко име."
 msgid "Please enter your email address."
 msgstr "Внесете ја вашата email адреса."
 
+msgid "Did you mean %(suggestion)s? Please check your email address."
+msgstr "Дали мислевте на %(suggestion)s? Проверете ја email адресата."
+
+msgid "Did you mean"
+msgstr "Дали мислевте на"
+
+msgid "Please check your email address."
+msgstr "Проверете ја email адресата."
+
+msgid "Use"
+msgstr "Користи"
+
+msgid "Keep my email"
+msgstr "Задржи ја мојата email"
+
 msgid "Please enter your full name."
 msgstr "Внесете го вашето име и презиме."
 
@@ -3047,6 +3062,15 @@ msgstr "Ова е последен слободен термин од откаж
 msgid ""
 "This is a reminder that you have an appointment on %(date)s at %(time)s."
 msgstr "Ова е потсетник дека имате термин на %(date)s во %(time)s."
+
+msgid ""
+"Hello %(name)s,\n"
+"\n"
+"This is a reminder that you have an appointment on %(date)s at %(time)s."
+msgstr ""
+"Здраво %(name)s,\n"
+"\n"
+"Ова е потсетник дека имате термин на %(date)s во %(time)s."
 
 msgid "This is a request only — not confirmed until the salon approves it."
 msgstr "Ова е само барање — не е потврдено додека салонот не одобри."
