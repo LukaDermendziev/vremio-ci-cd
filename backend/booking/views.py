@@ -854,7 +854,17 @@ def owner_dashboard(request):
                 else:
                     messages.success(request, _("Customer added successfully."))
             else:
-                messages.error(request, _("Could not save customer."))
+                field_errors = {
+                    field: [str(e) for e in errs]
+                    for field, errs in form.errors.items()
+                }
+                first_error = next(
+                    (e for errs in field_errors.values() for e in errs), None
+                )
+                messages.error(
+                    request,
+                    first_error or _("Could not save customer."),
+                )
 
         elif action == "delete_customer":
             customer = get_object_or_404(

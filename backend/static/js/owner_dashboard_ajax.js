@@ -306,7 +306,7 @@
       closeModal: "od-customer-modal",
       onSuccess: async () => {
         closeModal("od-customer-modal");
-        await refreshSection("od-sec-customers");
+        await refreshSection("od-sec-customers", window.odRebindDashboard);
       },
     });
 
@@ -396,7 +396,7 @@
       "Delete this customer?",
       async () => {
         closeModal("od-customer-modal");
-        await refreshSection("od-sec-customers");
+        await refreshSection("od-sec-customers", window.odRebindDashboard);
       },
     );
 
