@@ -195,7 +195,7 @@ class Customer(TimeStampedModel):
     )
     full_name = models.CharField(max_length=160)
     phone_number = models.CharField(max_length=30, blank=True)
-    instagram_username = models.CharField(max_length=80)
+    instagram_username = models.CharField(max_length=80, blank=True)
     email = models.EmailField(blank=True)
     preferred_contact_method = models.CharField(
         max_length=20,

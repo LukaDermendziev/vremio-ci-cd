@@ -160,12 +160,14 @@ Approval:
 * owner wants to know who is coming
 * owner may reject clients with previous bad experience
 
-Customer info required:
+Customer info:
 
-* name and surname
+* name and surname (required)
 * phone number
-* Instagram
-* email optional
+* Instagram (optional)
+* email (optional)
+
+Note: Instagram is optional everywhere (public booking form, owner dashboard, and Django admin). The `Customer` model stores it as a blank-allowed field, so customers can be created and edited without an Instagram handle.
 
 Customer history:
 
@@ -204,8 +206,8 @@ The app should replace scheduling through random messages and phone notes.
 
    * name and surname
    * phone number
-   * Instagram
-   * email optional
+   * Instagram (optional)
+   * email (optional)
    * preferred contact method
 6. Customer uploads photo if needed.
 7. Customer accepts salon rules.
