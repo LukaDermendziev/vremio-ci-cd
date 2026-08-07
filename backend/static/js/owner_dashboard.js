@@ -660,6 +660,7 @@ function initOwnerDashboard(config) {
       }
       if (deleteBtn) {
         deleteBtn.dataset.bkId = String(data.id);
+        deleteBtn.dataset.bkAction = "delete_reference_photo";
         if (!deleteBtn._photoActionBound) {
           deleteBtn._photoActionBound = true;
           bindBkAction(deleteBtn);
@@ -2167,6 +2168,37 @@ function initOwnerDashboard(config) {
         } finally {
           if (window.OwnerAjax) window.OwnerAjax.setButtonLoading(btn, false);
         }
+      });
+    });
+    document.querySelectorAll("[data-add-customer]").forEach(btn => {
+      if (btn.dataset.odAddCustBound) return;
+      btn.dataset.odAddCustBound = "1";
+      btn.addEventListener("click", () => openCustomerModal(null));
+    });
+    document.querySelectorAll("[data-add-block]").forEach(btn => {
+      if (btn.dataset.odAddBlockBound) return;
+      btn.dataset.odAddBlockBound = "1";
+      btn.addEventListener("click", () => openBlockModal(null));
+    });
+    document.querySelectorAll("[data-add-blocked-date]").forEach(btn => {
+      if (btn.dataset.odAddBlockedDateBound) return;
+      btn.dataset.odAddBlockedDateBound = "1";
+      btn.addEventListener("click", () => openModal("od-blocked-date-modal"));
+    });
+    document.querySelectorAll("[data-edit-block]").forEach(btn => {
+      if (btn.dataset.odEditBlockBound) return;
+      btn.dataset.odEditBlockBound = "1";
+      btn.addEventListener("click", () => {
+        const blockId = btn.dataset.editBlock;
+        openBlockModal(blockId, {
+          date: btn.dataset.blockDate,
+          startTime: btn.dataset.blockStart,
+          endTime: btn.dataset.blockEnd,
+        });
+        blockForm.querySelector('[name="reason"]').value = btn.dataset.blockReason || "";
+        blockForm.querySelector('[name="block_id"]').value = blockId;
+        blockDeleteForm.querySelector('[name="block_id"]').value = blockId;
+        blockDeleteBtn.style.display = "";
       });
     });
     if (window.odBindInlineDeleteForms) window.odBindInlineDeleteForms();

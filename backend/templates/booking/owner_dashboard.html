@@ -581,6 +581,7 @@
         {{ hours_formset.management_form }}
         {% for form in hours_formset %}
           <div class="od-hours-edit-row">
+            {{ form.id }}
             {{ form.weekday }}
             <div class="od-hours-day">{{ form.instance.get_weekday_display }}</div>
             <label class="od-check-label">{{ form.is_working_day }} {% trans "Open" %}</label>
