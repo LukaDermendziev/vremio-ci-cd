@@ -5,16 +5,16 @@
       <span class="od-modal-title" id="od-customer-modal-title">{% trans "Add customer" %}</span>
       <button type="button" class="od-modal-close" data-close-modal="od-customer-modal">&times;</button>
     </div>
-    <form method="post" id="od-customer-form" class="od-form">
+    <form method="post" id="od-customer-form" class="od-form" autocomplete="off">
       {% csrf_token %}
       <input type="hidden" name="action" value="save_customer">
       <input type="hidden" name="return_section" value="customers">
       <input type="hidden" name="customer_id" value="">
       <div class="od-form-grid od-form-grid-2">
-        <div class="od-field"><label>{% trans "Full name" %}</label><input type="text" name="full_name" required class="od-input"></div>
-        <div class="od-field"><label>{% trans "Phone" %}</label><input type="tel" name="phone_number" required class="od-input"></div>
-        <div class="od-field"><label>{% trans "Instagram" %}</label><input type="text" name="instagram_username" class="od-input"></div>
-        <div class="od-field"><label>{% trans "Email" %}</label><input type="email" name="email" class="od-input"></div>
+        <div class="od-field"><label>{% trans "Full name" %}</label><input type="text" name="full_name" required class="od-input" autocomplete="off"></div>
+        <div class="od-field"><label>{% trans "Phone" %}</label><input type="tel" name="phone_number" required class="od-input" autocomplete="off"></div>
+        <div class="od-field"><label>{% trans "Instagram" %}</label><input type="text" name="instagram_username" class="od-input" autocomplete="off"></div>
+        <div class="od-field"><label>{% trans "Email" %}</label><input type="email" name="email" class="od-input" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
         <div class="od-field">
           <label>{% trans "Preferred contact" %}</label>
           <select name="preferred_contact_method" class="od-input">
