@@ -485,9 +485,6 @@ class OwnerBookingForm(forms.Form):
             self.fields["source"].initial = booking.source
             self.fields["owner_note"].initial = booking.owner_note
 
-    def clean_email(self):
-        return validate_email_no_common_typos(self.cleaned_data.get("email", ""))
-
     def clean(self):
         cleaned_data = super().clean()
         services = list(cleaned_data.get("services") or [])
@@ -1073,9 +1070,6 @@ class OwnerCustomerForm(forms.ModelForm):
         self.salon = salon
         # Customer directory still requires a phone; only owner manual bookings allow blank.
         self.fields["phone_number"].required = True
-
-    def clean_email(self):
-        return validate_email_no_common_typos(self.cleaned_data.get("email", ""))
 
     def save(self, commit=True):
         instance = super().save(commit=False)
