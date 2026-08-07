@@ -9,3 +9,6 @@ Your appointment for {{ date }} at {{ time }} has been confirmed.{% endblocktran
 {% endif %}
 
 {% trans "We look forward to seeing you." %}
+
+{% trans "You can view or cancel your appointment here:" %}
+{{ manage_url }}

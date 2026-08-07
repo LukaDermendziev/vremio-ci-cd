@@ -5,3 +5,6 @@ Your appointment has been changed to {{ date }} at {{ time }}.
 Service: {{ service }}
 
 We look forward to seeing you.{% endblocktrans %}
+
+{% trans "You can view or cancel your appointment here:" %}
+{{ manage_url }}
