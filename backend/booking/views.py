@@ -723,6 +723,33 @@ def owner_dashboard(request):
                 log_booking_activity(booking, BookingActivityLog.Action.EMAIL_SENT, user=request.user, note="No-show email sent")
             messages.success(request, _("Booking marked as no-show."))
 
+        elif action == "resend_confirmation":
+            booking = get_object_or_404(
+                Booking, pk=request.POST.get("booking_id"), salon=salon
+            )
+            if not (booking.customer.email or "").strip():
+                messages.error(request, _("This customer has no email address on file."))
+            else:
+                notify_action = (
+                    "approved"
+                    if booking.status == Booking.Status.APPROVED
+                    else "request_received"
+                )
+                sent, reason = send_booking_notification(booking, notify_action)
+                if sent:
+                    log_booking_activity(
+                        booking,
+                        BookingActivityLog.Action.EMAIL_SENT,
+                        user=request.user,
+                        note="Confirmation email resent",
+                    )
+                    messages.success(request, _("Confirmation email sent to customer."))
+                else:
+                    messages.error(
+                        request,
+                        _("Could not send the email. Please try again later."),
+                    )
+
         elif action in ("cancel_booking", "cancel"):
             booking = get_object_or_404(
                 Booking, pk=request.POST.get("booking_id"), salon=salon

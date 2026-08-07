@@ -3872,3 +3872,15 @@ msgstr "— Зафатено"
 
 msgid "Please choose a start time."
 msgstr "Ве молиме изберете почетно време."
+
+msgid "Resend confirmation email"
+msgstr "Повторно испрати потврда по е-пошта"
+
+msgid "Confirmation email sent to customer."
+msgstr "Потврдата е испратена на клиентот по е-пошта."
+
+msgid "This customer has no email address on file."
+msgstr "Овој клиент нема зачувана е-пошта."
+
+msgid "Could not send the email. Please try again later."
+msgstr "Е-поштата не можеше да се испрати. Обидете се повторно подоцна."

@@ -611,6 +611,34 @@ function initOwnerDashboard(config) {
       }
     }
 
+    const resendBtn = document.getElementById("od-booking-resend-email");
+    if (resendBtn) {
+      if (data.email) {
+        resendBtn.hidden = false;
+        resendBtn.dataset.bookingId = data.id || "";
+        if (!resendBtn.dataset.odResendBound) {
+          resendBtn.dataset.odResendBound = "1";
+          resendBtn.addEventListener("click", async () => {
+            const bookingId = resendBtn.dataset.bookingId;
+            if (!bookingId || !window.OwnerAjax) return;
+            window.OwnerAjax.setButtonLoading(resendBtn, true);
+            try {
+              await window.OwnerAjax.postAction(
+                { action: "resend_confirmation", booking_id: bookingId, return_section: "calendar" },
+                { successMessage: t("confirmationResent", "Confirmation email sent to customer.") },
+              );
+            } catch (_) {
+              /* error toast already shown by postAction */
+            } finally {
+              window.OwnerAjax.setButtonLoading(resendBtn, false);
+            }
+          });
+        }
+      } else {
+        resendBtn.hidden = true;
+      }
+    }
+
     if (blockBtn) {
       blockBtn.dataset.customerId = data.customer_id || "";
       blockBtn.dataset.bookingId = data.id || "";
