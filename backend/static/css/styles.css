@@ -3487,9 +3487,18 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
 }
 .bk-svc-card-header:hover  { background: rgba(196,135,138,0.05); }
 .bk-svc-card-header:active { background: rgba(196,135,138,0.11); transform: scale(0.99); }
+.bk-svc-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--bk-accent);
+}
+.bk-svc-toggle-text { line-height: 1; }
 .bk-svc-chevron {
   font-size: 14px;
-  color: var(--bk-muted);
+  color: var(--bk-accent);
   transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
   flex-shrink: 0;
 }
@@ -3620,6 +3629,14 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
 .bk-cal-day.early-open:not(.selected) {
   box-shadow: inset 0 0 0 2px var(--bk-accent);
   font-weight: 600;
+}
+/* Fully booked working day — reads as unavailable without a legend */
+.bk-cal-day.full {
+  background: rgba(0, 0, 0, 0.06);
+  color: #bbb;
+  text-decoration: line-through;
+  cursor: not-allowed;
+  opacity: 1;
 }
 .bk-early-open-hint {
   font-size: 0.85rem;

@@ -27,6 +27,11 @@ urlpatterns = [
         name="last_minute_dates",
     ),
     path(
+        "book/<slug:salon_slug>/full-dates/",
+        views.fully_booked_dates,
+        name="fully_booked_dates",
+    ),
+    path(
         "book/<slug:salon_slug>/verify/<uuid:token>/",
         views.verify_booking_email,
         name="verify_booking_email",

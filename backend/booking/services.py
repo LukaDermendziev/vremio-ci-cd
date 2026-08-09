@@ -472,6 +472,41 @@ def get_last_minute_open_dates_for_services(
     return bookable
 
 
+def get_fully_booked_dates_for_services(
+    salon, services, start_date, end_date, duration_override_minutes=None, now=None
+):
+    """ISO dates in ``[start_date, end_date]`` that are open (have a working
+    window) but offer zero available slots for the selected services — i.e. days
+    that are already fully booked.
+
+    Closed days (no working window) are intentionally excluded here: the calendar
+    already marks those separately, so we only want to flag *working* days that
+    happen to be full. Iterates day-by-day reusing ``get_available_slots``; this
+    is fine for the pilot's ~60-day booking window.
+    """
+    if now is None:
+        now = timezone.now()
+    services = normalize_services(services)
+    if not services:
+        return []
+
+    full = []
+    current = start_date
+    while current <= end_date:
+        if get_working_window_for_date(salon, current) is not None:
+            slots = get_available_slots(
+                salon,
+                services,
+                current,
+                now=now,
+                duration_override_minutes=duration_override_minutes,
+            )
+            if not slots:
+                full.append(current.isoformat())
+        current += timedelta(days=1)
+    return full
+
+
 def _slot_fits_release(slot_start, slot_end, release):
     return release.start_at <= slot_start and slot_end <= release.end_at
 

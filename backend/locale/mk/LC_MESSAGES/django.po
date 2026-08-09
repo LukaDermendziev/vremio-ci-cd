@@ -1839,6 +1839,12 @@ msgstr "Месечна консултација за подобрување на
 msgid "More"
 msgstr "Повеќе"
 
+msgid "Less"
+msgstr "Помалку"
+
+msgid "Fully booked"
+msgstr "Пополнето"
+
 msgid "More details"
 msgstr "Повеќе детали"
 

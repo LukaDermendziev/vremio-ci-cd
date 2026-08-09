@@ -20,6 +20,7 @@
   enctype="multipart/form-data"
   data-slots-url="{% url 'booking:available_slots' salon.slug %}"
   data-last-minute-dates-url="{% url 'booking:last_minute_dates' salon.slug %}"
+  data-full-dates-url="{% url 'booking:fully_booked_dates' salon.slug %}"
   data-min-date="{{ min_date }}"
   data-max-date="{{ max_date }}"
   data-closed-weekdays="{{ closed_weekdays_js }}"
@@ -104,7 +105,10 @@
           </div>
           <div class="bk-service-right">
             {% if service.base_price %}<div class="bk-service-price">{% blocktrans with price=service.base_price|floatformat:0 %}from {{ price }} den{% endblocktrans %}</div>{% endif %}
-            <i class="bi bi-chevron-down bk-svc-chevron"></i>
+            <span class="bk-svc-toggle">
+              <span class="bk-svc-toggle-text">{% trans "More" %}</span>
+              <i class="bi bi-chevron-down bk-svc-chevron"></i>
+            </span>
           </div>
         </button>
         {# No hidden attribute — open/close via CSS class #}
@@ -385,6 +389,9 @@ window.BK_I18N = {
   photoOptional: "{% filter escapejs %}{% trans '(optional)' %}{% endfilter %}",
   viaContact: "{% filter escapejs %}{% trans 'Via' %}{% endfilter %}",
   minutes: "{% filter escapejs %}{% trans 'min' %}{% endfilter %}",
+  expandMore: "{% filter escapejs %}{% trans 'More' %}{% endfilter %}",
+  expandLess: "{% filter escapejs %}{% trans 'Less' %}{% endfilter %}",
+  fullyBooked: "{% filter escapejs %}{% trans 'Fully booked' %}{% endfilter %}",
   totalLabel: "{% filter escapejs %}{% trans 'Total' %}{% endfilter %}",
   currencyDen: "{% filter escapejs %}{% trans 'den' %}{% endfilter %}",
   nameRequired: "{% filter escapejs %}{% trans 'Please enter your full name.' %}{% endfilter %}",
@@ -467,6 +474,7 @@ window.BK_I18N = {
   const slotsGrid      = document.getElementById('bk-slots-grid');
   const slotsUrl       = form.dataset.slotsUrl;
   const lastMinuteDatesUrl = form.dataset.lastMinuteDatesUrl;
+  const fullDatesUrl   = form.dataset.fullDatesUrl;
 
   // Closed weekdays from the backend (JS day numbers: 0=Sun, 1=Mon … 6=Sat)
   let closedWeekdays = [];
@@ -476,6 +484,7 @@ window.BK_I18N = {
     (JSON.parse(form.dataset.closedDates || '[]')).forEach(d => closedDates.add(d));
   } catch {}
   const earlyOpenDates = new Set();
+  const fullDates = new Set();
 
   function parseLocalDate(str) {
     const [y, m, d] = str.split('-').map(Number);
@@ -637,7 +646,7 @@ window.BK_I18N = {
     if (targetStep < 1) return;
     goTo(targetStep);
     if (targetStep === 2) {
-      fetchEarlyOpenDates().then(() => {
+      Promise.all([fetchEarlyOpenDates(), fetchFullyBookedDates()]).then(() => {
         syncCalendarMonthToSelections();
         renderCalendar();
       });
@@ -676,6 +685,25 @@ window.BK_I18N = {
     if (earlyHint) earlyHint.hidden = !show;
   }
 
+  async function fetchFullyBookedDates() {
+    fullDates.clear();
+    if (!state.selections.length || !fullDatesUrl) return;
+    const ids = state.selections.map(s => s.service.id).join(',');
+    const priceItemsMap = {};
+    state.selections.forEach(s => { if (s.priceItem) priceItemsMap[s.service.id] = s.priceItem.id; });
+    let url = `${fullDatesUrl}?services=${encodeURIComponent(ids)}`;
+    if (Object.keys(priceItemsMap).length) {
+      url += `&price_items=${encodeURIComponent(JSON.stringify(priceItemsMap))}`;
+    }
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
+      (data.dates || []).forEach(d => fullDates.add(d));
+    } catch {
+      /* leave calendar without full-day markers on failure */
+    }
+  }
+
   const todayStr = formatDateStr(new Date());
 
   function renderCalendar() {
@@ -702,6 +730,7 @@ window.BK_I18N = {
       const isBeforeToday = dateStr < todayStr;
       const isFar     = dt > maxDate;
       const disabled  = isClosed || isBeforeToday || isFar || (dt < minDate && !isEarlyOpen);
+      const isFull    = !disabled && fullDates.has(dateStr);
       const isToday   = dateStr === todayStr;
       const isSelected = state.date === dateStr;
 
@@ -712,6 +741,11 @@ window.BK_I18N = {
       if (disabled) {
         btn.className = 'bk-cal-day disabled' + (isClosed ? ' closed' : '') + (isToday ? ' today' : '');
         btn.disabled  = true;
+      } else if (isFull) {
+        btn.className = 'bk-cal-day disabled full' + (isToday ? ' today' : '');
+        btn.disabled  = true;
+        btn.title     = I18N.fullyBooked;
+        btn.setAttribute('aria-label', `${d} — ${I18N.fullyBooked}`);
       } else {
         btn.className = 'bk-cal-day'
           + (isSelected ? ' selected' : '')
@@ -1131,10 +1165,14 @@ window.BK_I18N = {
   function openCard(card) {
     card.querySelector('.bk-svc-items')?.classList.add('open');
     card.querySelector('.bk-svc-chevron')?.classList.add('bk-svc-chevron--open');
+    const t = card.querySelector('.bk-svc-toggle-text');
+    if (t) t.textContent = I18N.expandLess;
   }
   function closeCard(card) {
     card.querySelector('.bk-svc-items')?.classList.remove('open');
     card.querySelector('.bk-svc-chevron')?.classList.remove('bk-svc-chevron--open');
+    const t = card.querySelector('.bk-svc-toggle-text');
+    if (t) t.textContent = I18N.expandMore;
   }
   function closeAllCards() {
     document.querySelectorAll('.bk-svc-card').forEach(closeCard);
@@ -1161,7 +1199,7 @@ window.BK_I18N = {
     state.date = null;
     state.slot = null;
     timeInput.value = '';
-    await fetchEarlyOpenDates();
+    await Promise.all([fetchEarlyOpenDates(), fetchFullyBookedDates()]);
     syncCalendarMonthToSelections();
     goTo(2);
     renderCalendar();

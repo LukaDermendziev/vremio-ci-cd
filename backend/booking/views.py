@@ -85,6 +85,7 @@ from .services import (
     get_salon_local_today,
     get_salon_page_hours_rows,
     get_active_released_intervals,
+    get_fully_booked_dates_for_services,
     get_last_minute_open_dates_for_services,
     get_unbookable_dates_for_customer,
     get_working_window_for_date,
@@ -2199,6 +2200,28 @@ def last_minute_dates(request, salon_slug):
     notice_cutoff = today + timedelta(days=min_notice)
     dates = get_last_minute_open_dates_for_services(
         salon, services, today, notice_cutoff
+    )
+    return JsonResponse({"dates": dates})
+
+
+@require_GET
+def fully_booked_dates(request, salon_slug):
+    """ISO dates within the normal booking window that are open but fully booked
+    for the selected services, so the calendar can flag them up front."""
+    salon = get_object_or_404(Salon, slug=salon_slug, is_active=True)
+    services = _services_from_request(request, salon)
+    if not services:
+        return JsonResponse({"dates": []})
+
+    today = get_salon_local_today(salon)
+    policy = getattr(salon, "booking_policy", None)
+    min_notice = policy.minimum_notice_days if policy else 14
+    max_window = policy.maximum_booking_window_days if policy else 60
+    start = today + timedelta(days=min_notice)
+    end = today + timedelta(days=max_window)
+    duration_override = _duration_override_from_request(request, salon, services)
+    dates = get_fully_booked_dates_for_services(
+        salon, services, start, end, duration_override_minutes=duration_override
     )
     return JsonResponse({"dates": dates})
 
