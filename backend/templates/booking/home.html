@@ -8,7 +8,9 @@
 {% block content %}
 <header class="vm-nav" id="vm-top">
   <div class="vm-nav-inner">
-    <a class="vm-brand" href="/">Vremio</a>
+    <a class="vm-brand" href="/" aria-label="Vremio">
+      <img src="{% static 'images/Vremio.png' %}" alt="Vremio" class="vm-brand-logo">
+    </a>
     <button type="button" class="vm-nav-toggle" id="vm-nav-toggle" aria-expanded="false" aria-controls="vm-nav-menu" aria-label="{% trans 'Menu' %}">
       <i class="bi bi-list"></i>
     </button>

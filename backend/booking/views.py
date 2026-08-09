@@ -69,6 +69,7 @@ from .services import (
     build_contact_links,
     build_prepared_message,
     build_service_schedule,
+    calculate_line_items_duration_minutes,
     can_customer_cancel_booking,
     complete_email_verification,
     cleanup_expired_unverified_bookings,
@@ -107,6 +108,55 @@ def _services_from_request(request, salon):
     raw = request.GET.get("services") or request.GET.get("service")
     service_ids = parse_service_ids_param(raw)
     return resolve_services_for_salon(salon, service_ids) or []
+
+
+def _duration_override_from_request(request, salon, services):
+    """Compute the total appointment duration honouring any selected sub-service
+    durations. Returns None when nothing overrides the default service duration.
+
+    Reads an optional ``price_items`` GET param: a JSON map of
+    ``{service_id: price_item_id}``.
+    """
+    raw = request.GET.get("price_items")
+    if not raw:
+        return None
+    try:
+        items_map = json.loads(raw)
+    except (json.JSONDecodeError, TypeError, ValueError):
+        return None
+    if not isinstance(items_map, dict) or not items_map:
+        return None
+
+    item_ids = []
+    for value in items_map.values():
+        try:
+            item_ids.append(int(value))
+        except (TypeError, ValueError):
+            continue
+    if not item_ids:
+        return None
+
+    items_by_id = {
+        item.id: item
+        for item in ServicePriceItem.objects.filter(
+            id__in=item_ids, service__salon=salon
+        )
+    }
+
+    line_items = []
+    for service in services:
+        item_id = items_map.get(str(service.id))
+        price_item = None
+        if item_id is not None:
+            try:
+                price_item = items_by_id.get(int(item_id))
+            except (TypeError, ValueError):
+                price_item = None
+            if price_item is not None and price_item.service_id != service.id:
+                price_item = None
+        line_items.append({"service": service, "price_item": price_item})
+
+    return calculate_line_items_duration_minutes(line_items, salon)
 
 
 def _slots_json(slots, *, last_minute=False, release_unavailable=False):
@@ -833,6 +883,10 @@ def owner_dashboard(request):
             price = request.POST.get("item_price", "").strip()
             group = request.POST.get("item_group", "").strip()
             sort_order = int(request.POST.get("item_sort", 0) or 0)
+            try:
+                duration = max(0, int(request.POST.get("item_duration", 0) or 0))
+            except (TypeError, ValueError):
+                duration = 0
             photo_required = request.POST.get("item_photo_required") == "1"
             if name and price:
                 if item:
@@ -840,12 +894,14 @@ def owner_dashboard(request):
                     item.price_display = price
                     item.group = group
                     item.sort_order = sort_order
+                    item.duration_minutes = duration
                     item.photo_required = photo_required
                     item.save()
                 else:
                     ServicePriceItem.objects.create(
                         service=service, name=name, price_display=price,
                         group=group, sort_order=sort_order,
+                        duration_minutes=duration,
                         photo_required=photo_required,
                     )
                 messages.success(request, _("Price item saved."))
@@ -2161,7 +2217,13 @@ def available_slots(request, salon_slug):
     except ValueError:
         return JsonResponse({"slots": [], "last_minute": False, "release_unavailable": False})
 
-    slots = get_available_slots(salon, services, selected_date)
+    duration_override = _duration_override_from_request(request, salon, services)
+    slots = get_available_slots(
+        salon,
+        services,
+        selected_date,
+        duration_override_minutes=duration_override,
+    )
     last_minute = not is_date_allowed(salon, selected_date) and bool(
         get_active_released_intervals(salon, selected_date)
     )

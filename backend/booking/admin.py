@@ -91,7 +91,7 @@ class SalonAdmin(admin.ModelAdmin):
 class ServicePriceItemInline(admin.TabularInline):
     model = ServicePriceItem
     extra = 1
-    fields = ("group", "name", "price_display", "photo_required", "sort_order")
+    fields = ("group", "name", "price_display", "duration_minutes", "photo_required", "sort_order")
 
 
 @admin.register(Service)

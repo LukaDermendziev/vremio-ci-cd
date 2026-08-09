@@ -166,11 +166,26 @@ class ServicePriceItem(models.Model):
         max_length=60,
         help_text='e.g. "600", "+100/200", "1500-2000"',
     )
+    duration_minutes = models.PositiveSmallIntegerField(
+        default=0,
+        help_text=(
+            "How long this specific sub-service takes, in minutes. "
+            "Leave 0 to use the parent service's duration."
+        ),
+    )
     sort_order = models.PositiveSmallIntegerField(default=0)
     photo_required = models.BooleanField(
         default=False,
         help_text="Customer must upload a reference photo when booking this specific sub-service.",
     )
+
+    @property
+    def effective_duration_minutes(self):
+        """Duration to actually schedule: the sub-service's own duration if set,
+        otherwise fall back to the parent service's duration."""
+        if self.duration_minutes:
+            return self.duration_minutes
+        return self.service.duration_minutes
 
     class Meta:
         ordering = ["sort_order", "id"]

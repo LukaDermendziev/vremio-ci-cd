@@ -2224,6 +2224,13 @@ msgstr "Please enter your full name."
 msgid "Please enter your phone number."
 msgstr "Please enter your phone number."
 
+msgid ""
+"Enter a valid Macedonian mobile number, for example 070 123 456 or +389 70 "
+"123 456."
+msgstr ""
+"Enter a valid Macedonian mobile number, for example 070 123 456 or +389 70 "
+"123 456."
+
 msgid "Please upload a reference photo for this service."
 msgstr "Please upload a reference photo for this service."
 

@@ -91,10 +91,11 @@
           <div class="bk-service-body">
             <div class="bk-service-name">{{ service.name }}</div>
             {% if service.description %}<div class="bk-service-desc">{{ service.description }}</div>{% endif %}
+            {% if service.extra_duration_note %}
             <div class="bk-service-tags">
-              <span class="bk-service-dur"><i class="bi bi-clock"></i> {% blocktrans with minutes=service.duration_minutes %}{{ minutes }} min{% endblocktrans %}</span>
-              {% if service.extra_duration_note %}<span class="bk-service-note">{{ service.extra_duration_note }}</span>{% endif %}
+              <span class="bk-service-note">{{ service.extra_duration_note }}</span>
             </div>
+            {% endif %}
             {# Shows which sub-service is selected when card is collapsed #}
             <div class="bk-svc-selected-summary" aria-live="polite">
               <i class="bi bi-check-circle-fill" style="font-size:11px"></i>
@@ -119,11 +120,15 @@
                       data-item-id="{{ item.id }}"
                       data-item-name="{{ item.name }}"
                       data-price="{{ item.price_display }}"
+                      data-duration="{{ item.effective_duration_minutes }}"
                       data-photo-required="{{ item.photo_required|yesno:'true,false' }}">
                 <span class="bk-pi-check" aria-hidden="true"><i class="bi bi-check-lg"></i></span>
                 <div class="bk-pi-info">
                   <span class="bk-pi-name">{{ item.name }}</span>
-                  {% if item.photo_required %}<span class="bk-photo-badge required">{% trans "Photo required" %}</span>{% endif %}
+                  <span class="bk-pi-meta">
+                    <span class="bk-pi-dur"><i class="bi bi-clock"></i> {% blocktrans with minutes=item.effective_duration_minutes %}{{ minutes }} min{% endblocktrans %}</span>
+                    {% if item.photo_required %}<span class="bk-photo-badge required">{% trans "Photo required" %}</span>{% endif %}
+                  </span>
                 </div>
                 <span class="bk-pi-price">{{ item.price_display }} {% trans "den" %}</span>
               </button>
@@ -384,6 +389,7 @@ window.BK_I18N = {
   currencyDen: "{% filter escapejs %}{% trans 'den' %}{% endfilter %}",
   nameRequired: "{% filter escapejs %}{% trans 'Please enter your full name.' %}{% endfilter %}",
   phoneRequired: "{% filter escapejs %}{% trans 'Please enter your phone number.' %}{% endfilter %}",
+  phoneInvalid: "{% filter escapejs %}{% trans 'Enter a valid Macedonian mobile number, for example 070 123 456 or +389 70 123 456.' %}{% endfilter %}",
   emailRequired: "{% filter escapejs %}{% trans 'Please enter your email address.' %}{% endfilter %}",
   emailInvalid: "{% filter escapejs %}{% trans 'Please enter a valid email address.' %}{% endfilter %}",
   emailTypoWarning: "{% filter escapejs %}{% trans 'Did you mean' %}{% endfilter %}",
@@ -503,9 +509,14 @@ window.BK_I18N = {
     };
   }
 
+  function selDuration(s) {
+    const itemDur = s && s.priceItem ? Number(s.priceItem.duration) : 0;
+    return itemDur || Number(s.service.duration) || 0;
+  }
+
   function totalDurationMinutes() {
     if (!state.selections.length) return 0;
-    const sum = state.selections.reduce((acc, s) => acc + Number(s.service.duration), 0);
+    const sum = state.selections.reduce((acc, s) => acc + selDuration(s), 0);
     return sum + serviceGapMin * Math.max(0, state.selections.length - 1);
   }
 
@@ -577,7 +588,7 @@ window.BK_I18N = {
     multiSummary.innerHTML = state.selections.map(s => {
       const label = s.priceItem ? s.priceItem.name : s.service.name;
       const price = s.priceItem ? s.priceItem.price : s.service.price;
-      return `<div class="bk-multi-line"><strong>${label}</strong> · ${s.service.duration} ${I18N.minutes}${price ? ' · ' + price + ' ' + I18N.currencyDen : ''}</div>`;
+      return `<div class="bk-multi-line"><strong>${label}</strong> · ${selDuration(s)} ${I18N.minutes}${price ? ' · ' + price + ' ' + I18N.currencyDen : ''}</div>`;
     }).join('') + `<div class="bk-multi-total">${I18N.totalLabel}: ${totalDurationMinutes()} ${I18N.minutes}${displayPrice() ? ' · ' + displayPrice() + ' ' + I18N.currencyDen : ''}</div>`;
     updatePhotoHintForSelections();
   }
@@ -722,7 +733,12 @@ window.BK_I18N = {
     updateEarlyOpenHint(false);
     slotsGrid.innerHTML = `<span class="bk-slots-hint bk-slots-loading"><i class="bi bi-arrow-repeat"></i> ${I18N.loading}</span>`;
     const ids = state.selections.map(s => s.service.id).join(',');
-    const url = `${slotsUrl}?services=${encodeURIComponent(ids)}&date=${encodeURIComponent(state.date)}`;
+    const priceItemsMap = {};
+    state.selections.forEach(s => { if (s.priceItem) priceItemsMap[s.service.id] = s.priceItem.id; });
+    let url = `${slotsUrl}?services=${encodeURIComponent(ids)}&date=${encodeURIComponent(state.date)}`;
+    if (Object.keys(priceItemsMap).length) {
+      url += `&price_items=${encodeURIComponent(JSON.stringify(priceItemsMap))}`;
+    }
     try {
       const res  = await fetch(url);
       const data = await res.json();
@@ -813,7 +829,7 @@ window.BK_I18N = {
       document.getElementById('bk-sum-meta').textContent  = `${formatDateDisplay(state.date)}  ·  ${state.slot.label}`;
       document.getElementById('bk-sum-svc').innerHTML = state.selections.map(s => {
         const n = s.priceItem ? s.priceItem.name : s.service.name;
-        return `<div>${n} · ${s.service.duration} ${I18N.minutes}</div>`;
+        return `<div>${n} · ${selDuration(s)} ${I18N.minutes}</div>`;
       }).join('');
       document.getElementById('bk-sum-price').textContent = displayPrice() ? `${I18N.totalLabel}: ${displayPrice()} ${I18N.currencyDen}` : '';
       card.style.display = 'block';
@@ -833,7 +849,7 @@ window.BK_I18N = {
 
     document.getElementById('bk-rev-svc').innerHTML   = state.selections.map(s => {
       const n = s.priceItem ? s.priceItem.name : s.service.name;
-      return `<div>${n} · ${s.service.duration} ${I18N.minutes}</div>`;
+      return `<div>${n} · ${selDuration(s)} ${I18N.minutes}</div>`;
     }).join('');
     document.getElementById('bk-rev-date').textContent  = `${formatDateDisplay(state.date)}  ·  ${state.slot.label}`;
     document.getElementById('bk-rev-dur').textContent   = `${I18N.totalLabel}: ${totalDurationMinutes()} ${I18N.minutes}`;
@@ -859,6 +875,17 @@ window.BK_I18N = {
 
   function isValidEmail(value) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  }
+
+  // Accept MK mobiles: 07XXXXXXX (national) or +389/389/00389 7XXXXXXX (international).
+  function isValidMkMobile(value) {
+    let digits = String(value || '').replace(/\D/g, '');
+    if (digits.startsWith('00')) digits = digits.slice(2);
+    if (digits.startsWith('389')) {
+      const local = digits.slice(3);
+      return /^7\d{7}$/.test(local);          // 389 + 7XXXXXXX (8 digits)
+    }
+    return /^07\d{7}$/.test(digits);           // 07XXXXXXX (9 digits)
   }
 
   // ── Email domain typo detection ───────────────────────────────────────────
@@ -1002,6 +1029,10 @@ window.BK_I18N = {
       setDetailsFieldError('phone_number', I18N.phoneRequired);
       firstInvalid = firstInvalid || document.getElementById('id_phone_number');
       valid = false;
+    } else if (!isValidMkMobile(phone)) {
+      setDetailsFieldError('phone_number', I18N.phoneInvalid);
+      firstInvalid = firstInvalid || document.getElementById('id_phone_number');
+      valid = false;
     }
     if (!smsVerificationRequired) {
       if (!email) {
@@ -1068,7 +1099,8 @@ window.BK_I18N = {
     void confirmBar.offsetHeight;
     confirmBar.style.animation = '';
     confirmBarName.textContent = priceItem.name;
-    confirmBarMeta.textContent = `${service.name}  ·  ${service.duration} ${I18N.minutes}  ·  ${priceItem.price} ${I18N.currencyDen}`;
+    const cbDur = Number(priceItem.duration) || Number(service.duration) || 0;
+    confirmBarMeta.textContent = `${service.name}  ·  ${cbDur} ${I18N.minutes}  ·  ${priceItem.price} ${I18N.currencyDen}`;
     confirmBar.style.display   = 'flex';
     document.body.classList.add('bk-step1-confirm-open');
     updateActiveStepPadding();
@@ -1169,6 +1201,7 @@ window.BK_I18N = {
         id: priceItemBtn.dataset.itemId,
         name: priceItemBtn.dataset.itemName,
         price: priceItemBtn.dataset.price,
+        duration: priceItemBtn.dataset.duration,
         photoRequired: priceItemBtn.dataset.photoRequired === 'true',
       };
       const idx = state.selections.findIndex(s => s.service.id === service.id);

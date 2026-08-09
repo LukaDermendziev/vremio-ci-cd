@@ -516,6 +516,9 @@
                             <td class="od-price-td-drag"><span class="od-drag-handle" title="{% trans "Drag to reorder" %}"><i class="bi bi-grip-vertical"></i></span></td>
                             <td colspan="2" class="od-price-td-name">
                               {{ item.name }}
+                              {% if item.duration_minutes %}
+                                <span class="od-price-dur-note"><i class="bi bi-clock"></i> {{ item.duration_minutes }} {% trans "min" %}</span>
+                              {% endif %}
                               {% if item.photo_required %}
                                 <span class="od-price-photo-note"><i class="bi bi-camera"></i> {% trans "Photo needed" %}</span>
                               {% endif %}
@@ -537,6 +540,7 @@
                                 data-item-price="{{ item.price_display|escapejs }}"
                                 data-item-group="{{ item.group|escapejs }}"
                                 data-item-sort="{{ item.sort_order }}"
+                                data-item-duration="{{ item.duration_minutes }}"
                                 data-item-photo="{{ item.photo_required|yesno:'true,false' }}">{% trans "Edit" %}</button>
                               <form method="post" style="display:inline">
                                 {% csrf_token %}

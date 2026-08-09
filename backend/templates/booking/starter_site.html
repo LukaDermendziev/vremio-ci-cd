@@ -96,6 +96,7 @@
     {% if services %}
       <div class="st-services-grid">
         {% for service in services %}
+          {% with items=service.price_items.all %}
           <article class="st-card st-service-card">
             <div class="st-service-top">
               <h3 class="st-service-name">{{ service.name }}</h3>
@@ -107,7 +108,7 @@
               <p class="st-service-desc">{{ service.description }}</p>
             {% endif %}
             <div class="st-service-meta">
-              <span><i class="bi bi-clock" aria-hidden="true"></i> {% blocktrans with minutes=service.duration_minutes %}{{ minutes }} min{% endblocktrans %}</span>
+              {% if not items %}<span><i class="bi bi-clock" aria-hidden="true"></i> {% blocktrans with minutes=service.duration_minutes %}{{ minutes }} min{% endblocktrans %}</span>{% endif %}
               {% if service.requires_photo %}
                 <span class="st-chip">{% trans "Photo required" %}</span>
               {% elif service.photo_recommended %}
@@ -117,8 +118,26 @@
             {% if service.extra_duration_note %}
               <p class="st-service-note">{{ service.extra_duration_note }}</p>
             {% endif %}
+            {% if items %}
+            <div class="st-price-list">
+              {% regroup items by group as grouped_items %}
+              {% for group_entry in grouped_items %}
+                {% if group_entry.grouper %}<p class="st-price-group">{{ group_entry.grouper }}</p>{% endif %}
+                <ul class="st-price-items">
+                  {% for item in group_entry.list %}
+                    <li class="st-price-item">
+                      <span class="st-price-item-name">{{ item.name }}</span>
+                      <span class="st-price-item-dur"><i class="bi bi-clock"></i> {% blocktrans with minutes=item.effective_duration_minutes %}{{ minutes }} min{% endblocktrans %}</span>
+                      <span class="st-price-item-price">{{ item.price_display }} {% trans "den" %}</span>
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% endfor %}
+            </div>
+            {% endif %}
             <a class="st-btn st-btn-secondary st-btn-sm" href="{% url 'booking:book_salon' salon.slug %}">{% trans "Book" %}</a>
           </article>
+          {% endwith %}
         {% endfor %}
       </div>
     {% else %}

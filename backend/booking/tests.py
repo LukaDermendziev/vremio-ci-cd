@@ -20,6 +20,7 @@ def _run_deferred_immediately(func, *args, **kwargs):
 
 from .forms import BookingPolicyForm, BookingRequestForm
 from .email_validation import suggest_email_correction, validate_email_no_common_typos
+from .phone_validation import is_valid_mk_mobile, validate_mk_mobile_number
 from .models import (
     Booking,
     BookingActivityLog,
@@ -43,6 +44,7 @@ from .services import (
     build_prepared_message,
     build_service_schedule,
     calculate_combined_duration_minutes,
+    calculate_line_items_duration_minutes,
     find_conflicting_booking,
     format_services_for_email,
     get_available_slots,
@@ -525,6 +527,46 @@ class EmailValidationTests(TestCase):
         self.assertIn("gmail.com", str(ctx.exception))
 
 
+class PhoneValidationTests(TestCase):
+    def test_accepts_national_form(self):
+        self.assertTrue(is_valid_mk_mobile("070123456"))
+        self.assertEqual(validate_mk_mobile_number("070123456"), "070123456")
+
+    def test_accepts_national_with_separators(self):
+        self.assertEqual(validate_mk_mobile_number("070 123 456"), "070123456")
+        self.assertEqual(validate_mk_mobile_number("070-123-456"), "070123456")
+
+    def test_accepts_international_forms(self):
+        self.assertEqual(validate_mk_mobile_number("+38970123456"), "070123456")
+        self.assertEqual(validate_mk_mobile_number("38970123456"), "070123456")
+        self.assertEqual(validate_mk_mobile_number("0038970123456"), "070123456")
+        self.assertEqual(validate_mk_mobile_number("+389 70 123 456"), "070123456")
+
+    def test_empty_passes_through(self):
+        self.assertEqual(validate_mk_mobile_number(""), "")
+
+    def test_rejects_too_short(self):
+        self.assertFalse(is_valid_mk_mobile("0701234"))
+        with self.assertRaises(ValidationError):
+            validate_mk_mobile_number("0701234")
+
+    def test_rejects_too_long(self):
+        with self.assertRaises(ValidationError):
+            validate_mk_mobile_number("07012345678")
+
+    def test_rejects_wrong_prefix(self):
+        # Landline-style / non-07 numbers and random digits.
+        with self.assertRaises(ValidationError):
+            validate_mk_mobile_number("021123456")
+        with self.assertRaises(ValidationError):
+            validate_mk_mobile_number("123456789")
+
+    def test_rejects_international_non_mobile(self):
+        # +389 must be followed by a mobile 7XXXXXXX.
+        with self.assertRaises(ValidationError):
+            validate_mk_mobile_number("+38921123456")
+
+
 class BookingViewTests(TestCase):
     def setUp(self):
         cache.clear()
@@ -859,6 +901,50 @@ class BookingViewTests(TestCase):
         self.assertContains(response, "gmail.com")
         self.assertFalse(Booking.objects.filter(customer__phone_number="079888777").exists())
 
+    def test_booking_request_rejects_invalid_phone(self):
+        selected_date = timezone.localdate() + timedelta(days=20)
+        if selected_date.weekday() == WorkingHours.Weekday.SUNDAY:
+            selected_date += timedelta(days=1)
+
+        service = self.salon.services.get(name="Manicure")
+        response = self.client.post(
+            "/book/fancy-fingers/request/",
+            {
+                "service": service.id,
+                "date": selected_date.isoformat(),
+                "start_time": "08:00",
+                "full_name": "Bad Phone",
+                "phone_number": "123456",
+                "email": "badphone@example.com",
+                "preferred_contact_method": Customer.PreferredContactMethod.VIBER,
+                "rules_accepted": "on",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Booking.objects.filter(customer__full_name="Bad Phone").exists())
+
+    def test_booking_request_normalizes_international_phone(self):
+        selected_date = timezone.localdate() + timedelta(days=20)
+        if selected_date.weekday() == WorkingHours.Weekday.SUNDAY:
+            selected_date += timedelta(days=1)
+
+        service = self.salon.services.get(name="Manicure")
+        response = self.client.post(
+            "/book/fancy-fingers/request/",
+            {
+                "service": service.id,
+                "date": selected_date.isoformat(),
+                "start_time": "08:00",
+                "full_name": "Intl Phone",
+                "phone_number": "+389 70 555 444",
+                "email": "intl@example.com",
+                "preferred_contact_method": Customer.PreferredContactMethod.VIBER,
+                "rules_accepted": "on",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(Booking.objects.filter(customer__phone_number="070555444").exists())
+
     def test_salon_page_shows_updated_hero(self):
         response = self.client.get("/book/fancy-fingers/")
         self.assertContains(response, _("Care, style, and an appointment that suits you."))
@@ -922,6 +1008,44 @@ class BookingViewTests(TestCase):
         booking = Booking.objects.get(customer__phone_number="072222333")
         self.assertEqual(
             booking.booking_services.first().service_name_snapshot, "Classic Manicure"
+        )
+
+    def test_booking_with_price_item_uses_its_duration(self):
+        """A sub-service duration should shorten the reserved appointment time."""
+        selected_date = timezone.localdate() + timedelta(days=20)
+        if selected_date.weekday() == WorkingHours.Weekday.SUNDAY:
+            selected_date += timedelta(days=1)
+
+        service = self.salon.services.get(name="Manicure")
+        express = ServicePriceItem.objects.create(
+            service=service,
+            name="Express Manicure",
+            price_display="500",
+            duration_minutes=45,
+            sort_order=1,
+        )
+        response = self.client.post(
+            "/book/fancy-fingers/request/",
+            {
+                "service": service.id,
+                "selected_price_item_id": express.id,
+                "date": selected_date.isoformat(),
+                "start_time": "08:00",
+                "full_name": "Express Customer",
+                "phone_number": "072777888",
+                "email": "express@example.com",
+                "preferred_contact_method": Customer.PreferredContactMethod.VIBER,
+                "rules_accepted": "on",
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        booking = Booking.objects.get(customer__phone_number="072777888")
+        self.assertEqual(booking.total_duration_minutes, 45)
+        line = booking.booking_services.first()
+        self.assertEqual(line.duration_minutes_snapshot, 45)
+        self.assertEqual(
+            (booking.end_at - booking.start_at).total_seconds() / 60, 45
         )
 
     def test_available_slots_api_returns_json(self):
@@ -2951,6 +3075,52 @@ class MultiServiceBookingTests(TestCase):
             self.salon,
         )
         self.assertEqual(total, 270)
+
+    def test_line_items_duration_uses_price_item_duration(self):
+        """A sub-service with its own duration overrides the parent service."""
+        express = ServicePriceItem.objects.create(
+            service=self.pedicure,
+            name="Express pedicure",
+            price_display="600",
+            duration_minutes=60,
+        )
+        total = calculate_line_items_duration_minutes(
+            [{"service": self.pedicure, "price_item": express}],
+            self.salon,
+        )
+        self.assertEqual(total, 60)
+
+    def test_line_items_duration_falls_back_to_service(self):
+        """A sub-service with no duration (0) inherits the parent duration."""
+        classic = ServicePriceItem.objects.create(
+            service=self.pedicure,
+            name="Classic pedicure",
+            price_display="800",
+            duration_minutes=0,
+        )
+        total = calculate_line_items_duration_minutes(
+            [{"service": self.pedicure, "price_item": classic}],
+            self.salon,
+        )
+        self.assertEqual(total, 120)
+
+    def test_line_items_duration_mixes_override_and_gap(self):
+        """Overridden sub-service + full service, plus one inter-service gap."""
+        express = ServicePriceItem.objects.create(
+            service=self.pedicure,
+            name="Express pedicure",
+            price_display="600",
+            duration_minutes=60,
+        )
+        total = calculate_line_items_duration_minutes(
+            [
+                {"service": self.pedicure, "price_item": express},
+                {"service": self.manicure, "price_item": None},
+            ],
+            self.salon,
+        )
+        # 60 (express) + 120 (manicure) + 30 (gap)
+        self.assertEqual(total, 210)
 
     def test_build_service_schedule_example(self):
         selected = self._future_date()

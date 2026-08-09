@@ -2241,6 +2241,13 @@ msgstr "Внесете го вашето име и презиме."
 msgid "Please enter your phone number."
 msgstr "Внесете го вашиот телефонски број."
 
+msgid ""
+"Enter a valid Macedonian mobile number, for example 070 123 456 or +389 70 "
+"123 456."
+msgstr ""
+"Внесете важечки македонски мобилен број, на пример 070 123 456 или +389 70 "
+"123 456."
+
 msgid "Please upload a reference photo for this service."
 msgstr "Прикачете референтна фотографија за оваа услуга."
 

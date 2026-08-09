@@ -100,7 +100,7 @@
           {% endif %}
 
           <div class="sp-service-footer">
-            <span class="sp-service-dur"><i class="bi bi-clock"></i> {% blocktrans with minutes=service.duration_minutes %}{{ minutes }} min{% endblocktrans %}</span>
+            {% if not items %}<span class="sp-service-dur"><i class="bi bi-clock"></i> {% blocktrans with minutes=service.duration_minutes %}{{ minutes }} min{% endblocktrans %}</span>{% endif %}
             {% if service.extra_duration_note %}<span class="sp-service-note">{{ service.extra_duration_note }}</span>{% endif %}
             {% if service.requires_photo %}
               <span class="sp-badge sp-badge-required">{% trans "Photo required" %}</span>
@@ -130,6 +130,7 @@
                   {% for item in group_entry.list %}
                     <li class="sp-price-item{% if item.photo_required %} sp-price-item--photo{% endif %}">
                       <span class="sp-price-item-name">{{ item.name }}</span>
+                      <span class="sp-price-item-dur"><i class="bi bi-clock"></i> {% blocktrans with minutes=item.effective_duration_minutes %}{{ minutes }} min{% endblocktrans %}</span>
                       <span class="sp-price-item-price">{{ item.price_display }} {% trans "den" %}</span>
                       {% if item.photo_required %}
                         <span class="sp-photo-note">📷 {% trans "Reference photo required" %}</span>

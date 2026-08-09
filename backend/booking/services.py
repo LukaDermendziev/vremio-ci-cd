@@ -92,6 +92,30 @@ def calculate_combined_duration_minutes(services, salon):
     return total
 
 
+def calculate_line_items_duration_minutes(line_items, salon):
+    """Total duration for a set of booking lines, honouring each selected
+    sub-service's own duration when present.
+
+    ``line_items`` is an iterable of dicts like ``{"service": Service,
+    "price_item": ServicePriceItem | None}``. When a price item has its own
+    ``duration_minutes`` it overrides the parent service duration.
+    """
+    line_items = list(line_items or [])
+    if not line_items:
+        return 0
+    total = 0
+    for line in line_items:
+        service = line.get("service")
+        price_item = line.get("price_item")
+        if price_item is not None and getattr(price_item, "duration_minutes", 0):
+            total += price_item.duration_minutes
+        elif service is not None:
+            total += service.duration_minutes
+    if len(line_items) > 1:
+        total += get_service_gap_minutes(salon) * (len(line_items) - 1)
+    return total
+
+
 def build_service_schedule(start_at, items, salon):
     gap = timedelta(minutes=get_service_gap_minutes(salon))
     current = start_at
@@ -474,6 +498,7 @@ def get_available_slots(
     *,
     for_owner=False,
     exclude_booking_id=None,
+    duration_override_minutes=None,
 ):
     if now is None:
         now = timezone.now()
@@ -505,7 +530,10 @@ def get_available_slots(
         return []
 
     working_start, working_end = working_interval
-    combined_minutes = calculate_combined_duration_minutes(services, salon)
+    if duration_override_minutes:
+        combined_minutes = duration_override_minutes
+    else:
+        combined_minutes = calculate_combined_duration_minutes(services, salon)
     service_duration = timedelta(minutes=combined_minutes)
 
     busy_intervals = get_busy_intervals_for_date(
@@ -906,6 +934,7 @@ def is_slot_available(
     *,
     for_owner=False,
     exclude_booking_id=None,
+    duration_override_minutes=None,
 ):
     slots = get_available_slots(
         salon,
@@ -913,6 +942,7 @@ def is_slot_available(
         selected_date,
         for_owner=for_owner,
         exclude_booking_id=exclude_booking_id,
+        duration_override_minutes=duration_override_minutes,
     )
     return next((slot for slot in slots if slot["value"] == start_time_value), None)
 

@@ -30,6 +30,11 @@
                  placeholder="{% trans 'e.g. 600 or +100/200' %}" required>
         </div>
         <div class="od-field">
+          <label>{% trans "Duration (min)" %} <span class="od-label-hint">({% trans "0 = use service default" %})</span></label>
+          <input type="number" name="item_duration" id="od-price-item-duration" class="od-input"
+                 value="0" min="0" step="5" placeholder="{% trans 'e.g. 60' %}">
+        </div>
+        <div class="od-field">
           <label>{% trans "Sort order" %}</label>
           <input type="number" name="item_sort" id="od-price-item-sort" class="od-input" value="0" min="0">
         </div>

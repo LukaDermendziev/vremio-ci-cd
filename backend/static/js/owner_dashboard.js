@@ -1178,6 +1178,7 @@ function initOwnerDashboard(config) {
   const priceItemName    = document.getElementById("od-price-item-name");
   const priceItemPrice   = document.getElementById("od-price-item-price");
   const priceItemSort    = document.getElementById("od-price-item-sort");
+  const priceItemDuration = document.getElementById("od-price-item-duration");
   const priceItemPhoto   = document.getElementById("od-price-item-photo");
   const priceItemSubmit  = document.getElementById("od-price-item-submit");
   const priceItemClear   = document.getElementById("od-price-item-clear");
@@ -1189,6 +1190,7 @@ function initOwnerDashboard(config) {
     if (priceItemName)  priceItemName.value = "";
     if (priceItemPrice) priceItemPrice.value = "";
     if (priceItemSort)  priceItemSort.value = "0";
+    if (priceItemDuration) priceItemDuration.value = "0";
     if (priceItemPhoto) priceItemPhoto.checked = false;
     if (priceItemSubmit) {
       priceItemSubmit.innerHTML = `<i class="bi bi-plus-lg"></i> ${t("addItem", "Add item")}`;
@@ -1230,6 +1232,7 @@ function initOwnerDashboard(config) {
       if (priceItemName)  priceItemName.value   = btn.dataset.itemName   || "";
       if (priceItemPrice) priceItemPrice.value  = btn.dataset.itemPrice  || "";
       if (priceItemSort)  priceItemSort.value   = btn.dataset.itemSort   || "0";
+      if (priceItemDuration) priceItemDuration.value = btn.dataset.itemDuration || "0";
       if (priceItemPhoto) priceItemPhoto.checked = btn.dataset.itemPhoto === "true";
       if (priceItemSubmit) priceItemSubmit.innerHTML = `<i class="bi bi-check-lg"></i> ${t("saveChanges", "Save changes")}`;
       openModal("od-price-modal");

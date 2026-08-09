@@ -2675,6 +2675,17 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
   overflow: hidden;
 }
 .sp-service-card--expandable[aria-expanded="true"] .sp-more-hint i { transform: rotate(180deg); }
+.sp-price-item-dur {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--sp-muted, #9a8a8d);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.sp-price-item-dur i { font-size: 10.5px; }
 .sp-price-item-price {
   font-weight: 700;
   color: var(--sp-rose-dark);
@@ -3579,6 +3590,22 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
   font-weight: 600;
   color: var(--bk-text);
 }
+.bk-pi-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.bk-pi-dur {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--bk-muted, #6b7280);
+  white-space: nowrap;
+}
+.bk-pi-dur i { font-size: 11px; }
 .bk-pi-price {
   font-size: 13px;
   font-weight: 600;
@@ -4515,6 +4542,16 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
   letter-spacing: .02em;
 }
 .od-price-photo-note i { font-size: 10px; }
+.od-price-dur-note {
+  display: inline-block;
+  font-size: 10.5px;
+  color: #0F766E;
+  margin-top: 3px;
+  margin-right: 8px;
+  font-weight: 600;
+  letter-spacing: .02em;
+}
+.od-price-dur-note i { font-size: 10px; }
 
 /* ── Booking policy section ──────────────────────────────────────────────── */
 .od-policy-card {
@@ -6584,6 +6621,8 @@ body.bk-step1-confirm-open .bk-toast {
   gap: 16px;
 }
 .vm-brand {
+  display: inline-flex;
+  align-items: center;
   font-size: 22px;
   font-weight: 800;
   letter-spacing: -0.03em;
@@ -6593,6 +6632,11 @@ body.bk-step1-confirm-open .bk-toast {
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+.vm-brand-logo {
+  display: block;
+  height: 32px;
+  width: auto;
 }
 .vm-nav-toggle {
   display: none;
@@ -8092,6 +8136,51 @@ fieldset.vm-lead-field {
   margin: 0;
   font-size: 12px;
   color: var(--st-text-muted);
+}
+.st-price-list {
+  margin: 4px 0 2px;
+  padding-top: 12px;
+  border-top: 1px solid var(--st-line);
+}
+.st-price-group {
+  margin: 8px 0 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--st-text-muted);
+}
+.st-price-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.st-price-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--st-line);
+  font-size: 13.5px;
+}
+.st-price-item:last-child { border-bottom: none; }
+.st-price-item-name { color: var(--st-text); flex: 1; min-width: 0; }
+.st-price-item-dur {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--st-text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.st-price-item-dur i { font-size: 10.5px; }
+.st-price-item-price {
+  font-weight: 700;
+  color: var(--st-accent);
+  white-space: nowrap;
+  font-size: 13px;
 }
 .st-service-card .st-btn { align-self: flex-start; margin-top: auto; }
 .st-placeholder {

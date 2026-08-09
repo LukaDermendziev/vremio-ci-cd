@@ -23,6 +23,7 @@ from .anti_abuse import (
     normalize_phone,
 )
 from .email_validation import validate_email_no_common_typos
+from .phone_validation import validate_mk_mobile_number
 from .image_moderation import moderate_reference_photo
 from .image_utils import FORMAT_TO_EXT, prepare_reference_photo, validate_reference_photo
 from .models import (
@@ -39,6 +40,7 @@ from .models import (
 from .services import (
     MSG_MULTI_SERVICE_NO_FIT,
     calculate_combined_duration_minutes,
+    calculate_line_items_duration_minutes,
     consume_released_slot,
     get_salon_timezone,
     is_slot_available,
@@ -230,6 +232,9 @@ class BookingRequestForm(forms.Form):
             return {}
         return {str(k): v for k, v in data.items() if v}
 
+    def clean_phone_number(self):
+        return validate_mk_mobile_number(self.cleaned_data.get("phone_number", ""))
+
     def clean(self):
         cleaned_data = super().clean()
         service_ids = self._parse_service_ids(cleaned_data)
@@ -300,7 +305,15 @@ class BookingRequestForm(forms.Form):
                 cleaned_data["_photo_format"] = image_format
 
         if services and date and start_time:
-            slot = is_slot_available(self.salon, services, date, start_time)
+            duration_override = calculate_line_items_duration_minutes(line_items, self.salon)
+            cleaned_data["_duration_minutes"] = duration_override
+            slot = is_slot_available(
+                self.salon,
+                services,
+                date,
+                start_time,
+                duration_override_minutes=duration_override,
+            )
             if not slot:
                 if len(services) > 1:
                     self.add_error("start_time", str(MSG_MULTI_SERVICE_NO_FIT))
@@ -332,9 +345,12 @@ class BookingRequestForm(forms.Form):
 
         line_items = self.cleaned_data["_line_items"]
         services = self.cleaned_data["_services"]
+        total_duration_minutes = self.cleaned_data.get(
+            "_duration_minutes"
+        ) or calculate_line_items_duration_minutes(line_items, self.salon)
         start_at = self.cleaned_data["start_at"]
         end_at = self.cleaned_data.get("end_at") or start_at + timedelta(
-            minutes=calculate_combined_duration_minutes(services, self.salon)
+            minutes=total_duration_minutes
         )
         policy = self.policy
         needs_sms_verification = bool(policy and policy.sms_verification_required)
@@ -355,7 +371,7 @@ class BookingRequestForm(forms.Form):
             status=status,
             start_at=start_at,
             end_at=end_at,
-            total_duration_minutes=calculate_combined_duration_minutes(services, self.salon),
+            total_duration_minutes=total_duration_minutes,
             source=Booking.Source.ONLINE,
             rules_accepted=self.cleaned_data["rules_accepted"],
             customer_note=self.cleaned_data.get("customer_note", ""),
@@ -394,10 +410,15 @@ class BookingRequestForm(forms.Form):
                 if price_item
                 else service.base_price
             )
+            duration_snap = (
+                price_item.duration_minutes
+                if price_item and price_item.duration_minutes
+                else service.duration_minutes
+            )
             booking.booking_services.create(
                 service=service,
                 service_name_snapshot=name_snapshot,
-                duration_minutes_snapshot=service.duration_minutes,
+                duration_minutes_snapshot=duration_snap,
                 price_snapshot=price_snap,
                 sort_order=sort_order,
             )
