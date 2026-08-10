@@ -82,9 +82,16 @@ DEFAULT_CONTENT_SECURITY_POLICY = (
     "connect-src 'self'"
 )
 
+# Disables powerful browser features we do not use (camera is allowed only if a
+# future flow needs it — keep locked down for now).
+DEFAULT_PERMISSIONS_POLICY = (
+    "accelerometer=(), autoplay=(), camera=(), display-capture=(), "
+    "geolocation=(), gyroscope=(), microphone=(), payment=(), usb=()"
+)
+
 
 class ContentSecurityPolicyMiddleware:
-    """Attach a Content-Security-Policy header when enabled in settings."""
+    """Attach CSP and related browser security headers when enabled."""
 
     def __init__(self, get_response):
         self.get_response = get_response
@@ -94,11 +101,16 @@ class ContentSecurityPolicyMiddleware:
         if not getattr(settings, "CONTENT_SECURITY_POLICY_ENABLED", False):
             return response
         # Do not override a view that already set CSP.
-        if "Content-Security-Policy" in response:
-            return response
-        policy = getattr(
-            settings, "CONTENT_SECURITY_POLICY", DEFAULT_CONTENT_SECURITY_POLICY
-        )
-        if policy:
-            response["Content-Security-Policy"] = policy
+        if "Content-Security-Policy" not in response:
+            policy = getattr(
+                settings, "CONTENT_SECURITY_POLICY", DEFAULT_CONTENT_SECURITY_POLICY
+            )
+            if policy:
+                response["Content-Security-Policy"] = policy
+        if "Permissions-Policy" not in response:
+            permissions = getattr(
+                settings, "PERMISSIONS_POLICY", DEFAULT_PERMISSIONS_POLICY
+            )
+            if permissions:
+                response["Permissions-Policy"] = permissions
         return response

@@ -97,6 +97,7 @@ Test: `python manage.py test_email --to you@example.com`
 | Content-Security-Policy | Completed | Middleware; allows fonts + jsDelivr CSS |
 | Customer IP block match | Completed | Public IPs only; private/loopback ignored |
 | Postgres SSL (prod) | Completed | `sslmode=require` when `DEBUG=False`; override via `DATABASE_SSLMODE` |
+| Referrer / Permissions-Policy | Completed | `SECURE_REFERRER_POLICY` + Permissions-Policy middleware |
 | Booking success IDOR | Completed | Session-gated success page |
 
 ---

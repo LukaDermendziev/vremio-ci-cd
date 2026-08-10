@@ -2904,12 +2904,14 @@ class ContentSecurityPolicyTests(TestCase):
         self.assertIn("frame-ancestors 'none'", policy)
         self.assertIn("https://fonts.googleapis.com", policy)
         self.assertIn("https://cdn.jsdelivr.net", policy)
+        self.assertIn("camera=()", response["Permissions-Policy"])
 
     def test_csp_header_absent_when_disabled(self):
         with override_settings(CONTENT_SECURITY_POLICY_ENABLED=False):
             response = self.client.get("/")
         self.assertEqual(response.status_code, 200)
         self.assertNotIn("Content-Security-Policy", response)
+        self.assertNotIn("Permissions-Policy", response)
 
 
 def _make_test_image(fmt="JPEG", name="test.jpg"):

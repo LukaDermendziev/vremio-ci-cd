@@ -409,6 +409,11 @@ CONTENT_SECURITY_POLICY_ENABLED = (
     os.environ.get("CONTENT_SECURITY_POLICY_ENABLED", "True") == "True"
 )
 
+# Limit referrer leakage; SecurityMiddleware emits Referrer-Policy when set.
+SECURE_REFERRER_POLICY = os.environ.get(
+    "SECURE_REFERRER_POLICY", "strict-origin-when-cross-origin"
+)
+
 # ── Production security (when DEBUG=False) ─────────────────────────────────────
 if not DEBUG:
     if os.environ.get("USE_SECURE_PROXY_SSL_HEADER", "True") == "True":
