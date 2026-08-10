@@ -197,7 +197,7 @@ def _active_future_bookings(salon, phone, email=None):
     )
 
 
-def is_customer_blocked(salon, phone, email="", instagram="", device_token=""):
+def is_customer_blocked(salon, phone, email="", instagram="", device_token="", ip=""):
     from .customer_blocking import is_customer_blocked as _is_customer_blocked
 
     return _is_customer_blocked(
@@ -206,6 +206,7 @@ def is_customer_blocked(salon, phone, email="", instagram="", device_token=""):
         email=email,
         instagram=instagram,
         device_token=device_token,
+        ip=ip,
     )
 
 
@@ -278,7 +279,7 @@ def check_public_booking_allowed(
 ):
     result = AntiAbuseResult()
 
-    if is_customer_blocked(salon, phone, email, instagram, device_token):
+    if is_customer_blocked(salon, phone, email, instagram, device_token, ip=ip):
         return AntiAbuseResult(
             ok=False,
             error_code="blocklist",

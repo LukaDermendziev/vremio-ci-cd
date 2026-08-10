@@ -1,5 +1,7 @@
 """Central customer blocking logic for owner actions and public booking checks."""
 
+import ipaddress
+
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.utils import timezone
@@ -12,6 +14,20 @@ MSG_REASON_REQUIRED = _("Please choose a reason for blocking this customer.")
 MSG_ALREADY_BLOCKED = _("This customer is already blocked.")
 MSG_NOT_BLOCKED = _("This customer is not currently blocked.")
 
+
+def is_public_client_ip(value):
+    """True for a routable public IP usable as a block signal.
+
+    Private, loopback, link-local, and unspecified addresses are ignored so
+    local/dev traffic and shared LAN addresses do not trigger IP bans.
+    """
+    raw = (value or "").strip()
+    if not raw:
+        return False
+    try:
+        return ipaddress.ip_address(raw).is_global
+    except ValueError:
+        return False
 
 def _verified_email_for_customer(customer):
     if not customer.email:
@@ -66,14 +82,17 @@ def is_customer_blocked(
     email="",
     instagram="",
     device_token="",
+    ip="",
 ):
     """Return True if any active blocklist entry matches the given identifiers."""
     phone = normalize_phone(phone)
     email = normalize_email(email)
     instagram = normalize_instagram(instagram)
     device_token = (device_token or "").strip()
+    ip = (ip or "").strip()
+    ip_usable = is_public_client_ip(ip)
 
-    if not any([phone, email, instagram, device_token]):
+    if not any([phone, email, instagram, device_token, ip_usable]):
         return False
 
     match = Q()
@@ -83,6 +102,8 @@ def is_customer_blocked(
         match |= Q(email__iexact=email)
     if device_token:
         match |= Q(device_token=device_token)
+    if ip_usable:
+        match |= Q(last_known_ip=ip)
     if match and CustomerBlocklist.objects.filter(salon=salon, is_active=True).filter(match).exists():
         return True
 

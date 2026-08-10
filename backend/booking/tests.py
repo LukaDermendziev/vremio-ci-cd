@@ -4303,6 +4303,44 @@ class CustomerBlockingTests(TestCase):
             )
         )
 
+    def test_public_ip_blocks_even_with_different_phone(self):
+        CustomerBlocklist.objects.create(
+            salon=self.salon,
+            phone_number="070000002",
+            last_known_ip="8.8.8.8",
+            reason_code=CustomerBlocklist.ReasonCode.OTHER,
+            is_active=True,
+            blocked_at=timezone.now(),
+        )
+        from .anti_abuse import is_customer_blocked
+
+        self.assertTrue(
+            is_customer_blocked(
+                self.salon,
+                phone="070222888",
+                ip="8.8.8.8",
+            )
+        )
+
+    def test_private_ip_is_not_used_for_block_matching(self):
+        CustomerBlocklist.objects.create(
+            salon=self.salon,
+            phone_number="070000003",
+            last_known_ip="192.168.1.20",
+            reason_code=CustomerBlocklist.ReasonCode.OTHER,
+            is_active=True,
+            blocked_at=timezone.now(),
+        )
+        from .anti_abuse import is_customer_blocked
+
+        self.assertFalse(
+            is_customer_blocked(
+                self.salon,
+                phone="070333777",
+                ip="192.168.1.20",
+            )
+        )
+
     def test_block_requires_reason(self):
         response = self.client.post(
             reverse("booking:owner_block_customer"),

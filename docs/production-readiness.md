@@ -95,6 +95,7 @@ Test: `python manage.py test_email --to you@example.com`
 | Rate limiting / honeypot | Completed | Requires `CACHE_URL` (Redis) for multi-worker |
 | Owner login brute-force | Completed | Cache lockout after 5 failures / 15 min |
 | Content-Security-Policy | Completed | Middleware; allows fonts + jsDelivr CSS |
+| Customer IP block match | Completed | Public IPs only; private/loopback ignored |
 | Booking success IDOR | Completed | Session-gated success page |
 
 ---
