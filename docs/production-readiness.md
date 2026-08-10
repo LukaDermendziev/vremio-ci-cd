@@ -93,8 +93,9 @@ Test: `python manage.py test_email --to you@example.com`
 | HTTPS redirect + HSTS | Completed | When `DEBUG=False` |
 | `SECURE_PROXY_SSL_HEADER` | Completed | For Railway/Render/nginx |
 | Rate limiting / honeypot | Completed | Requires `CACHE_URL` (Redis) for multi-worker |
+| Owner login brute-force | Completed | Cache lockout after 5 failures / 15 min |
+| Content-Security-Policy | Completed | Middleware; allows fonts + jsDelivr CSS |
 | Booking success IDOR | Completed | Session-gated success page |
-| Owner login brute-force | Missing (future) | Consider django-axes or reverse-proxy limits |
 
 ---
 
@@ -157,7 +158,7 @@ gunicorn config.wsgi:application --bind 0.0.0.0:$PORT
 
 | Item | Status | Notes |
 |------|--------|-------|
-| Error alerting (Sentry, etc.) | Missing | Recommended for production |
+| Error alerting (Sentry, etc.) | Optional | Set `SENTRY_DSN` to enable; off by default |
 | Uptime monitoring | Missing | Ping homepage + owner login |
 | DB connection monitoring | Needs configuration | Provider dashboards |
 
