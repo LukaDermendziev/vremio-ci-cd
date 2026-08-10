@@ -41,6 +41,7 @@ from .customer_blocking import (
     update_customer_block,
 )
 from .legal_utils import get_vremio_contact_email
+from .location_utils import salon_location_label, salon_maps_search_url
 from .email_utils import send_plan_interest_email
 from .forms import (
     BlockedDateForm,
@@ -1628,6 +1629,8 @@ def salon_page(request, salon_slug):
         if salon.uses_pro_website
         else "booking/starter_site.html"
     )
+    location_label = salon_location_label(salon)
+    maps_url = salon_maps_search_url(salon)
     return render(
         request,
         template_name,
@@ -1637,6 +1640,9 @@ def salon_page(request, salon_slug):
             "working_hours": working_hours,
             "hours_display_rows": get_salon_page_hours_rows(salon, working_hours),
             "booking_policy": policy,
+            "location_label": location_label,
+            "maps_url": maps_url,
+            "show_location": bool(maps_url),
         },
     )
 

@@ -949,6 +949,36 @@ class BookingViewTests(TestCase):
         response = self.client.get("/book/fancy-fingers/")
         self.assertContains(response, _("Care, style, and an appointment that suits you."))
 
+    def test_pro_salon_page_shows_location_maps_link(self):
+        self.salon.address = "Ul. Partizanski Odredi 1"
+        self.salon.city = "Skopje"
+        self.salon.save(update_fields=["address", "city"])
+        response = self.client.get("/book/fancy-fingers/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "google.com/maps/search")
+        self.assertContains(response, _("Find us"))
+        self.assertContains(response, "bi-geo-alt")
+
+    def test_pro_salon_page_uses_pasted_maps_url(self):
+        self.salon.address = ""
+        self.salon.city = ""
+        self.salon.maps_url = "https://maps.app.goo.gl/exampleSalonPin"
+        self.salon.save(update_fields=["address", "city", "maps_url"])
+        response = self.client.get("/book/fancy-fingers/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "https://maps.app.goo.gl/exampleSalonPin")
+        self.assertContains(response, _("Find us"))
+        self.assertContains(response, "sp-hero-social")
+
+    def test_pro_salon_page_hides_location_without_address(self):
+        self.salon.address = ""
+        self.salon.city = ""
+        self.salon.maps_url = ""
+        self.salon.save(update_fields=["address", "city", "maps_url"])
+        response = self.client.get("/book/fancy-fingers/")
+        self.assertNotContains(response, _("Find us"))
+        self.assertNotContains(response, "sp-hero-social")
+
     def test_booking_request_submission_creates_pending_booking(self):
         selected_date = timezone.localdate() + timedelta(days=20)
         if selected_date.weekday() == WorkingHours.Weekday.SUNDAY:
@@ -2912,6 +2942,12 @@ class ContentSecurityPolicyTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertNotIn("Content-Security-Policy", response)
         self.assertNotIn("Permissions-Policy", response)
+
+    def test_csp_skipped_on_admin(self):
+        with override_settings(CONTENT_SECURITY_POLICY_ENABLED=True):
+            response = self.client.get("/admin/login/")
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("Content-Security-Policy", response)
 
 
 def _make_test_image(fmt="JPEG", name="test.jpg"):

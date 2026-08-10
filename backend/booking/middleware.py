@@ -76,11 +76,12 @@ DEFAULT_CONTENT_SECURITY_POLICY = (
     "frame-ancestors 'none'; "
     "form-action 'self'; "
     "script-src 'self' 'unsafe-inline'; "
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; "
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com https://cdn.jsdelivr.net; "
     "font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; "
     "img-src 'self' data: blob:; "
-    "connect-src 'self'"
+    "connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com https://cdn.jsdelivr.net https://*.ingest.sentry.io https://*.ingest.de.sentry.io"
 )
+
 
 # Disables powerful browser features we do not use (camera is allowed only if a
 # future flow needs it — keep locked down for now).
@@ -99,6 +100,9 @@ class ContentSecurityPolicyMiddleware:
     def __call__(self, request):
         response = self.get_response(request)
         if not getattr(settings, "CONTENT_SECURITY_POLICY_ENABLED", False):
+            return response
+        # Django admin is staff-only and ships its own assets; skip CSP there.
+        if request.path.startswith("/admin/"):
             return response
         # Do not override a view that already set CSP.
         if "Content-Security-Policy" not in response:

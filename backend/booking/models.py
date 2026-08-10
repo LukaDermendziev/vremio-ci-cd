@@ -49,6 +49,15 @@ class Salon(TimeStampedModel):
     instagram_username = models.CharField(max_length=80, blank=True)
     address = models.CharField(max_length=255, blank=True)
     city = models.CharField(max_length=80, blank=True)
+    maps_url = models.URLField(
+        max_length=500,
+        blank=True,
+        help_text=_(
+            "Optional Google Maps (or other maps) link. "
+            "If set, the public Pro/Premium page uses this for Open in Maps. "
+            "Useful when you have a Maps link but not a full street address."
+        ),
+    )
     short_description = models.CharField(max_length=255, blank=True)
     business_category = models.CharField(
         max_length=20,

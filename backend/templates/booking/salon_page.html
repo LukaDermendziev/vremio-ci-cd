@@ -20,6 +20,9 @@
   <div class="sp-nav-links">
     <a href="#services">{% trans "Services" %}</a>
     <a href="#hours">{% trans "Hours" %}</a>
+    {% if show_location and maps_url %}
+    <a href="{{ maps_url }}" target="_blank" rel="noopener noreferrer"><i class="bi bi-geo-alt" aria-hidden="true"></i> {% trans "Find us" %}</a>
+    {% endif %}
   </div>
   <div class="sp-nav-right">
     {% if salon.instagram_username %}
@@ -47,11 +50,21 @@
       <a class="sp-btn-hero" href="{% url 'booking:book_salon' salon.slug %}">{% trans "Book an appointment" %}</a>
       <a class="sp-btn-hero sp-btn-hero-ghost" href="#services">{% trans "View services" %}</a>
     </div>
-    {% if salon.instagram_username %}
-    <a class="sp-hero-ig" href="https://instagram.com/{{ salon.instagram_username|cut:'@' }}" target="_blank" rel="noopener" aria-label="Instagram">
-      <i class="bi bi-instagram"></i>
-      <span>@{{ salon.instagram_username|cut:'@' }}</span>
-    </a>
+    {% if salon.instagram_username or show_location and maps_url %}
+    <div class="sp-hero-social">
+      {% if salon.instagram_username %}
+      <a class="sp-hero-ig" href="https://instagram.com/{{ salon.instagram_username|cut:'@' }}" target="_blank" rel="noopener" aria-label="Instagram">
+        <i class="bi bi-instagram"></i>
+        <span>@{{ salon.instagram_username|cut:'@' }}</span>
+      </a>
+      {% endif %}
+      {% if show_location and maps_url %}
+      <a class="sp-hero-ig sp-hero-maps" href="{{ maps_url }}" target="_blank" rel="noopener noreferrer">
+        <i class="bi bi-geo-alt" aria-hidden="true"></i>
+        <span>{% trans "Find us" %}</span>
+      </a>
+      {% endif %}
+    </div>
     {% endif %}
   </div>
 
@@ -318,6 +331,9 @@ window.SP_I18N = {
 
     {# Right — contact links #}
     <div class="sp-footer-col sp-footer-contact">
+      {% if show_location and maps_url %}
+        <a href="{{ maps_url }}" target="_blank" rel="noopener noreferrer"><i class="bi bi-geo-alt"></i> {% trans "Find us" %}</a>
+      {% endif %}
       {% if salon.phone_number %}
         <a href="tel:{{ salon.phone_number }}"><i class="bi bi-telephone"></i> {{ salon.phone_number }}</a>
       {% endif %}
@@ -334,6 +350,10 @@ window.SP_I18N = {
       <a href="#services">{% trans "Services" %}</a>
       <span class="sp-footer-dot"></span>
       <a href="#hours">{% trans "Hours" %}</a>
+      {% if show_location and maps_url %}
+      <span class="sp-footer-dot"></span>
+      <a href="{{ maps_url }}" target="_blank" rel="noopener noreferrer"><i class="bi bi-geo-alt"></i> {% trans "Find us" %}</a>
+      {% endif %}
       {% if salon.instagram_username %}
       <span class="sp-footer-dot"></span>
       <a href="https://instagram.com/{{ salon.instagram_username|cut:'@' }}" target="_blank" rel="noopener"><i class="bi bi-instagram"></i> Instagram</a>

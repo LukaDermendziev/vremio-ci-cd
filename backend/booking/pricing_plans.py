@@ -51,6 +51,7 @@ PRICING_PLANS = (
             _("Everything in Starter"),
             _("Custom domain connection"),
             _("Branded salon landing page"),
+            _("Location with Open in Maps"),
             _("DNS setup included"),
             _("Priority support"),
         ),

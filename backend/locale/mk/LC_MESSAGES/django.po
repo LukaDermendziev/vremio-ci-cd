@@ -2038,6 +2038,21 @@ msgstr "Отвори целосна големина"
 msgid "Open now"
 msgstr "Отворено сега"
 
+msgid "Open in Maps"
+msgstr "Отвори во Maps"
+
+msgid "Find us"
+msgstr "Најдете нѐ"
+
+msgid "Location"
+msgstr "Локација"
+
+msgid "Location with Open in Maps"
+msgstr "Локација со Отвори во Maps"
+
+msgid "View location on the map"
+msgstr "Погледнете ја локацијата на мапа"
+
 msgid "Opening hours"
 msgstr "Работно време"
 

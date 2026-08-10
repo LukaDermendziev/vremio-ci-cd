@@ -2182,8 +2182,12 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
   font-weight: 400;
   letter-spacing: 0.01em;
   transition: color 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 .sp-nav-links a:hover { color: rgba(255,255,255,0.9); }
+.sp-nav-links a .bi { font-size: 13px; opacity: 0.9; }
 .sp-nav-ig {
   display: inline-flex;
   align-items: center;
@@ -2334,11 +2338,17 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
 }
 .sp-hero-note i { flex-shrink: 0; margin-top: 2px; opacity: 0.85; }
 .sp-hero-actions { display: flex; gap: 14px; flex-wrap: wrap; }
-.sp-hero-ig {
+.sp-hero-social {
   display: none;
   align-items: center;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: 10px;
   margin-top: 18px;
+}
+.sp-hero-ig {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   width: fit-content;
   padding: 10px 16px;
   border-radius: 999px;
@@ -2358,7 +2368,7 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
   transform: translateY(-1px);
 }
 @media (max-width: 768px) {
-  .sp-hero-ig { display: inline-flex; }
+  .sp-hero-social { display: flex; }
 }
 .sp-btn-hero {
   display: inline-flex;

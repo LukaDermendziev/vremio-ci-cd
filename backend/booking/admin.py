@@ -75,6 +75,7 @@ class SalonAdmin(admin.ModelAdmin):
                     "instagram_username",
                     "city",
                     "address",
+                    "maps_url",
                     "timezone",
                 )
             },
