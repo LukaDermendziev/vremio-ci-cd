@@ -203,6 +203,18 @@ else:
             "PostgreSQL is required in production. Set DATABASE_URL or POSTGRES_DB."
         )
 
+# Production: prefer TLS to Postgres. Override with DATABASE_SSLMODE=prefer/disable
+# if your host's private network does not speak SSL (some Railway internal URLs).
+_db = DATABASES.get("default") or {}
+if _db.get("ENGINE") == "django.db.backends.postgresql":
+    _db_options = _db.setdefault("OPTIONS", {})
+    if "sslmode" not in _db_options:
+        _sslmode = os.environ.get("DATABASE_SSLMODE", "").strip()
+        if not _sslmode and not DEBUG:
+            _sslmode = "require"
+        if _sslmode:
+            _db_options["sslmode"] = _sslmode
+
 
 AUTH_PASSWORD_VALIDATORS = [
     {

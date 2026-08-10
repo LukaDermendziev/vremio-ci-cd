@@ -73,6 +73,7 @@ jobs:
           DJANGO_SECRET_KEY: ci-production-check-secret-key-must-be-at-least-fifty-characters-long
           DJANGO_DEBUG: "False"
           DATABASE_URL: postgres://ci:ci@localhost:5432/ci
+          DATABASE_SSLMODE: disable
           DJANGO_ALLOWED_HOSTS: www.example.com,example.com
           SITE_URL: https://www.example.com
           CUSTOMER_DOMAINS: www.example.com
