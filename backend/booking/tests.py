@@ -385,6 +385,61 @@ class HealthCheckTests(TestCase):
         self.assertEqual(response.content.decode(), "ok")
 
 
+class PageLoaderAndErrorPageTests(TestCase):
+    def setUp(self):
+        cache.clear()
+        self.user = get_user_model().objects.create_user(
+            username="loaderowner",
+            password="password",
+        )
+        self.salon = Salon.objects.create(
+            owner=self.user,
+            name="Loader Salon",
+            slug="loader-salon",
+            plan=Salon.Plan.PRO,
+        )
+        Service.objects.create(
+            salon=self.salon,
+            name="Manicure",
+            duration_minutes=120,
+            base_price=1000,
+            is_active=True,
+        )
+        BookingPolicy.objects.create(salon=self.salon, email_verification_required=False)
+
+    def test_home_includes_page_loader_markup(self):
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="vm-page-loader"')
+        self.assertContains(response, "js/page_loader.js")
+        self.assertContains(response, 'data-submit-hold-ms="900"')
+
+    def test_booking_form_includes_page_loader(self):
+        response = self.client.get(reverse("booking:book_salon", args=[self.salon.slug]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="vm-page-loader"')
+        self.assertContains(response, 'id="bk-submit"')
+
+    @override_settings(DEBUG=False)
+    def test_missing_url_uses_branded_404(self):
+        response = self.client.get("/this-page-definitely-does-not-exist-xyz/")
+        self.assertEqual(response.status_code, 404)
+        self.assertTemplateUsed(response, "404.html")
+        self.assertContains(response, "404", status_code=404)
+        self.assertContains(response, _("Page not found"), status_code=404)
+
+    def test_custom_500_handler_renders_branded_page(self):
+        from django.test import RequestFactory
+
+        from .views import custom_server_error
+
+        request = RequestFactory().get("/boom/")
+        response = custom_server_error(request)
+        self.assertEqual(response.status_code, 500)
+        self.assertContains(response, "500", status_code=500)
+        self.assertContains(response, _("Something went wrong"), status_code=500)
+
+
 class LegalComplianceTests(TestCase):
     def setUp(self):
         cache.clear()

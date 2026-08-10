@@ -8682,3 +8682,165 @@ fieldset.vm-lead-field {
   margin-bottom: 6px;
 }
 
+/* ── Full-screen page loader ──────────────────────────────────────────────── */
+html.vm-page-loader-open,
+html.vm-page-loader-open body {
+  overflow: hidden;
+}
+.vm-page-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background:
+    radial-gradient(110% 70% at 50% 0%, rgba(196, 135, 138, 0.18), transparent 58%),
+    linear-gradient(165deg, #FDF8F6 0%, #F7EEEF 48%, #FDF8F6 100%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease;
+}
+.vm-page-loader.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+.vm-page-loader[hidden] {
+  display: none !important;
+}
+.vm-page-loader-inner {
+  text-align: center;
+  color: #1a1a1a;
+  max-width: 280px;
+}
+.vm-page-loader-mark {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 18px;
+}
+.vm-page-loader-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(196, 135, 138, 0.22);
+  border-top-color: #C4878A;
+  animation: vm-page-loader-spin 0.85s linear infinite;
+}
+.vm-page-loader-dot {
+  position: absolute;
+  inset: 18px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #D4A3A6, #C4878A);
+  box-shadow: 0 6px 18px rgba(196, 135, 138, 0.28);
+}
+.vm-page-loader-msg {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: #5c5254;
+  line-height: 1.4;
+}
+@keyframes vm-page-loader-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Branded error pages (404 / 500) ──────────────────────────────────────── */
+.vm-error-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  background:
+    radial-gradient(120% 80% at 50% 0%, rgba(181, 132, 139, 0.18), transparent 55%),
+    linear-gradient(160deg, #1C1018 0%, #2A1A22 48%, #1C1018 100%);
+  color: #fff;
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+}
+.vm-error-card {
+  width: min(100%, 440px);
+  text-align: center;
+  padding: 12px 8px 0;
+}
+.vm-error-brand {
+  margin: 0 0 28px;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 1.65rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.92);
+}
+.vm-error-code {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 64px;
+  padding: 6px 14px;
+  margin-bottom: 18px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #E8C4C8;
+  background: rgba(201, 150, 156, 0.16);
+  border: 1px solid rgba(201, 150, 156, 0.28);
+}
+.vm-error-title {
+  margin: 0 0 12px;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: clamp(1.85rem, 4.5vw, 2.35rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: #fff;
+}
+.vm-error-lead {
+  margin: 0 auto 28px;
+  max-width: 34ch;
+  font-size: 15px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.72);
+}
+.vm-error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+.vm-error-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 18px;
+  border-radius: 12px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  transition: transform 0.12s ease, background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.vm-error-btn-primary {
+  color: #1C1018;
+  background: linear-gradient(145deg, #E8C4C8, #C9969C);
+  box-shadow: 0 10px 24px rgba(181, 132, 139, 0.28);
+}
+.vm-error-btn-primary:hover {
+  color: #1C1018;
+  transform: translateY(-1px);
+}
+.vm-error-btn-ghost {
+  color: rgba(255, 255, 255, 0.9);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
+.vm-error-btn-ghost:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+

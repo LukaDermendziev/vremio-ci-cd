@@ -1340,12 +1340,21 @@ window.BK_I18N = {
 
   document.getElementById('bk-rules-consent-check')?.addEventListener('change', refreshSubmit);
 
-  form?.addEventListener('submit', () => {
+  form?.addEventListener('submit', (e) => {
     const submitBtn = document.getElementById('bk-submit');
     if (!submitBtn || submitBtn.disabled) return;
+    // Hold the overlay briefly so customers always see "sending" feedback,
+    // even when the server responds almost instantly locally.
+    e.preventDefault();
     submitBtn.disabled = true;
     submitBtn.classList.add('is-loading');
     submitBtn.setAttribute('aria-busy', 'true');
+    const send = () => HTMLFormElement.prototype.submit.call(form);
+    if (window.PageLoader && typeof window.PageLoader.holdThen === 'function') {
+      window.PageLoader.holdThen(send);
+    } else {
+      send();
+    }
   });
 
   document.getElementById('bk-prev-month')?.addEventListener('click', () => {

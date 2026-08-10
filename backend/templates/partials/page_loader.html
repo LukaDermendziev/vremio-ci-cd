@@ -1,0 +1,14 @@
+{# Full-screen page transition loader. Shown by static/js/page_loader.js #}
+{% load i18n %}
+<div id="vm-page-loader" class="vm-page-loader" hidden aria-hidden="true" role="status" aria-live="polite"
+     data-default-message="{% filter escapejs %}{% trans 'Loading…' %}{% endfilter %}"
+     data-submit-message="{% filter escapejs %}{% trans 'Sending your request…' %}{% endfilter %}"
+     data-submit-hold-ms="900">
+  <div class="vm-page-loader-inner">
+    <div class="vm-page-loader-mark" aria-hidden="true">
+      <span class="vm-page-loader-ring"></span>
+      <span class="vm-page-loader-dot"></span>
+    </div>
+    <p class="vm-page-loader-msg" id="vm-page-loader-msg">{% trans "Loading…" %}</p>
+  </div>
+</div>

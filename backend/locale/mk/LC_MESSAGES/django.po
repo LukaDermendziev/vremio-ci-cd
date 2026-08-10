@@ -3915,3 +3915,30 @@ msgstr "Овој клиент нема зачувана е-пошта."
 
 msgid "Could not send the email. Please try again later."
 msgstr "Е-поштата не можеше да се испрати. Обидете се повторно подоцна."
+
+msgid "Loading…"
+msgstr "Се вчитува…"
+
+msgid "Opening booking…"
+msgstr "Се отвора закажувањето…"
+
+msgid "Sending your request…"
+msgstr "Се испраќа барањето…"
+
+msgid "Page not found"
+msgstr "Страницата не е пронајдена"
+
+msgid "Something went wrong"
+msgstr "Нешто тргна наопаку"
+
+msgid "Go to homepage"
+msgstr "На почетна"
+
+msgid "Try again"
+msgstr "Обиди се повторно"
+
+msgid "This page does not exist or the link may be outdated. You can go back home and continue from there."
+msgstr "Оваа страница не постои или линкот е застарен. Можете да се вратите на почетната и да продолжите од таму."
+
+msgid "We could not complete this request. Please try again in a moment. If the problem continues, contact the salon or try later."
+msgstr "Не можевме да го завршиме ова барање. Обидете се повторно за миг. Ако проблемот продолжи, контактирајте го салонот или обидете се подоцна."

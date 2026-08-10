@@ -14,5 +14,8 @@ urlpatterns = [
     path("", include("booking.urls")),
 ]
 
+handler404 = "booking.views.custom_page_not_found"
+handler500 = "booking.views.custom_server_error"
+
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

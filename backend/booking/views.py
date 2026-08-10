@@ -188,6 +188,16 @@ def health(request):
     return HttpResponse("ok", content_type="text/plain")
 
 
+def custom_page_not_found(request, exception):
+    """Branded 404 for missing pages / broken links."""
+    return render(request, "404.html", status=404)
+
+
+def custom_server_error(request):
+    """Branded 500 for unexpected server failures."""
+    return render(request, "500.html", status=500)
+
+
 @require_GET
 def favicon(request):
     """Serve the salon or platform .ico based on Host (browsers often hit /favicon.ico)."""
