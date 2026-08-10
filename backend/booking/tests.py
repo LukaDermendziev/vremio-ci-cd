@@ -2833,6 +2833,85 @@ class AntiAbuseTests(TestCase):
         )
 
 
+class OwnerLoginThrottleTests(TestCase):
+    def setUp(self):
+        cache.clear()
+        User = get_user_model()
+        self.user = User.objects.create_user(username="owner_login", password="correct-pass")
+        self.url = reverse("booking:owner_login")
+
+    def test_successful_login_clears_failures(self):
+        from .login_throttle import record_login_failure
+
+        record_login_failure("127.0.0.1", "owner_login")
+        response = self.client.post(
+            self.url,
+            {"username": "owner_login", "password": "correct-pass"},
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response.url.endswith("/owner/dashboard/"))
+
+    def test_locks_after_too_many_failures(self):
+        from .login_throttle import LOGIN_MAX_ATTEMPTS
+
+        for _attempt in range(LOGIN_MAX_ATTEMPTS):
+            response = self.client.post(
+                self.url,
+                {"username": "owner_login", "password": "wrong"},
+            )
+            self.assertEqual(response.status_code, 200)
+
+        response = self.client.post(
+            self.url,
+            {"username": "owner_login", "password": "correct-pass"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            _(
+                "Too many failed sign-in attempts. Please wait a few minutes and try again."
+            ),
+        )
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+    def test_device_cookie_sets_secure_when_session_secure(self):
+        salon = Salon.objects.create(
+            owner=self.user,
+            name="Cookie Salon",
+            slug="cookie-salon",
+            is_active=True,
+        )
+        BookingPolicy.objects.create(
+            salon=salon,
+            minimum_notice_days=0,
+            email_verification_required=False,
+        )
+        with override_settings(SESSION_COOKIE_SECURE=True):
+            response = self.client.get(reverse("booking:book_salon", args=[salon.slug]))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("salon_booking_device", response.cookies)
+        self.assertTrue(response.cookies["salon_booking_device"]["secure"])
+
+
+class ContentSecurityPolicyTests(TestCase):
+    def test_csp_header_present_when_enabled(self):
+        with override_settings(CONTENT_SECURITY_POLICY_ENABLED=True):
+            response = self.client.get("/")
+        self.assertEqual(response.status_code, 200)
+        policy = response.get("Content-Security-Policy", "")
+        self.assertIn("default-src 'self'", policy)
+        self.assertIn("script-src 'self' 'unsafe-inline'", policy)
+        self.assertIn("frame-ancestors 'none'", policy)
+        self.assertIn("https://fonts.googleapis.com", policy)
+        self.assertIn("https://cdn.jsdelivr.net", policy)
+
+    def test_csp_header_absent_when_disabled(self):
+        with override_settings(CONTENT_SECURITY_POLICY_ENABLED=False):
+            response = self.client.get("/")
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("Content-Security-Policy", response)
+
+
 def _make_test_image(fmt="JPEG", name="test.jpg"):
     from PIL import Image
 

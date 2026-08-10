@@ -1675,6 +1675,9 @@ msgstr "Невалиден формат на слика. Дозволени се
 msgid "Invalid username or password."
 msgstr "Невалидно корисничко име или лозинка."
 
+msgid "Too many failed sign-in attempts. Please wait a few minutes and try again."
+msgstr "Премногу неуспешни обиди за најава. Ве молиме почекајте неколку минути и обидете се повторно."
+
 msgid "Is my booking confirmed immediately?"
 msgstr "Дали терминот се потврдува веднаш?"
 

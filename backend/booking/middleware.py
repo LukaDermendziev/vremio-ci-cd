@@ -64,3 +64,41 @@ class NeverCacheOwnerMiddleware:
             response["Pragma"] = "no-cache"
             response["Expires"] = "0"
         return response
+
+
+# Baseline CSP for the current stack (same-origin assets + Google Fonts + jsDelivr
+# CSS/icons). 'unsafe-inline' is required while templates still use inline <script>
+# and style="" attributes; tighten later with nonces if needed.
+DEFAULT_CONTENT_SECURITY_POLICY = (
+    "default-src 'self'; "
+    "base-uri 'self'; "
+    "object-src 'none'; "
+    "frame-ancestors 'none'; "
+    "form-action 'self'; "
+    "script-src 'self' 'unsafe-inline'; "
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; "
+    "font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; "
+    "img-src 'self' data: blob:; "
+    "connect-src 'self'"
+)
+
+
+class ContentSecurityPolicyMiddleware:
+    """Attach a Content-Security-Policy header when enabled in settings."""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        if not getattr(settings, "CONTENT_SECURITY_POLICY_ENABLED", False):
+            return response
+        # Do not override a view that already set CSP.
+        if "Content-Security-Policy" in response:
+            return response
+        policy = getattr(
+            settings, "CONTENT_SECURITY_POLICY", DEFAULT_CONTENT_SECURITY_POLICY
+        )
+        if policy:
+            response["Content-Security-Policy"] = policy
+        return response

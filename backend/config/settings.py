@@ -133,6 +133,7 @@ MIDDLEWARE = [
     "booking.middleware.CustomerDomainMiddleware",
     "booking.middleware.DefaultMacedonianLocaleMiddleware",
     "booking.middleware.NeverCacheOwnerMiddleware",
+    "booking.middleware.ContentSecurityPolicyMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -384,6 +385,17 @@ LOGGING = {
         },
     },
 }
+
+# ── Cookie defaults (safe in both DEBUG and production) ───────────────────────
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_HTTPONLY = False  # must stay readable by JS for AJAX CSRF headers
+CSRF_COOKIE_SAMESITE = "Lax"
+
+# CSP is on by default; disable with CONTENT_SECURITY_POLICY_ENABLED=False if needed.
+CONTENT_SECURITY_POLICY_ENABLED = (
+    os.environ.get("CONTENT_SECURITY_POLICY_ENABLED", "True") == "True"
+)
 
 # ── Production security (when DEBUG=False) ─────────────────────────────────────
 if not DEBUG:

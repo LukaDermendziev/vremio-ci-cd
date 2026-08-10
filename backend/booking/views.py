@@ -26,6 +26,12 @@ from .anti_abuse import (
     get_device_token,
     record_booking_attempt,
 )
+from .login_throttle import (
+    MSG_LOGIN_LOCKED,
+    clear_login_failures,
+    is_login_locked,
+    record_login_failure,
+)
 from .customer_blocking import (
     block_customer as block_customer_service,
     get_active_block_entry,
@@ -539,11 +545,20 @@ def owner_login(request):
     if request.method == "POST":
         username = request.POST.get("username", "").strip()
         password = request.POST.get("password", "")
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
-            auth_login(request, user)
-            return redirect("booking:owner_dashboard")
-        error = _("Invalid username or password.")
+        ip = get_client_ip(request)
+        if is_login_locked(ip, username):
+            error = str(MSG_LOGIN_LOCKED)
+        else:
+            user = authenticate(request, username=username, password=password)
+            if user is not None:
+                clear_login_failures(ip, username)
+                auth_login(request, user)
+                return redirect("booking:owner_dashboard")
+            record_login_failure(ip, username)
+            if is_login_locked(ip, username):
+                error = str(MSG_LOGIN_LOCKED)
+            else:
+                error = _("Invalid username or password.")
 
     return render(
         request,
@@ -1634,6 +1649,8 @@ def _ensure_booking_device_cookie(response, request):
             max_age=DEVICE_COOKIE_MAX_AGE,
             httponly=True,
             samesite="Lax",
+            secure=bool(getattr(settings, "SESSION_COOKIE_SECURE", False))
+            or request.is_secure(),
         )
     return response
 
