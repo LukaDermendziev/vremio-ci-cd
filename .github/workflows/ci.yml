@@ -32,6 +32,11 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Audit Python dependencies
+        run: |
+          pip install pip-audit
+          pip-audit -r requirements.txt
+
       - name: Django system check
         env:
           DJANGO_SECRET_KEY: ci-test-secret-key-not-for-production
