@@ -3571,6 +3571,19 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
 }
 .bk-price-item-btn:hover  { background: var(--bk-accent-bg); border-color: rgba(196,135,138,0.3); }
 .bk-price-item-btn:active { transform: scale(0.97); background: var(--bk-accent-bg); }
+.bk-price-item-btn:disabled,
+.bk-price-item-btn:disabled:hover,
+.bk-price-item-btn:disabled:active,
+.bk-price-item-btn:disabled.selected {
+  opacity: 0.42;
+  cursor: not-allowed;
+  transform: none;
+  background: none;
+  border-color: transparent;
+  box-shadow: none;
+  pointer-events: none;
+  -webkit-tap-highlight-color: transparent;
+}
 .bk-price-item-btn.selected {
   background: var(--bk-accent-bg);
   border-color: var(--bk-accent);
@@ -3621,8 +3634,14 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
   line-height: 1.4;
 }
 .bk-price-item-addon:disabled {
-  opacity: 0.55;
+  opacity: 0.42;
   cursor: not-allowed;
+}
+.bk-svc-addons.is-locked {
+  opacity: 0.72;
+}
+.bk-svc-addons.is-locked .bk-price-item-addon {
+  pointer-events: none;
 }
 .od-price-addon-badge {
   display: inline-block;

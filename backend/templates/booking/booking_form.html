@@ -1270,12 +1270,17 @@ window.BK_I18N = {
     const addonBtns = panel.querySelectorAll('.bk-price-item-addon');
     if (!addonBtns.length) {
       panel.hidden = true;
+      panel.classList.remove('is-locked');
       return;
     }
     panel.hidden = false;
     const hasBase = !!(selection && selection.priceItem);
+    panel.classList.toggle('is-locked', !hasBase);
+    panel.setAttribute('aria-disabled', hasBase ? 'false' : 'true');
     addonBtns.forEach(btn => {
       btn.disabled = !hasBase;
+      btn.setAttribute('aria-disabled', hasBase ? 'false' : 'true');
+      if (!hasBase) btn.classList.remove('selected');
       const selected = hasBase && (selection.addons || []).some(a => String(a.id) === String(btn.dataset.itemId));
       btn.classList.toggle('selected', selected);
     });
@@ -1330,7 +1335,9 @@ window.BK_I18N = {
     // ── Price item selected (expandable card) ──
     const priceItemBtn = e.target.closest('.bk-price-item-btn');
     if (priceItemBtn) {
-      if (priceItemBtn.disabled) return;
+      if (priceItemBtn.disabled || priceItemBtn.getAttribute('aria-disabled') === 'true') return;
+      const addonsPanel = priceItemBtn.closest('[data-addons-panel]');
+      if (addonsPanel && addonsPanel.classList.contains('is-locked')) return;
       const card = priceItemBtn.closest('.bk-svc-card');
       const service = serviceFromRow(card);
       const item = priceItemFromBtn(priceItemBtn);
