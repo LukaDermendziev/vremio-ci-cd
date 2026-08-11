@@ -50,7 +50,12 @@
         const card = form.closest(".bk-manage-card");
         if (card) {
           card.innerHTML =
-            '<div class="bk-manage-success-icon"><i class="bi bi-check-circle-fill"></i></div>' +
+            '<div class="bk-manage-success-icon" aria-hidden="true">' +
+              '<svg class="bk-check-svg bk-manage-check-svg" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+                '<circle class="bk-check-circle bk-manage-check-circle" cx="30" cy="30" r="26" stroke-width="2.5" stroke-linecap="round"/>' +
+                '<polyline class="bk-check-mark bk-manage-check-mark" points="16,31 25,40 44,20" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>' +
+              "</svg>" +
+            "</div>" +
             `<h1 class="bk-manage-title">${I18N.cancelledTitle || "Appointment cancelled."}</h1>` +
             `<p class="bk-manage-lead">${I18N.cancelledLead || "Thank you for letting us know. The salon has been notified."}</p>`;
           card.classList.add("bk-manage-success-card");

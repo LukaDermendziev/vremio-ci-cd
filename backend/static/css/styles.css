@@ -6435,7 +6435,46 @@ body.bk-step1-confirm-open .bk-toast {
   border: 1px solid var(--bk-line);
 }
 .bk-manage-success-card { text-align: center; }
-.bk-manage-success-icon { font-size: 48px; color: #059669; margin-bottom: 12px; }
+.bk-manage-success-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 4px auto 16px;
+}
+.bk-manage-check-svg {
+  width: 72px;
+  height: 72px;
+  overflow: visible;
+  animation: bk-manage-check-glow 1.25s ease-out 0.75s both;
+}
+.bk-manage-check-circle,
+.bk-manage-check-mark {
+  stroke: #059669;
+}
+@keyframes bk-manage-check-glow {
+  0% {
+    filter: drop-shadow(0 0 0 rgba(5, 150, 105, 0));
+    transform: scale(1);
+  }
+  45% {
+    filter: drop-shadow(0 0 22px rgba(5, 150, 105, 0.75))
+            drop-shadow(0 0 10px rgba(16, 185, 129, 0.55));
+    transform: scale(1.04);
+  }
+  100% {
+    filter: drop-shadow(0 0 12px rgba(5, 150, 105, 0.4))
+            drop-shadow(0 0 4px rgba(16, 185, 129, 0.3));
+    transform: scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bk-manage-check-svg { animation: none; filter: none; }
+  .bk-manage-check-circle,
+  .bk-manage-check-mark {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}
 .bk-manage-header {
   display: flex;
   align-items: center;
