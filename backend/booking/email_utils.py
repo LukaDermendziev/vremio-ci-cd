@@ -4,6 +4,7 @@ import logging
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils.html import escape
 from django.utils import timezone
 from django.utils import translation
@@ -115,6 +116,7 @@ def _booking_email_context(booking):
         format_services_for_email,
         format_services_label,
         get_manage_booking_url,
+        google_calendar_url,
     )
 
     local_start = timezone.localtime(booking.start_at)
@@ -127,6 +129,8 @@ def _booking_email_context(booking):
     )
     services_text = format_services_for_email(booking)
     site_url = getattr(settings, "SITE_URL", "").rstrip("/")
+    ics_path = reverse("booking:manage_booking_ics", args=[booking.manage_token])
+    calendar_ics_url = f"{site_url}{ics_path}" if site_url else ics_path
     return {
         "booking": booking,
         "customer": customer,
@@ -145,6 +149,8 @@ def _booking_email_context(booking):
         "end_time": local_end.strftime("%H:%M"),
         "dashboard_url": f"{site_url}/owner/dashboard/" if site_url else "/owner/dashboard/",
         "manage_url": get_manage_booking_url(booking),
+        "google_calendar_url": google_calendar_url(booking),
+        "calendar_ics_url": calendar_ics_url,
     }
 
 
@@ -156,7 +162,42 @@ def _render_email_parts(subject_template, body_template, context):
     return subject, body
 
 
-def _send_email(*, subject, body, to_email, reply_to=None):
+def _approved_email_html(body, context):
+    """
+    Same approved email as plaintext, but the two calendar labels are clickable
+    links (no raw URL shown under them). Keeps original wording/translations.
+    """
+    language = getattr(settings, "LANGUAGE_CODE", "mk")
+    with translation.override(language):
+        google_label = _("Add to Google Calendar")
+        apple_label = _("Apple / Samsung / other")
+
+    google_url = context.get("google_calendar_url") or ""
+    ics_url = context.get("calendar_ics_url") or ""
+    html = escape(body).replace("\n", "<br>\n")
+
+    if google_url and google_label in body:
+        html = html.replace(
+            escape(google_label),
+            (
+                f'<a href="{escape(google_url)}" '
+                f'style="text-decoration: underline;">{escape(google_label)}</a>'
+            ),
+            1,
+        )
+    if ics_url and apple_label in body:
+        html = html.replace(
+            escape(apple_label),
+            (
+                f'<a href="{escape(ics_url)}" '
+                f'style="text-decoration: underline;">{escape(apple_label)}</a>'
+            ),
+            1,
+        )
+    return f"<html><body>{html}</body></html>"
+
+
+def _send_email(*, subject, body, to_email, reply_to=None, html_body=None):
     if not to_email:
         return False, "no_email"
     from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@salonscheduler.app")
@@ -168,8 +209,10 @@ def _send_email(*, subject, body, to_email, reply_to=None):
             to=[to_email],
             reply_to=reply_to or [],
         )
-        html_body = escape(body).replace("\n", "<br>\n")
-        message.attach_alternative(f"<html><body>{html_body}</body></html>", "text/html")
+        if not html_body:
+            escaped = escape(body).replace("\n", "<br>\n")
+            html_body = f"<html><body>{escaped}</body></html>"
+        message.attach_alternative(html_body, "text/html")
         message.send(fail_silently=False)
         logger.info("Email sent to %s — subject: %s", to_email, subject)
         return True, "sent"
@@ -193,11 +236,15 @@ def send_customer_booking_email(booking, action):
 
     context = _booking_email_context(booking)
     subject, body = _render_email_parts(templates[0], templates[1], context)
+    html_body = None
+    if action == "approved":
+        html_body = _approved_email_html(body, context)
     return _send_email(
         subject=subject,
         body=body,
         to_email=email,
         reply_to=get_owner_reply_to(booking.salon),
+        html_body=html_body,
     )
 
 

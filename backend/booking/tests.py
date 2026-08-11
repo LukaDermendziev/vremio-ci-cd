@@ -1,5 +1,6 @@
 from datetime import datetime, time, timedelta
 import io
+import json
 from unittest.mock import patch
 
 from django.core.exceptions import ValidationError
@@ -2324,6 +2325,28 @@ class BetaReadinessTests(TestCase):
         self.assertIn("customer@example.com", mail.outbox[0].to)
         self.assertIn(_("Your appointment is confirmed"), mail.outbox[0].subject)
         self.assertTrue(mail.outbox[0].reply_to)
+        body = mail.outbox[0].body
+        self.assertIn(_("You can view or cancel your appointment here:"), body)
+        self.assertIn(_("Add to Google Calendar"), body)
+        self.assertIn(_("Apple / Samsung / other"), body)
+        # Plain text keeps labels only; clickable hrefs live in the HTML part.
+        self.assertNotIn("calendar.google.com/calendar/render", body)
+        html_part = mail.outbox[0].alternatives[0][0]
+        google_label = _("Add to Google Calendar")
+        apple_label = _("Apple / Samsung / other")
+        self.assertIn("calendar.google.com/calendar/render", html_part)
+        self.assertIn(
+            reverse("booking:manage_booking_ics", args=[self.booking_a.manage_token]),
+            html_part,
+        )
+        self.assertIn('text-decoration: underline', html_part)
+        self.assertIn(f">{google_label}</a>", html_part)
+        self.assertIn(f">{apple_label}</a>", html_part)
+        self.assertLess(html_part.find(google_label), html_part.find(apple_label))
+        self.assertLess(
+            body.find(_("You can view or cancel your appointment here:")),
+            body.find(google_label),
+        )
 
     @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
     def test_reject_sends_customer_email_when_email_exists(self):
@@ -2454,6 +2477,43 @@ class BetaReadinessTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, self.customer_a.full_name)
         self.assertContains(response, _("Your appointment"))
+
+    def test_manage_page_shows_calendar_only_when_approved(self):
+        self.booking_a.status = Booking.Status.PENDING
+        self.booking_a.save(update_fields=["status"])
+        pending = self.client.get(
+            reverse("booking:manage_booking", args=[self.booking_a.manage_token])
+        )
+        self.assertNotContains(pending, _("Add to calendar"))
+
+        self.booking_a.status = Booking.Status.APPROVED
+        self.booking_a.save(update_fields=["status"])
+        approved = self.client.get(
+            reverse("booking:manage_booking", args=[self.booking_a.manage_token])
+        )
+        self.assertContains(approved, _("Add to calendar"))
+        self.assertContains(approved, "calendar.google.com/calendar/render")
+        self.assertContains(
+            approved,
+            reverse("booking:manage_booking_ics", args=[self.booking_a.manage_token]),
+        )
+
+    def test_manage_ics_only_for_approved(self):
+        self.booking_a.status = Booking.Status.PENDING
+        self.booking_a.save(update_fields=["status"])
+        pending = self.client.get(
+            reverse("booking:manage_booking_ics", args=[self.booking_a.manage_token])
+        )
+        self.assertEqual(pending.status_code, 404)
+
+        self.booking_a.status = Booking.Status.APPROVED
+        self.booking_a.save(update_fields=["status"])
+        approved = self.client.get(
+            reverse("booking:manage_booking_ics", args=[self.booking_a.manage_token])
+        )
+        self.assertEqual(approved.status_code, 200)
+        self.assertIn("text/calendar", approved["Content-Type"])
+        self.assertIn(b"BEGIN:VEVENT", approved.content)
 
     @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
     def test_customer_can_cancel_pending_booking(self):
@@ -3293,6 +3353,92 @@ class MultiServiceBookingTests(TestCase):
         )
         # 60 (express) + 120 (manicure) + 30 (gap)
         self.assertEqual(total, 210)
+
+    def test_line_items_duration_base_plus_addons_no_inner_gap(self):
+        base = ServicePriceItem.objects.create(
+            service=self.manicure,
+            name="Gel polish",
+            price_display="600",
+            duration_minutes=120,
+            is_addon=False,
+        )
+        art = ServicePriceItem.objects.create(
+            service=self.manicure,
+            name="French",
+            price_display="+100",
+            duration_minutes=20,
+            is_addon=True,
+        )
+        total = calculate_line_items_duration_minutes(
+            [{"service": self.manicure, "price_item": base, "addons": [art]}],
+            self.salon,
+        )
+        self.assertEqual(total, 140)
+
+    def test_addon_duration_zero_does_not_use_parent_service(self):
+        base = ServicePriceItem.objects.create(
+            service=self.manicure,
+            name="Gel polish",
+            price_display="600",
+            duration_minutes=120,
+        )
+        art = ServicePriceItem.objects.create(
+            service=self.manicure,
+            name="Simple art",
+            price_display="100",
+            duration_minutes=0,
+            is_addon=True,
+        )
+        total = calculate_line_items_duration_minutes(
+            [{"service": self.manicure, "price_item": base, "addons": [art]}],
+            self.salon,
+        )
+        self.assertEqual(total, 120)
+
+    def test_booking_form_accepts_base_and_addon_map(self):
+        base = ServicePriceItem.objects.create(
+            service=self.manicure,
+            name="Gel polish",
+            price_display="600",
+            duration_minutes=90,
+        )
+        art = ServicePriceItem.objects.create(
+            service=self.manicure,
+            name="French",
+            price_display="+100",
+            duration_minutes=15,
+            is_addon=True,
+        )
+        selected = self._future_date()
+        from django.test import RequestFactory
+
+        request = RequestFactory().post("/book/")
+        form = BookingRequestForm(
+            data={
+                "service_ids": str(self.manicure.id),
+                "service_price_items": json.dumps(
+                    {str(self.manicure.id): {"base": base.id, "addons": [art.id]}}
+                ),
+                "date": selected.isoformat(),
+                "start_time": "08:00",
+                "full_name": "Ana Test",
+                "phone_number": "070123456",
+                "email": "ana@example.com",
+                "preferred_contact_method": Customer.PreferredContactMethod.PHONE,
+                "rules_accepted": True,
+            },
+            salon=self.salon,
+            request=request,
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+        booking = form.save()
+        names = list(
+            booking.booking_services.order_by("sort_order").values_list(
+                "service_name_snapshot", flat=True
+            )
+        )
+        self.assertEqual(names, ["Gel polish", "French"])
+        self.assertEqual(booking.total_duration_minutes, 105)
 
     def test_build_service_schedule_example(self):
         selected = self._future_date()

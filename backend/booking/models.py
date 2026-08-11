@@ -187,13 +187,26 @@ class ServicePriceItem(models.Model):
         default=False,
         help_text="Customer must upload a reference photo when booking this specific sub-service.",
     )
+    is_addon = models.BooleanField(
+        default=False,
+        help_text=(
+            "Optional extra on top of a main (base) sub-service. "
+            "Leave off for normal standalone choices."
+        ),
+    )
 
     @property
     def effective_duration_minutes(self):
         """Duration to actually schedule: the sub-service's own duration if set,
-        otherwise fall back to the parent service's duration."""
+        otherwise fall back to the parent service's duration.
+
+        For add-ons, ``0`` means no extra time (do not fall back to the full
+        parent service duration).
+        """
         if self.duration_minutes:
             return self.duration_minutes
+        if self.is_addon:
+            return 0
         return self.service.duration_minutes
 
     class Meta:

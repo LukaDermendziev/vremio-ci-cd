@@ -65,7 +65,9 @@ def serialize_service(service):
                 "price_display": item.price_display,
                 "group": item.group or "",
                 "sort_order": item.sort_order,
+                "duration_minutes": item.duration_minutes,
                 "photo_required": item.photo_required,
+                "is_addon": item.is_addon,
             }
             for item in items
         ],
@@ -93,7 +95,9 @@ def serialize_price_item(item):
         "price_display": item.price_display,
         "group": item.group or "",
         "sort_order": item.sort_order,
+        "duration_minutes": item.duration_minutes,
         "photo_required": item.photo_required,
+        "is_addon": item.is_addon,
     }
 
 

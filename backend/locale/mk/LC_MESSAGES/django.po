@@ -1675,8 +1675,11 @@ msgstr "Невалиден формат на слика. Дозволени се
 msgid "Invalid username or password."
 msgstr "Невалидно корисничко име или лозинка."
 
-msgid "Too many failed sign-in attempts. Please wait a few minutes and try again."
-msgstr "Премногу неуспешни обиди за најава. Ве молиме почекајте неколку минути и обидете се повторно."
+msgid ""
+"Too many failed sign-in attempts. Please wait a few minutes and try again."
+msgstr ""
+"Премногу неуспешни обиди за најава. Ве молиме почекајте неколку минути и "
+"обидете се повторно."
 
 msgid "Is my booking confirmed immediately?"
 msgstr "Дали терминот се потврдува веднаш?"
@@ -3290,7 +3293,7 @@ msgid "View & Book"
 msgstr "Погледни и резервирај"
 
 msgid "View / manage booking"
-msgstr "Преглед / управување со термин"
+msgstr "Погледни / управувај со терминот"
 
 msgid "View all"
 msgstr "Види ги сите"
@@ -3937,8 +3940,66 @@ msgstr "На почетна"
 msgid "Try again"
 msgstr "Обиди се повторно"
 
-msgid "This page does not exist or the link may be outdated. You can go back home and continue from there."
-msgstr "Оваа страница не постои или линкот е застарен. Можете да се вратите на почетната и да продолжите од таму."
+msgid ""
+"This page does not exist or the link may be outdated. You can go back home "
+"and continue from there."
+msgstr ""
+"Оваа страница не постои или линкот е застарен. Можете да се вратите на "
+"почетната и да продолжите од таму."
 
-msgid "We could not complete this request. Please try again in a moment. If the problem continues, contact the salon or try later."
-msgstr "Не можевме да го завршиме ова барање. Обидете се повторно за миг. Ако проблемот продолжи, контактирајте го салонот или обидете се подоцна."
+msgid ""
+"We could not complete this request. Please try again in a moment. If the "
+"problem continues, contact the salon or try later."
+msgstr ""
+"Не можевме да го завршиме ова барање. Обидете се повторно за миг. Ако "
+"проблемот продолжи, контактирајте го салонот или обидете се подоцна."
+
+msgid "Optional extras"
+msgstr "Опционални додатоци"
+
+msgid "Choose a main service above, then add extras if you want."
+msgstr ""
+"Изберете главна услуга погоре, потоа доколку сакате додадете додатоци."
+
+msgid "Add-on (optional extra)"
+msgstr "Додаток (опционално)"
+
+msgid ""
+"Shown after the customer picks a main service. Leave off for normal "
+"standalone options."
+msgstr ""
+"Се прикажува откако клиентот ќе избере главна услуга. Оставете исклучено за "
+"обични самостојни опции."
+
+msgid "Add-on"
+msgstr "Додаток"
+
+msgid "Please choose a main service option."
+msgstr "Ве молиме изберете главна услуга."
+
+msgid "Choose a main service before adding extras."
+msgstr "Изберете главна услуга пред да додадете додатоци."
+
+msgid "Add to calendar"
+msgstr "Додај во календар"
+
+msgid "Save this confirmed appointment to your phone calendar."
+msgstr "Зачувајте го потврдениот термин во календарот на телефонот."
+
+msgid "Google Calendar"
+msgstr "Google Calendar"
+
+msgid "Apple / Samsung / other"
+msgstr "Apple / Samsung / друго"
+
+msgid "Add to Google Calendar:"
+msgstr "Додај во Google Calendar:"
+
+msgid "Apple / Samsung / other calendar:"
+msgstr "Apple / Samsung / друг календар:"
+
+msgid "Add to Google Calendar"
+msgstr "Додај во Google Calendar"
+
+msgid "Cancelling your booking…"
+msgstr "Се откажува терминот…"

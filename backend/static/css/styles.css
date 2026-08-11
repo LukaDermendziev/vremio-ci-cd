@@ -3597,6 +3597,43 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
   color: #fff;
   transform: scale(1.05);
 }
+.bk-svc-addons {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--bk-line);
+}
+.bk-svc-addons[hidden] {
+  display: none !important;
+}
+.bk-svc-addons:not(:has(.bk-price-item-addon)) {
+  display: none !important;
+}
+.bk-svc-addons-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--bk-text);
+  margin-bottom: 4px;
+}
+.bk-svc-addons-hint {
+  margin: 0 0 10px;
+  font-size: 12px;
+  color: var(--bk-muted);
+  line-height: 1.4;
+}
+.bk-price-item-addon:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.od-price-addon-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #7a4a4e;
+  background: #f5eceb;
+}
 .bk-pi-info {
   display: flex;
   flex-direction: column;
@@ -6454,6 +6491,59 @@ body.bk-step1-confirm-open .bk-toast {
 .bk-manage-rules ul { margin: 8px 0 0; padding-left: 18px; }
 .bk-manage-rules li { margin-bottom: 6px; }
 .bk-manage-cancel-section { margin-bottom: 20px; }
+.bk-manage-calendar {
+  margin-bottom: 20px;
+  padding: 14px 14px 16px;
+  border-radius: 14px;
+  background: rgba(196, 135, 138, 0.08);
+  border: 1px solid rgba(196, 135, 138, 0.18);
+}
+.bk-manage-calendar-hint {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: var(--bk-muted);
+  line-height: 1.45;
+}
+.bk-manage-calendar-actions {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  align-items: stretch;
+}
+.bk-cal-link {
+  flex: 1 1 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 36px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  color: var(--bk-text);
+  background: #fff;
+  border: 1px solid var(--bk-line);
+}
+.bk-cal-link i {
+  font-size: 13px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.bk-cal-link span {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bk-cal-link-primary {
+  color: #fff;
+  background: var(--bk-accent);
+  border-color: var(--bk-accent);
+}
 .bk-manage-cancel-hint { font-size: 14px; color: var(--bk-muted); margin: 0 0 12px; }
 .bk-manage-cancel-warn,
 .bk-manage-cancel-info {

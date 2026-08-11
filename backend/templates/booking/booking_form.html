@@ -117,15 +117,17 @@
             {% regroup items by group as grouped_items %}
             {% for group_entry in grouped_items %}
               {% if group_entry.grouper %}
-              <div class="bk-svc-group-label">{{ group_entry.grouper }}</div>
+              <div class="bk-svc-group-label bk-svc-group-label-bases">{{ group_entry.grouper }}</div>
               {% endif %}
               {% for item in group_entry.list %}
+                {% if not item.is_addon %}
               <button type="button" class="bk-price-item-btn"
                       data-item-id="{{ item.id }}"
                       data-item-name="{{ item.name }}"
                       data-price="{{ item.price_display }}"
                       data-duration="{{ item.effective_duration_minutes }}"
-                      data-photo-required="{{ item.photo_required|yesno:'true,false' }}">
+                      data-photo-required="{{ item.photo_required|yesno:'true,false' }}"
+                      data-is-addon="false">
                 <span class="bk-pi-check" aria-hidden="true"><i class="bi bi-check-lg"></i></span>
                 <div class="bk-pi-info">
                   <span class="bk-pi-name">{{ item.name }}</span>
@@ -136,8 +138,38 @@
                 </div>
                 <span class="bk-pi-price">{{ item.price_display }} {% trans "den" %}</span>
               </button>
+                {% endif %}
               {% endfor %}
             {% endfor %}
+
+            <div class="bk-svc-addons" data-addons-panel hidden>
+              <div class="bk-svc-addons-label">{% trans "Optional extras" %}</div>
+              <p class="bk-svc-addons-hint">{% trans "Choose a main service above, then add extras if you want." %}</p>
+              {% for item in items %}
+                {% if item.is_addon %}
+              <button type="button" class="bk-price-item-btn bk-price-item-addon"
+                      data-item-id="{{ item.id }}"
+                      data-item-name="{{ item.name }}"
+                      data-price="{{ item.price_display }}"
+                      data-duration="{{ item.effective_duration_minutes }}"
+                      data-photo-required="{{ item.photo_required|yesno:'true,false' }}"
+                      data-is-addon="true"
+                      disabled>
+                <span class="bk-pi-check" aria-hidden="true"><i class="bi bi-check-lg"></i></span>
+                <div class="bk-pi-info">
+                  <span class="bk-pi-name">{{ item.name }}</span>
+                  <span class="bk-pi-meta">
+                    {% if item.duration_minutes %}
+                    <span class="bk-pi-dur"><i class="bi bi-clock"></i> +{% blocktrans with minutes=item.duration_minutes %}{{ minutes }} min{% endblocktrans %}</span>
+                    {% endif %}
+                    {% if item.photo_required %}<span class="bk-photo-badge required">{% trans "Photo required" %}</span>{% endif %}
+                  </span>
+                </div>
+                <span class="bk-pi-price">{{ item.price_display }} {% trans "den" %}</span>
+              </button>
+                {% endif %}
+              {% endfor %}
+            </div>
           </div>
         </div>
       </div>
@@ -519,8 +551,21 @@ window.BK_I18N = {
   }
 
   function selDuration(s) {
-    const itemDur = s && s.priceItem ? Number(s.priceItem.duration) : 0;
-    return itemDur || Number(s.service.duration) || 0;
+    const baseDur = s && s.priceItem ? Number(s.priceItem.duration) : 0;
+    const serviceDur = Number(s.service.duration) || 0;
+    let total = baseDur || serviceDur;
+    (s.addons || []).forEach(a => {
+      total += Number(a.duration) || 0;
+    });
+    return total;
+  }
+
+  function selectionLabel(s) {
+    const parts = [];
+    if (s.priceItem) parts.push(s.priceItem.name);
+    else parts.push(s.service.name);
+    (s.addons || []).forEach(a => parts.push(a.name));
+    return parts.join(' + ');
   }
 
   function totalDurationMinutes() {
@@ -530,9 +575,16 @@ window.BK_I18N = {
   }
 
   function selectionPrices() {
-    return state.selections
-      .map(s => String(s.priceItem ? s.priceItem.price : s.service.price || '').trim())
-      .filter(Boolean);
+    const prices = [];
+    state.selections.forEach(s => {
+      const base = String(s.priceItem ? s.priceItem.price : s.service.price || '').trim();
+      if (base) prices.push(base);
+      (s.addons || []).forEach(a => {
+        const p = String(a.price || '').trim();
+        if (p) prices.push(p);
+      });
+    });
+    return prices;
   }
 
   function isSummablePrice(price) {
@@ -569,7 +621,7 @@ window.BK_I18N = {
   }
 
   function displayName() {
-    return state.selections.map(s => s.priceItem ? s.priceItem.name : s.service.name).join(' + ');
+    return state.selections.map(selectionLabel).join(' + ');
   }
 
   function displayPrice() { return totalPriceDisplay(); }
@@ -579,7 +631,13 @@ window.BK_I18N = {
     if (svcIdsInput) svcIdsInput.value = ids.join(',');
     if (svcInput) svcInput.value = ids.length === 1 ? ids[0] : '';
     const map = {};
-    state.selections.forEach(s => { if (s.priceItem) map[s.service.id] = s.priceItem.id; });
+    state.selections.forEach(s => {
+      if (!s.priceItem && !(s.addons || []).length) return;
+      map[s.service.id] = {
+        base: s.priceItem ? Number(s.priceItem.id) : null,
+        addons: (s.addons || []).map(a => Number(a.id)),
+      };
+    });
     if (priceItemsInput) priceItemsInput.value = JSON.stringify(map);
     if (priceItemInput) {
       priceItemInput.value = (state.selections.length === 1 && state.selections[0].priceItem)
@@ -595,8 +653,11 @@ window.BK_I18N = {
     if (!n) { multiSummary.style.display = 'none'; return; }
     multiSummary.style.display = 'block';
     multiSummary.innerHTML = state.selections.map(s => {
-      const label = s.priceItem ? s.priceItem.name : s.service.name;
-      const price = s.priceItem ? s.priceItem.price : s.service.price;
+      const label = selectionLabel(s);
+      const priceBits = [];
+      if (s.priceItem?.price) priceBits.push(s.priceItem.price);
+      (s.addons || []).forEach(a => { if (a.price) priceBits.push(a.price); });
+      const price = priceBits.join(' + ');
       return `<div class="bk-multi-line"><strong>${label}</strong> · ${selDuration(s)} ${I18N.minutes}${price ? ' · ' + price + ' ' + I18N.currencyDen : ''}</div>`;
     }).join('') + `<div class="bk-multi-total">${I18N.totalLabel}: ${totalDurationMinutes()} ${I18N.minutes}${displayPrice() ? ' · ' + displayPrice() + ' ' + I18N.currencyDen : ''}</div>`;
     updatePhotoHintForSelections();
@@ -607,6 +668,7 @@ window.BK_I18N = {
     let recommended = false;
     state.selections.forEach(s => {
       if (s.priceItem?.photoRequired || s.service.requiresPhoto) required = true;
+      if ((s.addons || []).some(a => a.photoRequired)) required = true;
       if (s.service.photoRecommended) recommended = true;
     });
     updatePhotoHint(required, recommended);
@@ -619,7 +681,7 @@ window.BK_I18N = {
       state.selections.splice(idx, 1);
       row.classList.remove('selected');
     } else {
-      state.selections.push({ service: serviceFromRow(row), priceItem: null });
+      state.selections.push({ service: serviceFromRow(row), priceItem: null, addons: [] });
       row.classList.add('selected');
     }
     refreshStep1UI();
@@ -690,7 +752,13 @@ window.BK_I18N = {
     if (!state.selections.length || !fullDatesUrl) return;
     const ids = state.selections.map(s => s.service.id).join(',');
     const priceItemsMap = {};
-    state.selections.forEach(s => { if (s.priceItem) priceItemsMap[s.service.id] = s.priceItem.id; });
+    state.selections.forEach(s => {
+      if (!s.priceItem && !(s.addons || []).length) return;
+      priceItemsMap[s.service.id] = {
+        base: s.priceItem ? Number(s.priceItem.id) : null,
+        addons: (s.addons || []).map(a => Number(a.id)),
+      };
+    });
     let url = `${fullDatesUrl}?services=${encodeURIComponent(ids)}`;
     if (Object.keys(priceItemsMap).length) {
       url += `&price_items=${encodeURIComponent(JSON.stringify(priceItemsMap))}`;
@@ -768,7 +836,13 @@ window.BK_I18N = {
     slotsGrid.innerHTML = `<span class="bk-slots-hint bk-slots-loading"><i class="bi bi-arrow-repeat"></i> ${I18N.loading}</span>`;
     const ids = state.selections.map(s => s.service.id).join(',');
     const priceItemsMap = {};
-    state.selections.forEach(s => { if (s.priceItem) priceItemsMap[s.service.id] = s.priceItem.id; });
+    state.selections.forEach(s => {
+      if (!s.priceItem && !(s.addons || []).length) return;
+      priceItemsMap[s.service.id] = {
+        base: s.priceItem ? Number(s.priceItem.id) : null,
+        addons: (s.addons || []).map(a => Number(a.id)),
+      };
+    });
     let url = `${slotsUrl}?services=${encodeURIComponent(ids)}&date=${encodeURIComponent(state.date)}`;
     if (Object.keys(priceItemsMap).length) {
       url += `&price_items=${encodeURIComponent(JSON.stringify(priceItemsMap))}`;
@@ -862,7 +936,7 @@ window.BK_I18N = {
       document.getElementById('bk-sum-svc').textContent   = displayName();
       document.getElementById('bk-sum-meta').textContent  = `${formatDateDisplay(state.date)}  ·  ${state.slot.label}`;
       document.getElementById('bk-sum-svc').innerHTML = state.selections.map(s => {
-        const n = s.priceItem ? s.priceItem.name : s.service.name;
+        const n = selectionLabel(s);
         return `<div>${n} · ${selDuration(s)} ${I18N.minutes}</div>`;
       }).join('');
       document.getElementById('bk-sum-price').textContent = displayPrice() ? `${I18N.totalLabel}: ${displayPrice()} ${I18N.currencyDen}` : '';
@@ -1043,7 +1117,11 @@ window.BK_I18N = {
   }
 
   function photoRequiredForBooking() {
-    return state.selections.some(s => s.priceItem?.photoRequired || s.service.requiresPhoto);
+    return state.selections.some(s =>
+      s.priceItem?.photoRequired
+      || s.service.requiresPhoto
+      || (s.addons || []).some(a => a.photoRequired)
+    );
   }
 
   function validateDetailsStep({ focusFirst = true } = {}) {
@@ -1178,20 +1256,40 @@ window.BK_I18N = {
     document.querySelectorAll('.bk-svc-card').forEach(closeCard);
   }
 
-  // ── Update "Selected: X" summary in one card; clears all others ──────────
-  function setCardSummary(activeCard, name) {
-    document.querySelectorAll('.bk-svc-card').forEach(c => {
-      const nameEl = c.querySelector('.bk-svc-selected-name');
-      if (c === activeCard) {
-        if (nameEl) nameEl.textContent = name || '';
-        if (name) c.classList.add('has-selection');
-        else      c.classList.remove('has-selection');
-      } else {
-        // Clear every other card's summary
-        if (nameEl) nameEl.textContent = '';
-        c.classList.remove('has-selection');
-      }
+  // ── Update "Selected: X" summary on this card only ───────────────────────
+  function setCardSummary(card, name) {
+    const nameEl = card.querySelector('.bk-svc-selected-name');
+    if (nameEl) nameEl.textContent = name || '';
+    if (name) card.classList.add('has-selection');
+    else card.classList.remove('has-selection');
+  }
+
+  function syncAddonsPanel(card, selection) {
+    const panel = card.querySelector('[data-addons-panel]');
+    if (!panel) return;
+    const addonBtns = panel.querySelectorAll('.bk-price-item-addon');
+    if (!addonBtns.length) {
+      panel.hidden = true;
+      return;
+    }
+    panel.hidden = false;
+    const hasBase = !!(selection && selection.priceItem);
+    addonBtns.forEach(btn => {
+      btn.disabled = !hasBase;
+      const selected = hasBase && (selection.addons || []).some(a => String(a.id) === String(btn.dataset.itemId));
+      btn.classList.toggle('selected', selected);
     });
+  }
+
+  function priceItemFromBtn(btn) {
+    return {
+      id: btn.dataset.itemId,
+      name: btn.dataset.itemName,
+      price: btn.dataset.price,
+      duration: btn.dataset.duration,
+      photoRequired: btn.dataset.photoRequired === 'true',
+      isAddon: btn.dataset.isAddon === 'true',
+    };
   }
 
   step1NextBtn?.addEventListener('click', async () => {
@@ -1232,28 +1330,40 @@ window.BK_I18N = {
     // ── Price item selected (expandable card) ──
     const priceItemBtn = e.target.closest('.bk-price-item-btn');
     if (priceItemBtn) {
+      if (priceItemBtn.disabled) return;
       const card = priceItemBtn.closest('.bk-svc-card');
-
       const service = serviceFromRow(card);
-      const priceItem = {
-        id: priceItemBtn.dataset.itemId,
-        name: priceItemBtn.dataset.itemName,
-        price: priceItemBtn.dataset.price,
-        duration: priceItemBtn.dataset.duration,
-        photoRequired: priceItemBtn.dataset.photoRequired === 'true',
-      };
-      const idx = state.selections.findIndex(s => s.service.id === service.id);
-      if (idx >= 0 && state.selections[idx].priceItem?.id === priceItem.id) {
+      const item = priceItemFromBtn(priceItemBtn);
+      const isAddon = item.isAddon;
+      let idx = state.selections.findIndex(s => s.service.id === service.id);
+
+      if (isAddon) {
+        if (idx < 0 || !state.selections[idx].priceItem) return;
+        const sel = state.selections[idx];
+        sel.addons = sel.addons || [];
+        const aIdx = sel.addons.findIndex(a => String(a.id) === String(item.id));
+        if (aIdx >= 0) sel.addons.splice(aIdx, 1);
+        else sel.addons.push(item);
+        setCardSummary(card, selectionLabel(sel));
+        syncAddonsPanel(card, sel);
+        refreshStep1UI();
+        return;
+      }
+
+      // Base / main option (exclusive within this service)
+      if (idx >= 0 && state.selections[idx].priceItem?.id === item.id) {
         state.selections.splice(idx, 1);
-        priceItemBtn.classList.remove('selected');
-        card.classList.remove('has-selection');
+        card.querySelectorAll('.bk-price-item-btn:not(.bk-price-item-addon)').forEach(b => b.classList.remove('selected'));
+        setCardSummary(card, '');
+        syncAddonsPanel(card, null);
       } else {
-        if (idx >= 0) state.selections[idx] = { service, priceItem };
-        else state.selections.push({ service, priceItem });
-        card.querySelectorAll('.bk-price-item-btn').forEach(b => b.classList.remove('selected'));
+        const next = { service, priceItem: item, addons: [] };
+        if (idx >= 0) state.selections[idx] = next;
+        else state.selections.push(next);
+        card.querySelectorAll('.bk-price-item-btn:not(.bk-price-item-addon)').forEach(b => b.classList.remove('selected'));
         priceItemBtn.classList.add('selected');
-        card.classList.add('has-selection');
-        setCardSummary(card, priceItem.name);
+        setCardSummary(card, selectionLabel(next));
+        syncAddonsPanel(card, next);
       }
       refreshStep1UI();
       return;
@@ -1366,6 +1476,10 @@ window.BK_I18N = {
     if (state.calMonth === 11) { state.calMonth = 0; state.calYear++; }
     else state.calMonth++;
     renderCalendar();
+  });
+
+  document.querySelectorAll('.bk-svc-card').forEach(card => {
+    syncAddonsPanel(card, null);
   });
 
   goTo(1);

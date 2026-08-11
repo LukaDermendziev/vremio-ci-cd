@@ -44,6 +44,7 @@ from .services import (
     consume_released_slot,
     get_salon_timezone,
     is_slot_available,
+    normalize_price_item_selection,
     parse_fixed_start_times_text,
     release_timeslot,
     resolve_services_for_salon,
@@ -230,7 +231,7 @@ class BookingRequestForm(forms.Form):
             return {}
         if not isinstance(data, dict):
             return {}
-        return {str(k): v for k, v in data.items() if v}
+        return {str(k): v for k, v in data.items() if v not in (None, "", {}, [])}
 
     def clean_phone_number(self):
         return validate_mk_mobile_number(self.cleaned_data.get("phone_number", ""))
@@ -273,20 +274,67 @@ class BookingRequestForm(forms.Form):
             return cleaned_data
 
         cleaned_data["_services"] = services
+        all_item_ids = []
+        selections = []
+        for service in services:
+            base_id, addon_ids = normalize_price_item_selection(
+                price_items_map.get(str(service.pk))
+            )
+            selections.append((service, base_id, addon_ids))
+            if base_id:
+                all_item_ids.append(base_id)
+            all_item_ids.extend(addon_ids)
+
+        items_by_id = {
+            item.id: item
+            for item in ServicePriceItem.objects.filter(
+                id__in=all_item_ids, service__salon=self.salon
+            ).select_related("service")
+        } if all_item_ids else {}
+
         line_items = []
         photo_required = False
-        for service in services:
+        for service, base_id, addon_ids in selections:
             price_item = None
-            price_item_id = price_items_map.get(str(service.pk))
-            if price_item_id:
-                try:
-                    price_item = ServicePriceItem.objects.get(pk=int(price_item_id), service=service)
-                except (ServicePriceItem.DoesNotExist, TypeError, ValueError):
+            if base_id:
+                price_item = items_by_id.get(base_id)
+                if (
+                    price_item is None
+                    or price_item.service_id != service.id
+                    or price_item.is_addon
+                ):
                     self.add_error(None, _("Choose a valid service for this salon."))
                     return cleaned_data
+            elif service.price_items.filter(is_addon=False).exists():
+                self.add_error(None, _("Please choose a main service option."))
+                return cleaned_data
+
+            addons = []
+            for addon_id in addon_ids:
+                addon = items_by_id.get(addon_id)
+                if (
+                    addon is None
+                    or addon.service_id != service.id
+                    or not addon.is_addon
+                ):
+                    self.add_error(None, _("Choose a valid service for this salon."))
+                    return cleaned_data
+                addons.append(addon)
+
+            if addons and price_item is None:
+                self.add_error(
+                    None,
+                    _("Choose a main service before adding extras."),
+                )
+                return cleaned_data
+
             if service.requires_photo or (price_item and price_item.photo_required):
                 photo_required = True
-            line_items.append({"service": service, "price_item": price_item})
+            if any(addon.photo_required for addon in addons):
+                photo_required = True
+            line_items.append(
+                {"service": service, "price_item": price_item, "addons": addons}
+            )
         cleaned_data["_line_items"] = line_items
 
         photo = cleaned_data.get("reference_photo")
@@ -401,27 +449,43 @@ class BookingRequestForm(forms.Form):
             booking.reference_photo_status = Booking.ReferencePhotoStatus.UNREVIEWED
 
         booking.save()
-        for sort_order, line in enumerate(line_items):
+        sort_order = 0
+        for line in line_items:
             service = line["service"]
             price_item = line["price_item"]
-            name_snapshot = price_item.name if price_item else service.name
-            price_snap = (
-                _price_from_display(price_item.price_display, service.base_price)
-                if price_item
-                else service.base_price
-            )
-            duration_snap = (
-                price_item.duration_minutes
-                if price_item and price_item.duration_minutes
-                else service.duration_minutes
-            )
-            booking.booking_services.create(
-                service=service,
-                service_name_snapshot=name_snapshot,
-                duration_minutes_snapshot=duration_snap,
-                price_snapshot=price_snap,
-                sort_order=sort_order,
-            )
+            addons = line.get("addons") or []
+            rows = []
+            if price_item:
+                rows.append(price_item)
+            elif not addons:
+                rows.append(None)
+            rows.extend(addons)
+            for row_item in rows:
+                if row_item is None:
+                    name_snapshot = service.name
+                    price_snap = service.base_price
+                    duration_snap = service.duration_minutes
+                else:
+                    name_snapshot = row_item.name
+                    price_snap = _price_from_display(
+                        row_item.price_display, service.base_price
+                    )
+                    if row_item.is_addon:
+                        duration_snap = row_item.duration_minutes or 0
+                    else:
+                        duration_snap = (
+                            row_item.duration_minutes
+                            if row_item.duration_minutes
+                            else service.duration_minutes
+                        )
+                booking.booking_services.create(
+                    service=service,
+                    service_name_snapshot=name_snapshot,
+                    duration_minutes_snapshot=duration_snap,
+                    price_snapshot=price_snap,
+                    sort_order=sort_order,
+                )
+                sort_order += 1
 
         if not needs_verification:
             consume_released_slot(self.salon, start_at, end_at)

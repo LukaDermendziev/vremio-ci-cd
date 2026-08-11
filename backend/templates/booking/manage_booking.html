@@ -81,6 +81,23 @@
       {% endif %}
     </div>
 
+    {% if show_add_to_calendar %}
+    <div class="bk-manage-calendar">
+      <div class="bk-ss-label">{% trans "Add to calendar" %}</div>
+      <p class="bk-manage-calendar-hint">{% trans "Save this confirmed appointment to your phone calendar." %}</p>
+      <div class="bk-manage-calendar-actions">
+        <a class="bk-cal-link bk-cal-link-primary" href="{{ google_calendar_url }}" target="_blank" rel="noopener noreferrer">
+          <i class="bi bi-google" aria-hidden="true"></i>
+          <span>{% trans "Google Calendar" %}</span>
+        </a>
+        <a class="bk-cal-link" href="{% url 'booking:manage_booking_ics' booking.manage_token %}">
+          <i class="bi bi-apple" aria-hidden="true"></i>
+          <span>{% trans "Apple / Samsung / other" %}</span>
+        </a>
+      </div>
+    </div>
+    {% endif %}
+
     {% if salon_rules %}
     <div class="bk-manage-rules">
       <div class="bk-ss-label">{% trans "Salon rules" %}</div>
@@ -136,6 +153,7 @@ window.MANAGE_I18N = {
   cancelledLead: "{% filter escapejs %}{% trans 'Thank you for letting us know. The salon has been notified.' %}{% endfilter %}",
   cancelError: "{% filter escapejs %}{% trans 'Could not cancel appointment.' %}{% endfilter %}",
   genericError: "{% filter escapejs %}{% trans 'Something went wrong.' %}{% endfilter %}",
+  cancelling: "{% filter escapejs %}{% trans 'Cancelling your booking…' %}{% endfilter %}",
 };
 </script>
 <script src="{% static 'js/manage_booking.js' %}" defer></script>

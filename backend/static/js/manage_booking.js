@@ -6,7 +6,16 @@
   const form = document.getElementById("bk-manage-cancel-form");
   if (!form) return;
 
-  form.addEventListener("submit", async function (event) {
+  function cancelMessage() {
+    const root = document.getElementById("vm-page-loader");
+    return (
+      (root && root.dataset.cancelMessage) ||
+      I18N.cancelling ||
+      "Cancelling your booking…"
+    );
+  }
+
+  form.addEventListener("submit", function (event) {
     event.preventDefault();
     const btn = document.getElementById("bk-manage-cancel-btn");
     const csrf = form.querySelector("[name=csrfmiddlewaretoken]")?.value;
@@ -14,42 +23,55 @@
       btn.disabled = true;
       btn.setAttribute("aria-busy", "true");
     }
-    try {
-      const resp = await fetch(form.action, {
-        method: "POST",
-        headers: {
-          "X-CSRFToken": csrf,
-          "X-Requested-With": "fetch",
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams(new FormData(form)),
-      });
-      let data = {};
+
+    // Same intentional hold as booking "Send request": show overlay first,
+    // then run the cancel after the minimum hold so it is always visible.
+    const cancel = async function () {
       try {
-        data = await resp.json();
-      } catch (_) {
-        throw new Error("Invalid response");
+        const resp = await fetch(form.action, {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": csrf,
+            "X-Requested-With": "fetch",
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: new URLSearchParams(new FormData(form)),
+        });
+        let data = {};
+        try {
+          data = await resp.json();
+        } catch (_) {
+          throw new Error("Invalid response");
+        }
+        if (!resp.ok || !data.ok) {
+          throw new Error(data.error || I18N.cancelError || "Could not cancel appointment.");
+        }
+        if (window.PageLoader) window.PageLoader.hide();
+        const card = form.closest(".bk-manage-card");
+        if (card) {
+          card.innerHTML =
+            '<div class="bk-manage-success-icon"><i class="bi bi-check-circle-fill"></i></div>' +
+            `<h1 class="bk-manage-title">${I18N.cancelledTitle || "Appointment cancelled."}</h1>` +
+            `<p class="bk-manage-lead">${I18N.cancelledLead || "Thank you for letting us know. The salon has been notified."}</p>`;
+          card.classList.add("bk-manage-success-card");
+        }
+      } catch (err) {
+        if (window.PageLoader) window.PageLoader.hide();
+        const alertBox = document.createElement("div");
+        alertBox.className = "bk-manage-alert bk-manage-alert-error";
+        alertBox.textContent = err.message || I18N.genericError || "Something went wrong.";
+        form.parentElement?.insertBefore(alertBox, form);
+        if (btn) {
+          btn.disabled = false;
+          btn.removeAttribute("aria-busy");
+        }
       }
-      if (!resp.ok || !data.ok) {
-        throw new Error(data.error || I18N.cancelError || "Could not cancel appointment.");
-      }
-      const card = form.closest(".bk-manage-card");
-      if (card) {
-        card.innerHTML =
-          '<div class="bk-manage-success-icon"><i class="bi bi-check-circle-fill"></i></div>' +
-          `<h1 class="bk-manage-title">${I18N.cancelledTitle || "Appointment cancelled."}</h1>` +
-          `<p class="bk-manage-lead">${I18N.cancelledLead || "Thank you for letting us know. The salon has been notified."}</p>`;
-        card.classList.add("bk-manage-success-card");
-      }
-    } catch (err) {
-      const alertBox = document.createElement("div");
-      alertBox.className = "bk-manage-alert bk-manage-alert-error";
-      alertBox.textContent = err.message || I18N.genericError || "Something went wrong.";
-      form.parentElement?.insertBefore(alertBox, form);
-      if (btn) {
-        btn.disabled = false;
-        btn.removeAttribute("aria-busy");
-      }
+    };
+
+    if (window.PageLoader && typeof window.PageLoader.holdThen === "function") {
+      window.PageLoader.holdThen(cancel, cancelMessage());
+    } else {
+      cancel();
     }
   });
 })();

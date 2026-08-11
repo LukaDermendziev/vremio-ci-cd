@@ -56,6 +56,11 @@ urlpatterns = [
         name="booking_success_legacy",
     ),
     path("booking/manage/<uuid:token>/", views.manage_booking, name="manage_booking"),
+    path(
+        "booking/manage/<uuid:token>/calendar.ics",
+        views.manage_booking_ics,
+        name="manage_booking_ics",
+    ),
     path("booking/manage/<uuid:token>/cancel/", views.manage_booking_cancel, name="manage_booking_cancel"),
 
     # ── Owner dashboard ─────────────────────────────────────────────────────────

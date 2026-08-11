@@ -82,6 +82,52 @@ def get_service_gap_minutes(salon):
     return get_policy_value(salon, "service_gap_minutes", 30)
 
 
+def normalize_price_item_selection(value):
+    """Normalize one service's price-item selection.
+
+    Accepts legacy ``price_item_id`` or ``{"base": id, "addons": [ids]}``.
+    Returns ``(base_id_or_None, [addon_ids])``.
+    """
+    if value is None or value == "":
+        return None, []
+    if isinstance(value, dict):
+        base_raw = value.get("base", value.get("price_item"))
+        addons_raw = value.get("addons") or []
+        try:
+            base_id = int(base_raw) if base_raw not in (None, "") else None
+        except (TypeError, ValueError):
+            base_id = None
+        addon_ids = []
+        if isinstance(addons_raw, (list, tuple)):
+            for raw in addons_raw:
+                try:
+                    addon_ids.append(int(raw))
+                except (TypeError, ValueError):
+                    continue
+        return base_id, addon_ids
+    try:
+        return int(value), []
+    except (TypeError, ValueError):
+        return None, []
+
+
+def line_item_duration_minutes(line):
+    """Duration for one service selection (base + add-ons, no inter-service gap)."""
+    service = line.get("service")
+    price_item = line.get("price_item")
+    addons = line.get("addons") or []
+    if price_item is not None and getattr(price_item, "duration_minutes", 0):
+        total = price_item.duration_minutes
+    elif service is not None:
+        total = service.duration_minutes
+    else:
+        total = 0
+    for addon in addons:
+        # Add-ons never fall back to the full parent service duration.
+        total += getattr(addon, "duration_minutes", 0) or 0
+    return total
+
+
 def calculate_combined_duration_minutes(services, salon):
     services = normalize_services(services)
     if not services:
@@ -93,24 +139,18 @@ def calculate_combined_duration_minutes(services, salon):
 
 
 def calculate_line_items_duration_minutes(line_items, salon):
-    """Total duration for a set of booking lines, honouring each selected
-    sub-service's own duration when present.
+    """Total duration for booking lines, honouring sub-service durations and add-ons.
 
-    ``line_items`` is an iterable of dicts like ``{"service": Service,
-    "price_item": ServicePriceItem | None}``. When a price item has its own
-    ``duration_minutes`` it overrides the parent service duration.
+    ``line_items`` is an iterable of dicts like
+    ``{"service": Service, "price_item": ServicePriceItem | None, "addons": [...]}``.
+
+    Gap minutes apply between different service lines only — not between a base
+    and its add-ons (those are one visit block).
     """
     line_items = list(line_items or [])
     if not line_items:
         return 0
-    total = 0
-    for line in line_items:
-        service = line.get("service")
-        price_item = line.get("price_item")
-        if price_item is not None and getattr(price_item, "duration_minutes", 0):
-            total += price_item.duration_minutes
-        elif service is not None:
-            total += service.duration_minutes
+    total = sum(line_item_duration_minutes(line) for line in line_items)
     if len(line_items) > 1:
         total += get_service_gap_minutes(salon) * (len(line_items) - 1)
     return total
@@ -120,6 +160,7 @@ def build_service_schedule(start_at, items, salon):
     gap = timedelta(minutes=get_service_gap_minutes(salon))
     current = start_at
     schedule = []
+    items = list(items)
     for index, item in enumerate(items):
         duration = getattr(item, "duration_minutes_snapshot", None)
         if duration is None:
@@ -140,7 +181,13 @@ def build_service_schedule(start_at, items, salon):
         )
         current = end
         if index < len(items) - 1:
-            current += gap
+            next_item = items[index + 1]
+            same_service = getattr(item, "service_id", None) is not None and (
+                getattr(item, "service_id", None) == getattr(next_item, "service_id", None)
+            )
+            # No gap between a base and its add-ons (same parent service).
+            if not same_service:
+                current += gap
     return schedule
 
 
@@ -1127,6 +1174,112 @@ def get_manage_booking_url(booking):
     path = reverse("booking:manage_booking", args=[booking.manage_token])
     site_url = getattr(settings, "SITE_URL", "").rstrip("/")
     return f"{site_url}{path}" if site_url else path
+
+
+def _ics_escape(text):
+    """Escape text for iCalendar property values."""
+    return (
+        str(text or "")
+        .replace("\\", "\\\\")
+        .replace(";", "\\;")
+        .replace(",", "\\,")
+        .replace("\r\n", "\\n")
+        .replace("\n", "\\n")
+    )
+
+
+def booking_services_label(booking):
+    names = [item.service_name_snapshot for item in booking.booking_services.all()]
+    return ", ".join(names) if names else booking.salon.name
+
+
+def build_booking_ics(booking, *, for_customer=True):
+    """Return (filename, ics_body) for a booking calendar event."""
+    salon = booking.salon
+    local_start = timezone.localtime(booking.start_at)
+    local_end = timezone.localtime(booking.end_at)
+    services = booking_services_label(booking)
+    uid = f"booking-{booking.manage_token}@vremio"
+    now_stamp = timezone.now().strftime("%Y%m%dT%H%M%SZ")
+
+    def fmt(dt):
+        return dt.strftime("%Y%m%dT%H%M%S")
+
+    if for_customer:
+        summary = f"{salon.name} — {services}"
+        description_parts = [
+            f"Salon: {salon.name}",
+            f"Services: {services}",
+            f"Manage: {get_manage_booking_url(booking)}",
+        ]
+    else:
+        summary = f"{booking.customer.full_name} — {services}"
+        description_parts = [
+            f"Phone: {booking.customer.phone_number or '—'}",
+            f"Instagram: {booking.customer.instagram_username or '—'}",
+            f"Status: {booking.get_status_display()}",
+        ]
+
+    location = salon.name
+    if getattr(salon, "address", None):
+        city = getattr(salon, "city", "") or ""
+        location = ", ".join(p for p in [salon.address, city, salon.name] if p)
+
+    ics_lines = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "PRODID:-//Vremio//EN",
+        "CALSCALE:GREGORIAN",
+        "METHOD:PUBLISH",
+        "BEGIN:VEVENT",
+        f"UID:{uid}",
+        f"DTSTAMP:{now_stamp}",
+        f"DTSTART:{fmt(local_start)}",
+        f"DTEND:{fmt(local_end)}",
+        f"SUMMARY:{_ics_escape(summary)}",
+        f"DESCRIPTION:{_ics_escape(chr(10).join(description_parts))}",
+        f"LOCATION:{_ics_escape(location)}",
+        "END:VEVENT",
+        "END:VCALENDAR",
+    ]
+    body = "\r\n".join(ics_lines) + "\r\n"
+    filename = f"vremio-{local_start.strftime('%Y%m%d-%H%M')}.ics"
+    return filename, body
+
+
+def google_calendar_url(booking):
+    """One-click Google Calendar template URL with the booking pre-filled."""
+    from urllib.parse import urlencode
+
+    salon = booking.salon
+    local_start = timezone.localtime(booking.start_at)
+    local_end = timezone.localtime(booking.end_at)
+    services = booking_services_label(booking)
+
+    def fmt(dt):
+        return dt.strftime("%Y%m%dT%H%M%S")
+
+    dates = f"{fmt(local_start)}/{fmt(local_end)}"
+    details = "\n".join(
+        [
+            f"{salon.name}",
+            f"{services}",
+            get_manage_booking_url(booking),
+        ]
+    )
+    location = salon.name
+    if getattr(salon, "address", None):
+        city = getattr(salon, "city", "") or ""
+        location = ", ".join(p for p in [salon.address, city] if p) or salon.name
+
+    params = {
+        "action": "TEMPLATE",
+        "text": f"{salon.name} — {services}",
+        "dates": dates,
+        "details": details,
+        "location": location,
+    }
+    return f"https://calendar.google.com/calendar/render?{urlencode(params)}"
 
 
 def can_customer_cancel_booking(booking, now=None):

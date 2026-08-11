@@ -88,6 +88,8 @@ from .services import (
     get_booking_total_price_display,
     get_calendar_history_cutoff_date,
     get_manage_booking_url,
+    google_calendar_url,
+    build_booking_ics,
     get_revenue_stats,
     get_salon_local_today,
     get_salon_page_hours_rows,
@@ -120,11 +122,14 @@ def _services_from_request(request, salon):
 
 def _duration_override_from_request(request, salon, services):
     """Compute the total appointment duration honouring any selected sub-service
-    durations. Returns None when nothing overrides the default service duration.
+    durations and add-ons. Returns None when nothing overrides the default.
 
     Reads an optional ``price_items`` GET param: a JSON map of
-    ``{service_id: price_item_id}``.
+    ``{service_id: price_item_id}`` or
+    ``{service_id: {"base": id, "addons": [ids]}}``.
     """
+    from .services import normalize_price_item_selection
+
     raw = request.GET.get("price_items")
     if not raw:
         return None
@@ -135,34 +140,39 @@ def _duration_override_from_request(request, salon, services):
     if not isinstance(items_map, dict) or not items_map:
         return None
 
-    item_ids = []
-    for value in items_map.values():
-        try:
-            item_ids.append(int(value))
-        except (TypeError, ValueError):
-            continue
-    if not item_ids:
+    all_ids = []
+    selections = []
+    for service in services:
+        base_id, addon_ids = normalize_price_item_selection(
+            items_map.get(str(service.id))
+        )
+        selections.append((service, base_id, addon_ids))
+        if base_id:
+            all_ids.append(base_id)
+        all_ids.extend(addon_ids)
+    if not all_ids:
         return None
 
     items_by_id = {
         item.id: item
         for item in ServicePriceItem.objects.filter(
-            id__in=item_ids, service__salon=salon
+            id__in=all_ids, service__salon=salon
         )
     }
 
     line_items = []
-    for service in services:
-        item_id = items_map.get(str(service.id))
-        price_item = None
-        if item_id is not None:
-            try:
-                price_item = items_by_id.get(int(item_id))
-            except (TypeError, ValueError):
-                price_item = None
-            if price_item is not None and price_item.service_id != service.id:
-                price_item = None
-        line_items.append({"service": service, "price_item": price_item})
+    for service, base_id, addon_ids in selections:
+        price_item = items_by_id.get(base_id) if base_id else None
+        if price_item is not None and price_item.service_id != service.id:
+            price_item = None
+        addons = []
+        for addon_id in addon_ids:
+            addon = items_by_id.get(addon_id)
+            if addon is not None and addon.service_id == service.id and addon.is_addon:
+                addons.append(addon)
+        line_items.append(
+            {"service": service, "price_item": price_item, "addons": addons}
+        )
 
     return calculate_line_items_duration_minutes(line_items, salon)
 
@@ -915,6 +925,7 @@ def owner_dashboard(request):
             except (TypeError, ValueError):
                 duration = 0
             photo_required = request.POST.get("item_photo_required") == "1"
+            is_addon = request.POST.get("item_is_addon") == "1"
             if name and price:
                 if item:
                     item.name = name
@@ -923,6 +934,7 @@ def owner_dashboard(request):
                     item.sort_order = sort_order
                     item.duration_minutes = duration
                     item.photo_required = photo_required
+                    item.is_addon = is_addon
                     item.save()
                 else:
                     ServicePriceItem.objects.create(
@@ -930,6 +942,7 @@ def owner_dashboard(request):
                         group=group, sort_order=sort_order,
                         duration_minutes=duration,
                         photo_required=photo_required,
+                        is_addon=is_addon,
                     )
                 messages.success(request, _("Price item saved."))
             else:
@@ -1521,48 +1534,21 @@ def owner_booking_photo(request, booking_id):
 @login_required
 @require_GET
 def booking_ics(request, booking_id):
-    """Generate an .ics calendar file for an approved booking."""
-    from django.http import HttpResponse
-
+    """Generate an .ics calendar file for an approved booking (owner)."""
     salon = _get_owner_salon(request.user)
     if not salon:
         return HttpResponse(status=403)
 
     booking = get_object_or_404(
-        Booking.objects.select_related("customer").prefetch_related("booking_services"),
+        Booking.objects.select_related("customer", "salon").prefetch_related(
+            "booking_services"
+        ),
         pk=booking_id,
         salon=salon,
     )
-
-    local_start = timezone.localtime(booking.start_at)
-    local_end   = timezone.localtime(booking.end_at)
-    services    = ", ".join(bs.service_name_snapshot for bs in booking.booking_services.all())
-    uid         = f"booking-{booking.id}@salonscheduler"
-    now_stamp   = timezone.now().strftime("%Y%m%dT%H%M%SZ")
-
-    def fmt(dt):
-        return dt.strftime("%Y%m%dT%H%M%S")
-
-    ics_lines = [
-        "BEGIN:VCALENDAR",
-        "VERSION:2.0",
-        "PRODID:-//Vremio//EN",
-        "CALSCALE:GREGORIAN",
-        "BEGIN:VEVENT",
-        f"UID:{uid}",
-        f"DTSTAMP:{now_stamp}",
-        f"DTSTART:{fmt(local_start)}",
-        f"DTEND:{fmt(local_end)}",
-        f"SUMMARY:{booking.customer.full_name} — {services}",
-        f"DESCRIPTION:Phone: {booking.customer.phone_number}\\nInstagram: {booking.customer.instagram_username}\\nStatus: {booking.get_status_display()}",
-        f"LOCATION:{salon.name}",
-        "END:VEVENT",
-        "END:VCALENDAR",
-    ]
-
-    content = "\r\n".join(ics_lines) + "\r\n"
+    filename, content = build_booking_ics(booking, for_customer=False)
     response = HttpResponse(content, content_type="text/calendar; charset=utf-8")
-    response["Content-Disposition"] = f'attachment; filename="booking-{booking.id}.ics"'
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
     return response
 
 
@@ -2144,6 +2130,7 @@ def manage_booking(request, token):
     service_schedule = build_service_schedule(
         booking.start_at, booking_service_items, booking.salon
     )
+    show_add_to_calendar = booking.status == Booking.Status.APPROVED
 
     return render(
         request,
@@ -2160,8 +2147,28 @@ def manage_booking(request, token):
             "manage_url": get_manage_booking_url(booking),
             "service_schedule": service_schedule,
             "total_duration": booking.total_duration_minutes,
+            "show_add_to_calendar": show_add_to_calendar,
+            "google_calendar_url": (
+                google_calendar_url(booking) if show_add_to_calendar else ""
+            ),
         },
     )
+
+
+@require_GET
+def manage_booking_ics(request, token):
+    """Customer .ics download for an approved booking (capability URL)."""
+    booking = get_object_or_404(
+        Booking.objects.select_related("salon", "customer").prefetch_related(
+            "booking_services"
+        ),
+        manage_token=token,
+        status=Booking.Status.APPROVED,
+    )
+    filename, content = build_booking_ics(booking, for_customer=True)
+    response = HttpResponse(content, content_type="text/calendar; charset=utf-8")
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response
 
 
 @require_POST

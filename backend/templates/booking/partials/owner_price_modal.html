@@ -41,6 +41,18 @@
         <div class="od-field od-field-full">
           <div class="od-toggle-row">
             <div class="od-toggle-info">
+              <span class="od-toggle-label">{% trans "Add-on (optional extra)" %}</span>
+              <span class="od-toggle-desc">{% trans "Shown after the customer picks a main service. Leave off for normal standalone options." %}</span>
+            </div>
+            <label class="od-toggle-switch">
+              <input type="checkbox" name="item_is_addon" id="od-price-item-addon" value="1">
+              <span class="od-toggle-track"><span class="od-toggle-thumb"></span></span>
+            </label>
+          </div>
+        </div>
+        <div class="od-field od-field-full">
+          <div class="od-toggle-row">
+            <div class="od-toggle-info">
               <span class="od-toggle-label">{% trans "Photo required" %}</span>
               <span class="od-toggle-desc">{% trans "Customer must upload a reference photo when booking this sub-service" %}</span>
             </div>

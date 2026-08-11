@@ -423,7 +423,7 @@
       {% for service in services %}
         <div class="od-svc-card{% if not service.is_active %} od-svc-card--inactive{% endif %}"
              data-service-id="{{ service.id }}"
-             data-price-items='{% spaceless %}[{% for item in service.price_items.all %}{"id":{{ item.id }},"name":"{{ item.name|escapejs }}","price_display":"{{ item.price_display|escapejs }}","group":"{{ item.group|escapejs }}","sort_order":{{ item.sort_order }},"photo_required":{% if item.photo_required %}true{% else %}false{% endif %}}{% if not forloop.last %},{% endif %}{% endfor %}]{% endspaceless %}'
+             data-price-items='{% spaceless %}[{% for item in service.price_items.all %}{"id":{{ item.id }},"name":"{{ item.name|escapejs }}","price_display":"{{ item.price_display|escapejs }}","group":"{{ item.group|escapejs }}","sort_order":{{ item.sort_order }},"duration_minutes":{{ item.duration_minutes }},"photo_required":{% if item.photo_required %}true{% else %}false{% endif %},"is_addon":{% if item.is_addon %}true{% else %}false{% endif %}}{% if not forloop.last %},{% endif %}{% endfor %}]{% endspaceless %}'
              data-name="{{ service.name }}"
              data-description="{{ service.description|escape }}"
              data-duration="{{ service.duration_minutes }}"
@@ -516,6 +516,9 @@
                             <td class="od-price-td-drag"><span class="od-drag-handle" title="{% trans "Drag to reorder" %}"><i class="bi bi-grip-vertical"></i></span></td>
                             <td colspan="2" class="od-price-td-name">
                               {{ item.name }}
+                              {% if item.is_addon %}
+                                <span class="od-price-addon-badge">{% trans "Add-on" %}</span>
+                              {% endif %}
                               {% if item.duration_minutes %}
                                 <span class="od-price-dur-note"><i class="bi bi-clock"></i> {{ item.duration_minutes }} {% trans "min" %}</span>
                               {% endif %}
@@ -541,7 +544,8 @@
                                 data-item-group="{{ item.group|escapejs }}"
                                 data-item-sort="{{ item.sort_order }}"
                                 data-item-duration="{{ item.duration_minutes }}"
-                                data-item-photo="{{ item.photo_required|yesno:'true,false' }}">{% trans "Edit" %}</button>
+                                data-item-photo="{{ item.photo_required|yesno:'true,false' }}"
+                                data-item-addon="{{ item.is_addon|yesno:'true,false' }}">{% trans "Edit" %}</button>
                               <form method="post" style="display:inline">
                                 {% csrf_token %}
                                 <input type="hidden" name="action" value="delete_price_item">

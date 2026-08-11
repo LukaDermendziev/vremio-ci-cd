@@ -27,18 +27,22 @@ Make customer booking and owner calendar agree on how long a visit really takes 
 
 ### Ship criteria
 
-1. Choosing base + add-on(s) uses the **correct total duration** for slot search (price-item durations where set; otherwise parent service).
-2. **Service gap** policy applies in the way this salon expects (between services in one booking and/or between bookings — confirm with owner once, then encode it).
-3. Owner add/edit booking keeps the same duration rules (no silent drop back to base-only duration).
-4. Tests cover the salon’s real cases (e.g. manicure + design add-on).
-5. Live owner confirms available times match how she actually works for one busy week.
+1. Price-list lines can be marked **Add-on** in owner dashboard / admin (`is_addon`, default off — current menus unchanged).
+2. Customer step 1: bases stay visible; optional extras appear **after** a base is chosen (reveal-after-base).
+3. Choosing base + add-on(s) uses correct total duration for slots (addon minutes add on; `0` does not inherit full parent duration).
+4. Booking saves base + add-on lines; schedule does not insert service-gap between a base and its extras.
+5. Gap minutes between different services (e.g. manicure block vs pedicure) still **on hold** until the owner answers.
+6. Live owner can mark French / drawings / extra length as add-ons when ready.
 
-### Out of scope
+### Done so far
 
-- Second-salon onboarding packaging
-- Auto message modal
-- Deposits / loyalty / multi-staff
+- `ServicePriceItem.is_addon` + migration `0026`
+- Owner modal toggle + badge
+- Booking UI reveal-after-base
+- Duration / submit / slot map support for `{base, addons}`
 
-### Next step when building
+### Still open
 
-Plan the exact gap + add-on rules with a short owner confirmation, then implement in `services.py` slot engine + booking form + owner booking form, with tests.
+- Owner confirmation of exact gap rules
+- Optional second UI variant (always-visible greyed extras)
+- Add to calendar (approved only) — separate small ship
