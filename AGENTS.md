@@ -458,3 +458,13 @@ Create a local Django project with:
 * simple owner dashboard placeholder
 
 Do not implement complex notifications, payments, loyalty, or SMS in the first milestone.
+
+## Current product stage (important)
+
+The first nail salon owner is already using Vremio in production (live for about a month). Treat ongoing work as **production product**, not greenfield MVP.
+
+Locked next milestone:
+
+* Schedule truth: base + add-ons durations and slot gaps — `docs/next-production-milestone.md`
+
+Do not default to Phase 0–14 checklist items from `docs/roadmap.md`, and do not revive rejected notify/remind UX unless the live owner asks for it.

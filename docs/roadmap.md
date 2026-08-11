@@ -457,11 +457,10 @@ Long-term modules:
 
 ## Current Immediate Next Steps
 
-1. Create the local project folder.
-2. Add documentation files.
-3. Add `AGENTS.md` for Codex.
-4. Ask Codex to read documentation and propose project structure.
-5. Create Django project locally.
-6. Create initial models proposal.
-7. Review models before coding too much.
+**Live product (first salon ~1 month in production).**
+
+Locked milestone: **Schedule truth — base + add-ons durations and slot gaps**  
+See [next-production-milestone.md](next-production-milestone.md).
+
+Also: Railway cron must run `auto_complete_past_bookings` (now in `backend/railway.cron.toml`) so finished appointments leave Approved and become Completed.
 

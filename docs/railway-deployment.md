@@ -308,7 +308,9 @@ Because the web service uses `backend/railway.toml` (Gunicorn), the cron service
 3. Set: `/backend/railway.cron.toml`
 4. Redeploy
 
-That file runs reminders, then cleanup (`&&` — cleanup runs only if reminders succeed).
+That file runs reminders, then cleanup, then auto-complete (`&&` — later steps run only if earlier ones succeed).
+
+Recommended schedule for this cron service: every **15–30 minutes**.
 
 Use `railway ssh` to test manually:
 
