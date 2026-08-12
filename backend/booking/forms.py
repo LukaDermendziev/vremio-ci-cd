@@ -465,25 +465,21 @@ class BookingRequestForm(forms.Form):
                     name_snapshot = service.name
                     price_snap = service.base_price
                     duration_snap = service.duration_minutes
+                    is_addon_snap = False
                 else:
                     name_snapshot = row_item.name
                     price_snap = _price_from_display(
                         row_item.price_display, service.base_price
                     )
-                    if row_item.is_addon:
-                        duration_snap = row_item.duration_minutes or 0
-                    else:
-                        duration_snap = (
-                            row_item.duration_minutes
-                            if row_item.duration_minutes
-                            else service.duration_minutes
-                        )
+                    duration_snap = row_item.effective_duration_minutes
+                    is_addon_snap = bool(row_item.is_addon)
                 booking.booking_services.create(
                     service=service,
                     service_name_snapshot=name_snapshot,
                     duration_minutes_snapshot=duration_snap,
                     price_snapshot=price_snap,
                     sort_order=sort_order,
+                    is_addon_snapshot=is_addon_snap,
                 )
                 sort_order += 1
 

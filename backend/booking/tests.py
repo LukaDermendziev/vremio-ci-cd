@@ -3395,6 +3395,65 @@ class MultiServiceBookingTests(TestCase):
         )
         self.assertEqual(total, 120)
 
+    def test_zero_minute_addon_snapshot_not_inflated_to_parent(self):
+        """Regression: addon duration 0 must stay 0 on BookingService (not 120)."""
+        base = ServicePriceItem.objects.create(
+            service=self.manicure,
+            name="КОРЕКЦИЈА",
+            price_display="900",
+            duration_minutes=120,
+        )
+        art = ServicePriceItem.objects.create(
+            service=self.manicure,
+            name="ФРЕНЧ/ОМБРЕ",
+            price_display="+200",
+            duration_minutes=0,
+            is_addon=True,
+        )
+        selected = self._future_date()
+        from django.test import RequestFactory
+
+        request = RequestFactory().post("/book/")
+        form = BookingRequestForm(
+            data={
+                "service_ids": str(self.manicure.id),
+                "service_price_items": json.dumps(
+                    {str(self.manicure.id): {"base": base.id, "addons": [art.id]}}
+                ),
+                "date": selected.isoformat(),
+                "start_time": "08:00",
+                "full_name": "Evdokija Test",
+                "phone_number": "070123456",
+                "email": "evdokija@example.com",
+                "preferred_contact_method": Customer.PreferredContactMethod.PHONE,
+                "rules_accepted": True,
+            },
+            salon=self.salon,
+            request=request,
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+        booking = form.save()
+        rows = list(booking.booking_services.order_by("sort_order"))
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(rows[0].duration_minutes_snapshot, 120)
+        self.assertFalse(rows[0].is_addon_snapshot)
+        self.assertEqual(rows[1].duration_minutes_snapshot, 0)
+        self.assertTrue(rows[1].is_addon_snapshot)
+        self.assertEqual(booking.total_duration_minutes, 120)
+        self.assertEqual(
+            (booking.end_at - booking.start_at).total_seconds(),
+            120 * 60,
+        )
+        schedule = build_service_schedule(
+            booking.start_at, rows, self.salon
+        )
+        self.assertEqual(schedule[0]["start_time"], "08:00")
+        self.assertEqual(schedule[0]["end_time"], "10:00")
+        # Zero-minute add-on shares the base window — not a second 2h slot.
+        self.assertEqual(schedule[1]["start_time"], "08:00")
+        self.assertEqual(schedule[1]["end_time"], "10:00")
+        self.assertEqual(schedule[1]["duration_minutes"], 0)
+
     def test_booking_form_accepts_base_and_addon_map(self):
         base = ServicePriceItem.objects.create(
             service=self.manicure,
@@ -3439,6 +3498,12 @@ class MultiServiceBookingTests(TestCase):
         )
         self.assertEqual(names, ["Gel polish", "French"])
         self.assertEqual(booking.total_duration_minutes, 105)
+        snaps = list(
+            booking.booking_services.order_by("sort_order").values_list(
+                "duration_minutes_snapshot", "is_addon_snapshot"
+            )
+        )
+        self.assertEqual(snaps, [(90, False), (15, True)])
 
     def test_build_service_schedule_example(self):
         selected = self._future_date()

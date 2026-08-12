@@ -749,6 +749,10 @@ class BookingService(models.Model):
     duration_minutes_snapshot = models.PositiveSmallIntegerField(default=0)
     price_snapshot = models.DecimalField(max_digits=8, decimal_places=2, default=0)
     sort_order = models.PositiveSmallIntegerField(default=0)
+    is_addon_snapshot = models.BooleanField(
+        default=False,
+        help_text="True when this line was booked as an add-on extra, not a base service.",
+    )
 
     class Meta:
         ordering = ["sort_order", "id"]
@@ -769,8 +773,10 @@ class BookingService(models.Model):
         if self.service_id:
             if not self.service_name_snapshot:
                 self.service_name_snapshot = self.service.name
-            if not self.duration_minutes_snapshot:
-                self.duration_minutes_snapshot = self.service.duration_minutes
+            # Do NOT backfill duration when snapshot is 0.
+            # Add-ons often take 0 extra minutes; treating 0 as "missing"
+            # incorrectly assigned the full parent service duration and made
+            # extras look like their own appointment slots in emails/schedule.
             if self.price_snapshot is None:
                 self.price_snapshot = self.service.base_price
 

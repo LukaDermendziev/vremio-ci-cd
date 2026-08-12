@@ -157,6 +157,11 @@ def calculate_line_items_duration_minutes(line_items, salon):
 
 
 def build_service_schedule(start_at, items, salon):
+    """Build per-line start/end times for display (emails, manage page, owner UI).
+
+    Add-ons with 0 extra minutes share the previous same-service block's window
+    so they are not shown as a second full appointment slot.
+    """
     gap = timedelta(minutes=get_service_gap_minutes(salon))
     current = start_at
     schedule = []
@@ -164,8 +169,32 @@ def build_service_schedule(start_at, items, salon):
     for index, item in enumerate(items):
         duration = getattr(item, "duration_minutes_snapshot", None)
         if duration is None:
-            duration = getattr(item, "duration_minutes", 0)
+            duration = getattr(item, "duration_minutes", 0) or 0
         name = getattr(item, "service_name_snapshot", None) or getattr(item, "name", "")
+        is_addon = bool(getattr(item, "is_addon_snapshot", False))
+        prev_item = items[index - 1] if index > 0 else None
+        same_service_as_prev = (
+            prev_item is not None
+            and getattr(item, "service_id", None) is not None
+            and getattr(item, "service_id", None) == getattr(prev_item, "service_id", None)
+        )
+
+        # Zero-minute extras stay inside the parent block's displayed window.
+        if duration == 0 and schedule and (is_addon or same_service_as_prev):
+            prev = schedule[-1]
+            schedule.append(
+                {
+                    "name": name,
+                    "start": prev["start"],
+                    "end": prev["end"],
+                    "duration_minutes": 0,
+                    "start_time": prev["start_time"],
+                    "end_time": prev["end_time"],
+                    "is_addon": True,
+                }
+            )
+            continue
+
         end = current + timedelta(minutes=duration)
         local_start = timezone.localtime(current)
         local_end = timezone.localtime(end)
@@ -177,6 +206,7 @@ def build_service_schedule(start_at, items, salon):
                 "duration_minutes": duration,
                 "start_time": local_start.strftime("%H:%M"),
                 "end_time": local_end.strftime("%H:%M"),
+                "is_addon": is_addon,
             }
         )
         current = end
