@@ -31,6 +31,9 @@ DEFAULT_START_TIME = time(8, 0)
 DEFAULT_END_TIME = time(18, 0)
 FIXED_START_TIME_RE = re.compile(r"^(\d{1,2}):(\d{2})$")
 DEFAULT_FIXED_START_TIMES = ["08:00", "10:30", "13:00", "15:30"]
+# After a visit that opens a real hole, the next extra start is end + this gap
+# (sanitize / breath). Anchors still win when the visit ends before the next one.
+FIXED_START_PACKING_GAP_MINUTES = 30
 
 
 MSG_MULTI_SERVICE_NO_FIT = _(
@@ -653,15 +656,21 @@ def get_available_slots(
         selected_date,
         exclude_booking_id=exclude_booking_id,
     )
+    visit_spans = get_blocking_visit_spans_for_date(
+        salon,
+        selected_date,
+        exclude_booking_id=exclude_booking_id,
+    )
     fixed_times = get_salon_fixed_start_times(salon)
     if fixed_times is not None:
-        candidates = generate_fixed_candidate_slots(
+        candidates = generate_fixed_packing_candidates(
             selected_date=selected_date,
             salon=salon,
             working_start=working_start,
             working_end=working_end,
             duration=service_duration,
             fixed_time_strings=fixed_times,
+            visit_spans=visit_spans,
         )
     else:
         slot_interval = timedelta(
@@ -677,6 +686,7 @@ def get_available_slots(
         )
 
     slots = []
+    salon_tz = get_salon_timezone(salon)
     for candidate_start, candidate_end in candidates:
         if candidate_start < now:
             continue
@@ -687,12 +697,14 @@ def get_available_slots(
         ):
             continue
 
+        local_start = timezone.localtime(candidate_start, salon_tz)
+        local_end = timezone.localtime(candidate_end, salon_tz)
         slots.append(
             {
                 "start": candidate_start,
                 "end": candidate_end,
-                "value": candidate_start.strftime("%H:%M"),
-                "label": f"{candidate_start:%H:%M} - {candidate_end:%H:%M}",
+                "value": local_start.strftime("%H:%M"),
+                "label": f"{local_start:%H:%M} - {local_end:%H:%M}",
             }
         )
 
@@ -905,6 +917,186 @@ def get_working_window_for_date(salon, selected_date):
         return None
 
     return DEFAULT_START_TIME, DEFAULT_END_TIME
+
+
+def get_blocking_visit_spans_for_date(salon, selected_date, exclude_booking_id=None):
+    """Actual start/end of blocking bookings on a date (no policy buffer)."""
+    working_interval = get_working_interval_for_date(salon, selected_date)
+    if not working_interval:
+        return []
+
+    day_start, day_end = working_interval
+    status_values = get_blocking_booking_statuses(salon)
+    bookings = salon.bookings.filter(
+        status__in=status_values,
+        start_at__lt=day_end,
+        end_at__gt=day_start,
+    )
+    if exclude_booking_id:
+        bookings = bookings.exclude(pk=exclude_booking_id)
+    return [(booking.start_at, booking.end_at) for booking in bookings.order_by("start_at")]
+
+
+def leftover_start_after_visit(visit_start, visit_end, anchors, gap):
+    """Next extra start after a visit, or None to keep the next anchor.
+
+    - Ends before the next anchor, and end+gap still before it → extra at end+gap.
+    - Ends before the next anchor, but end+gap would reach/pass it → keep the anchor.
+    - Ends on or after the next anchor → extra at end+gap (that anchor is used up).
+    - No later anchor → extra at end+gap (must still fit the working day).
+    """
+    next_anchor = next((anchor for anchor in anchors if anchor > visit_start), None)
+    extra = visit_end + gap
+    if next_anchor is None:
+        return extra
+    if visit_end < next_anchor:
+        if extra < next_anchor:
+            return extra
+        return None
+    return extra
+
+
+def consumed_fixed_anchors(visit_spans, anchors):
+    """Anchors a visit has already reached or passed (start < anchor <= end)."""
+    consumed = set()
+    for visit_start, visit_end in visit_spans:
+        for anchor in anchors:
+            if visit_start < anchor <= visit_end:
+                consumed.add(anchor)
+    return consumed
+
+
+def packing_gap_conflict(candidate_start, candidate_end, visit_spans, gap):
+    """True when a leftover extra sits closer than ``gap`` to another visit."""
+    for visit_start, visit_end in visit_spans:
+        if intervals_overlap(visit_start, visit_end, candidate_start, candidate_end):
+            return True
+        if visit_end <= candidate_start and candidate_start < visit_end + gap:
+            return True
+        if visit_start >= candidate_end and candidate_end + gap > visit_start:
+            return True
+    return False
+
+
+def resolve_fixed_anchor_datetimes(
+    selected_date,
+    salon,
+    time_strings,
+    working_start,
+    working_end,
+):
+    salon_tz = get_salon_timezone(salon)
+    anchors = []
+    seen = set()
+    for time_string in time_strings:
+        match = FIXED_START_TIME_RE.match(str(time_string).strip())
+        if not match:
+            continue
+        hour, minute = int(match.group(1)), int(match.group(2))
+        if hour > 23 or minute > 59:
+            continue
+        anchor = timezone.make_aware(
+            datetime.combine(selected_date, time(hour, minute)),
+            salon_tz,
+        )
+        if anchor in seen:
+            continue
+        if working_start <= anchor < working_end:
+            seen.add(anchor)
+            anchors.append(anchor)
+    anchors.sort()
+    return anchors
+
+
+def fixed_anchor_step(anchors, gap):
+    """Spacing between original anchors (2h visit + 30 min gap → 2h30)."""
+    if len(anchors) >= 2:
+        step = anchors[1] - anchors[0]
+        if step.total_seconds() > 0:
+            return step
+    return timedelta(minutes=120) + gap
+
+
+def generate_fixed_packing_candidates(
+    *,
+    selected_date,
+    salon,
+    working_start,
+    working_end,
+    duration,
+    fixed_time_strings,
+    visit_spans,
+):
+    """Anchor starts plus leftover extras after shorter visits.
+
+    Empty days stay on the configured anchors only. Extra starts appear at
+    visit_end + 30 minutes when that hole is still before the next anchor.
+    """
+    gap = timedelta(minutes=FIXED_START_PACKING_GAP_MINUTES)
+    salon_tz = get_salon_timezone(salon)
+    visit_spans = [
+        (timezone.localtime(start, salon_tz), timezone.localtime(end, salon_tz))
+        for start, end in visit_spans
+    ]
+    anchors = resolve_fixed_anchor_datetimes(
+        selected_date,
+        salon,
+        fixed_time_strings,
+        working_start,
+        working_end,
+    )
+    consumed = consumed_fixed_anchors(visit_spans, anchors)
+    visit_spans.sort(key=lambda item: item[0])
+    step = fixed_anchor_step(anchors, gap)
+
+    rebase_windows = []
+    rebased = []
+
+    for visit_start, visit_end in visit_spans:
+        extra_start = leftover_start_after_visit(visit_start, visit_end, anchors, gap)
+        if extra_start is None:
+            continue
+        next_visit_start = next(
+            (start for start, _end in visit_spans if start > visit_end),
+            None,
+        )
+        window_end = next_visit_start if next_visit_start is not None else working_end
+        rebase_windows.append((extra_start, window_end))
+
+        grid_start = extra_start
+        while grid_start < window_end:
+            grid_end = grid_start + duration
+            if grid_end > working_end:
+                break
+            if (
+                grid_start >= working_start
+                and not packing_gap_conflict(grid_start, grid_end, visit_spans, gap)
+            ):
+                rebased.append((grid_start, grid_end))
+            grid_start += step
+
+    def in_rebase_window(moment):
+        return any(start <= moment < end for start, end in rebase_windows)
+
+    results = []
+    seen_starts = set()
+
+    for anchor in anchors:
+        if anchor in consumed or in_rebase_window(anchor):
+            continue
+        candidate_end = anchor + duration
+        if candidate_end <= working_end:
+            results.append((anchor, candidate_end))
+            seen_starts.add(anchor)
+
+    for start, end in rebased:
+        if start in seen_starts:
+            continue
+        results.append((start, end))
+        seen_starts.add(start)
+
+    results.sort(key=lambda item: item[0])
+    yield from results
 
 
 def get_busy_intervals_for_date(salon, selected_date, exclude_booking_id=None):

@@ -49,6 +49,7 @@ from .services import (
     find_conflicting_booking,
     format_services_for_email,
     get_available_slots,
+    leftover_start_after_visit,
     get_calendar_history_cutoff_date,
     get_calendar_history_days,
     get_last_minute_open_dates,
@@ -1514,12 +1515,30 @@ class FixedStartTimesTests(TestCase):
             instagram_username="fixed_customer",
         )
 
-    def _slot_values(self):
+    def _aware(self, hour, minute):
+        return timezone.make_aware(
+            datetime.combine(self.selected_date, time(hour, minute)),
+            timezone.get_current_timezone(),
+        )
+
+    def _book(self, start_hour, start_minute, end_hour, end_minute, minutes):
+        return Booking.objects.create(
+            salon=self.salon,
+            customer=self.customer,
+            status=Booking.Status.APPROVED,
+            source=Booking.Source.OWNER_MANUAL,
+            start_at=self._aware(start_hour, start_minute),
+            end_at=self._aware(end_hour, end_minute),
+            total_duration_minutes=minutes,
+        )
+
+    def _slot_values(self, duration_minutes=None):
         slots = get_available_slots(
             self.salon,
             self.service,
             self.selected_date,
             now=self.now,
+            duration_override_minutes=duration_minutes,
         )
         return {slot["value"] for slot in slots}
 
@@ -1528,6 +1547,7 @@ class FixedStartTimesTests(TestCase):
         self.assertEqual(values, {"08:00", "10:30", "13:00", "15:30"})
         self.assertNotIn("08:30", values)
         self.assertNotIn("09:00", values)
+        self.assertEqual(self._slot_values(duration_minutes=60), values)
 
     def test_fixed_start_times_respect_busy_intervals(self):
         Booking.objects.create(
@@ -1548,8 +1568,141 @@ class FixedStartTimesTests(TestCase):
 
         values = self._slot_values()
         self.assertNotIn("08:00", values)
+        self.assertNotIn("10:00", values)
         self.assertIn("10:30", values)
         self.assertIn("13:00", values)
+
+    def test_visit_ending_before_next_anchor_keeps_anchor(self):
+        self._book(8, 0, 10, 20, 140)
+        values = self._slot_values()
+        self.assertNotIn("08:00", values)
+        self.assertNotIn("10:20", values)
+        self.assertNotIn("10:50", values)
+        self.assertIn("10:30", values)
+
+    def test_visit_ending_on_next_anchor_opens_end_plus_gap(self):
+        self._book(8, 0, 10, 30, 150)
+        values = self._slot_values(duration_minutes=60)
+        self.assertNotIn("08:00", values)
+        self.assertNotIn("10:30", values)
+        self.assertIn("11:00", values)
+        self.assertIn("13:30", values)
+        self.assertIn("16:00", values)
+        self.assertNotIn("13:00", values)
+        self.assertNotIn("15:30", values)
+
+    def test_short_visit_opens_leftover_before_next_anchor(self):
+        self._book(10, 30, 11, 30, 60)
+        values = self._slot_values(duration_minutes=60)
+        self.assertIn("08:00", values)
+        self.assertNotIn("10:30", values)
+        self.assertIn("12:00", values)
+        self.assertIn("14:30", values)
+        self.assertIn("17:00", values)
+        self.assertNotIn("13:00", values)
+        self.assertNotIn("15:30", values)
+
+    def test_ninety_minute_visit_opens_twelve_thirty(self):
+        self._book(10, 30, 12, 0, 90)
+        values = self._slot_values(duration_minutes=60)
+        self.assertIn("12:30", values)
+        self.assertIn("15:00", values)
+        self.assertNotIn("13:00", values)
+        self.assertNotIn("12:00", values)
+        self.assertIn("08:00", values)
+
+    def test_visit_ending_close_to_next_anchor_keeps_anchor(self):
+        self._book(10, 30, 12, 40, 130)
+        values = self._slot_values(duration_minutes=60)
+        self.assertNotIn("12:40", values)
+        self.assertNotIn("13:10", values)
+        self.assertIn("13:00", values)
+
+    def test_leftover_does_not_butt_against_later_anchor_booking(self):
+        self._book(10, 30, 11, 30, 60)
+        self._book(13, 0, 15, 0, 120)
+        values = self._slot_values(duration_minutes=60)
+        self.assertNotIn("12:00", values)
+        self.assertNotIn("13:00", values)
+        self.assertIn("08:00", values)
+        self.assertIn("15:30", values)
+
+    def test_short_leftover_can_fit_before_later_anchor_booking(self):
+        self._book(10, 30, 11, 30, 60)
+        self._book(13, 0, 15, 0, 120)
+        values = self._slot_values(duration_minutes=30)
+        self.assertIn("12:00", values)
+        self.assertNotIn("13:00", values)
+
+    def test_afternoon_one_fifty_fits_closing(self):
+        values = self._slot_values(duration_minutes=150)
+        self.assertIn("15:30", values)
+        self.assertIn("08:00", values)
+
+    def test_rebased_last_hour_only_fits_short_service(self):
+        self._book(10, 30, 11, 30, 60)
+        hour = self._slot_values(duration_minutes=60)
+        self.assertIn("17:00", hour)
+        full = self._slot_values(duration_minutes=150)
+        self.assertIn("12:00", full)
+        self.assertIn("14:30", full)
+        self.assertNotIn("17:00", full)
+        self.assertNotIn("13:00", full)
+        self.assertNotIn("15:30", full)
+
+    def test_max_duration_from_noon_opens_three_pm(self):
+        self._book(8, 0, 10, 0, 120)
+        self._book(10, 30, 11, 30, 60)
+        self._book(12, 0, 14, 30, 150)
+        values = self._slot_values(duration_minutes=150)
+        self.assertEqual(values, {"15:00"})
+        self.assertNotIn("17:00", values)
+        self.assertNotIn("15:30", values)
+
+    def test_thirty_minute_service_keeps_empty_day_anchors(self):
+        values = self._slot_values(duration_minutes=30)
+        self.assertEqual(values, {"08:00", "10:30", "13:00", "15:30"})
+
+    def test_thirty_minute_service_fits_rebased_last_hour(self):
+        self._book(10, 30, 11, 30, 60)
+        values = self._slot_values(duration_minutes=30)
+        self.assertIn("08:00", values)
+        self.assertIn("12:00", values)
+        self.assertIn("14:30", values)
+        self.assertIn("17:00", values)
+        self.assertNotIn("13:00", values)
+        self.assertNotIn("15:30", values)
+
+    def test_thirty_minute_booking_at_noon_keeps_thirty_min_gap(self):
+        self._book(10, 30, 11, 30, 60)
+        self._book(12, 0, 12, 30, 30)
+        values = self._slot_values(duration_minutes=30)
+        self.assertIn("13:00", values)
+        self.assertNotIn("12:00", values)
+        self.assertIn("08:00", values)
+
+    def test_leftover_start_helper_keeps_anchor_when_end_is_before_it(self):
+        gap = timedelta(minutes=30)
+        anchors = [
+            self._aware(8, 0),
+            self._aware(10, 30),
+            self._aware(13, 0),
+            self._aware(15, 30),
+        ]
+        self.assertIsNone(
+            leftover_start_after_visit(self._aware(8, 0), self._aware(10, 20), anchors, gap)
+        )
+        self.assertEqual(
+            leftover_start_after_visit(self._aware(8, 0), self._aware(10, 30), anchors, gap),
+            self._aware(11, 0),
+        )
+        self.assertEqual(
+            leftover_start_after_visit(self._aware(10, 30), self._aware(11, 30), anchors, gap),
+            self._aware(12, 0),
+        )
+        self.assertIsNone(
+            leftover_start_after_visit(self._aware(10, 30), self._aware(12, 40), anchors, gap)
+        )
 
     def test_fixed_start_times_outside_custom_hours_are_skipped(self):
         DateWorkingHoursOverride.objects.create(
