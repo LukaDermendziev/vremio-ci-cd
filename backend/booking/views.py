@@ -451,12 +451,58 @@ def _get_owner_salon(user):
 
 def _validation_error_to_text(exc):
     if hasattr(exc, "message_dict"):
-        return " ".join(
-            message
-            for messages_for_field in exc.message_dict.values()
-            for message in messages_for_field
+        parts = []
+        for messages_list in exc.message_dict.values():
+            parts.extend(str(item) for item in messages_list)
+        return " ".join(parts)
+    if getattr(exc, "messages", None):
+        return " ".join(str(item) for item in exc.messages)
+    return str(exc)
+
+
+def _group_consecutive_blocked_dates(rows):
+    groups = []
+    for row in rows:
+        last = groups[-1] if groups else None
+        if (
+            last
+            and row.date == last["end"] + timedelta(days=1)
+            and (row.reason or "") == last["reason"]
+        ):
+            last["end"] = row.date
+            last["ids"].append(row.id)
+        else:
+            groups.append(
+                {
+                    "start": row.date,
+                    "end": row.date,
+                    "reason": row.reason or "",
+                    "ids": [row.id],
+                }
+            )
+    return groups
+
+
+def _save_blocked_dates_from_form(request, salon, form):
+    created = form.apply(salon)
+    if len(created) == 1:
+        messages.success(request, _("Blocked date saved."))
+    else:
+        messages.success(
+            request,
+            _("Blocked %(count)s days.") % {"count": len(created)},
         )
-    return " ".join(exc.messages)
+    return created
+
+
+def _parse_blocked_date_ids(request):
+    raw = request.POST.get("override_ids") or request.POST.get("override_id") or ""
+    ids = []
+    for part in str(raw).split(","):
+        part = part.strip()
+        if part.isdigit():
+            ids.append(int(part))
+    return ids
 
 
 def _owner_dashboard_context(salon):
@@ -502,6 +548,7 @@ def _owner_dashboard_context(salon):
     blocked_dates = salon.date_working_hours_overrides.filter(
         mode=DateWorkingHoursOverride.Mode.CLOSED
     ).order_by("date")
+    blocked_date_groups = _group_consecutive_blocked_dates(blocked_dates)
     unavailable_blocks = salon.unavailable_time_blocks.order_by("date", "start_time")[:30]
     blocked_customers = (
         salon.customer_blocklist_entries.filter(is_active=True)
@@ -535,6 +582,7 @@ def _owner_dashboard_context(salon):
         "booking_policy": booking_policy,
         "working_hours": working_hours,
         "blocked_dates": blocked_dates,
+        "blocked_date_groups": blocked_date_groups,
         "unavailable_blocks": unavailable_blocks,
         "blocked_customers": blocked_customers,
         "revenue": revenue,
@@ -752,24 +800,17 @@ def owner_dashboard(request):
         elif action == "add_blocked_date":
             form = BlockedDateForm(request.POST)
             if form.is_valid():
-                DateWorkingHoursOverride.objects.update_or_create(
-                    salon=salon,
-                    date=form.cleaned_data["date"],
-                    defaults={
-                        "mode": DateWorkingHoursOverride.Mode.CLOSED,
-                        "reason": form.cleaned_data.get("reason", ""),
-                    },
-                )
-                messages.success(request, _("Blocked date added."))
+                _save_blocked_dates_from_form(request, salon, form)
             else:
                 messages.error(request, _("Invalid blocked date."))
 
         elif action == "delete_blocked_date":
-            override_id = request.POST.get("override_id")
-            salon.date_working_hours_overrides.filter(
-                pk=override_id,
-                mode=DateWorkingHoursOverride.Mode.CLOSED,
-            ).delete()
+            ids = _parse_blocked_date_ids(request)
+            if ids:
+                salon.date_working_hours_overrides.filter(
+                    pk__in=ids,
+                    mode=DateWorkingHoursOverride.Mode.CLOSED,
+                ).delete()
             messages.success(request, _("Blocked date removed."))
 
         elif action == "add_unavailable_block":
@@ -1005,15 +1046,7 @@ def owner_dashboard(request):
         elif action == "save_blocked_date":
             form = BlockedDateForm(request.POST)
             if form.is_valid():
-                DateWorkingHoursOverride.objects.update_or_create(
-                    salon=salon,
-                    date=form.cleaned_data["date"],
-                    defaults={
-                        "mode": DateWorkingHoursOverride.Mode.CLOSED,
-                        "reason": form.cleaned_data.get("reason", ""),
-                    },
-                )
-                messages.success(request, _("Blocked date saved."))
+                _save_blocked_dates_from_form(request, salon, form)
             else:
                 messages.error(request, _("Invalid blocked date."))
 

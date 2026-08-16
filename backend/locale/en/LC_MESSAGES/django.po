@@ -3853,3 +3853,24 @@ msgstr "— Occupied"
 
 msgid "Please choose a start time."
 msgstr "Please choose a start time."
+
+msgid "Blocked %(count)s days."
+msgstr "Blocked %(count)s days."
+
+msgid "End date must be on or after the start date."
+msgstr "End date must be on or after the start date."
+
+msgid "From"
+msgstr "From"
+
+msgid "Leave the end date empty to block only one day."
+msgstr "Leave the end date empty to block only one day."
+
+msgid "Remove these blocked dates?"
+msgstr "Remove these blocked dates?"
+
+msgid "To"
+msgstr "To"
+
+msgid "You can block at most %(days)s days at once."
+msgstr "You can block at most %(days)s days at once."

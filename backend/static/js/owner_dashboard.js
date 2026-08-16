@@ -127,13 +127,6 @@ function initOwnerDashboard(config) {
     return true;
   }
 
-  function refreshNativeDateMins(root = document) {
-    const min = todayIsoLocal();
-    root.querySelectorAll(".od-date-native").forEach(el => {
-      el.min = min;
-    });
-  }
-
   function setDateFieldInitialIso(wrap, iso) {
     if (wrap) wrap.dataset.initialDateIso = iso || "";
   }
@@ -142,14 +135,171 @@ function initOwnerDashboard(config) {
     if (!wrap) return;
     const display = wrap.querySelector(".od-date-display");
     const hidden = wrap.querySelector(".od-date-value");
-    const native = wrap.querySelector(".od-date-native");
     const cleanIso = iso || "";
     if (hidden) hidden.value = cleanIso;
     if (display) {
       display.value = cleanIso ? isoToDisplay(cleanIso) : "";
       display.setCustomValidity("");
     }
-    if (native) native.value = cleanIso;
+  }
+
+  function linkedMinIso(wrap) {
+    const fromName = wrap?.dataset.odDateMinFrom;
+    if (!fromName) return todayIsoLocal();
+    const form = wrap.closest("form");
+    const fromIso = form?.querySelector(`[name="${fromName}"]`)?.value || "";
+    const today = todayIsoLocal();
+    if (fromIso && fromIso > today) return fromIso;
+    return today;
+  }
+
+  const PICKER_DOW_MK = ["пон", "вто", "сре", "чет", "пет", "саб", "нед"];
+  let datePickerState = { wrap: null, viewYear: 0, viewMonth: 0 };
+
+  function closeDatePicker() {
+    const pop = document.getElementById("od-date-popover");
+    if (pop) pop.hidden = true;
+    document.querySelectorAll(".od-date-picker-btn[aria-expanded='true']").forEach(btn => {
+      btn.setAttribute("aria-expanded", "false");
+    });
+    datePickerState.wrap = null;
+  }
+
+  function ensureDatePicker() {
+    let pop = document.getElementById("od-date-popover");
+    if (pop) return pop;
+    pop = document.createElement("div");
+    pop.id = "od-date-popover";
+    pop.className = "od-date-popover";
+    pop.hidden = true;
+    pop.setAttribute("role", "dialog");
+    document.body.appendChild(pop);
+    pop.addEventListener("click", (e) => e.stopPropagation());
+    return pop;
+  }
+
+  function pickerMonthTitle(year, monthIndex) {
+    if (CG_IS_MK) return `${CG_MONTHS_MK_LONG[monthIndex]} ${year}`;
+    return new Intl.DateTimeFormat(CG_LOCALE, { month: "long", year: "numeric" }).format(
+      new Date(year, monthIndex, 1)
+    );
+  }
+
+  function pickerWeekdays() {
+    if (CG_IS_MK) return PICKER_DOW_MK;
+    const base = new Date(2024, 0, 1);
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(base);
+      d.setDate(base.getDate() + i);
+      return new Intl.DateTimeFormat(CG_LOCALE, { weekday: "short" }).format(d);
+    });
+  }
+
+  function positionDatePicker(pop, wrap) {
+    const anchor = wrap.querySelector(".od-date-input-row") || wrap;
+    const rect = anchor.getBoundingClientRect();
+    const width = 292;
+    const left = Math.min(Math.max(12, rect.left), window.innerWidth - width - 12);
+    pop.style.left = `${left}px`;
+    pop.style.width = `${width}px`;
+    pop.hidden = false;
+    const popH = pop.offsetHeight || 320;
+    const below = rect.bottom + 8;
+    const above = rect.top - popH - 8;
+    const fitsBelow = below + popH <= window.innerHeight - 12;
+    pop.style.top = `${fitsBelow || above < 12 ? below : above}px`;
+  }
+
+  function renderDatePicker() {
+    const wrap = datePickerState.wrap;
+    const pop = ensureDatePicker();
+    if (!wrap) {
+      pop.hidden = true;
+      return;
+    }
+    const selected = wrap.querySelector(".od-date-value")?.value || "";
+    const minIso = linkedMinIso(wrap);
+    const allowedInitial = wrap.dataset.initialDateIso || "";
+    const rangeStart = wrap.dataset.odDateMinFrom
+      ? (wrap.closest("form")?.querySelector(`[name="${wrap.dataset.odDateMinFrom}"]`)?.value || "")
+      : "";
+    const { viewYear, viewMonth } = datePickerState;
+    const first = new Date(viewYear, viewMonth, 1);
+    const startPad = (first.getDay() + 6) % 7;
+    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+    const dows = pickerWeekdays()
+      .map((d) => `<span>${d}</span>`)
+      .join("");
+    let cells = "";
+    for (let i = 0; i < startPad; i++) cells += `<span class="od-date-pop-empty"></span>`;
+    for (let day = 1; day <= daysInMonth; day++) {
+      const iso = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      const disabled = iso < minIso && iso !== allowedInitial;
+      const classes = ["od-date-pop-day"];
+      if (iso === selected) classes.push("is-selected");
+      if (iso === todayIsoLocal()) classes.push("is-today");
+      if (rangeStart && selected && iso > rangeStart && iso < selected) classes.push("is-in-range");
+      if (rangeStart && iso === rangeStart) classes.push("is-range-start");
+      if (disabled) classes.push("is-disabled");
+      cells += `<button type="button" class="${classes.join(" ")}" data-iso="${iso}" ${disabled ? "disabled" : ""}>${day}</button>`;
+    }
+    pop.innerHTML = `
+      <div class="od-date-pop-head">
+        <button type="button" class="od-date-pop-nav" data-nav="-1" aria-label="${t("datePickerPrevMonth", "Previous month")}">
+          <i class="bi bi-chevron-left"></i>
+        </button>
+        <div class="od-date-pop-title">${pickerMonthTitle(viewYear, viewMonth)}</div>
+        <button type="button" class="od-date-pop-nav" data-nav="1" aria-label="${t("datePickerNextMonth", "Next month")}">
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
+      <div class="od-date-pop-dows">${dows}</div>
+      <div class="od-date-pop-grid">${cells}</div>
+    `;
+    pop.querySelectorAll("[data-nav]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const delta = Number(btn.dataset.nav);
+        let month = datePickerState.viewMonth + delta;
+        let year = datePickerState.viewYear;
+        if (month < 0) {
+          month = 11;
+          year -= 1;
+        } else if (month > 11) {
+          month = 0;
+          year += 1;
+        }
+        datePickerState.viewMonth = month;
+        datePickerState.viewYear = year;
+        renderDatePicker();
+      });
+    });
+    pop.querySelectorAll(".od-date-pop-day:not(.is-disabled)").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const iso = btn.dataset.iso;
+        setDateFieldValue(wrap, iso);
+        wrap.querySelector(".od-date-value")?.dispatchEvent(new Event("change", { bubbles: true }));
+        closeDatePicker();
+      });
+    });
+    positionDatePicker(pop, wrap);
+  }
+
+  function openDatePicker(wrap) {
+    if (!wrap) return;
+    if (datePickerState.wrap === wrap) {
+      closeDatePicker();
+      return;
+    }
+    closeDatePicker();
+    const selected = wrap.querySelector(".od-date-value")?.value || linkedMinIso(wrap) || todayIsoLocal();
+    const parts = selected.split("-").map(Number);
+    datePickerState = {
+      wrap,
+      viewYear: parts[0] || new Date().getFullYear(),
+      viewMonth: (parts[1] || 1) - 1,
+    };
+    wrap.querySelector(".od-date-picker-btn")?.setAttribute("aria-expanded", "true");
+    renderDatePicker();
   }
 
   function initDateField(wrap) {
@@ -157,12 +307,10 @@ function initOwnerDashboard(config) {
     wrap.dataset.odDateInit = "1";
     const display = wrap.querySelector(".od-date-display");
     const hidden = wrap.querySelector(".od-date-value");
-    const native = wrap.querySelector(".od-date-native");
     const btn = wrap.querySelector(".od-date-picker-btn");
     if (!display || !hidden) return;
 
     if (hidden.value) setDateFieldValue(wrap, hidden.value);
-    if (native) native.min = todayIsoLocal();
 
     display.addEventListener("blur", () => {
       if (!display.value.trim()) {
@@ -192,21 +340,12 @@ function initOwnerDashboard(config) {
       applyDateDisplayMask(display);
     });
 
-    native?.addEventListener("change", () => {
-      if (native.value && isBeforeToday(native.value) && native.value !== (wrap.dataset.initialDateIso || "")) {
-        display.setCustomValidity(t("dateInPast", "Choose today or a future date."));
-        display.reportValidity();
-        setDateFieldValue(wrap, "");
-        return;
-      }
-      setDateFieldValue(wrap, native.value);
-      validateOwnerDateField(wrap);
-      hidden.dispatchEvent(new Event("change", { bubbles: true }));
-    });
+    display.addEventListener("focus", () => closeDatePicker());
 
-    btn?.addEventListener("click", () => {
-      if (native?.showPicker) native.showPicker();
-      else native?.focus();
+    btn?.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      openDatePicker(wrap);
     });
   }
 
@@ -223,12 +362,33 @@ function initOwnerDashboard(config) {
     });
   }
 
+  function syncLinkedEndDate(form) {
+    form?.querySelectorAll("[data-od-date-min-from]").forEach((wrap) => {
+      const minIso = linkedMinIso(wrap);
+      const current = wrap.querySelector(".od-date-value")?.value || "";
+      if (current && current < minIso) setDateFieldValue(wrap, "");
+    });
+  }
+
   initDateFields();
-  refreshNativeDateMins();
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest("#od-date-popover") && !e.target.closest("[data-od-date-field]")) {
+      closeDatePicker();
+    }
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeDatePicker();
+  });
+  window.addEventListener("resize", closeDatePicker);
+  document.addEventListener("scroll", closeDatePicker, true);
 
   document.querySelectorAll(".od-form").forEach(form => {
+    form.addEventListener("change", (e) => {
+      if (e.target.classList.contains("od-date-value")) syncLinkedEndDate(form);
+    });
     form.addEventListener("submit", e => {
       syncAllDateFields(form);
+      closeDatePicker();
       let valid = true;
       let firstInvalidWrap = null;
       form.querySelectorAll("[data-od-date-field]").forEach(wrap => {
@@ -237,6 +397,15 @@ function initOwnerDashboard(config) {
           if (!firstInvalidWrap) firstInvalidWrap = wrap;
         }
       });
+      const startIso = form.querySelector('[name="date"]')?.value || "";
+      const endIso = form.querySelector('[name="end_date"]')?.value || "";
+      if (form.id === "od-blocked-date-form" && startIso && endIso && endIso < startIso) {
+        const endWrap = form.querySelector('[name="end_date"]')?.closest("[data-od-date-field]");
+        const endDisplay = endWrap?.querySelector(".od-date-display");
+        endDisplay?.setCustomValidity(t("endDateBeforeStart", "End date must be on or after the start date."));
+        valid = false;
+        if (!firstInvalidWrap) firstInvalidWrap = endWrap;
+      }
       if (!valid) {
         firstInvalidWrap?.querySelector(".od-date-display")?.reportValidity();
         e.preventDefault();
@@ -254,6 +423,7 @@ function initOwnerDashboard(config) {
   }
 
   function closeModal(id) {
+    closeDatePicker();
     document.getElementById(id)?.classList.remove("open");
     if (!document.querySelector(".od-modal-overlay.open")) {
       document.body.classList.remove("od-modal-open");
@@ -1511,8 +1681,21 @@ function initOwnerDashboard(config) {
     openModal("od-block-modal");
   }
 
+  function openBlockedDateModal() {
+    const form = document.getElementById("od-blocked-date-form");
+    form?.reset();
+    form?.querySelectorAll("[data-od-date-field]").forEach((wrap) => setDateFieldValue(wrap, ""));
+    const reason = form?.querySelector('[name="reason"]');
+    if (reason) reason.value = "";
+    closeDatePicker();
+    openModal("od-blocked-date-modal");
+  }
+
   document.querySelectorAll("[data-add-block]").forEach(btn => btn.addEventListener("click", () => openBlockModal(null)));
-  document.querySelectorAll("[data-add-blocked-date]").forEach(btn => btn.addEventListener("click", () => openModal("od-blocked-date-modal")));
+  document.querySelectorAll("[data-add-blocked-date]").forEach(btn => {
+    btn.dataset.odAddBlockedDateBound = "1";
+    btn.addEventListener("click", () => openBlockedDateModal());
+  });
   document.querySelectorAll("[data-edit-block]").forEach(btn => btn.addEventListener("click", () => {
     const blockId = btn.dataset.editBlock;
     openBlockModal(blockId, {
@@ -2217,7 +2400,7 @@ function initOwnerDashboard(config) {
     document.querySelectorAll("[data-add-blocked-date]").forEach(btn => {
       if (btn.dataset.odAddBlockedDateBound) return;
       btn.dataset.odAddBlockedDateBound = "1";
-      btn.addEventListener("click", () => openModal("od-blocked-date-modal"));
+      btn.addEventListener("click", () => openBlockedDateModal());
     });
     document.querySelectorAll("[data-edit-block]").forEach(btn => {
       if (btn.dataset.odEditBlockBound) return;
@@ -2236,6 +2419,7 @@ function initOwnerDashboard(config) {
       });
     });
     if (window.odBindInlineDeleteForms) window.odBindInlineDeleteForms();
+    initDateFields();
     initToggles();
     syncFixedStartTimesPolicyFields();
     syncEmailVerificationPolicyFields();

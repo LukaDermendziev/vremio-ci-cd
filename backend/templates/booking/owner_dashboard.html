@@ -632,15 +632,23 @@
       <div class="od-grid-2">
         <div class="od-card">
           <div class="od-card-title">{% trans "Blocked dates" %}</div>
-          {% if blocked_dates %}
+          {% if blocked_date_groups %}
             <ul class="od-list">
-              {% for row in blocked_dates %}
+              {% for group in blocked_date_groups %}
                 <li>
-                  <span>{{ row.date|date:"d/m/Y" }}{% if row.reason %} — {{ row.reason }}{% endif %}</span>
+                  <span>
+                    {% if group.start == group.end %}
+                      {{ group.start|date:"d/m/Y" }}
+                    {% else %}
+                      {{ group.start|date:"d/m/Y" }} – {{ group.end|date:"d/m/Y" }}
+                    {% endif %}
+                    {% if group.reason %} — {{ group.reason }}{% endif %}
+                  </span>
                   <form method="post" style="display:inline">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="delete_blocked_date">
-                    <input type="hidden" name="override_id" value="{{ row.id }}">
+                    <input type="hidden" name="override_id" value="{{ group.ids.0 }}">
+                    <input type="hidden" name="override_ids" value="{{ group.ids|join:',' }}">
                     <input type="hidden" name="return_section" value="availability">
                     <button type="submit" class="od-btn od-btn-danger-ghost od-btn-sm" data-delete-blocked-date>{% trans "Delete" %}</button>
                   </form>
@@ -930,6 +938,10 @@ window.OD_I18N = {
   editBlockedTime: "{% filter escapejs %}{% trans "Edit blocked time" %}{% endfilter %}",
   confirmRemoveTimeBlock: "{% filter escapejs %}{% trans "Remove this time block?" %}{% endfilter %}",
   confirmRemoveBlockedDate: "{% filter escapejs %}{% trans "Remove this blocked date?" %}{% endfilter %}",
+  confirmRemoveBlockedDates: "{% filter escapejs %}{% trans "Remove these blocked dates?" %}{% endfilter %}",
+  datePickerPrevMonth: "{% filter escapejs %}{% trans "Previous month" %}{% endfilter %}",
+  datePickerNextMonth: "{% filter escapejs %}{% trans "Next month" %}{% endfilter %}",
+  endDateBeforeStart: "{% filter escapejs %}{% trans "End date must be on or after the start date." %}{% endfilter %}",
   block: "{% filter escapejs %}{% trans "Block" %}{% endfilter %}",
   blocked: "{% filter escapejs %}{% trans "Blocked" %}{% endfilter %}",
   blockedRange: "{% filter escapejs %}{% trans "Blocked %(start)s%(end)s" %}{% endfilter %}",

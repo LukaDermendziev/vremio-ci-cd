@@ -229,7 +229,14 @@
         if (action === "delete_price_item") {
           confirmMsg = t("confirmDeletePriceItem", "Delete this price item?");
         } else if (action === "delete_blocked_date") {
-          confirmMsg = t("confirmRemoveBlockedDate", "Remove this blocked date?");
+          const ids = (form.querySelector('[name="override_ids"]')?.value || "")
+            .split(",")
+            .map((part) => part.trim())
+            .filter(Boolean);
+          confirmMsg =
+            ids.length > 1
+              ? t("confirmRemoveBlockedDates", "Remove these blocked dates?")
+              : t("confirmRemoveBlockedDate", "Remove this blocked date?");
         } else {
           const serviceId = form.querySelector('[name="service_id"]')?.value;
           confirmMsg = serviceDeleteMessage(serviceId);

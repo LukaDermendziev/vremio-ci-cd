@@ -4003,3 +4003,24 @@ msgstr "Додај во Google Calendar"
 
 msgid "Cancelling your booking…"
 msgstr "Се откажува терминот…"
+
+msgid "Blocked %(count)s days."
+msgstr "Блокирани се %(count)s дена."
+
+msgid "End date must be on or after the start date."
+msgstr "Крајниот датум мора да биде на или после почетниот."
+
+msgid "From"
+msgstr "Од"
+
+msgid "Leave the end date empty to block only one day."
+msgstr "Оставете го крајниот датум празен за да се блокира само еден ден."
+
+msgid "Remove these blocked dates?"
+msgstr "Да се отстранат овие блокирани датуми?"
+
+msgid "To"
+msgstr "До"
+
+msgid "You can block at most %(days)s days at once."
+msgstr "Можете да блокирате најмногу %(days)s дена одеднаш."

@@ -75,11 +75,10 @@ class LocalizedDateInput(forms.DateInput):
             '<div class="od-date-input-row">'
             '<input type="text" class="od-input od-date-display" placeholder="{placeholder}" '
             'inputmode="numeric" autocomplete="off" aria-labelledby="{field_id}_label" {req}>'
-            '<button type="button" class="od-date-picker-btn" aria-label="{choose}">'
+            '<button type="button" class="od-date-picker-btn" aria-label="{choose}" aria-haspopup="dialog">'
             '<i class="bi bi-calendar3"></i></button>'
             "</div>"
             '<input type="hidden" name="{name}" id="{field_id}" class="od-date-value" value="{iso}">'
-            '<input type="date" class="od-date-native" tabindex="-1" aria-hidden="true">'
             "</div>",
             placeholder=_("dd/mm/yyyy"),
             choose=_("Choose date"),
@@ -1078,11 +1077,19 @@ class UnavailableTimeBlockForm(forms.ModelForm):
         return instance
 
 
+MAX_BLOCKED_DATE_RANGE_DAYS = 90
+
+
 class BlockedDateForm(forms.Form):
     override_id = forms.IntegerField(required=False, widget=forms.HiddenInput())
     date = forms.DateField(
         widget=LocalizedDateInput(),
-        label=_("Date"),
+        label=_("From"),
+    )
+    end_date = forms.DateField(
+        required=False,
+        widget=LocalizedDateInput(),
+        label=_("To"),
     )
     reason = forms.CharField(
         required=False,
@@ -1090,6 +1097,48 @@ class BlockedDateForm(forms.Form):
         label="Reason",
         widget=forms.TextInput(attrs={"class": "od-input", "placeholder": "Optional reason"}),
     )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        start = cleaned_data.get("date")
+        end = cleaned_data.get("end_date")
+        if start and end and end < start:
+            self.add_error(
+                "end_date",
+                _("End date must be on or after the start date."),
+            )
+        elif start and end:
+            day_count = (end - start).days + 1
+            if day_count > MAX_BLOCKED_DATE_RANGE_DAYS:
+                self.add_error(
+                    "end_date",
+                    _("You can block at most %(days)s days at once.")
+                    % {"days": MAX_BLOCKED_DATE_RANGE_DAYS},
+                )
+        return cleaned_data
+
+    def date_range(self):
+        start = self.cleaned_data["date"]
+        end = self.cleaned_data.get("end_date") or start
+        return start, end
+
+    def apply(self, salon):
+        start, end = self.date_range()
+        reason = self.cleaned_data.get("reason", "")
+        created = []
+        current = start
+        while current <= end:
+            row, _ = DateWorkingHoursOverride.objects.update_or_create(
+                salon=salon,
+                date=current,
+                defaults={
+                    "mode": DateWorkingHoursOverride.Mode.CLOSED,
+                    "reason": reason,
+                },
+            )
+            created.append(row)
+            current += timedelta(days=1)
+        return created
 
 
 class ServiceForm(forms.ModelForm):

@@ -1,5 +1,5 @@
 {% load i18n %}
-<div class="od-date-wrap" data-od-date-field>
+<div class="od-date-wrap" data-od-date-field{% if min_from %} data-od-date-min-from="{{ min_from }}"{% endif %}>
   <div class="od-date-input-row">
     <input
       type="text"
@@ -9,10 +9,9 @@
       autocomplete="off"
       {% if required %}required{% endif %}
     >
-    <button type="button" class="od-date-picker-btn" aria-label="{% trans 'Choose date' %}">
+    <button type="button" class="od-date-picker-btn" aria-label="{% trans 'Choose date' %}" aria-haspopup="dialog">
       <i class="bi bi-calendar3"></i>
     </button>
   </div>
   <input type="hidden" name="{{ name }}" class="od-date-value"{% if id %} id="{{ id }}"{% endif %}{% if value %} value="{{ value }}"{% endif %}>
-  <input type="date" class="od-date-native" tabindex="-1" aria-hidden="true">
 </div>

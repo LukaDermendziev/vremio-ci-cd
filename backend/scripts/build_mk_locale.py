@@ -69,6 +69,7 @@ TRANSLATIONS = {
     "Submit Request": "Испрати барање",
     "Loading times…": "Се вчитуваат термини…",
     "No available times on this date.": "Нема слободни термини на овој датум.",
+    "Fully booked": "Пополнето",
     "There is not enough available time for the selected services together. Please choose another date or book the services separately.": "Нема доволно слободно време за избраните услуги заедно. Ве молиме изберете друг датум или закажете ги услугите одделно.",
     "Select one or more services to continue.": "Изберете една или повеќе услуги за да продолжите.",
     "Could not load times. Please try again.": "Не можеше да се вчитаат термините. Обидете се повторно.",
@@ -856,6 +857,19 @@ TRANSLATIONS = {
     "Blocked dates": "Блокирани датуми",
     "Add blocked date": "Додади блокиран датум",
     "No blocked dates.": "Нема блокирани датуми.",
+    "From": "Од",
+    "To": "До",
+    "Leave the end date empty to block only one day.": (
+        "Оставете го крајниот датум празен за да се блокира само еден ден."
+    ),
+    "End date must be on or after the start date.": (
+        "Крајниот датум мора да биде на или после почетниот."
+    ),
+    "You can block at most %(days)s days at once.": (
+        "Можете да блокирате најмногу %(days)s дена одеднаш."
+    ),
+    "Blocked %(count)s days.": "Блокирани се %(count)s дена.",
+    "Remove these blocked dates?": "Да се отстранат овие блокирани датуми?",
     "Unavailable time blocks": "Недостапни блокови",
     "Add time block": "Додади блок",
     "No unavailable blocks.": "Нема недостапни блокови.",

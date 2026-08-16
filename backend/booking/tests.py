@@ -5197,6 +5197,106 @@ class OwnerDashboardAjaxTests(TestCase):
             self.salon.date_working_hours_overrides.filter(pk=row.id).exists()
         )
 
+    def test_save_blocked_date_without_end_blocks_one_day(self):
+        day = timezone.localdate() + timedelta(days=20)
+        response = self._fetch_post(
+            {
+                "action": "save_blocked_date",
+                "date": day.isoformat(),
+                "end_date": "",
+                "reason": "Trip",
+                "return_section": "availability",
+            }
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["ok"])
+        rows = list(
+            self.salon.date_working_hours_overrides.filter(
+                mode=DateWorkingHoursOverride.Mode.CLOSED
+            )
+        )
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0].date, day)
+        self.assertEqual(rows[0].reason, "Trip")
+
+    def test_save_blocked_date_range_blocks_each_day(self):
+        start = timezone.localdate() + timedelta(days=20)
+        end = start + timedelta(days=4)
+        response = self._fetch_post(
+            {
+                "action": "save_blocked_date",
+                "date": start.isoformat(),
+                "end_date": end.isoformat(),
+                "reason": "Vacation",
+                "return_section": "availability",
+            }
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["ok"])
+        dates = list(
+            self.salon.date_working_hours_overrides.filter(
+                mode=DateWorkingHoursOverride.Mode.CLOSED
+            )
+            .order_by("date")
+            .values_list("date", flat=True)
+        )
+        self.assertEqual(dates, [start + timedelta(days=i) for i in range(5)])
+
+    def test_save_blocked_date_end_before_start_fails(self):
+        start = timezone.localdate() + timedelta(days=20)
+        response = self._fetch_post(
+            {
+                "action": "save_blocked_date",
+                "date": start.isoformat(),
+                "end_date": (start - timedelta(days=1)).isoformat(),
+                "return_section": "availability",
+            }
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(response.json()["ok"])
+        self.assertFalse(self.salon.date_working_hours_overrides.exists())
+
+    def test_delete_blocked_date_range_ids(self):
+        start = timezone.localdate() + timedelta(days=21)
+        ids = []
+        for offset in range(3):
+            row = DateWorkingHoursOverride.objects.create(
+                salon=self.salon,
+                date=start + timedelta(days=offset),
+                mode=DateWorkingHoursOverride.Mode.CLOSED,
+                reason="Away",
+            )
+            ids.append(row.id)
+        response = self._fetch_post(
+            {
+                "action": "delete_blocked_date",
+                "override_id": ids[0],
+                "override_ids": ",".join(str(item) for item in ids),
+                "return_section": "availability",
+            }
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["ok"])
+        self.assertFalse(
+            self.salon.date_working_hours_overrides.filter(pk__in=ids).exists()
+        )
+
+    def test_blocked_date_range_is_grouped_in_list(self):
+        start = timezone.localdate() + timedelta(days=22)
+        ids = []
+        for offset in range(3):
+            row = DateWorkingHoursOverride.objects.create(
+                salon=self.salon,
+                date=start + timedelta(days=offset),
+                mode=DateWorkingHoursOverride.Mode.CLOSED,
+                reason="Away",
+            )
+            ids.append(row.id)
+        response = self.client.get(reverse("booking:owner_dashboard"))
+        self.assertContains(response, start.strftime("%d/%m/%Y"))
+        self.assertContains(response, (start + timedelta(days=2)).strftime("%d/%m/%Y"))
+        self.assertContains(response, ",".join(str(item) for item in ids))
+
     def test_reorder_price_items_returns_json(self):
         item = ServicePriceItem.objects.create(
             service=self.service,

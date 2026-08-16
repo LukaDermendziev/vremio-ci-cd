@@ -46,7 +46,17 @@
       <input type="hidden" name="action" value="save_blocked_date">
       <input type="hidden" name="return_section" value="availability">
       <div class="od-form-grid">
-        <div class="od-field"><label>{% trans "Date" %}</label>{% include "booking/partials/od_date_input.html" with name="date" required=True %}</div>
+        <div class="od-form-grid od-form-grid-2">
+          <div class="od-field">
+            <label>{% trans "From" %}</label>
+            {% include "booking/partials/od_date_input.html" with name="date" required=True %}
+          </div>
+          <div class="od-field">
+            <label>{% trans "To" %}</label>
+            {% include "booking/partials/od_date_input.html" with name="end_date" required=False min_from="date" %}
+          </div>
+        </div>
+        <p class="od-field-hint">{% trans "Leave the end date empty to block only one day." %}</p>
         <div class="od-field"><label>{% trans "Reason (optional)" %}</label><input type="text" name="reason" class="od-input"></div>
       </div>
       <div class="od-modal-footer">
