@@ -43,15 +43,19 @@ jobs:
       PGSSLMODE: require
 
     steps:
-      - name: Install latest PostgreSQL client
+      - name: Install PostgreSQL client
+        env:
+          # Must be >= the Railway server's major version. Server is currently 18.
+          # Bump this if you ever upgrade the database to a newer major (e.g. 19).
+          PG_MAJOR: "18"
         run: |
           set -euo pipefail
           sudo apt-get update
           sudo apt-get install -y postgresql-common
-          # Sets up the official PGDG apt repo and installs the newest client,
-          # which can dump any equal-or-older server version.
+          # Set up the official PGDG apt repo, then install the matching major client.
+          # (Ubuntu's default "postgresql-client" metapackage lags behind, so we pin.)
           sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
-          sudo apt-get install -y postgresql-client
+          sudo apt-get install -y "postgresql-client-${PG_MAJOR}"
           pg_dump --version
 
       - name: Dump database
