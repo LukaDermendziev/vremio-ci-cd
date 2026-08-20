@@ -5702,6 +5702,9 @@ class OwnerStatisticsTests(TestCase):
 
         self.assertIsNotNone(month["busiest_weekday"])
         self.assertEqual(month["busiest_weekday"]["count"], 3)
+        self.assertIn("note", month["busiest_weekday"])
+        # Full weekday name in the sentence (e.g. Wednesday), not the short chart label (Wed).
+        self.assertGreater(len(month["busiest_weekday"]["label"]), 3)
 
     def test_statistics_empty_salon_has_no_data(self):
         stats = get_owner_statistics(self.salon)
@@ -5732,3 +5735,18 @@ class OwnerStatisticsTests(TestCase):
         self.assertEqual(stats["ranges"]["all"]["revenue"], 3000)
         self.assertEqual(stats["ranges"]["month"]["completed"], 1)
         self.assertEqual(stats["ranges"]["all"]["completed"], 2)
+
+    def test_busiest_day_note_is_translated_with_full_weekday(self):
+        self._booking(
+            Booking.Status.COMPLETED, Booking.Source.ONLINE, [("Manicure", "1000")]
+        )
+        with override("mk"):
+            stats = get_owner_statistics(self.salon)
+        note = stats["ranges"]["month"]["busiest_weekday"]["note"]
+        self.assertTrue(
+            note.startswith("Вашиот најзафатен ден е "),
+            msg=note,
+        )
+        self.assertFalse(note.startswith("Your busiest day"))
+        # Full Macedonian weekday, not the short chart form like "Сре".
+        self.assertNotIn(" Сре.", note)

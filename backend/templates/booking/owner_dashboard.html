@@ -278,10 +278,9 @@
               <div class="od-card-title"><i class="bi bi-calendar-week"></i> {% trans "Busiest days" %}</div>
             </div>
             <div class="od-chart-wrap"><canvas id="od-chart-weekday" height="220"></canvas></div>
-            <p class="od-chart-note" data-stats-busiest{% if not statistics.ranges.month.busiest_weekday %} hidden{% endif %}
-               data-template="{% trans 'Your busiest day is %(day)s.' %}">
+            <p class="od-chart-note" data-stats-busiest{% if not statistics.ranges.month.busiest_weekday %} hidden{% endif %}>
               <i class="bi bi-info-circle"></i>
-              <span data-stats-busiest-text>{% if statistics.ranges.month.busiest_weekday %}{% blocktrans with day=statistics.ranges.month.busiest_weekday.label %}Your busiest day is {{ day }}.{% endblocktrans %}{% endif %}</span>
+              <span data-stats-busiest-text>{% if statistics.ranges.month.busiest_weekday %}{{ statistics.ranges.month.busiest_weekday.note }}{% endif %}</span>
             </p>
           </div>
           <div class="od-card">

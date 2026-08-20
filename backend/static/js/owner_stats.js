@@ -232,8 +232,7 @@
       note.hidden = true;
       return;
     }
-    var template = note.getAttribute("data-template") || "%(day)s";
-    setText(text, template.replace("%(day)s", data.busiest_weekday.label));
+    setText(text, data.busiest_weekday.note || data.busiest_weekday.label);
     note.hidden = false;
   }
 

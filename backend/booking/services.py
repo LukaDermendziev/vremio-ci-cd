@@ -1331,8 +1331,18 @@ def _month_keys_inclusive(start_date, end_date):
 
 
 def _weekday_labels_for(today):
+    """Return (short_labels, full_labels) for Mon–Sun in the active locale.
+
+    Short names (``D``) fit the weekday chart; full names (``l``) are used in
+    the “busiest day” sentence so Macedonian shows Среда instead of Сре.
+    """
     this_monday = today - timedelta(days=today.weekday())
-    return [date_format(this_monday + timedelta(days=i), "D") for i in range(7)]
+    short, full = [], []
+    for i in range(7):
+        day = this_monday + timedelta(days=i)
+        short.append(date_format(day, "D"))
+        full.append(date_format(day, "l").capitalize())
+    return short, full
 
 
 def _booking_line_revenue(booking):
@@ -1341,7 +1351,7 @@ def _booking_line_revenue(booking):
     )
 
 
-def _stats_for_bookings(bookings, weekday_labels, trend_spec):
+def _stats_for_bookings(bookings, weekday_labels, weekday_full_labels, trend_spec):
     """Build one range payload from an in-memory booking list.
 
     ``trend_spec`` is ``("day", [date, ...])`` or ``("month", [(year, month), ...])``.
@@ -1423,8 +1433,10 @@ def _stats_for_bookings(bookings, weekday_labels, trend_spec):
     if any(weekday_counts):
         busiest_index = max(range(7), key=lambda i: weekday_counts[i])
         busiest_weekday = {
-            "label": weekday_labels[busiest_index],
+            "label": weekday_full_labels[busiest_index],
             "count": weekday_counts[busiest_index],
+            "note": _("Your busiest day is %(day)s.")
+            % {"day": weekday_full_labels[busiest_index]},
         }
 
     return {
@@ -1455,7 +1467,7 @@ def get_owner_statistics(salon, months=6):
     """
     Status = Booking.Status
     today = timezone.localdate()
-    weekday_labels = _weekday_labels_for(today)
+    weekday_labels, weekday_full_labels = _weekday_labels_for(today)
 
     bookings = list(
         salon.bookings.exclude(status=Status.UNVERIFIED)
@@ -1488,13 +1500,13 @@ def get_owner_statistics(salon, months=6):
 
     ranges = {
         "month": _stats_for_bookings(
-            month_bookings, weekday_labels, ("day", month_days)
+            month_bookings, weekday_labels, weekday_full_labels, ("day", month_days)
         ),
         "year": _stats_for_bookings(
-            year_bookings, weekday_labels, ("month", year_months)
+            year_bookings, weekday_labels, weekday_full_labels, ("month", year_months)
         ),
         "all": _stats_for_bookings(
-            all_bookings, weekday_labels, ("month", all_months)
+            all_bookings, weekday_labels, weekday_full_labels, ("month", all_months)
         ),
     }
     month_stats = ranges["month"]
