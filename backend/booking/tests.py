@@ -5314,6 +5314,54 @@ class OwnerDashboardAjaxTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.json()["ok"])
 
+    def test_grouped_price_items_render_group_move_arrows(self):
+        ServicePriceItem.objects.create(
+            service=self.service,
+            name="Short",
+            price_display="500",
+            group="Gel",
+            sort_order=0,
+        )
+        ServicePriceItem.objects.create(
+            service=self.service,
+            name="Long",
+            price_display="900",
+            group="Acrylic",
+            sort_order=1,
+        )
+        response = self.client.get(reverse("booking:owner_dashboard"))
+        self.assertContains(response, 'data-group-move="up"')
+        self.assertContains(response, 'data-group-move="down"')
+        self.assertContains(response, "od-price-group-head")
+
+    def test_reorder_moves_group_block_and_persists_order(self):
+        gel_a = ServicePriceItem.objects.create(
+            service=self.service, name="Gel A", price_display="500", group="Gel", sort_order=0
+        )
+        gel_b = ServicePriceItem.objects.create(
+            service=self.service, name="Gel B", price_display="550", group="Gel", sort_order=1
+        )
+        acr_a = ServicePriceItem.objects.create(
+            service=self.service, name="Acr A", price_display="900", group="Acrylic", sort_order=2
+        )
+        # Simulate the front-end moving the Acrylic group above the Gel group:
+        # the whole Acrylic block comes first, Gel block after.
+        new_order = [acr_a.id, gel_a.id, gel_b.id]
+        response = self._fetch_post(
+            {
+                "action": "reorder_price_items",
+                "item_ids": ",".join(str(i) for i in new_order),
+                "return_section": "services",
+            }
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["ok"])
+        acr_a.refresh_from_db()
+        gel_a.refresh_from_db()
+        gel_b.refresh_from_db()
+        self.assertLess(acr_a.sort_order, gel_a.sort_order)
+        self.assertLess(gel_a.sort_order, gel_b.sort_order)
+
     def test_manage_booking_cancel_fetch_returns_json(self):
         customer = Customer.objects.create(
             salon=self.salon,

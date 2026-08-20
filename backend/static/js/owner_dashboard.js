@@ -1378,6 +1378,104 @@ function initOwnerDashboard(config) {
     setTimeout(() => priceItemName?.focus(), 120);
   }
 
+  // Group identity of a price row: named groups share their header's group-id;
+  // ungrouped items share a single "__ungrouped__" key. Used to keep a group's
+  // items contiguous (drag stays within a group; whole groups move via arrows).
+  function priceGroupKey(row) {
+    if (row.classList.contains("od-price-group-item")) {
+      let prev = row.previousElementSibling;
+      while (prev && !prev.classList.contains("od-price-group-row")) {
+        prev = prev.previousElementSibling;
+      }
+      return prev ? prev.dataset.groupId : "__ungrouped__";
+    }
+    return "__ungrouped__";
+  }
+
+  // Split a price tbody into ordered blocks (named group = header + its items,
+  // or a run of consecutive ungrouped items).
+  function buildPriceBlocks(tbody) {
+    const blocks = [];
+    let current = null;
+    [...tbody.children].forEach(row => {
+      if (row.classList.contains("od-price-group-row")) {
+        current = { type: "named", key: row.dataset.groupId, rows: [row] };
+        blocks.push(current);
+      } else if (row.classList.contains("od-price-drag-row")) {
+        const grouped = row.classList.contains("od-price-group-item");
+        if (grouped && current && current.type === "named") {
+          current.rows.push(row);
+        } else {
+          if (!current || current.type !== "ungrouped") {
+            current = { type: "ungrouped", key: "__ungrouped__", rows: [] };
+            blocks.push(current);
+          }
+          current.rows.push(row);
+        }
+      }
+    });
+    return blocks;
+  }
+
+  function persistPriceOrder(tbody) {
+    const orderedIds = [...tbody.querySelectorAll(".od-price-drag-row")]
+      .map(r => r.dataset.itemId).join(",");
+    const csrf = document.querySelector("[name=csrfmiddlewaretoken]")?.value;
+    return fetch(window.location.pathname, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-CSRFToken": csrf,
+        "X-Requested-With": "fetch",
+      },
+      body: `action=reorder_price_items&item_ids=${encodeURIComponent(orderedIds)}&return_section=services`,
+    }).then(async (resp) => {
+      let data = null;
+      try { data = await resp.json(); } catch (_) {}
+      if (window.OwnerAjax) {
+        if (resp.ok) {
+          const okMsg = (data?.messages || []).find(m => m[0] === "success");
+          if (okMsg) window.OwnerAjax.showToast(okMsg[1], "success");
+        } else {
+          const errMsg = (data?.messages || []).find(m => m[0] === "error");
+          window.OwnerAjax.showToast(errMsg ? errMsg[1] : t("somethingWentWrong", "Something went wrong."), "error");
+        }
+      }
+      return resp.ok;
+    });
+  }
+
+  // Enable/disable a group's up/down arrows based on its position among blocks.
+  function updateGroupArrowStates(tbody) {
+    const blocks = buildPriceBlocks(tbody);
+    blocks.forEach((block, index) => {
+      if (block.type !== "named") return;
+      const header = block.rows[0];
+      const up = header.querySelector('[data-group-move="up"]');
+      const down = header.querySelector('[data-group-move="down"]');
+      if (up) up.disabled = index === 0;
+      if (down) down.disabled = index === blocks.length - 1;
+    });
+  }
+
+  function movePriceGroup(header, direction) {
+    const tbody = header.closest("tbody");
+    if (!tbody) return;
+    const blocks = buildPriceBlocks(tbody);
+    const index = blocks.findIndex(
+      b => b.type === "named" && b.rows[0] === header
+    );
+    if (index === -1) return;
+    const swapWith = direction === "up" ? index - 1 : index + 1;
+    if (swapWith < 0 || swapWith >= blocks.length) return;
+    [blocks[index], blocks[swapWith]] = [blocks[swapWith], blocks[index]];
+    blocks.forEach(block => block.rows.forEach(row => tbody.appendChild(row)));
+    header.classList.add("od-price-group-moved");
+    setTimeout(() => header.classList.remove("od-price-group-moved"), 500);
+    updateGroupArrowStates(tbody);
+    persistPriceOrder(tbody);
+  }
+
   function bindPriceListInteractions() {
     document.querySelectorAll("[data-manage-prices]").forEach(btn => {
       if (btn.dataset.odManagePricesBound) return;
@@ -1439,13 +1537,17 @@ function initOwnerDashboard(config) {
       e.dataTransfer.dropEffect = "move";
       const row = e.target.closest(".od-price-drag-row");
       tbody.querySelectorAll(".od-drag-over").forEach(r => r.classList.remove("od-drag-over"));
-      if (row && row !== dragSrc) row.classList.add("od-drag-over");
+      if (row && row !== dragSrc && dragSrc && priceGroupKey(row) === priceGroupKey(dragSrc)) {
+        row.classList.add("od-drag-over");
+      }
     });
 
     tbody.addEventListener("drop", e => {
       e.preventDefault();
       const target = e.target.closest(".od-price-drag-row");
       if (!target || target === dragSrc || !dragSrc) return;
+      // Keep groups contiguous: only reorder within the same group.
+      if (priceGroupKey(target) !== priceGroupKey(dragSrc)) return;
       // Re-insert dragged row before or after target
       const allRows = [...tbody.querySelectorAll(".od-price-drag-row")];
       const srcIdx = allRows.indexOf(dragSrc);
@@ -1544,6 +1646,7 @@ function initOwnerDashboard(config) {
         let over = null;
         for (const r of rows) {
           if (r === touchDragEl) continue;
+          if (priceGroupKey(r) !== priceGroupKey(touchDragEl)) continue;
           const rect = r.getBoundingClientRect();
           if (touch.clientY >= rect.top && touch.clientY <= rect.bottom) { over = r; break; }
         }
@@ -1586,6 +1689,18 @@ function initOwnerDashboard(config) {
         }
       });
     });
+
+    document.querySelectorAll("[data-group-move]").forEach(btn => {
+      if (btn.dataset.odGroupMoveBound) return;
+      btn.dataset.odGroupMoveBound = "1";
+      btn.addEventListener("click", e => {
+        e.stopPropagation();
+        const header = btn.closest("tr.od-price-group-row");
+        if (header) movePriceGroup(header, btn.dataset.groupMove);
+      });
+    });
+
+    document.querySelectorAll(".od-svc-price-body tbody").forEach(updateGroupArrowStates);
 
     document.querySelectorAll("[data-price-toggle]").forEach(btn => {
       if (btn.dataset.odPriceToggleBound) return;

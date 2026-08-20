@@ -403,6 +403,9 @@ msgstr "блокира корисник кој ја злоупотребува �
 msgid "Blocked"
 msgstr "Блокирано"
 
+msgid "Blocked %(count)s days."
+msgstr "Блокирани се %(count)s дена."
+
 msgid "Blocked %(start)s%(end)s"
 msgstr "Блокирано %(start)s%(end)s"
 
@@ -1019,9 +1022,6 @@ msgstr "Трајно избриши го терминот?"
 msgid "Delete this customer?"
 msgstr "Избриши го клиентот?"
 
-msgid "Different person"
-msgstr "Друга личност"
-
 msgid "Delete this reference photo?"
 msgstr "Дали да се избрише референтната слика?"
 
@@ -1170,6 +1170,9 @@ msgstr "Honeypot заштита"
 msgid "End"
 msgstr "Крај"
 
+msgid "End date must be on or after the start date."
+msgstr "Крајниот датум мора да биде на или после почетниот."
+
 msgid "Enter accurate contact details so the business can reach you."
 msgstr "Внесете точни контакт податоци за да може бизнисот да ве контактира."
 
@@ -1274,8 +1277,14 @@ msgstr "Пе"
 msgid "Friday"
 msgstr "Петок"
 
+msgid "From"
+msgstr "Од"
+
 msgid "Full name"
 msgstr "Име и презиме"
+
+msgid "Fully booked"
+msgstr "Пополнето"
 
 msgid "Gallery"
 msgstr "Галерија"
@@ -1675,12 +1684,6 @@ msgstr "Невалиден формат на слика. Дозволени се
 msgid "Invalid username or password."
 msgstr "Невалидно корисничко име или лозинка."
 
-msgid ""
-"Too many failed sign-in attempts. Please wait a few minutes and try again."
-msgstr ""
-"Премногу неуспешни обиди за најава. Ве молиме почекајте неколку минути и "
-"обидете се повторно."
-
 msgid "Is my booking confirmed immediately?"
 msgstr "Дали терминот се потврдува веднаш?"
 
@@ -1723,6 +1726,9 @@ msgid ""
 msgstr ""
 "Оставете празно за да се прикаже истото време на затворање како работното "
 "време. Достапноста за резервации не се менува."
+
+msgid "Leave the end date empty to block only one day."
+msgstr "Оставете го крајниот датум празен за да се блокира само еден ден."
 
 msgid "Leave your name and Instagram or phone. We’ll get back to you."
 msgstr ""
@@ -1845,17 +1851,17 @@ msgstr "Месечна консултација за подобрување на
 msgid "More"
 msgstr "Повеќе"
 
-msgid "Less"
-msgstr "Помалку"
-
-msgid "Fully booked"
-msgstr "Пополнето"
-
 msgid "More details"
 msgstr "Повеќе детали"
 
 msgid "Most popular"
 msgstr "Најпопуларен"
+
+msgid "Move group down"
+msgstr "Премести ја групата надолу"
+
+msgid "Move group up"
+msgstr "Премести ја групата нагоре"
 
 msgid ""
 "Nail salons, beauty studios, barbershops, trainers, and small service "
@@ -2040,21 +2046,6 @@ msgstr "Отвори целосна големина"
 
 msgid "Open now"
 msgstr "Отворено сега"
-
-msgid "Open in Maps"
-msgstr "Отвори во Maps"
-
-msgid "Find us"
-msgstr "Најдете нѐ"
-
-msgid "Location"
-msgstr "Локација"
-
-msgid "Location with Open in Maps"
-msgstr "Локација со Отвори во Maps"
-
-msgid "View location on the map"
-msgstr "Погледнете ја локацијата на мапа"
 
 msgid "Opening hours"
 msgstr "Работно време"
@@ -2247,33 +2238,11 @@ msgstr "Внесете го вашето Instagram корисничко име."
 msgid "Please enter your email address."
 msgstr "Внесете ја вашата email адреса."
 
-msgid "Did you mean %(suggestion)s? Please check your email address."
-msgstr "Дали мислевте на %(suggestion)s? Проверете ја email адресата."
-
-msgid "Did you mean"
-msgstr "Дали мислевте на"
-
-msgid "Please check your email address."
-msgstr "Проверете ја email адресата."
-
-msgid "Use"
-msgstr "Користи"
-
-msgid "Keep my email"
-msgstr "Задржи ја мојата email"
-
 msgid "Please enter your full name."
 msgstr "Внесете го вашето име и презиме."
 
 msgid "Please enter your phone number."
 msgstr "Внесете го вашиот телефонски број."
-
-msgid ""
-"Enter a valid Macedonian mobile number, for example 070 123 456 or +389 70 "
-"123 456."
-msgstr ""
-"Внесете важечки македонски мобилен број, на пример 070 123 456 или +389 70 "
-"123 456."
 
 msgid "Please upload a reference photo for this service."
 msgstr "Прикачете референтна фотографија за оваа услуга."
@@ -2437,6 +2406,9 @@ msgstr "Потсетник: вашиот претстоен термин"
 msgid "Remove"
 msgstr "Отстрани"
 
+msgid "Remove these blocked dates?"
+msgstr "Да се отстранат овие блокирани датуми?"
+
 msgid "Remove this blocked date?"
 msgstr "Отстрани го блокираниот датум?"
 
@@ -2590,9 +2562,6 @@ msgstr "Vremio — Резервирај онлајн"
 
 msgid "Salon rules"
 msgstr "Правила на салонот"
-
-msgid "Same client?"
-msgstr "Ист клиент?"
 
 msgid "Salon rules (English)"
 msgstr "Правила на салонот (англиски)"
@@ -2982,19 +2951,6 @@ msgstr ""
 msgid "The time %(time)s is no longer available. Please select another slot."
 msgstr "Терминот %(time)s веќе не е достапен. Изберете друг."
 
-msgid ""
-"This phone belongs to %(existing_name)s. Confirm it is the same client, or "
-"use a different phone."
-msgstr ""
-"Овој телефон припаѓа на %(existing_name)s. Потврдете дека е ист клиент, или "
-"користете друг телефон."
-
-msgid ""
-"This phone belongs to %(existing)s. You entered %(typed)s. Is this the same "
-"client?"
-msgstr ""
-"Овој телефон припаѓа на %(existing)s. Внесовте %(typed)s. Дали е ист клиент?"
-
 msgid "The user agrees to:"
 msgstr "Корисникот се согласува дека ќе:"
 
@@ -3097,15 +3053,6 @@ msgid ""
 "This is a reminder that you have an appointment on %(date)s at %(time)s."
 msgstr "Ова е потсетник дека имате термин на %(date)s во %(time)s."
 
-msgid ""
-"Hello %(name)s,\n"
-"\n"
-"This is a reminder that you have an appointment on %(date)s at %(time)s."
-msgstr ""
-"Здраво %(name)s,\n"
-"\n"
-"Ова е потсетник дека имате термин на %(date)s во %(time)s."
-
 msgid "This is a request only — not confirmed until the salon approves it."
 msgstr "Ова е само барање — не е потврдено додека салонот не одобри."
 
@@ -3154,6 +3101,9 @@ msgstr "Временскиот блок е додаден."
 
 msgid "Time block updated."
 msgstr "Временскиот блок е ажуриран."
+
+msgid "To"
+msgstr "До"
 
 msgid "Today"
 msgstr "Денес"
@@ -3253,9 +3203,6 @@ msgstr "Користете ги податоците од клиенти сам�
 msgid "Use dd/mm/yyyy"
 msgstr "Користете дд/мм/гггг"
 
-msgid "Use a different phone number for a different person."
-msgstr "Користете друг телефонски број за друга личност."
-
 msgid "Use fixed start times"
 msgstr "Фиксни почетни термини"
 
@@ -3293,7 +3240,7 @@ msgid "View & Book"
 msgstr "Погледни и резервирај"
 
 msgid "View / manage booking"
-msgstr "Погледни / управувај со терминот"
+msgstr "Преглед / управување со термин"
 
 msgid "View all"
 msgstr "Види ги сите"
@@ -3568,9 +3515,6 @@ msgstr "Работното време е зачувано."
 msgid "Yes, cancel appointment"
 msgstr "Да, откажи термин"
 
-msgid "Yes, same client"
-msgstr "Да, ист клиент"
-
 msgid ""
 "Yes. Customers can request appointments anytime while you stay in control of"
 " approvals and availability."
@@ -3652,6 +3596,9 @@ msgid ""
 msgstr ""
 "Вие сте одговорни за вистинската услуга, цените и комуникацијата со "
 "клиентите."
+
+msgid "You can block at most %(days)s days at once."
+msgstr "Можете да блокирате најмногу %(days)s дена одеднаш."
 
 msgid "You can cancel this appointment online."
 msgstr "Можете да го откажете терминот онлајн."
@@ -3903,124 +3850,3 @@ msgstr "— Достапно"
 
 msgid "— Occupied"
 msgstr "— Зафатено"
-
-msgid "Please choose a start time."
-msgstr "Ве молиме изберете почетно време."
-
-msgid "Resend confirmation email"
-msgstr "Повторно испрати потврда по е-пошта"
-
-msgid "Confirmation email sent to customer."
-msgstr "Потврдата е испратена на клиентот по е-пошта."
-
-msgid "This customer has no email address on file."
-msgstr "Овој клиент нема зачувана е-пошта."
-
-msgid "Could not send the email. Please try again later."
-msgstr "Е-поштата не можеше да се испрати. Обидете се повторно подоцна."
-
-msgid "Loading…"
-msgstr "Се вчитува…"
-
-msgid "Opening booking…"
-msgstr "Се отвора закажувањето…"
-
-msgid "Sending your request…"
-msgstr "Се испраќа барањето…"
-
-msgid "Page not found"
-msgstr "Страницата не е пронајдена"
-
-msgid "Something went wrong"
-msgstr "Нешто тргна наопаку"
-
-msgid "Go to homepage"
-msgstr "На почетна"
-
-msgid "Try again"
-msgstr "Обиди се повторно"
-
-msgid ""
-"This page does not exist or the link may be outdated. You can go back home "
-"and continue from there."
-msgstr ""
-"Оваа страница не постои или линкот е застарен. Можете да се вратите на "
-"почетната и да продолжите од таму."
-
-msgid ""
-"We could not complete this request. Please try again in a moment. If the "
-"problem continues, contact the salon or try later."
-msgstr ""
-"Не можевме да го завршиме ова барање. Обидете се повторно за миг. Ако "
-"проблемот продолжи, контактирајте го салонот или обидете се подоцна."
-
-msgid "Optional extras"
-msgstr "Опционални додатоци"
-
-msgid "Choose a main service above, then add extras if you want."
-msgstr ""
-"Изберете главна услуга погоре, потоа доколку сакате додадете додатоци."
-
-msgid "Add-on (optional extra)"
-msgstr "Додаток (опционално)"
-
-msgid ""
-"Shown after the customer picks a main service. Leave off for normal "
-"standalone options."
-msgstr ""
-"Се прикажува откако клиентот ќе избере главна услуга. Оставете исклучено за "
-"обични самостојни опции."
-
-msgid "Add-on"
-msgstr "Додаток"
-
-msgid "Please choose a main service option."
-msgstr "Ве молиме изберете главна услуга."
-
-msgid "Choose a main service before adding extras."
-msgstr "Изберете главна услуга пред да додадете додатоци."
-
-msgid "Add to calendar"
-msgstr "Додај во календар"
-
-msgid "Save this confirmed appointment to your phone calendar."
-msgstr "Зачувајте го потврдениот термин во календарот на телефонот."
-
-msgid "Google Calendar"
-msgstr "Google Calendar"
-
-msgid "Apple / Samsung / other"
-msgstr "Apple / Samsung / друго"
-
-msgid "Add to Google Calendar:"
-msgstr "Додај во Google Calendar:"
-
-msgid "Apple / Samsung / other calendar:"
-msgstr "Apple / Samsung / друг календар:"
-
-msgid "Add to Google Calendar"
-msgstr "Додај во Google Calendar"
-
-msgid "Cancelling your booking…"
-msgstr "Се откажува терминот…"
-
-msgid "Blocked %(count)s days."
-msgstr "Блокирани се %(count)s дена."
-
-msgid "End date must be on or after the start date."
-msgstr "Крајниот датум мора да биде на или после почетниот."
-
-msgid "From"
-msgstr "Од"
-
-msgid "Leave the end date empty to block only one day."
-msgstr "Оставете го крајниот датум празен за да се блокира само еден ден."
-
-msgid "Remove these blocked dates?"
-msgstr "Да се отстранат овие блокирани датуми?"
-
-msgid "To"
-msgstr "До"
-
-msgid "You can block at most %(days)s days at once."
-msgstr "Можете да блокирате најмногу %(days)s дена одеднаш."

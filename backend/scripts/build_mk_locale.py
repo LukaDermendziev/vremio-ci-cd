@@ -1432,6 +1432,9 @@ TRANSLATIONS = {
     "Delete inappropriate photos": "избрише несоодветна фотографија",
     "Block users who misuse the platform": "блокира корисник кој ја злоупотребува платформата",
     "Decline future requests if abuse is confirmed": "одбие идни барања доколку се утврди злоупотреба",
+    # owner dashboard: move price groups
+    "Move group up": "Премести ја групата нагоре",
+    "Move group down": "Премести ја групата надолу",
 }
 
 

@@ -499,12 +499,18 @@
                           <tr class="od-price-group-row" data-group-id="{{ service.id }}-{{ forloop.counter }}">
                             <td></td>
                             <td colspan="5">
-                              <button type="button" class="od-price-group-toggle"
-                                      data-toggle-group="{{ service.id }}-{{ forloop.counter }}">
-                                <i class="bi bi-chevron-down od-group-chevron"></i>
-                                <span class="od-price-group-name">{{ grp.grouper }}</span>
-                                <span class="od-price-group-count">{{ grp.list|length }}</span>
-                              </button>
+                              <div class="od-price-group-head">
+                                <button type="button" class="od-price-group-toggle"
+                                        data-toggle-group="{{ service.id }}-{{ forloop.counter }}">
+                                  <i class="bi bi-chevron-down od-group-chevron"></i>
+                                  <span class="od-price-group-name">{{ grp.grouper }}</span>
+                                  <span class="od-price-group-count">{{ grp.list|length }}</span>
+                                </button>
+                                <span class="od-price-group-move">
+                                  <button type="button" class="od-group-move-btn" data-group-move="up" aria-label="{% trans 'Move group up' %}" title="{% trans 'Move group up' %}"><i class="bi bi-arrow-up"></i></button>
+                                  <button type="button" class="od-group-move-btn" data-group-move="down" aria-label="{% trans 'Move group down' %}" title="{% trans 'Move group down' %}"><i class="bi bi-arrow-down"></i></button>
+                                </span>
+                              </div>
                             </td>
                           </tr>
                         {% endif %}
