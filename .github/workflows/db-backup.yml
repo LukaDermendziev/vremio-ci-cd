@@ -1,0 +1,104 @@
+name: DB Backup
+
+# Weekly off-site backup of the production Postgres database.
+# Dumps via pg_dump and uploads the compressed dump to a Cloudflare R2 bucket.
+# Runs on GitHub's infrastructure so backups keep working even if Railway is down.
+#
+# Required repository secrets (Settings -> Secrets and variables -> Actions):
+#   BACKUP_DATABASE_URL   Railway DATABASE_PUBLIC_URL (full public connection string)
+#   R2_ENDPOINT           https://<ACCOUNT_ID>.r2.cloudflarestorage.com
+#   R2_BUCKET             e.g. vremio-db-backups
+#   R2_ACCESS_KEY_ID      R2 API token access key id
+#   R2_SECRET_ACCESS_KEY  R2 API token secret access key
+
+on:
+  schedule:
+    # 03:00 UTC every Sunday. Adjust the cron if you want a different day/time.
+    - cron: "0 3 * * 0"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: db-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    name: Dump and upload
+    runs-on: ubuntu-latest
+    env:
+      # How many most-recent backups to keep in the bucket. Older ones are pruned.
+      KEEP_BACKUPS: "12"
+      # R2 is S3-compatible but uses a virtual "auto" region.
+      AWS_DEFAULT_REGION: auto
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      # Cloudflare R2 rejects the newer AWS CLI default integrity checksums, so
+      # only send/validate them when the operation actually requires it.
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+      # pg_dump reads this for the TLS mode; Railway's public endpoint needs TLS.
+      PGSSLMODE: require
+
+    steps:
+      - name: Install latest PostgreSQL client
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y postgresql-common
+          # Sets up the official PGDG apt repo and installs the newest client,
+          # which can dump any equal-or-older server version.
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y postgresql-client
+          pg_dump --version
+
+      - name: Dump database
+        env:
+          BACKUP_DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${BACKUP_DATABASE_URL}" ]; then
+            echo "BACKUP_DATABASE_URL secret is not set" >&2
+            exit 1
+          fi
+          FILE="vremio-$(date -u +%Y%m%d-%H%M%S).dump"
+          echo "FILE=${FILE}" >> "$GITHUB_ENV"
+          # -Fc  custom format (compressed, restorable with pg_restore)
+          # -Z 9 maximum compression
+          # --no-owner / --no-acl  clean restore into a fresh DB (e.g. new Railway PG)
+          pg_dump "${BACKUP_DATABASE_URL}" \
+            -Fc -Z 9 --no-owner --no-acl \
+            -f "${FILE}"
+          ls -lh "${FILE}"
+
+      - name: Upload to Cloudflare R2
+        run: |
+          set -euo pipefail
+          aws s3 cp "${FILE}" "s3://${{ secrets.R2_BUCKET }}/${FILE}" \
+            --endpoint-url "${{ secrets.R2_ENDPOINT }}"
+          echo "Uploaded ${FILE} to R2 bucket ${{ secrets.R2_BUCKET }}"
+
+      - name: Prune old backups
+        run: |
+          set -euo pipefail
+          # Timestamped names sort chronologically, so lexical sort == oldest first.
+          # Keep the newest $KEEP_BACKUPS and delete everything older.
+          mapfile -t OLD < <(
+            aws s3 ls "s3://${{ secrets.R2_BUCKET }}/" \
+              --endpoint-url "${{ secrets.R2_ENDPOINT }}" \
+              | awk '{print $4}' \
+              | grep -E '^vremio-.*\.dump$' \
+              | sort \
+              | head -n "-${KEEP_BACKUPS}" || true
+          )
+          if [ "${#OLD[@]}" -eq 0 ]; then
+            echo "Nothing to prune (<= ${KEEP_BACKUPS} backups)."
+          else
+            for f in "${OLD[@]}"; do
+              echo "Pruning old backup: ${f}"
+              aws s3 rm "s3://${{ secrets.R2_BUCKET }}/${f}" \
+                --endpoint-url "${{ secrets.R2_ENDPOINT }}"
+            done
+          fi
