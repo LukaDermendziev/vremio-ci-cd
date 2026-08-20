@@ -404,9 +404,6 @@ msgstr "Block users who misuse the platform"
 msgid "Blocked"
 msgstr "Blocked"
 
-msgid "Blocked %(count)s days."
-msgstr "Blocked %(count)s days."
-
 msgid "Blocked %(start)s%(end)s"
 msgstr "Blocked %(start)s%(end)s"
 
@@ -1015,6 +1012,9 @@ msgstr "Delete this booking permanently?"
 msgid "Delete this customer?"
 msgstr "Delete this customer?"
 
+msgid "Different person"
+msgstr "Different person"
+
 msgid "Delete this reference photo?"
 msgstr "Delete this reference photo?"
 
@@ -1162,9 +1162,6 @@ msgstr "Enable honeypot protection"
 msgid "End"
 msgstr "End"
 
-msgid "End date must be on or after the start date."
-msgstr "End date must be on or after the start date."
-
 msgid "Enter accurate contact details so the business can reach you."
 msgstr "Enter accurate contact details so the business can reach you."
 
@@ -1269,14 +1266,8 @@ msgstr "Fr"
 msgid "Friday"
 msgstr "Friday"
 
-msgid "From"
-msgstr "From"
-
 msgid "Full name"
 msgstr "Full name"
-
-msgid "Fully booked"
-msgstr "Fully booked"
 
 msgid "Gallery"
 msgstr "Gallery"
@@ -1711,9 +1702,6 @@ msgstr ""
 "Leave empty to show the same end time as working hours. Booking availability"
 " is not affected."
 
-msgid "Leave the end date empty to block only one day."
-msgstr "Leave the end date empty to block only one day."
-
 msgid "Leave your name and Instagram or phone. We’ll get back to you."
 msgstr "Leave your name and Instagram or phone. We’ll get back to you."
 
@@ -1837,12 +1825,6 @@ msgstr "More details"
 
 msgid "Most popular"
 msgstr "Most popular"
-
-msgid "Move group down"
-msgstr "Move group down"
-
-msgid "Move group up"
-msgstr "Move group up"
 
 msgid ""
 "Nail salons, beauty studios, barbershops, trainers, and small service "
@@ -2221,11 +2203,33 @@ msgstr "Please enter your Instagram username."
 msgid "Please enter your email address."
 msgstr "Please enter your email address."
 
+msgid "Did you mean %(suggestion)s? Please check your email address."
+msgstr "Did you mean %(suggestion)s? Please check your email address."
+
+msgid "Did you mean"
+msgstr "Did you mean"
+
+msgid "Please check your email address."
+msgstr "Please check your email address."
+
+msgid "Use"
+msgstr "Use"
+
+msgid "Keep my email"
+msgstr "Keep my email"
+
 msgid "Please enter your full name."
 msgstr "Please enter your full name."
 
 msgid "Please enter your phone number."
 msgstr "Please enter your phone number."
+
+msgid ""
+"Enter a valid Macedonian mobile number, for example 070 123 456 or +389 70 "
+"123 456."
+msgstr ""
+"Enter a valid Macedonian mobile number, for example 070 123 456 or +389 70 "
+"123 456."
 
 msgid "Please upload a reference photo for this service."
 msgstr "Please upload a reference photo for this service."
@@ -2389,9 +2393,6 @@ msgstr "Reminder: your upcoming appointment"
 msgid "Remove"
 msgstr "Remove"
 
-msgid "Remove these blocked dates?"
-msgstr "Remove these blocked dates?"
-
 msgid "Remove this blocked date?"
 msgstr "Remove this blocked date?"
 
@@ -2544,6 +2545,9 @@ msgstr "Salon Scheduler — Book Online"
 
 msgid "Salon rules"
 msgstr "Salon rules"
+
+msgid "Same client?"
+msgstr "Same client?"
 
 msgid "Salon rules (English)"
 msgstr "Salon rules (English)"
@@ -2929,6 +2933,20 @@ msgstr ""
 msgid "The time %(time)s is no longer available. Please select another slot."
 msgstr "The time %(time)s is no longer available. Please select another slot."
 
+msgid ""
+"This phone belongs to %(existing_name)s. Confirm it is the same client, or "
+"use a different phone."
+msgstr ""
+"This phone belongs to %(existing_name)s. Confirm it is the same client, or "
+"use a different phone."
+
+msgid ""
+"This phone belongs to %(existing)s. You entered %(typed)s. Is this the same "
+"client?"
+msgstr ""
+"This phone belongs to %(existing)s. You entered %(typed)s. Is this the same "
+"client?"
+
 msgid "The user agrees to:"
 msgstr "The user agrees to:"
 
@@ -3031,6 +3049,15 @@ msgid ""
 msgstr ""
 "This is a reminder that you have an appointment on %(date)s at %(time)s."
 
+msgid ""
+"Hello %(name)s,\n"
+"\n"
+"This is a reminder that you have an appointment on %(date)s at %(time)s."
+msgstr ""
+"Hello %(name)s,\n"
+"\n"
+"This is a reminder that you have an appointment on %(date)s at %(time)s."
+
 msgid "This is a request only — not confirmed until the salon approves it."
 msgstr "This is a request only — not confirmed until the salon approves it."
 
@@ -3079,9 +3106,6 @@ msgstr "Time block added."
 
 msgid "Time block updated."
 msgstr "Time block updated."
-
-msgid "To"
-msgstr "To"
 
 msgid "Today"
 msgstr "Today"
@@ -3180,6 +3204,9 @@ msgstr "Use customer data only for booking and service purposes."
 
 msgid "Use dd/mm/yyyy"
 msgstr "Use dd/mm/yyyy"
+
+msgid "Use a different phone number for a different person."
+msgstr "Use a different phone number for a different person."
 
 msgid "Use fixed start times"
 msgstr "Use fixed start times"
@@ -3486,6 +3513,9 @@ msgstr "Working hours saved."
 msgid "Yes, cancel appointment"
 msgstr "Yes, cancel appointment"
 
+msgid "Yes, same client"
+msgstr "Yes, same client"
+
 msgid ""
 "Yes. Customers can request appointments anytime while you stay in control of"
 " approvals and availability."
@@ -3568,9 +3598,6 @@ msgid ""
 msgstr ""
 "You are responsible for the actual service delivery, prices, and customer "
 "communication."
-
-msgid "You can block at most %(days)s days at once."
-msgstr "You can block at most %(days)s days at once."
 
 msgid "You can cancel this appointment online."
 msgstr "You can cancel this appointment online."
@@ -3823,3 +3850,36 @@ msgstr "— Available"
 
 msgid "— Occupied"
 msgstr "— Occupied"
+
+msgid "Please choose a start time."
+msgstr "Please choose a start time."
+
+msgid "Blocked %(count)s days."
+msgstr "Blocked %(count)s days."
+
+msgid "End date must be on or after the start date."
+msgstr "End date must be on or after the start date."
+
+msgid "From"
+msgstr "From"
+
+msgid "Leave the end date empty to block only one day."
+msgstr "Leave the end date empty to block only one day."
+
+msgid "Remove these blocked dates?"
+msgstr "Remove these blocked dates?"
+
+msgid "To"
+msgstr "To"
+
+msgid "You can block at most %(days)s days at once."
+msgstr "You can block at most %(days)s days at once."
+
+msgid "Fully booked"
+msgstr "Fully booked"
+
+msgid "Move group up"
+msgstr "Move group up"
+
+msgid "Move group down"
+msgstr "Move group down"

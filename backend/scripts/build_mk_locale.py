@@ -1439,34 +1439,47 @@ TRANSLATIONS = {
 
 
 def main():
+    default_metadata = {
+        "Project-Id-Version": "Vremio",
+        "Report-Msgid-Bugs-To": "",
+        "POT-Creation-Date": "2026-06-21 12:00+0000",
+        "PO-Revision-Date": "2026-06-21 12:00+0000",
+        "Last-Translator": "Vremio",
+        "MIME-Version": "1.0",
+        "Content-Type": "text/plain; charset=UTF-8",
+        "Content-Transfer-Encoding": "8bit",
+        "Plural-Forms": "nplurals=2; plural=(n % 10 == 1 && n % 100 != 11) ? 0 : 1;",
+    }
+
     for lang in ("mk", "en"):
         locale_dir = BASE / "locale" / lang / "LC_MESSAGES"
         locale_dir.mkdir(parents=True, exist_ok=True)
         po_path = locale_dir / "django.po"
         mo_path = locale_dir / "django.mo"
 
-        po = polib.POFile()
-        po.metadata = {
-            "Project-Id-Version": "Vremio",
-            "Report-Msgid-Bugs-To": "",
-            "POT-Creation-Date": "2026-06-21 12:00+0000",
-            "PO-Revision-Date": "2026-06-21 12:00+0000",
-            "Last-Translator": "Vremio",
-            "Language-Team": "Macedonian" if lang == "mk" else "English",
-            "Language": lang,
-            "MIME-Version": "1.0",
-            "Content-Type": "text/plain; charset=UTF-8",
-            "Content-Transfer-Encoding": "8bit",
-            "Plural-Forms": "nplurals=2; plural=(n % 10 == 1 && n % 100 != 11) ? 0 : 1;",
-        }
+        # Merge into the existing catalog so translations that are not tracked
+        # in TRANSLATIONS (e.g. added via makemessages) are never dropped.
+        if po_path.exists():
+            po = polib.pofile(str(po_path))
+        else:
+            po = polib.POFile()
+            po.metadata = dict(default_metadata)
+            po.metadata["Language-Team"] = "Macedonian" if lang == "mk" else "English"
+            po.metadata["Language"] = lang
 
-        for msgid, mk_text in sorted(TRANSLATIONS.items()):
+        # Add-only: never overwrite an existing translation. The .po catalog is
+        # the source of truth; TRANSLATIONS only seeds strings that are missing.
+        added = 0
+        for msgid, mk_text in TRANSLATIONS.items():
+            if po.find(msgid) is not None:
+                continue
             msgstr = mk_text if lang == "mk" else msgid
             po.append(polib.POEntry(msgid=msgid, msgstr=msgstr))
+            added += 1
 
         po.save(str(po_path))
         po.save_as_mofile(str(mo_path))
-        print(f"Wrote {po_path} ({len(po)} entries)")
+        print(f"Wrote {po_path} ({len(po)} entries, {added} new)")
         print(f"Wrote {mo_path}")
 
 
