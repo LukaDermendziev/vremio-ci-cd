@@ -56,7 +56,10 @@ jobs:
           # (Ubuntu's default "postgresql-client" metapackage lags behind, so we pin.)
           sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
           sudo apt-get install -y "postgresql-client-${PG_MAJOR}"
-          pg_dump --version
+          # Ubuntu's /usr/bin/pg_dump wrapper can default to an older installed
+          # client, so put the versioned binary dir first on PATH for later steps.
+          echo "/usr/lib/postgresql/${PG_MAJOR}/bin" >> "$GITHUB_PATH"
+          "/usr/lib/postgresql/${PG_MAJOR}/bin/pg_dump" --version
 
       - name: Dump database
         env:
