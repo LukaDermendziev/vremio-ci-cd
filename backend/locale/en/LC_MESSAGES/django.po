@@ -3883,3 +3883,64 @@ msgstr "Move group up"
 
 msgid "Move group down"
 msgstr "Move group down"
+
+msgid "Statistics"
+msgstr "Statistics"
+
+msgid "How your salon is doing at a glance."
+msgstr "How your salon is doing at a glance."
+
+msgid "No data yet — your statistics will appear here once you have bookings."
+msgstr ""
+"No data yet — your statistics will appear here once you have bookings."
+
+msgid "Revenue this month"
+msgstr "Revenue this month"
+
+msgid "Completed this month"
+msgstr "Completed this month"
+
+msgid "No-show rate"
+msgstr "No-show rate"
+
+msgid "Booked online"
+msgstr "Booked online"
+
+msgid "Revenue (last 6 months)"
+msgstr "Revenue (last 6 months)"
+
+msgid "Appointments (last 6 months)"
+msgstr "Appointments (last 6 months)"
+
+msgid "Busiest days"
+msgstr "Busiest days"
+
+msgid "Your busiest day is %(day)s."
+msgstr "Your busiest day is %(day)s."
+
+msgid "Top services"
+msgstr "Top services"
+
+msgid "No services booked yet."
+msgstr "No services booked yet."
+
+msgid "This month"
+msgstr "This month"
+
+msgid "This year"
+msgstr "This year"
+
+msgid "All time"
+msgstr "All time"
+
+msgid "Time range"
+msgstr "Time range"
+
+msgid "Revenue"
+msgstr "Revenue"
+
+msgid "Appointments"
+msgstr "Appointments"
+
+msgid "Completed bookings"
+msgstr "Completed bookings"

@@ -474,6 +474,9 @@ function initOwnerDashboard(config) {
         }
       }, 100);
     }
+    if (id === "statistics" && typeof window.odInitStatsCharts === "function") {
+      setTimeout(() => window.odInitStatsCharts(), 50);
+    }
   }
 
   // ── Mobile sidebar + bottom nav ──────────────────────────────────────────

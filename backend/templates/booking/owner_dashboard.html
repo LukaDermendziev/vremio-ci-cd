@@ -43,6 +43,7 @@
 
     <nav class="od-nav">
       <a href="#dashboard" class="is-active" data-section="dashboard"><i class="bi bi-grid"></i><span>{% trans "Overview" %}</span></a>
+      <a href="#statistics" data-section="statistics"><i class="bi bi-bar-chart-line"></i><span>{% trans "Statistics" %}</span></a>
       <a href="#calendar" data-section="calendar"><i class="bi bi-calendar3"></i><span>{% trans "Calendar" %}</span></a>
       <a href="#bookings" data-section="bookings"><i class="bi bi-journal-text"></i><span>{% trans "Bookings" %}</span></a>
       <a href="#customers" data-section="customers"><i class="bi bi-people"></i><span>{% trans "Customers" %}</span></a>
@@ -213,6 +214,99 @@
         {% endif %}
       </div>
       </div>
+    </div>
+
+    <div class="od-section" id="od-sec-statistics">
+      <div class="od-page-top">
+        <div>
+          <div class="od-page-title">{% trans "Statistics" %}</div>
+          <p class="od-page-sub">{% trans "How your salon is doing at a glance." %}</p>
+        </div>
+        {% if statistics.has_data %}
+        <div class="od-stats-range" data-stats-range-toggle role="tablist" aria-label="{% trans 'Time range' %}">
+          <button type="button" class="od-stats-range-btn is-active" role="tab" aria-selected="true" data-stats-range="month">{% trans "This month" %}</button>
+          <button type="button" class="od-stats-range-btn" role="tab" aria-selected="false" data-stats-range="year">{% trans "This year" %}</button>
+          <button type="button" class="od-stats-range-btn" role="tab" aria-selected="false" data-stats-range="all">{% trans "All time" %}</button>
+        </div>
+        {% endif %}
+      </div>
+
+      {% if not statistics.has_data %}
+        <div class="od-empty od-empty-soft">
+          <i class="bi bi-bar-chart-line"></i>
+          <p>{% trans "No data yet — your statistics will appear here once you have bookings." %}</p>
+        </div>
+      {% else %}
+        <div class="od-stats od-stats-modern" data-stats-kpis>
+          <div class="od-stat od-stat-revenue">
+            <div class="od-stat-icon-wrap"><i class="bi bi-cash-stack"></i></div>
+            <span class="od-stat-value"><span data-stats-kpi="revenue">{{ statistics.ranges.month.revenue }}</span> <small>{% trans "den" %}</small></span>
+            <span class="od-stat-label">{% trans "Revenue" %}</span>
+          </div>
+          <div class="od-stat od-stat-completed">
+            <div class="od-stat-icon-wrap"><i class="bi bi-check2-circle"></i></div>
+            <span class="od-stat-value" data-stats-kpi="completed">{{ statistics.ranges.month.completed }}</span>
+            <span class="od-stat-label">{% trans "Completed bookings" %}</span>
+          </div>
+          <div class="od-stat od-stat-noshow">
+            <div class="od-stat-icon-wrap"><i class="bi bi-person-x"></i></div>
+            <span class="od-stat-value"><span data-stats-kpi="no_show_rate">{{ statistics.ranges.month.no_show_rate }}</span><small>%</small></span>
+            <span class="od-stat-label">{% trans "No-show rate" %}</span>
+          </div>
+          <div class="od-stat od-stat-online">
+            <div class="od-stat-icon-wrap"><i class="bi bi-phone"></i></div>
+            <span class="od-stat-value"><span data-stats-kpi="online_share">{{ statistics.ranges.month.online_share }}</span><small>%</small></span>
+            <span class="od-stat-label">{% trans "Booked online" %}</span>
+          </div>
+        </div>
+
+        <div class="od-stats-grid">
+          <div class="od-card">
+            <div class="od-card-top">
+              <div class="od-card-title"><i class="bi bi-graph-up-arrow"></i> {% trans "Revenue" %}</div>
+            </div>
+            <div class="od-chart-wrap"><canvas id="od-chart-revenue" height="220"></canvas></div>
+          </div>
+          <div class="od-card">
+            <div class="od-card-top">
+              <div class="od-card-title"><i class="bi bi-calendar3"></i> {% trans "Appointments" %}</div>
+            </div>
+            <div class="od-chart-wrap"><canvas id="od-chart-bookings" height="220"></canvas></div>
+          </div>
+          <div class="od-card">
+            <div class="od-card-top">
+              <div class="od-card-title"><i class="bi bi-calendar-week"></i> {% trans "Busiest days" %}</div>
+            </div>
+            <div class="od-chart-wrap"><canvas id="od-chart-weekday" height="220"></canvas></div>
+            <p class="od-chart-note" data-stats-busiest{% if not statistics.ranges.month.busiest_weekday %} hidden{% endif %}
+               data-template="{% trans 'Your busiest day is %(day)s.' %}">
+              <i class="bi bi-info-circle"></i>
+              <span data-stats-busiest-text>{% if statistics.ranges.month.busiest_weekday %}{% blocktrans with day=statistics.ranges.month.busiest_weekday.label %}Your busiest day is {{ day }}.{% endblocktrans %}{% endif %}</span>
+            </p>
+          </div>
+          <div class="od-card">
+            <div class="od-card-top">
+              <div class="od-card-title"><i class="bi bi-star"></i> {% trans "Top services" %}</div>
+            </div>
+            <ol class="od-top-list" data-stats-top-list{% if not statistics.ranges.month.top_services %} hidden{% endif %}>
+              {% for svc in statistics.ranges.month.top_services %}
+                <li class="od-top-item{% if forloop.counter <= 3 %} od-top-item--medal-{{ forloop.counter }}{% endif %}">
+                  <span class="od-top-rank{% if forloop.counter <= 3 %} od-top-rank--{{ forloop.counter }}{% endif %}">{{ forloop.counter }}</span>
+                  <span class="od-top-name">{{ svc.name }}</span>
+                  <span class="od-top-count">{{ svc.count }}&times;</span>
+                </li>
+              {% endfor %}
+            </ol>
+            <div class="od-empty od-empty-soft" data-stats-top-empty{% if statistics.ranges.month.top_services %} hidden{% endif %}>
+              <p>{% trans "No services booked yet." %}</p>
+            </div>
+          </div>
+        </div>
+
+        <p class="od-revenue-note"><i class="bi bi-info-circle"></i> {% trans "Revenue from completed appointments only. No online payments." %}</p>
+
+        {{ statistics.ranges|json_script:"od-stats-ranges" }}
+      {% endif %}
     </div>
 
     <div class="od-section" id="od-sec-calendar">
@@ -863,9 +957,9 @@
       <i class="bi bi-calendar3"></i>
       <span>{% trans "Calendar" %}</span>
     </button>
-    <button class="od-bn-item" data-bn-section="services" aria-label="{% trans "Services" %}">
-      <i class="bi bi-scissors"></i>
-      <span>{% trans "Services" %}</span>
+    <button class="od-bn-item" data-bn-section="statistics" aria-label="{% trans "Statistics" %}">
+      <i class="bi bi-bar-chart-line"></i>
+      <span>{% trans "Statistics" %}</span>
     </button>
     <button class="od-bn-item od-bn-more" id="od-bn-more" aria-label="{% trans "More" %}">
       <i class="bi bi-list"></i>
@@ -901,6 +995,8 @@
 <script src="{% static 'js/owner_dashboard.js' %}"></script>
 <script src="{% static 'js/owner_calendar_mobile.js' %}"></script>
 <script src="{% static 'js/owner_dashboard_ajax.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+<script src="{% static 'js/owner_stats.js' %}"></script>
 
 <script>
 window.OD_I18N = {

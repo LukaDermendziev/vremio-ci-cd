@@ -1435,6 +1435,27 @@ TRANSLATIONS = {
     # owner dashboard: move price groups
     "Move group up": "Премести ја групата нагоре",
     "Move group down": "Премести ја групата надолу",
+    # owner_dashboard.html — statistics section
+    "Statistics": "Статистика",
+    "How your salon is doing at a glance.": "Како работи вашиот салон, на прв поглед.",
+    "No data yet — your statistics will appear here once you have bookings.": "Сè уште нема податоци — вашата статистика ќе се појави тука штом имате резервации.",
+    "Revenue this month": "Приход овој месец",
+    "Completed this month": "Завршени овој месец",
+    "No-show rate": "Стапка на непојавување",
+    "Booked online": "Резервирано онлајн",
+    "Revenue (last 6 months)": "Приход (последни 6 месеци)",
+    "Appointments (last 6 months)": "Термини (последни 6 месеци)",
+    "Busiest days": "Најзафатени денови",
+    "Your busiest day is %(day)s.": "Вашиот најзафатен ден е %(day)s.",
+    "Top services": "Најпопуларни услуги",
+    "No services booked yet.": "Сè уште нема резервирани услуги.",
+    "This month": "Овој месец",
+    "This year": "Оваа година",
+    "All time": "Цело време",
+    "Time range": "Период",
+    "Revenue": "Приход",
+    "Appointments": "Термини",
+    "Completed bookings": "Завршени",
 }
 
 

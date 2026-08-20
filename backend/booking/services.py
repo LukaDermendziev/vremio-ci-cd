@@ -2,7 +2,8 @@ import logging
 import re
 import threading
 from decimal import Decimal
-from datetime import datetime, time, timedelta
+from calendar import monthrange
+from datetime import date, datetime, time, timedelta
 from urllib.parse import quote
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -18,6 +19,7 @@ from .models import (
     Booking,
     BookingActivityLog,
     BookingPolicy,
+    BookingService,
     DateWorkingHoursOverride,
     ReleasedSlot,
     Service,
@@ -1299,6 +1301,220 @@ def get_revenue_stats(salon):
         "weekly_revenue": weekly_revenue,
         "week_start": week_start,
         "week_end": week_end,
+    }
+
+
+def _last_n_months(end_date, n):
+    """Return the last ``n`` (year, month) tuples ending at ``end_date`` (oldest first)."""
+    months = []
+    year, month = end_date.year, end_date.month
+    for _i in range(n):
+        months.append((year, month))
+        month -= 1
+        if month == 0:
+            month = 12
+            year -= 1
+    return list(reversed(months))
+
+
+def _month_keys_inclusive(start_date, end_date):
+    """Return (year, month) tuples from ``start_date`` through ``end_date`` (oldest first)."""
+    keys = []
+    year, month = start_date.year, start_date.month
+    while (year, month) <= (end_date.year, end_date.month):
+        keys.append((year, month))
+        month += 1
+        if month == 13:
+            month = 1
+            year += 1
+    return keys
+
+
+def _weekday_labels_for(today):
+    this_monday = today - timedelta(days=today.weekday())
+    return [date_format(this_monday + timedelta(days=i), "D") for i in range(7)]
+
+
+def _booking_line_revenue(booking):
+    return sum(
+        (bs.price_snapshot or Decimal("0")) for bs in booking.booking_services.all()
+    )
+
+
+def _stats_for_bookings(bookings, weekday_labels, trend_spec):
+    """Build one range payload from an in-memory booking list.
+
+    ``trend_spec`` is ``("day", [date, ...])`` or ``("month", [(year, month), ...])``.
+    """
+    Status = Booking.Status
+    accepted = {Status.APPROVED, Status.COMPLETED, Status.NO_SHOW}
+    granularity, trend_keys = trend_spec
+    buckets = {key: {"revenue": 0, "bookings": 0} for key in trend_keys}
+
+    revenue_total = 0
+    completed = 0
+    no_show = 0
+    online = 0
+    weekday_counts = [0] * 7
+    service_stats = {}
+
+    for booking in bookings:
+        local_dt = timezone.localtime(booking.start_at)
+        if booking.source == Booking.Source.ONLINE:
+            online += 1
+
+        line_revenue = 0
+        if booking.status == Status.COMPLETED:
+            line_revenue = int(_booking_line_revenue(booking))
+            revenue_total += line_revenue
+            completed += 1
+        elif booking.status == Status.NO_SHOW:
+            no_show += 1
+
+        if booking.status in accepted:
+            weekday_counts[local_dt.weekday()] += 1
+            tkey = local_dt.date() if granularity == "day" else (local_dt.year, local_dt.month)
+            if tkey in buckets:
+                buckets[tkey]["bookings"] += 1
+                if booking.status == Status.COMPLETED:
+                    buckets[tkey]["revenue"] += line_revenue
+
+        for line in booking.booking_services.all():
+            name = (line.service_name_snapshot or "").strip()
+            if not name:
+                continue
+            entry = service_stats.setdefault(name, {"count": 0, "revenue": 0})
+            entry["count"] += 1
+            entry["revenue"] += int(line.price_snapshot or 0)
+
+    finished_total = completed + no_show
+    real_total = len(bookings)
+    top_services = sorted(
+        (
+            {"name": name, "count": data["count"], "revenue": data["revenue"]}
+            for name, data in service_stats.items()
+        ),
+        key=lambda row: (-row["count"], row["name"]),
+    )[:5]
+
+    if granularity == "day":
+        trend = [
+            {
+                "label": str(day.day),
+                "revenue": buckets[day]["revenue"],
+                "bookings": buckets[day]["bookings"],
+            }
+            for day in trend_keys
+        ]
+    else:
+        trend = [
+            {
+                "label": date_format(date(year, month, 1), "M y"),
+                "revenue": buckets[(year, month)]["revenue"],
+                "bookings": buckets[(year, month)]["bookings"],
+            }
+            for year, month in trend_keys
+        ]
+
+    weekday_distribution = [
+        {"label": weekday_labels[i], "count": weekday_counts[i]} for i in range(7)
+    ]
+    busiest_weekday = None
+    if any(weekday_counts):
+        busiest_index = max(range(7), key=lambda i: weekday_counts[i])
+        busiest_weekday = {
+            "label": weekday_labels[busiest_index],
+            "count": weekday_counts[busiest_index],
+        }
+
+    return {
+        "revenue": revenue_total,
+        "completed": completed,
+        "no_show_rate": round(no_show / finished_total * 100) if finished_total else 0,
+        "no_show_total": no_show,
+        "online_share": round(online / real_total * 100) if real_total else 0,
+        "online_total": online,
+        "trend": trend,
+        "top_services": top_services,
+        "busiest_weekday": busiest_weekday,
+        "weekday_distribution": weekday_distribution,
+        "has_data": real_total > 0,
+    }
+
+
+def get_owner_statistics(salon, months=6):
+    """Aggregate owner-facing statistics for the dashboard.
+
+    Returns three ranges (this month / this year / all time) so the owner can
+    toggle without another round-trip. Money comes from completed bookings only
+    (no online payments), matching ``get_revenue_stats``. Dates are bucketed in
+    the salon's local time.
+
+    ``months`` is kept for callers that still pass it; all-time charts cap at
+    the last 24 months when history is longer.
+    """
+    Status = Booking.Status
+    today = timezone.localdate()
+    weekday_labels = _weekday_labels_for(today)
+
+    bookings = list(
+        salon.bookings.exclude(status=Status.UNVERIFIED)
+        .prefetch_related("booking_services")
+    )
+    dated = [(booking, timezone.localtime(booking.start_at).date()) for booking in bookings]
+
+    month_start = date(today.year, today.month, 1)
+    month_end = date(today.year, today.month, monthrange(today.year, today.month)[1])
+    year_start = date(today.year, 1, 1)
+    year_end = date(today.year, 12, 31)
+
+    month_bookings = [b for b, d in dated if month_start <= d <= month_end]
+    year_bookings = [b for b, d in dated if year_start <= d <= year_end]
+    all_bookings = [b for b, _d in dated]
+
+    month_days = [
+        date(today.year, today.month, day) for day in range(1, month_end.day + 1)
+    ]
+    year_months = [(today.year, month) for month in range(1, 13)]
+    if dated:
+        first_date = min(d for _b, d in dated)
+        last_date = max(today, max(d for _b, d in dated))
+        all_months = _month_keys_inclusive(first_date, last_date)
+        cap = max(int(months or 6), 24)
+        if len(all_months) > cap:
+            all_months = all_months[-cap:]
+    else:
+        all_months = _last_n_months(today, months)
+
+    ranges = {
+        "month": _stats_for_bookings(
+            month_bookings, weekday_labels, ("day", month_days)
+        ),
+        "year": _stats_for_bookings(
+            year_bookings, weekday_labels, ("month", year_months)
+        ),
+        "all": _stats_for_bookings(
+            all_bookings, weekday_labels, ("month", all_months)
+        ),
+    }
+    month_stats = ranges["month"]
+    all_stats = ranges["all"]
+    return {
+        "has_data": all_stats["has_data"],
+        "default_range": "month",
+        "ranges": ranges,
+        # Back-compat aliases used by older overview/KPI callers and tests.
+        "revenue_this_month": month_stats["revenue"],
+        "revenue_all_time": all_stats["revenue"],
+        "completed_this_month": month_stats["completed"],
+        "no_show_rate": all_stats["no_show_rate"],
+        "no_show_total": all_stats["no_show_total"],
+        "online_share": all_stats["online_share"],
+        "online_total": all_stats["online_total"],
+        "monthly": all_stats["trend"],
+        "top_services": all_stats["top_services"],
+        "busiest_weekday": all_stats["busiest_weekday"],
+        "weekday_distribution": all_stats["weekday_distribution"],
     }
 
 

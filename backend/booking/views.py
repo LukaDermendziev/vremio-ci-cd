@@ -90,6 +90,7 @@ from .services import (
     get_manage_booking_url,
     google_calendar_url,
     build_booking_ics,
+    get_owner_statistics,
     get_revenue_stats,
     get_salon_local_today,
     get_salon_page_hours_rows,
@@ -556,6 +557,7 @@ def _owner_dashboard_context(salon):
         .order_by("-blocked_at", "-created_at")
     )
     revenue = get_revenue_stats(salon)
+    statistics = get_owner_statistics(salon)
 
     week_start = today - timedelta(days=today.weekday())
     week_end   = week_start + timedelta(days=6)
@@ -586,6 +588,7 @@ def _owner_dashboard_context(salon):
         "unavailable_blocks": unavailable_blocks,
         "blocked_customers": blocked_customers,
         "revenue": revenue,
+        "statistics": statistics,
         "policy_form": BookingPolicyForm(instance=booking_policy) if booking_policy else None,
         "blocked_date_form": BlockedDateForm(),
         "unavailable_block_form": UnavailableTimeBlockForm(salon=salon),

@@ -4030,3 +4030,65 @@ msgstr "Премести ја групата нагоре"
 
 msgid "Move group down"
 msgstr "Премести ја групата надолу"
+
+msgid "Statistics"
+msgstr "Статистика"
+
+msgid "How your salon is doing at a glance."
+msgstr "Како работи вашиот салон, на прв поглед."
+
+msgid "No data yet — your statistics will appear here once you have bookings."
+msgstr ""
+"Сè уште нема податоци — вашата статистика ќе се појави тука штом имате "
+"резервации."
+
+msgid "Revenue this month"
+msgstr "Приход овој месец"
+
+msgid "Completed this month"
+msgstr "Завршени овој месец"
+
+msgid "No-show rate"
+msgstr "Стапка на непојавување"
+
+msgid "Booked online"
+msgstr "Резервирано онлајн"
+
+msgid "Revenue (last 6 months)"
+msgstr "Приход (последни 6 месеци)"
+
+msgid "Appointments (last 6 months)"
+msgstr "Термини (последни 6 месеци)"
+
+msgid "Busiest days"
+msgstr "Најзафатени денови"
+
+msgid "Your busiest day is %(day)s."
+msgstr "Вашиот најзафатен ден е %(day)s."
+
+msgid "Top services"
+msgstr "Најпопуларни услуги"
+
+msgid "No services booked yet."
+msgstr "Сè уште нема резервирани услуги."
+
+msgid "This month"
+msgstr "Овој месец"
+
+msgid "This year"
+msgstr "Оваа година"
+
+msgid "All time"
+msgstr "Цело време"
+
+msgid "Time range"
+msgstr "Период"
+
+msgid "Revenue"
+msgstr "Приход"
+
+msgid "Appointments"
+msgstr "Термини"
+
+msgid "Completed bookings"
+msgstr "Завршени"

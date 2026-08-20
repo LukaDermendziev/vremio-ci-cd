@@ -54,6 +54,7 @@ from .services import (
     get_calendar_history_days,
     get_last_minute_open_dates,
     get_last_minute_open_dates_for_services,
+    get_owner_statistics,
     get_salon_local_today,
     is_slot_available,
     release_booking_slot,
@@ -5613,3 +5614,121 @@ class SmsVerificationTests(TestCase):
 
         self.assertEqual(format_phone_for_brevo("070 123 456"), "38970123456")
         self.assertEqual(format_phone_for_brevo("+389 70 123 456"), "38970123456")
+
+
+class OwnerStatisticsTests(TestCase):
+    def setUp(self):
+        from decimal import Decimal
+
+        self.Decimal = Decimal
+        user = get_user_model().objects.create_user(username="statowner", password="pw")
+        self.salon = Salon.objects.create(
+            owner=user, name="Stat Studio", slug="stat-studio"
+        )
+        self.service = Service.objects.create(
+            salon=self.salon, name="Manicure", duration_minutes=120, base_price=1000
+        )
+        self.customer = Customer.objects.create(
+            salon=self.salon, full_name="Stat Client", phone_number="070000000"
+        )
+        self.now = timezone.now()
+
+    def _booking(self, status, source, lines, start_at=None):
+        start = start_at or self.now
+        booking = Booking.objects.create(
+            salon=self.salon,
+            customer=self.customer,
+            status=status,
+            start_at=start,
+            end_at=start + timedelta(hours=2),
+            total_duration_minutes=120,
+            source=source,
+            rules_accepted=True,
+        )
+        for name, price in lines:
+            BookingService.objects.create(
+                booking=booking,
+                service=self.service,
+                service_name_snapshot=name,
+                price_snapshot=self.Decimal(price),
+            )
+        return booking
+
+    def test_statistics_aggregate_expected_values(self):
+        self._booking(
+            Booking.Status.COMPLETED, Booking.Source.ONLINE, [("Manicure", "1000")]
+        )
+        self._booking(
+            Booking.Status.COMPLETED, Booking.Source.ONLINE, [("Manicure", "500")]
+        )
+        self._booking(
+            Booking.Status.NO_SHOW, Booking.Source.OWNER_MANUAL, [("Pedicure", "800")]
+        )
+        self._booking(
+            Booking.Status.PENDING, Booking.Source.ONLINE, [("Manicure", "1000")]
+        )
+
+        stats = get_owner_statistics(self.salon)
+        month = stats["ranges"]["month"]
+        year = stats["ranges"]["year"]
+        all_time = stats["ranges"]["all"]
+
+        self.assertTrue(stats["has_data"])
+        self.assertEqual(stats["default_range"], "month")
+        # Money comes from completed bookings only.
+        self.assertEqual(month["revenue"], 1500)
+        self.assertEqual(all_time["revenue"], 1500)
+        self.assertEqual(month["completed"], 2)
+        # No-show rate = no_show / (completed + no_show) = 1 / 3 -> 33%.
+        self.assertEqual(month["no_show_rate"], 33)
+        # Online share = online / non-unverified bookings = 3 / 4 -> 75%.
+        self.assertEqual(month["online_share"], 75)
+        self.assertEqual(year["revenue"], 1500)
+
+        top = {row["name"]: row["count"] for row in month["top_services"]}
+        self.assertEqual(top.get("Manicure"), 3)
+        self.assertEqual(top.get("Pedicure"), 1)
+
+        # This month is a daily chart covering the current calendar month.
+        self.assertGreaterEqual(len(month["trend"]), timezone.localdate().day)
+        accepted_this_month = sum(point["bookings"] for point in month["trend"])
+        self.assertEqual(accepted_this_month, 3)
+        self.assertEqual(sum(point["revenue"] for point in month["trend"]), 1500)
+
+        # This year is 12 monthly bars; all-time spans from first booking to now.
+        self.assertEqual(len(year["trend"]), 12)
+        self.assertGreaterEqual(len(all_time["trend"]), 1)
+        self.assertEqual(all_time["trend"][-1]["bookings"], 3)
+
+        self.assertIsNotNone(month["busiest_weekday"])
+        self.assertEqual(month["busiest_weekday"]["count"], 3)
+
+    def test_statistics_empty_salon_has_no_data(self):
+        stats = get_owner_statistics(self.salon)
+
+        self.assertFalse(stats["has_data"])
+        self.assertEqual(stats["ranges"]["month"]["no_show_rate"], 0)
+        self.assertEqual(stats["ranges"]["all"]["online_share"], 0)
+        self.assertIsNone(stats["ranges"]["all"]["busiest_weekday"])
+        self.assertEqual(stats["ranges"]["all"]["top_services"], [])
+        self.assertEqual(len(stats["ranges"]["all"]["trend"]), 6)
+        self.assertEqual(len(stats["ranges"]["year"]["trend"]), 12)
+
+    def test_statistics_range_excludes_previous_year(self):
+        last_year = timezone.make_aware(datetime(timezone.now().year - 1, 6, 15, 10, 0))
+        self._booking(
+            Booking.Status.COMPLETED,
+            Booking.Source.ONLINE,
+            [("Gel", "2000")],
+            start_at=last_year,
+        )
+        self._booking(
+            Booking.Status.COMPLETED, Booking.Source.ONLINE, [("Manicure", "1000")]
+        )
+
+        stats = get_owner_statistics(self.salon)
+        self.assertEqual(stats["ranges"]["month"]["revenue"], 1000)
+        self.assertEqual(stats["ranges"]["year"]["revenue"], 1000)
+        self.assertEqual(stats["ranges"]["all"]["revenue"], 3000)
+        self.assertEqual(stats["ranges"]["month"]["completed"], 1)
+        self.assertEqual(stats["ranges"]["all"]["completed"], 2)
