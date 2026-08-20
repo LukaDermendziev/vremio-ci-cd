@@ -289,9 +289,15 @@ window.SP_I18N = {
       // Don't toggle if user clicked the CTA button inside
       if (e && e.target.closest('a')) return;
       var expanded = card.getAttribute('aria-expanded') === 'true';
-      card.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+      var willOpen = !expanded;
+      card.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
       var list = card.querySelector('.sp-price-list');
-      if (list) list.setAttribute('aria-hidden', expanded ? 'true' : 'false');
+      if (list) {
+        list.setAttribute('aria-hidden', willOpen ? 'false' : 'true');
+        // Expand to the exact content height so nothing (e.g. the CTA button)
+        // is ever clipped, no matter how many price items / add-ons exist.
+        list.style.maxHeight = willOpen ? (list.scrollHeight + 'px') : '';
+      }
     }
     card.addEventListener('click', toggle);
     card.addEventListener('keydown', function (e) {

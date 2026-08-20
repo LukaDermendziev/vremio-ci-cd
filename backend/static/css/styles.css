@@ -2700,7 +2700,9 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
   opacity: 0;
 }
 .sp-service-card--expandable[aria-expanded="true"] .sp-price-list {
-  max-height: 800px;
+  /* Fallback ceiling if JS is unavailable; JS sets the exact height inline so
+     the CTA is never clipped for long price lists (base + add-ons). */
+  max-height: 1600px;
   opacity: 1;
 }
 .sp-price-list-inner {
