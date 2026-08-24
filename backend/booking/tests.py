@@ -511,6 +511,17 @@ class LegalComplianceTests(TestCase):
         self.assertContains(response, reverse("booking:booking_rules"))
         self.assertContains(response, reverse("booking:photo_policy"))
 
+    def test_booking_form_shows_review_email_confirmation_card(self):
+        response = self.client.get("/book/legal-test/request/")
+        self.assertContains(response, 'id="bk-rev-email-card"')
+        self.assertContains(response, 'id="bk-rev-email-edit"')
+        self.assertContains(response, "Е-пошта за потврда")
+        self.assertContains(response, "Уреди")
+        self.client.cookies["django_language"] = "en"
+        en_response = self.client.get("/book/legal-test/request/")
+        self.assertContains(en_response, "Confirmation email")
+        self.assertContains(en_response, "Edit")
+
     def test_booking_requires_rules_accepted(self):
         selected_date = timezone.localdate() + timedelta(days=20)
         if selected_date.weekday() == WorkingHours.Weekday.SUNDAY:
@@ -5790,6 +5801,7 @@ class SmsVerificationTests(TestCase):
         response = self.client.get("/book/salon-sms/request/")
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'id="id_email"')
+        self.assertNotContains(response, 'id="bk-rev-email-card"')
         self.assertContains(response, 'data-sms-verification="true"')
 
     def test_enabling_sms_verification_disables_email_in_policy_form(self):

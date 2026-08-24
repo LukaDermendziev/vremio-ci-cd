@@ -350,6 +350,22 @@
       <div class="bk-review-row"><i class="bi bi-chat-dots"></i><span id="bk-rev-contact"></span></div>
     </div>
 
+    {% if not booking_policy.sms_verification_required %}
+    <div class="bk-review-card bk-email-confirm" id="bk-rev-email-card">
+      <div class="bk-review-label">{% trans "Confirmation email" %}</div>
+      <div class="bk-email-confirm-row">
+        <i class="bi bi-envelope"></i>
+        <span id="bk-rev-email" class="bk-email-confirm-value"></span>
+        <input type="email" id="bk-rev-email-input" class="bk-email-confirm-input" autocomplete="email" inputmode="email" aria-label="{% trans "Email" %}">
+        <button type="button" class="bk-email-confirm-edit" id="bk-rev-email-edit"
+                data-edit-label="{% trans "Edit" %}"
+                data-done-label="{% trans "Done" %}">{% trans "Edit" %}</button>
+      </div>
+      <p class="bk-email-confirm-error" id="bk-rev-email-error" hidden></p>
+      <p class="bk-email-confirm-note">{% trans "Please check the spelling — a wrong address will not receive a confirmation." %}</p>
+    </div>
+    {% endif %}
+
     <div class="bk-rules-section">
       <div class="bk-section-label" style="margin-top:0">{% trans "Salon rules" %}</div>
       <p class="bk-rules-intro">{% trans "I understand:" %}</p>
@@ -966,6 +982,67 @@ window.BK_I18N = {
     document.getElementById('bk-rev-name').textContent  = nameEl?.value || '';
     document.getElementById('bk-rev-phone').textContent = phoneEl?.value || '';
     document.getElementById('bk-rev-contact').textContent = selectedPill ? `${I18N.viaContact} ${selectedPill.textContent}` : '';
+    const emailVal = document.getElementById('id_email')?.value.trim() || '';
+    const revEmail = document.getElementById('bk-rev-email');
+    const revEmailInput = document.getElementById('bk-rev-email-input');
+    if (revEmail) revEmail.textContent = emailVal;
+    if (revEmailInput) revEmailInput.value = emailVal;
+    exitReviewEmailEdit();
+  }
+
+  function setReviewEmailError(message) {
+    const err = document.getElementById('bk-rev-email-error');
+    if (!err) return;
+    err.textContent = message || '';
+    err.hidden = !message;
+  }
+
+  function exitReviewEmailEdit() {
+    const card = document.getElementById('bk-rev-email-card');
+    const btn = document.getElementById('bk-rev-email-edit');
+    card?.classList.remove('is-editing');
+    if (btn) btn.textContent = btn.dataset.editLabel || btn.textContent;
+    setReviewEmailError('');
+  }
+
+  async function applyReviewEmailEdit() {
+    const input = document.getElementById('bk-rev-email-input');
+    const emailInput = document.getElementById('id_email');
+    const value = (input?.value || '').trim();
+    if (!value || !isValidEmail(value)) {
+      setReviewEmailError(I18N.emailInvalid);
+      input?.focus();
+      return false;
+    }
+    let finalVal = value;
+    const suggestion = suggestEmailCorrection(value);
+    if (suggestion) {
+      const choice = await showEmailTypoPrompt(suggestion);
+      if (choice === 'use') finalVal = suggestion;
+    }
+    if (emailInput) emailInput.value = finalVal;
+    if (input) input.value = finalVal;
+    const revEmail = document.getElementById('bk-rev-email');
+    if (revEmail) revEmail.textContent = finalVal;
+    setReviewEmailError('');
+    return true;
+  }
+
+  async function toggleReviewEmailEdit() {
+    const card = document.getElementById('bk-rev-email-card');
+    const btn = document.getElementById('bk-rev-email-edit');
+    const input = document.getElementById('bk-rev-email-input');
+    if (!card || !btn || !input) return;
+    if (card.classList.contains('is-editing')) {
+      if (!(await applyReviewEmailEdit())) return;
+      exitReviewEmailEdit();
+      return;
+    }
+    input.value = document.getElementById('id_email')?.value.trim() || '';
+    card.classList.add('is-editing');
+    btn.textContent = btn.dataset.doneLabel || btn.textContent;
+    input.focus();
+    input.select();
   }
 
   function refreshSubmit() {
@@ -1383,6 +1460,11 @@ window.BK_I18N = {
       return;
     }
 
+    if (e.target.closest('#bk-rev-email-edit')) {
+      await toggleReviewEmailEdit();
+      return;
+    }
+
     if (e.target.closest('[data-prev]')) {
       goBackOneStep();
       return;
@@ -1457,12 +1539,23 @@ window.BK_I18N = {
 
   document.getElementById('bk-rules-consent-check')?.addEventListener('change', refreshSubmit);
 
-  form?.addEventListener('submit', (e) => {
+  document.getElementById('bk-rev-email-input')?.addEventListener('keydown', async (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    if (await applyReviewEmailEdit()) exitReviewEmailEdit();
+  });
+
+  form?.addEventListener('submit', async (e) => {
     const submitBtn = document.getElementById('bk-submit');
     if (!submitBtn || submitBtn.disabled) return;
+    e.preventDefault();
+    const emailCard = document.getElementById('bk-rev-email-card');
+    if (emailCard?.classList.contains('is-editing')) {
+      if (!(await applyReviewEmailEdit())) return;
+      exitReviewEmailEdit();
+    }
     // Hold the overlay briefly so customers always see "sending" feedback,
     // even when the server responds almost instantly locally.
-    e.preventDefault();
     submitBtn.disabled = true;
     submitBtn.classList.add('is-loading');
     submitBtn.setAttribute('aria-busy', 'true');

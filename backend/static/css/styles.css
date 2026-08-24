@@ -3866,6 +3866,67 @@ input[type="checkbox"].od-toggle-cb:focus-visible { box-shadow: 0 0 0 3px rgba(1
 .bk-review-row i { font-size: 13px; flex-shrink: 0; color: var(--bk-accent); }
 .bk-review-svc { font-size: 15px; font-weight: 700; color: var(--bk-text); margin-bottom: 8px; }
 
+/* ── Confirmation email callout (catch address typos before submit) ───────── */
+.bk-review-card.bk-email-confirm {
+  border-color: var(--bk-accent);
+  background: rgba(181, 132, 139, 0.06);
+}
+.bk-email-confirm-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.bk-email-confirm-row i { font-size: 15px; flex-shrink: 0; color: var(--bk-accent); }
+.bk-email-confirm-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--bk-text);
+  word-break: break-all;
+  flex: 1;
+  min-width: 0;
+}
+.bk-email-confirm-input {
+  display: none;
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  color: var(--bk-text);
+  border: 1.5px solid var(--bk-accent);
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: #fff;
+}
+.bk-email-confirm.is-editing .bk-email-confirm-value { display: none; }
+.bk-email-confirm.is-editing .bk-email-confirm-input { display: block; }
+.bk-email-confirm-edit {
+  flex-shrink: 0;
+  border: 1px solid var(--bk-accent);
+  background: #fff;
+  color: var(--bk-accent);
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+.bk-email-confirm-edit:hover { background: var(--bk-accent); color: #fff; }
+.bk-email-confirm-note {
+  font-size: 12px;
+  color: var(--bk-muted);
+  margin: 8px 0 0;
+  line-height: 1.4;
+}
+.bk-email-confirm-error {
+  font-size: 12px;
+  color: #B42318;
+  margin: 6px 0 0;
+  line-height: 1.35;
+}
+.bk-email-confirm-error[hidden] { display: none !important; }
+
 /* ── Rules section ───────────────────────────────────────────────────────── */
 .bk-rules-section { margin-bottom: 16px; }
 .bk-rules-intro {

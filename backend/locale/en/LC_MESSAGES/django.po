@@ -1129,6 +1129,15 @@ msgstr "Edited/rescheduled message"
 msgid "Email"
 msgstr "Email"
 
+msgid "Confirmation email"
+msgstr "Confirmation email"
+
+msgid "Done"
+msgstr "Done"
+
+msgid "Please check the spelling — a wrong address will not receive a confirmation."
+msgstr "Please check the spelling — a wrong address will not receive a confirmation."
+
 msgid "Email address"
 msgstr "Email address"
 

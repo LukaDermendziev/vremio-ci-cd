@@ -1137,6 +1137,15 @@ msgstr "Порака за промена"
 msgid "Email"
 msgstr "Е-пошта"
 
+msgid "Confirmation email"
+msgstr "Е-пошта за потврда"
+
+msgid "Done"
+msgstr "Готово"
+
+msgid "Please check the spelling — a wrong address will not receive a confirmation."
+msgstr "Проверете го записот — на погрешна адреса нема да добиете потврда."
+
 msgid "Email address"
 msgstr "Е-пошта"
 
