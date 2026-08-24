@@ -143,6 +143,21 @@ def calculate_combined_duration_minutes(services, salon):
     return total
 
 
+def booking_parent_service_ids(booking):
+    """Unique parent service IDs on a booking, in display order.
+
+    Used to detect whether an owner edit actually changed services, so we can
+    keep price-item / express durations instead of rebuilding from the parent.
+    """
+    return list(
+        dict.fromkeys(
+            booking.booking_services.order_by("sort_order", "id").values_list(
+                "service_id", flat=True
+            )
+        )
+    )
+
+
 def calculate_line_items_duration_minutes(line_items, salon):
     """Total duration for booking lines, honouring sub-service durations and add-ons.
 

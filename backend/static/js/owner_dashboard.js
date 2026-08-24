@@ -630,6 +630,46 @@ function initOwnerDashboard(config) {
       .map(el => el.value);
   }
 
+  function setServiceCheckboxCaption(cb, text) {
+    const label = cb.closest("label");
+    if (!label) return;
+    while (cb.nextSibling) label.removeChild(cb.nextSibling);
+    label.appendChild(document.createTextNode(" " + text));
+  }
+
+  function resetServiceCheckboxCaptions() {
+    if (!servicesContainer) return;
+    const min = t("minSuffix", "min");
+    servicesContainer.querySelectorAll('input[name="services"]').forEach(cb => {
+      const duration = cb.getAttribute("data-duration-default") || cb.dataset.duration || "0";
+      cb.dataset.duration = duration;
+      const name = cb.getAttribute("data-base-name") || "";
+      if (name) setServiceCheckboxCaption(cb, `${name} (${duration} ${min})`);
+    });
+  }
+
+  function applyBookedServiceCaptions(services) {
+    if (!servicesContainer) return;
+    const min = t("minSuffix", "min");
+    const linesByService = {};
+    (services || []).forEach(line => {
+      const key = String(line.service_id);
+      (linesByService[key] ||= []).push(line);
+    });
+    servicesContainer.querySelectorAll('input[name="services"]').forEach(cb => {
+      const lines = linesByService[cb.value];
+      if (cb.checked && lines && lines.length) {
+        const duration = lines.reduce((sum, line) => sum + parseInt(line.duration || "0", 10), 0);
+        cb.dataset.duration = String(duration);
+        const caption = lines
+          .map(line => `${line.name} (${line.duration} ${min})`)
+          .join(" + ");
+        setServiceCheckboxCaption(cb, caption);
+      }
+    });
+    updateOwnerServicesSummary();
+  }
+
   function setSelectedServices(serviceIds) {
     if (!servicesContainer) return;
     const idSet = new Set((serviceIds || []).map(String));
@@ -715,6 +755,13 @@ function initOwnerDashboard(config) {
   }
 
   servicesContainer?.addEventListener("change", () => {
+    const min = t("minSuffix", "min");
+    servicesContainer.querySelectorAll('input[name="services"]:not(:checked)').forEach(cb => {
+      const duration = cb.getAttribute("data-duration-default") || "0";
+      cb.dataset.duration = duration;
+      const name = cb.getAttribute("data-base-name") || "";
+      if (name) setServiceCheckboxCaption(cb, `${name} (${duration} ${min})`);
+    });
     updateOwnerServicesSummary();
     loadOwnerSlots();
   });
@@ -731,6 +778,7 @@ function initOwnerDashboard(config) {
     if (data.service_ids?.length) setSelectedServices(data.service_ids);
     else if (data.service_id) setSelectedServices([data.service_id]);
     else setSelectedServices([]);
+    applyBookedServiceCaptions(data.services);
     const dateWrap = dateInput?.closest("[data-od-date-field]");
     setDateFieldValue(dateWrap, data.date || "");
     setDateFieldInitialIso(dateWrap, data.date || "");
@@ -922,6 +970,7 @@ function initOwnerDashboard(config) {
 
   async function openBookingModal(bookingId, preset = {}) {
     bookingForm.reset();
+    resetServiceCheckboxCaptions();
     const warning = document.getElementById("od-slots-warning");
     if (warning) {
       warning.style.display = "none";

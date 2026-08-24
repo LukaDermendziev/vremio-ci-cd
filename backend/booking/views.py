@@ -90,6 +90,7 @@ from .services import (
     get_manage_booking_url,
     google_calendar_url,
     build_booking_ics,
+    booking_parent_service_ids,
     get_owner_statistics,
     get_revenue_stats,
     get_salon_local_today,
@@ -1633,9 +1634,17 @@ def owner_available_slots(request):
         return JsonResponse({"slots": []})
 
     exclude_booking_id = None
+    duration_override = None
     if exclude_id:
-        if Booking.objects.filter(pk=exclude_id, salon=salon).exists():
+        existing = (
+            Booking.objects.filter(pk=exclude_id, salon=salon)
+            .prefetch_related("booking_services")
+            .first()
+        )
+        if existing:
             exclude_booking_id = exclude_id
+            if set(booking_parent_service_ids(existing)) == {service.id for service in services}:
+                duration_override = existing.total_duration_minutes
 
     slots = get_available_slots(
         salon,
@@ -1643,6 +1652,7 @@ def owner_available_slots(request):
         selected_date,
         for_owner=True,
         exclude_booking_id=exclude_booking_id,
+        duration_override_minutes=duration_override,
     )
     return _slots_json(slots)
 

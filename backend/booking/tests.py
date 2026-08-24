@@ -3832,6 +3832,64 @@ class MultiServiceBookingTests(TestCase):
         self.assertEqual(booking.booking_services.count(), 2)
         self.assertEqual(booking.total_duration_minutes, 270)
 
+    def test_owner_edit_keeps_express_duration_when_services_unchanged(self):
+        """Saving an email/contact tweak must not rewrite an express 60-min line as 120 min."""
+        self.client.login(username="owner", password="pass")
+        selected = self._future_date()
+        customer = Customer.objects.create(
+            salon=self.salon,
+            full_name="Express Client",
+            phone_number="070888999",
+            email="wrong@example.com",
+        )
+        start = timezone.make_aware(
+            datetime.combine(selected, time(8, 0)),
+            timezone.get_current_timezone(),
+        )
+        booking = Booking.objects.create(
+            salon=self.salon,
+            customer=customer,
+            status=Booking.Status.APPROVED,
+            start_at=start,
+            end_at=start + timedelta(minutes=60),
+            total_duration_minutes=60,
+            source=Booking.Source.ONLINE,
+            rules_accepted=True,
+        )
+        BookingService.objects.create(
+            booking=booking,
+            service=self.manicure,
+            service_name_snapshot="Express manicure",
+            duration_minutes_snapshot=60,
+            price_snapshot=500,
+            sort_order=0,
+        )
+        response = self.client.post(
+            "/owner/dashboard/",
+            {
+                "action": "save_booking",
+                "booking_id": str(booking.id),
+                "full_name": "Express Client",
+                "phone_number": "070888999",
+                "email": "fixed@example.com",
+                "preferred_contact_method": Customer.PreferredContactMethod.VIBER,
+                "services": [self.manicure.id],
+                "date": selected.isoformat(),
+                "start_time": "08:00",
+                "status": Booking.Status.APPROVED,
+                "source": Booking.Source.ONLINE,
+            },
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        booking.refresh_from_db()
+        line = booking.booking_services.get()
+        self.assertEqual(booking.customer.email, "fixed@example.com")
+        self.assertEqual(booking.total_duration_minutes, 60)
+        self.assertEqual(line.duration_minutes_snapshot, 60)
+        self.assertEqual(line.service_name_snapshot, "Express manicure")
+        self.assertEqual((booking.end_at - booking.start_at).total_seconds() / 60, 60)
+
     def test_owner_slots_api_with_services_param(self):
         self.client.login(username="owner", password="pass")
         selected = self._future_date()

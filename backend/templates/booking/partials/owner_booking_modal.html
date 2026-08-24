@@ -30,7 +30,7 @@
             {% for service in services %}
               {% if service.is_active %}
               <label>
-                <input type="checkbox" name="services" value="{{ service.id }}" data-duration="{{ service.duration_minutes }}">
+                <input type="checkbox" name="services" value="{{ service.id }}" data-duration="{{ service.duration_minutes }}" data-duration-default="{{ service.duration_minutes }}" data-base-name="{{ service.name }}">
                 {{ service.name }} ({{ service.duration_minutes }} {% trans "min" %})
               </label>
               {% endif %}

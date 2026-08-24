@@ -39,6 +39,7 @@ from .models import (
 )
 from .services import (
     MSG_MULTI_SERVICE_NO_FIT,
+    booking_parent_service_ids,
     calculate_combined_duration_minutes,
     calculate_line_items_duration_minutes,
     consume_released_slot,
@@ -594,6 +595,15 @@ class OwnerBookingForm(forms.Form):
                 except (ValueError, TypeError):
                     pass
 
+            duration_override = None
+            cleaned_data["_preserve_booking_services"] = False
+            if self.booking and exclude_id:
+                existing_ids = booking_parent_service_ids(self.booking)
+                new_ids = [service.id for service in services]
+                if set(existing_ids) == set(new_ids):
+                    duration_override = self.booking.total_duration_minutes
+                    cleaned_data["_preserve_booking_services"] = True
+
             slot = is_slot_available(
                 self.salon,
                 services,
@@ -601,6 +611,7 @@ class OwnerBookingForm(forms.Form):
                 start_time,
                 for_owner=True,
                 exclude_booking_id=exclude_id,
+                duration_override_minutes=duration_override,
             )
             if not slot:
                 if len(services) > 1:
@@ -692,13 +703,18 @@ class OwnerBookingForm(forms.Form):
         services = self.cleaned_data["_services"]
         start_at = self.cleaned_data["start_at"]
         end_at = self.cleaned_data["end_at"]
-        total_duration = calculate_combined_duration_minutes(services, self.salon)
+        preserve_lines = bool(self.cleaned_data.get("_preserve_booking_services"))
         booking_id = self.cleaned_data.get("booking_id")
 
         if booking_id:
             booking = Booking.objects.get(pk=booking_id, salon=self.salon)
             old_start = booking.start_at
             old_end = booking.end_at
+            if preserve_lines:
+                total_duration = booking.total_duration_minutes
+                end_at = start_at + timedelta(minutes=total_duration)
+            else:
+                total_duration = calculate_combined_duration_minutes(services, self.salon)
             booking.customer = customer
             booking.status = self.cleaned_data["status"]
             booking.start_at = start_at
@@ -708,7 +724,8 @@ class OwnerBookingForm(forms.Form):
             booking.owner_note = self.cleaned_data.get("owner_note", "")
             booking.rules_accepted = True
             booking.save()
-            booking.booking_services.all().delete()
+            if not preserve_lines:
+                booking.booking_services.all().delete()
             if (old_start, old_end) != (start_at, end_at):
                 release_timeslot(
                     self.salon,
@@ -717,6 +734,7 @@ class OwnerBookingForm(forms.Form):
                     source_booking=booking,
                 )
         else:
+            total_duration = calculate_combined_duration_minutes(services, self.salon)
             booking = Booking(
                 salon=self.salon,
                 customer=customer,
@@ -730,14 +748,15 @@ class OwnerBookingForm(forms.Form):
             )
             booking.save()
 
-        for sort_order, service in enumerate(services):
-            booking.booking_services.create(
-                service=service,
-                service_name_snapshot=service.name,
-                duration_minutes_snapshot=service.duration_minutes,
-                price_snapshot=service.base_price,
-                sort_order=sort_order,
-            )
+        if not preserve_lines:
+            for sort_order, service in enumerate(services):
+                booking.booking_services.create(
+                    service=service,
+                    service_name_snapshot=service.name,
+                    duration_minutes_snapshot=service.duration_minutes,
+                    price_snapshot=service.base_price,
+                    sort_order=sort_order,
+                )
         consume_released_slot(self.salon, start_at, end_at)
         return booking
 
