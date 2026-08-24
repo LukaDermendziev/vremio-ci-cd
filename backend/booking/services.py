@@ -23,6 +23,7 @@ from .models import (
     DateWorkingHoursOverride,
     ReleasedSlot,
     Service,
+    ServicePriceItem,
     WorkingHours,
 )
 
@@ -155,6 +156,22 @@ def booking_parent_service_ids(booking):
                 "service_id", flat=True
             )
         )
+    )
+
+
+def match_price_item_for_booking_line(booking_service):
+    """Best-effort match of a saved booking line back to a ServicePriceItem."""
+    name = (booking_service.service_name_snapshot or "").strip()
+    if not name:
+        return None
+    return (
+        ServicePriceItem.objects.filter(
+            service_id=booking_service.service_id,
+            name=name,
+            is_addon=bool(booking_service.is_addon_snapshot),
+        )
+        .order_by("sort_order", "id")
+        .first()
     )
 
 

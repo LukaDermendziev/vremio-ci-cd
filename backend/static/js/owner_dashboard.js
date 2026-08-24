@@ -630,70 +630,199 @@ function initOwnerDashboard(config) {
       .map(el => el.value);
   }
 
-  function setServiceCheckboxCaption(cb, text) {
-    const label = cb.closest("label");
-    if (!label) return;
-    while (cb.nextSibling) label.removeChild(cb.nextSibling);
-    label.appendChild(document.createTextNode(" " + text));
+  function priceItemsInput() {
+    return document.getElementById("od-booking-price-items");
   }
 
-  function resetServiceCheckboxCaptions() {
-    if (!servicesContainer) return;
-    const min = t("minSuffix", "min");
-    servicesContainer.querySelectorAll('input[name="services"]').forEach(cb => {
-      const duration = cb.getAttribute("data-duration-default") || cb.dataset.duration || "0";
-      cb.dataset.duration = duration;
-      const name = cb.getAttribute("data-base-name") || "";
-      if (name) setServiceCheckboxCaption(cb, `${name} (${duration} ${min})`);
-    });
+  function setSvcCardOpen(card, open) {
+    if (!card?.classList.contains("od-bk-svc-card--expandable")) return;
+    card.classList.toggle("is-open", open);
+    card.querySelector(".od-bk-svc-chevron")?.classList.toggle("is-open", open);
+    const head = card.querySelector("[data-toggle-svc]");
+    if (head) head.setAttribute("aria-expanded", open ? "true" : "false");
   }
 
-  function applyBookedServiceCaptions(services) {
-    if (!servicesContainer) return;
-    const min = t("minSuffix", "min");
-    const linesByService = {};
-    (services || []).forEach(line => {
-      const key = String(line.service_id);
-      (linesByService[key] ||= []).push(line);
+  function syncCardChrome(card) {
+    if (!card) return;
+    const selected = [...card.querySelectorAll(".od-bk-pi.is-selected")];
+    const cb = card.querySelector('input[name="services"]');
+    const has = selected.length > 0 || Boolean(cb?.checked);
+    card.classList.toggle("has-selection", has);
+    const summary = card.querySelector(".od-bk-svc-selected");
+    if (summary) {
+      if (selected.length) {
+        summary.textContent = selected.map(btn => btn.dataset.itemName).join(" · ");
+        summary.hidden = false;
+      } else {
+        summary.textContent = "";
+        summary.hidden = true;
+      }
+    }
+  }
+
+  function syncAddonsPanel(card) {
+    const panel = card.querySelector("[data-addons-panel]");
+    if (panel) {
+      const hasAddons = panel.querySelector(".od-bk-pi--addon");
+      const hasBase = Boolean(card.querySelector(".od-bk-pi:not(.od-bk-pi--addon).is-selected"));
+      panel.hidden = !hasAddons || !hasBase;
+      panel.querySelectorAll(".od-bk-pi--addon").forEach(btn => {
+        btn.disabled = !hasBase;
+        if (!hasBase) btn.classList.remove("is-selected");
+      });
+    }
+    syncCardChrome(card);
+  }
+
+  function cardDuration(card) {
+    const base = card.querySelector(".od-bk-pi:not(.od-bk-pi--addon).is-selected");
+    const cb = card.querySelector('input[name="services"]');
+    let total = 0;
+    if (base) total += parseInt(base.dataset.duration || "0", 10);
+    else if (cb?.checked) total += parseInt(cb.getAttribute("data-duration-default") || cb.dataset.duration || "0", 10);
+    card.querySelectorAll(".od-bk-pi--addon.is-selected").forEach(btn => {
+      total += parseInt(btn.dataset.duration || "0", 10);
     });
-    servicesContainer.querySelectorAll('input[name="services"]').forEach(cb => {
-      const lines = linesByService[cb.value];
-      if (cb.checked && lines && lines.length) {
-        const duration = lines.reduce((sum, line) => sum + parseInt(line.duration || "0", 10), 0);
-        cb.dataset.duration = String(duration);
-        const caption = lines
-          .map(line => `${line.name} (${line.duration} ${min})`)
-          .join(" + ");
-        setServiceCheckboxCaption(cb, caption);
+    return total;
+  }
+
+  function syncPriceItemsField() {
+    const map = {};
+    servicesContainer?.querySelectorAll(".od-bk-svc-card--expandable").forEach(card => {
+      const serviceId = card.dataset.serviceId;
+      const base = card.querySelector(".od-bk-pi:not(.od-bk-pi--addon).is-selected");
+      if (!base) return;
+      const addons = [...card.querySelectorAll(".od-bk-pi--addon.is-selected")]
+        .map(btn => parseInt(btn.dataset.itemId, 10))
+        .filter(Boolean);
+      map[serviceId] = { base: parseInt(base.dataset.itemId, 10), addons };
+    });
+    const field = priceItemsInput();
+    if (field) field.value = Object.keys(map).length ? JSON.stringify(map) : "";
+  }
+
+  function resetOwnerServicePicker() {
+    if (!servicesContainer) return;
+    servicesContainer.querySelectorAll(".od-bk-svc-card").forEach(card => {
+      const cb = card.querySelector('input[name="services"]');
+      if (cb) {
+        cb.checked = false;
+        cb.dataset.duration = cb.getAttribute("data-duration-default") || cb.dataset.duration || "0";
+      }
+      card.querySelectorAll(".od-bk-pi").forEach(btn => btn.classList.remove("is-selected"));
+      setSvcCardOpen(card, false);
+      syncAddonsPanel(card);
+      syncCardChrome(card);
+    });
+    const field = priceItemsInput();
+    if (field) field.value = "";
+    updateOwnerServicesSummary();
+  }
+
+  function applyPriceItemSelection(data) {
+    if (!servicesContainer) return;
+    const map = data?.service_price_items || {};
+    Object.entries(map).forEach(([serviceId, selection]) => {
+      const card = servicesContainer.querySelector(`.od-bk-svc-card[data-service-id="${serviceId}"]`);
+      if (!card) return;
+      const baseId = selection && typeof selection === "object" ? selection.base : selection;
+      const addonIds = new Set(
+        (selection && typeof selection === "object" ? (selection.addons || []) : [])
+      );
+      if (baseId) {
+        card.querySelector(`.od-bk-pi[data-item-id="${baseId}"]`)?.classList.add("is-selected");
+      }
+      addonIds.forEach(id => {
+        card.querySelector(`.od-bk-pi--addon[data-item-id="${id}"]`)?.classList.add("is-selected");
+      });
+      const cb = card.querySelector('input[name="services"]');
+      if (cb) {
+        cb.checked = true;
+        cb.dataset.duration = String(cardDuration(card));
+      }
+      setSvcCardOpen(card, true);
+      syncAddonsPanel(card);
+    });
+    (data?.services || []).forEach(line => {
+      if (line.price_item_id) return;
+      const card = servicesContainer.querySelector(`.od-bk-svc-card[data-service-id="${line.service_id}"]`);
+      const btn = [...(card?.querySelectorAll(".od-bk-pi") || [])].find(
+        el => el.dataset.itemName === line.name
+      );
+      if (btn && !btn.classList.contains("is-selected")) {
+        btn.classList.add("is-selected");
+        const cb = card.querySelector('input[name="services"]');
+        if (cb) {
+          cb.checked = true;
+          cb.dataset.duration = String(cardDuration(card));
+        }
+        setSvcCardOpen(card, true);
+        syncAddonsPanel(card);
       }
     });
+    servicesContainer.querySelectorAll(".od-bk-svc-card--expandable").forEach(card => {
+      const cb = card.querySelector('input[name="services"]');
+      if (cb?.checked) {
+        setSvcCardOpen(card, true);
+        syncAddonsPanel(card);
+      }
+    });
+    syncPriceItemsField();
     updateOwnerServicesSummary();
   }
 
   function setSelectedServices(serviceIds) {
     if (!servicesContainer) return;
     const idSet = new Set((serviceIds || []).map(String));
-    servicesContainer.querySelectorAll('input[name="services"]').forEach(cb => {
+    servicesContainer.querySelectorAll(".od-bk-svc-card").forEach(card => {
+      const cb = card.querySelector('input[name="services"]');
+      if (!cb) return;
       cb.checked = idSet.has(cb.value);
+      if (cb.checked && card.classList.contains("od-bk-svc-card--expandable")) {
+        setSvcCardOpen(card, true);
+      }
+      syncCardChrome(card);
     });
     updateOwnerServicesSummary();
   }
 
+  function prepareNewBookingServices() {
+    const firstExpandable = servicesContainer?.querySelector(".od-bk-svc-card--expandable");
+    if (firstExpandable) {
+      setSvcCardOpen(firstExpandable, true);
+      return;
+    }
+    const firstService = servicesContainer?.querySelector('input[name="services"]');
+    if (firstService) {
+      firstService.checked = true;
+      syncCardChrome(firstService.closest(".od-bk-svc-card"));
+      updateOwnerServicesSummary();
+    }
+  }
+
   function updateOwnerServicesSummary() {
-    const checked = [...(servicesContainer?.querySelectorAll('input[name="services"]:checked') || [])];
+    const checkedCards = [...(servicesContainer?.querySelectorAll(".od-bk-svc-card") || [])]
+      .filter(card => card.querySelector('input[name="services"]:checked'));
     if (!servicesSummary) return;
-    if (!checked.length) {
+    if (!checkedCards.length) {
       servicesSummary.textContent = "";
       return;
     }
     const gap = parseInt(config.serviceGapMinutes || 30, 10);
-    let total = checked.reduce((sum, el) => sum + parseInt(el.dataset.duration || "0", 10), 0);
-    if (checked.length > 1) total += gap * (checked.length - 1);
-    const names = checked.map(el => {
-      const label = el.closest("label");
-      return label ? label.textContent.trim() : "";
-    }).filter(Boolean);
-    servicesSummary.textContent = `${names.join(" + ")} · ${total} ${t("minSuffix", "min")}`;
+    let total = 0;
+    const names = [];
+    checkedCards.forEach((card, index) => {
+      const dur = cardDuration(card);
+      total += dur;
+      if (index > 0) total += gap;
+      const selected = [...card.querySelectorAll(".od-bk-pi.is-selected")];
+      if (selected.length) {
+        names.push(selected.map(btn => btn.dataset.itemName).join(" + "));
+      } else {
+        names.push(card.querySelector(".od-bk-svc-name")?.textContent?.trim() || "");
+      }
+    });
+    servicesSummary.textContent = `${names.filter(Boolean).join(" · ")} · ${total} ${t("minSuffix", "min")}`;
   }
 
   function renderBookingSchedule(data) {
@@ -724,7 +853,9 @@ function initOwnerDashboard(config) {
     }
     const exclude = bookingForm.querySelector('[name="booking_id"]')?.value || "";
     const isEdit = Boolean(exclude);
-    const url = `${config.slotsUrl}?services=${serviceIds.join(",")}&date=${dateInput.value}&exclude=${exclude}`;
+    const priceItems = priceItemsInput()?.value || "";
+    let url = `${config.slotsUrl}?services=${serviceIds.join(",")}&date=${dateInput.value}&exclude=${exclude}`;
+    if (priceItems) url += `&price_items=${encodeURIComponent(priceItems)}`;
     const res = await fetch(url);
     const data = await res.json();
     if (!slotsSelect) return;
@@ -754,14 +885,44 @@ function initOwnerDashboard(config) {
     startInput.value = slotsSelect.value || "";
   }
 
-  servicesContainer?.addEventListener("change", () => {
-    const min = t("minSuffix", "min");
-    servicesContainer.querySelectorAll('input[name="services"]:not(:checked)').forEach(cb => {
-      const duration = cb.getAttribute("data-duration-default") || "0";
-      cb.dataset.duration = duration;
-      const name = cb.getAttribute("data-base-name") || "";
-      if (name) setServiceCheckboxCaption(cb, `${name} (${duration} ${min})`);
-    });
+  servicesContainer?.addEventListener("click", (e) => {
+    const toggle = e.target.closest("[data-toggle-svc]");
+    if (toggle) {
+      e.preventDefault();
+      const card = toggle.closest(".od-bk-svc-card");
+      if (!card) return;
+      if (card.classList.contains("od-bk-svc-card--expandable")) {
+        setSvcCardOpen(card, !card.classList.contains("is-open"));
+        return;
+      }
+      const cb = card.querySelector('input[name="services"]');
+      if (cb) {
+        cb.checked = !cb.checked;
+        syncCardChrome(card);
+        updateOwnerServicesSummary();
+        loadOwnerSlots();
+      }
+      return;
+    }
+    const itemBtn = e.target.closest(".od-bk-pi");
+    if (!itemBtn || itemBtn.disabled) return;
+    e.preventDefault();
+    const card = itemBtn.closest(".od-bk-svc-card");
+    const cb = card?.querySelector('input[name="services"]');
+    if (itemBtn.classList.contains("od-bk-pi--addon")) {
+      itemBtn.classList.toggle("is-selected");
+    } else {
+      const already = itemBtn.classList.contains("is-selected");
+      card.querySelectorAll(".od-bk-pi:not(.od-bk-pi--addon)").forEach(btn => btn.classList.remove("is-selected"));
+      if (!already) itemBtn.classList.add("is-selected");
+    }
+    const hasBase = Boolean(card.querySelector(".od-bk-pi:not(.od-bk-pi--addon).is-selected"));
+    if (cb) {
+      cb.checked = hasBase;
+      cb.dataset.duration = String(cardDuration(card));
+    }
+    syncAddonsPanel(card);
+    syncPriceItemsField();
     updateOwnerServicesSummary();
     loadOwnerSlots();
   });
@@ -775,10 +936,11 @@ function initOwnerDashboard(config) {
     bookingForm.querySelector('[name="instagram_username"]').value = data.instagram_username || "";
     bookingForm.querySelector('[name="email"]').value = data.email || "";
     bookingForm.querySelector('[name="preferred_contact_method"]').value = data.preferred_contact_method || "viber";
+    resetOwnerServicePicker();
     if (data.service_ids?.length) setSelectedServices(data.service_ids);
     else if (data.service_id) setSelectedServices([data.service_id]);
     else setSelectedServices([]);
-    applyBookedServiceCaptions(data.services);
+    applyPriceItemSelection(data);
     const dateWrap = dateInput?.closest("[data-od-date-field]");
     setDateFieldValue(dateWrap, data.date || "");
     setDateFieldInitialIso(dateWrap, data.date || "");
@@ -970,7 +1132,7 @@ function initOwnerDashboard(config) {
 
   async function openBookingModal(bookingId, preset = {}) {
     bookingForm.reset();
-    resetServiceCheckboxCaptions();
+    resetOwnerServicePicker();
     const warning = document.getElementById("od-slots-warning");
     if (warning) {
       warning.style.display = "none";
@@ -1018,23 +1180,15 @@ function initOwnerDashboard(config) {
       if (preset.time) startInput.value = preset.time;
       bookingForm.querySelector('[name="status"]').value = "approved";
       bookingForm.querySelector('[name="source"]').value = "owner_manual";
-      // New bookings need a service before slots/save work — preselect the first one.
-      const firstService = servicesContainer?.querySelector('input[name="services"]');
-      if (firstService) {
-        firstService.checked = true;
-        updateOwnerServicesSummary();
-      }
+      // Expand Manikir/Pedikir so the owner can pick the real sub-service.
+      prepareNewBookingServices();
       updateReferencePhotoSection({});
       updateBookingCustomerActions({});
       renderBookingSchedule({});
     } else {
       bookingForm.querySelector('[name="status"]').value = "approved";
       bookingForm.querySelector('[name="source"]').value = "owner_manual";
-      const firstService = servicesContainer?.querySelector('input[name="services"]');
-      if (firstService) {
-        firstService.checked = true;
-        updateOwnerServicesSummary();
-      }
+      prepareNewBookingServices();
       updateReferencePhotoSection({});
       updateBookingCustomerActions({});
       renderBookingSchedule({});
@@ -1045,6 +1199,15 @@ function initOwnerDashboard(config) {
   }
 
   bookingForm?.addEventListener("submit", () => {
+    servicesContainer?.querySelectorAll(".od-bk-svc-card").forEach(card => {
+      const cb = card.querySelector('input[name="services"]');
+      if (!cb) return;
+      if (card.classList.contains("od-bk-svc-card--expandable")) {
+        cb.checked = Boolean(card.querySelector(".od-bk-pi:not(.od-bk-pi--addon).is-selected"));
+        cb.dataset.duration = String(cardDuration(card));
+      }
+    });
+    syncPriceItemsField();
     if (slotsSelect?.value) startInput.value = slotsSelect.value;
   });
 

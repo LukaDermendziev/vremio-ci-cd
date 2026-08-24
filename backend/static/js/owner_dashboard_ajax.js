@@ -88,6 +88,51 @@
 
     let submitting = false;
 
+    function bookingFormErrorEl() {
+      return form.querySelector("#od-booking-form-error");
+    }
+
+    function showBookingFormError(msg) {
+      const el = bookingFormErrorEl();
+      if (el) {
+        el.textContent = msg;
+        el.hidden = false;
+      }
+      OA.showToast(msg, "error");
+    }
+
+    function clearBookingFormError() {
+      const el = bookingFormErrorEl();
+      if (el) {
+        el.textContent = "";
+        el.hidden = true;
+      }
+    }
+
+    function syncServiceSelection() {
+      form.querySelectorAll(".od-bk-svc-card").forEach((card) => {
+        const cb = card.querySelector('input[name="services"]');
+        if (!cb) return;
+        if (card.classList.contains("od-bk-svc-card--expandable")) {
+          cb.checked = Boolean(
+            card.querySelector(".od-bk-pi:not(.od-bk-pi--addon).is-selected"),
+          );
+        }
+      });
+      const map = {};
+      form.querySelectorAll(".od-bk-svc-card--expandable").forEach((card) => {
+        const serviceId = card.dataset.serviceId;
+        const base = card.querySelector(".od-bk-pi:not(.od-bk-pi--addon).is-selected");
+        if (!base || !serviceId) return;
+        const addons = [...card.querySelectorAll(".od-bk-pi--addon.is-selected")]
+          .map((btn) => parseInt(btn.dataset.itemId, 10))
+          .filter(Boolean);
+        map[serviceId] = { base: parseInt(base.dataset.itemId, 10), addons };
+      });
+      const field = form.querySelector("#od-booking-price-items");
+      if (field) field.value = Object.keys(map).length ? JSON.stringify(map) : "";
+    }
+
     async function submitBooking(extra = {}) {
       const body = new URLSearchParams(new FormData(form));
       Object.entries(extra).forEach(([key, value]) => {
@@ -109,6 +154,7 @@
         OA.firstMessage(data, "info") ||
         "";
       if (msg) OA.showToast(msg, "success");
+      clearBookingFormError();
       syncStats(data);
       closeModal("od-booking-modal");
       await calendarRefresh();
@@ -119,26 +165,41 @@
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       if (submitting) return;
+      clearBookingFormError();
+      syncServiceSelection();
 
-      const hasService = !!form.querySelector('input[name="services"]:checked');
+      const hasService = !!(
+        form.querySelector('input[name="services"]:checked') ||
+        form.querySelector(".od-bk-pi:not(.od-bk-pi--addon).is-selected")
+      );
       if (!hasService) {
-        OA.showToast(
+        showBookingFormError(
           t("chooseAtLeastOneService", "Please choose at least one service."),
-          "error",
         );
+        form.querySelector(".od-bk-svc-list")?.scrollIntoView({ block: "nearest" });
         return;
       }
-      const startTime = form.querySelector("#od-booking-start-time")?.value?.trim();
+      const dateVal = form.querySelector('[name="date"]')?.value?.trim();
+      if (!dateVal) {
+        showBookingFormError(t("chooseDate", "Please choose a date."));
+        form.querySelector(".od-date-display")?.focus();
+        form.querySelector("[data-od-date-field]")?.scrollIntoView({ block: "center" });
+        return;
+      }
       const slotsSelect = form.querySelector("#od-owner-slots");
       if (slotsSelect?.value) {
         const hiddenStart = form.querySelector("#od-booking-start-time");
         if (hiddenStart) hiddenStart.value = slotsSelect.value;
       }
+      const startTime = form.querySelector("#od-booking-start-time")?.value?.trim();
       if (!(startTime || slotsSelect?.value)) {
-        OA.showToast(
-          t("chooseStartTime", "Please choose a start time."),
-          "error",
+        showBookingFormError(
+          t("noSlotsAvailable", "No slots available"),
         );
+        slotsSelect?.focus();
+        form.querySelector("#od-owner-slots")?.closest(".od-field")?.scrollIntoView({
+          block: "center",
+        });
         return;
       }
 
@@ -172,25 +233,22 @@
               const data = await submitBooking({ same_client_confirmed: "1" });
               await handleSuccess(data);
             } catch (retryErr) {
-              OA.showToast(
+              showBookingFormError(
                 retryErr.message || t("somethingWentWrong", "Something went wrong."),
-                "error",
               );
             }
           } else {
-            OA.showToast(
+            showBookingFormError(
               t(
                 "sameClientUseDifferentPhone",
                 "Use a different phone number for a different person.",
               ),
-              "error",
             );
             form.querySelector('[name="phone_number"]')?.focus();
           }
         } else {
-          OA.showToast(
+          showBookingFormError(
             err.message || t("somethingWentWrong", "Something went wrong."),
-            "error",
           );
         }
       } finally {

@@ -3890,6 +3890,206 @@ class MultiServiceBookingTests(TestCase):
         self.assertEqual(line.service_name_snapshot, "Express manicure")
         self.assertEqual((booking.end_at - booking.start_at).total_seconds() / 60, 60)
 
+    def test_owner_manual_booking_uses_express_price_item(self):
+        express = ServicePriceItem.objects.create(
+            service=self.manicure,
+            name="Express manicure",
+            price_display="500",
+            duration_minutes=60,
+        )
+        self.client.login(username="owner", password="pass")
+        selected = self._future_date()
+        response = self.client.post(
+            "/owner/dashboard/",
+            {
+                "action": "save_booking",
+                "full_name": "Express New",
+                "phone_number": "070111222",
+                "preferred_contact_method": Customer.PreferredContactMethod.VIBER,
+                "services": [self.manicure.id],
+                "service_price_items": json.dumps(
+                    {str(self.manicure.id): {"base": express.id, "addons": []}}
+                ),
+                "date": selected.isoformat(),
+                "start_time": "08:00",
+                "status": Booking.Status.APPROVED,
+                "source": Booking.Source.OWNER_MANUAL,
+            },
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        booking = Booking.objects.get(customer__phone_number="070111222")
+        line = booking.booking_services.get()
+        self.assertEqual(booking.total_duration_minutes, 60)
+        self.assertEqual(line.service_name_snapshot, "Express manicure")
+        self.assertEqual(line.duration_minutes_snapshot, 60)
+        self.assertEqual((booking.end_at - booking.start_at).total_seconds() / 60, 60)
+
+    def test_owner_edit_saves_express_from_price_items(self):
+        """Owner picking Express in the expanded card must rewrite the 120-min parent line."""
+        express = ServicePriceItem.objects.create(
+            service=self.manicure,
+            name="Express manicure",
+            price_display="500",
+            duration_minutes=60,
+        )
+        self.client.login(username="owner", password="pass")
+        selected = self._future_date()
+        customer = Customer.objects.create(
+            salon=self.salon,
+            full_name="Needs Express",
+            phone_number="070333444",
+        )
+        start = timezone.make_aware(
+            datetime.combine(selected, time(8, 0)),
+            timezone.get_current_timezone(),
+        )
+        booking = Booking.objects.create(
+            salon=self.salon,
+            customer=customer,
+            status=Booking.Status.APPROVED,
+            start_at=start,
+            end_at=start + timedelta(minutes=120),
+            total_duration_minutes=120,
+            source=Booking.Source.OWNER_MANUAL,
+            rules_accepted=True,
+        )
+        BookingService.objects.create(
+            booking=booking,
+            service=self.manicure,
+            service_name_snapshot="Manicure",
+            duration_minutes_snapshot=120,
+            price_snapshot=600,
+            sort_order=0,
+        )
+        response = self.client.post(
+            "/owner/dashboard/",
+            {
+                "action": "save_booking",
+                "booking_id": str(booking.id),
+                "full_name": "Needs Express",
+                "phone_number": "070333444",
+                "preferred_contact_method": Customer.PreferredContactMethod.VIBER,
+                "services": [self.manicure.id],
+                "service_price_items": json.dumps(
+                    {str(self.manicure.id): {"base": express.id, "addons": []}}
+                ),
+                "date": selected.isoformat(),
+                "start_time": "08:00",
+                "status": Booking.Status.APPROVED,
+                "source": Booking.Source.OWNER_MANUAL,
+            },
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        booking.refresh_from_db()
+        line = booking.booking_services.get()
+        self.assertEqual(booking.total_duration_minutes, 60)
+        self.assertEqual(line.service_name_snapshot, "Express manicure")
+        self.assertEqual(line.duration_minutes_snapshot, 60)
+
+    def test_owner_dashboard_booking_modal_lists_price_items(self):
+        ServicePriceItem.objects.create(
+            service=self.manicure,
+            name="Express manicure",
+            price_display="500",
+            duration_minutes=60,
+        )
+        ServicePriceItem.objects.create(
+            service=self.manicure,
+            name="French",
+            price_display="+100",
+            duration_minutes=15,
+            is_addon=True,
+        )
+        self.client.login(username="owner", password="pass")
+        response = self.client.get("/owner/dashboard/")
+        self.assertContains(response, "od-bk-svc-card--expandable")
+        self.assertContains(response, "Express manicure")
+        self.assertContains(response, "French")
+        self.assertContains(response, "od-booking-price-items")
+
+    def test_owner_slots_api_uses_price_item_duration(self):
+        express = ServicePriceItem.objects.create(
+            service=self.manicure,
+            name="Express manicure",
+            price_display="500",
+            duration_minutes=60,
+        )
+        self.client.login(username="owner", password="pass")
+        selected = self._future_date()
+        response = self.client.get(
+            reverse("booking:owner_available_slots"),
+            {
+                "services": str(self.manicure.id),
+                "date": selected.isoformat(),
+                "price_items": json.dumps(
+                    {str(self.manicure.id): {"base": express.id, "addons": []}}
+                ),
+            },
+        )
+        values = {slot["value"] for slot in response.json()["slots"]}
+        self.assertIn("17:00", values)
+
+    def test_owner_booking_detail_returns_price_items_map(self):
+        express = ServicePriceItem.objects.create(
+            service=self.manicure,
+            name="Express manicure",
+            price_display="500",
+            duration_minutes=60,
+        )
+        art = ServicePriceItem.objects.create(
+            service=self.manicure,
+            name="French",
+            price_display="+100",
+            duration_minutes=15,
+            is_addon=True,
+        )
+        selected = self._future_date()
+        customer = Customer.objects.create(
+            salon=self.salon,
+            full_name="Detail Express",
+            phone_number="070555666",
+        )
+        start = timezone.make_aware(
+            datetime.combine(selected, time(8, 0)),
+            timezone.get_current_timezone(),
+        )
+        booking = Booking.objects.create(
+            salon=self.salon,
+            customer=customer,
+            status=Booking.Status.APPROVED,
+            source=Booking.Source.OWNER_MANUAL,
+            start_at=start,
+            end_at=start + timedelta(minutes=75),
+            total_duration_minutes=75,
+            rules_accepted=True,
+        )
+        BookingService.objects.create(
+            booking=booking,
+            service=self.manicure,
+            service_name_snapshot="Express manicure",
+            duration_minutes_snapshot=60,
+            sort_order=0,
+        )
+        BookingService.objects.create(
+            booking=booking,
+            service=self.manicure,
+            service_name_snapshot="French",
+            duration_minutes_snapshot=15,
+            is_addon_snapshot=True,
+            sort_order=1,
+        )
+        self.client.login(username="owner", password="pass")
+        response = self.client.get(
+            reverse("booking:owner_booking_detail", args=[booking.pk])
+        )
+        data = response.json()
+        self.assertEqual(
+            data["service_price_items"][str(self.manicure.id)],
+            {"base": express.id, "addons": [art.id]},
+        )
+
     def test_owner_slots_api_with_services_param(self):
         self.client.login(username="owner", password="pass")
         selected = self._future_date()

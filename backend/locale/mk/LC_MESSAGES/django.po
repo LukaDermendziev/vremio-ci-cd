@@ -3907,6 +3907,12 @@ msgstr "— Зафатено"
 msgid "Please choose a start time."
 msgstr "Ве молиме изберете почетно време."
 
+msgid "Please choose a date."
+msgstr "Ве молиме изберете датум."
+
+msgid "Please choose at least one service."
+msgstr "Ве молиме изберете најмалку една услуга."
+
 msgid "Resend confirmation email"
 msgstr "Повторно испрати потврда по е-пошта"
 

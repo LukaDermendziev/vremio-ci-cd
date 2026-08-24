@@ -91,6 +91,7 @@ from .services import (
     google_calendar_url,
     build_booking_ics,
     booking_parent_service_ids,
+    match_price_item_for_booking_line,
     get_owner_statistics,
     get_revenue_stats,
     get_salon_local_today,
@@ -1471,18 +1472,30 @@ def owner_booking_detail(request, booking_id):
     local_end   = timezone.localtime(booking.end_at)
     booking_service_items = list(booking.booking_services.all())
     schedule = build_service_schedule(booking.start_at, booking_service_items, salon)
-
-    services_list = [
-        {
-            "service_id": bs.service_id,
-            "name": bs.service_name_snapshot,
-            "duration": bs.duration_minutes_snapshot,
-            "price": str(bs.price_snapshot),
-            "start_time": schedule[index]["start_time"] if index < len(schedule) else "",
-            "end_time": schedule[index]["end_time"] if index < len(schedule) else "",
-        }
-        for index, bs in enumerate(booking_service_items)
-    ]
+    price_items_map = {}
+    services_list = []
+    for index, bs in enumerate(booking_service_items):
+        matched = match_price_item_for_booking_line(bs)
+        if matched:
+            entry = price_items_map.setdefault(
+                str(bs.service_id), {"base": None, "addons": []}
+            )
+            if matched.is_addon:
+                entry["addons"].append(matched.id)
+            else:
+                entry["base"] = matched.id
+        services_list.append(
+            {
+                "service_id": bs.service_id,
+                "name": bs.service_name_snapshot,
+                "duration": bs.duration_minutes_snapshot,
+                "price": str(bs.price_snapshot),
+                "price_item_id": matched.id if matched else None,
+                "is_addon": bool(bs.is_addon_snapshot),
+                "start_time": schedule[index]["start_time"] if index < len(schedule) else "",
+                "end_time": schedule[index]["end_time"] if index < len(schedule) else "",
+            }
+        )
 
     activity = [
         {
@@ -1508,6 +1521,7 @@ def owner_booking_detail(request, booking_id):
             "preferred_contact_method": booking.customer.preferred_contact_method,
             "service_id": first_service.service_id if first_service else None,
             "service_ids": [bs.service_id for bs in booking_service_items],
+            "service_price_items": price_items_map,
             "services": services_list,
             "service_schedule": schedule,
             "services_label": format_services_label(booking),
@@ -1634,7 +1648,7 @@ def owner_available_slots(request):
         return JsonResponse({"slots": []})
 
     exclude_booking_id = None
-    duration_override = None
+    duration_override = _duration_override_from_request(request, salon, services)
     if exclude_id:
         existing = (
             Booking.objects.filter(pk=exclude_id, salon=salon)
@@ -1643,7 +1657,9 @@ def owner_available_slots(request):
         )
         if existing:
             exclude_booking_id = exclude_id
-            if set(booking_parent_service_ids(existing)) == {service.id for service in services}:
+            if duration_override is None and set(
+                booking_parent_service_ids(existing)
+            ) == {service.id for service in services}:
                 duration_override = existing.total_duration_minutes
 
     slots = get_available_slots(

@@ -5,7 +5,7 @@
       <span class="od-modal-title" id="od-booking-modal-title">{% trans "Add booking" %}</span>
       <button type="button" class="od-modal-close" data-close-modal="od-booking-modal">&times;</button>
     </div>
-    <form method="post" id="od-booking-form" class="od-form">
+    <form method="post" id="od-booking-form" class="od-form" novalidate>
       {% csrf_token %}
       <input type="hidden" name="action" value="save_booking">
       <input type="hidden" name="return_section" value="calendar">
@@ -26,16 +26,82 @@
         </div>
         <div class="od-field od-field-span-2">
           <label>{% trans "Services" %}</label>
-          <div class="od-service-checks" id="od-booking-services">
+          <div class="od-bk-svc-list" id="od-booking-services">
             {% for service in services %}
               {% if service.is_active %}
-              <label>
-                <input type="checkbox" name="services" value="{{ service.id }}" data-duration="{{ service.duration_minutes }}" data-duration-default="{{ service.duration_minutes }}" data-base-name="{{ service.name }}">
-                {{ service.name }} ({{ service.duration_minutes }} {% trans "min" %})
-              </label>
+              {% with items=service.price_items.all %}
+              <div class="od-bk-svc-card{% if items %} od-bk-svc-card--expandable{% endif %}" data-service-id="{{ service.id }}">
+                <input type="checkbox" name="services" value="{{ service.id }}"
+                       data-duration="{{ service.duration_minutes }}"
+                       data-duration-default="{{ service.duration_minutes }}"
+                       data-base-name="{{ service.name }}"
+                       hidden>
+                <button type="button" class="od-bk-svc-head" data-toggle-svc{% if items %} aria-expanded="false"{% endif %}>
+                  <span class="od-bk-svc-head-text">
+                    <span class="od-bk-svc-name">{{ service.name }}</span>
+                    <span class="od-bk-svc-selected" hidden></span>
+                    <span class="od-bk-svc-head-meta">
+                      <i class="bi bi-clock"></i> {{ service.duration_minutes }} {% trans "min" %}
+                      {% if items %}<span class="od-bk-svc-count">{{ items|length }}</span>{% endif %}
+                    </span>
+                  </span>
+                  {% if items %}<i class="bi bi-chevron-down od-bk-svc-chevron"></i>{% endif %}
+                </button>
+                {% if items %}
+                <div class="od-bk-svc-body">
+                  <div class="od-bk-svc-body-inner">
+                  {% regroup items by group as grouped_items %}
+                  {% for group_entry in grouped_items %}
+                    {% if group_entry.grouper %}
+                    <div class="od-bk-svc-group">{{ group_entry.grouper }}</div>
+                    {% endif %}
+                    {% for item in group_entry.list %}
+                      {% if not item.is_addon %}
+                    <button type="button" class="od-bk-pi"
+                            data-item-id="{{ item.id }}"
+                            data-item-name="{{ item.name }}"
+                            data-duration="{{ item.effective_duration_minutes }}"
+                            data-is-addon="false">
+                      <span class="od-bk-pi-check"><i class="bi bi-check-lg"></i></span>
+                      <span class="od-bk-pi-info">
+                        <span class="od-bk-pi-name">{{ item.name }}</span>
+                        <span class="od-bk-pi-dur"><i class="bi bi-clock"></i> {{ item.effective_duration_minutes }} {% trans "min" %}</span>
+                      </span>
+                      <span class="od-bk-pi-price">{{ item.price_display }} {% trans "den" %}</span>
+                    </button>
+                      {% endif %}
+                    {% endfor %}
+                  {% endfor %}
+                  <div class="od-bk-svc-addons" data-addons-panel hidden>
+                    <div class="od-bk-svc-addons-label">{% trans "Optional extras" %}</div>
+                    {% for item in items %}
+                      {% if item.is_addon %}
+                    <button type="button" class="od-bk-pi od-bk-pi--addon" disabled
+                            data-item-id="{{ item.id }}"
+                            data-item-name="{{ item.name }}"
+                            data-duration="{{ item.duration_minutes }}"
+                            data-is-addon="true">
+                      <span class="od-bk-pi-check"><i class="bi bi-check-lg"></i></span>
+                      <span class="od-bk-pi-info">
+                        <span class="od-bk-pi-name">{{ item.name }}</span>
+                        {% if item.duration_minutes %}
+                        <span class="od-bk-pi-dur"><i class="bi bi-clock"></i> +{{ item.duration_minutes }} {% trans "min" %}</span>
+                        {% endif %}
+                      </span>
+                      <span class="od-bk-pi-price">{{ item.price_display }} {% trans "den" %}</span>
+                    </button>
+                      {% endif %}
+                    {% endfor %}
+                  </div>
+                  </div>
+                </div>
+                {% endif %}
+              </div>
+              {% endwith %}
               {% endif %}
             {% endfor %}
           </div>
+          <input type="hidden" name="service_price_items" id="od-booking-price-items" value="">
           <p class="od-owner-services-summary" id="od-owner-services-summary"></p>
         </div>
         <div class="od-field"><label>{% trans "Date" %}</label>{% include "booking/partials/od_date_input.html" with name="date" id="od-booking-date" required=True %}</div>
@@ -103,6 +169,7 @@
           </div>
         </div>
       </div>
+      <p class="od-booking-form-error" id="od-booking-form-error" hidden></p>
       <div class="od-modal-footer od-modal-footer-split">
         <button type="button" class="od-btn od-btn-danger od-delete-btn" id="od-booking-delete" style="display:none">{% trans "Delete" %}</button>
         <div class="od-modal-footer-right">

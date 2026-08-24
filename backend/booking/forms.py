@@ -114,6 +114,43 @@ def _price_from_display(price_display: str, base_price: Decimal) -> Decimal:
         return base_price
 
 
+def write_booking_line_items(booking, line_items):
+    """Create BookingService rows from resolved base + add-on selections."""
+    sort_order = 0
+    for line in line_items:
+        service = line["service"]
+        price_item = line.get("price_item")
+        addons = line.get("addons") or []
+        rows = []
+        if price_item:
+            rows.append(price_item)
+        elif not addons:
+            rows.append(None)
+        rows.extend(addons)
+        for row_item in rows:
+            if row_item is None:
+                name_snapshot = service.name
+                price_snap = service.base_price
+                duration_snap = service.duration_minutes
+                is_addon_snap = False
+            else:
+                name_snapshot = row_item.name
+                price_snap = _price_from_display(
+                    row_item.price_display, service.base_price
+                )
+                duration_snap = row_item.effective_duration_minutes
+                is_addon_snap = bool(row_item.is_addon)
+            booking.booking_services.create(
+                service=service,
+                service_name_snapshot=name_snapshot,
+                duration_minutes_snapshot=duration_snap,
+                price_snapshot=price_snap,
+                sort_order=sort_order,
+                is_addon_snapshot=is_addon_snap,
+            )
+            sort_order += 1
+
+
 class BookingRequestForm(forms.Form):
     service = forms.ModelChoiceField(
         queryset=Service.objects.none(),
@@ -524,6 +561,7 @@ class OwnerBookingForm(forms.Form):
         label=_("Services"),
         widget=forms.CheckboxSelectMultiple(attrs={"class": "od-service-checks"}),
     )
+    service_price_items = forms.CharField(required=False, widget=forms.HiddenInput())
     date = forms.DateField(widget=LocalizedDateInput(), label=_("Date"))
     start_time = forms.CharField(label=_("Start time"))
     status = forms.ChoiceField(choices=Booking.Status.choices, label=_("Status"))
@@ -566,6 +604,68 @@ class OwnerBookingForm(forms.Form):
             self.fields["source"].initial = booking.source
             self.fields["owner_note"].initial = booking.owner_note
 
+    def _parse_price_items_map(self):
+        raw = (self.data.get("service_price_items") or "").strip()
+        if not raw:
+            return {}
+        try:
+            data = json.loads(raw)
+        except (json.JSONDecodeError, TypeError, ValueError):
+            return {}
+        if not isinstance(data, dict):
+            return {}
+        return {str(k): v for k, v in data.items() if v not in (None, "", {}, [])}
+
+    def _resolve_line_items(self, services, price_map):
+        all_item_ids = []
+        selections = []
+        for service in services:
+            base_id, addon_ids = normalize_price_item_selection(
+                price_map.get(str(service.pk))
+            )
+            selections.append((service, base_id, addon_ids))
+            if base_id:
+                all_item_ids.append(base_id)
+            all_item_ids.extend(addon_ids)
+
+        items_by_id = {
+            item.id: item
+            for item in ServicePriceItem.objects.filter(
+                id__in=all_item_ids, service__salon=self.salon
+            ).select_related("service")
+        } if all_item_ids else {}
+
+        line_items = []
+        for service, base_id, addon_ids in selections:
+            price_item = None
+            if base_id:
+                price_item = items_by_id.get(base_id)
+                if (
+                    price_item is None
+                    or price_item.service_id != service.id
+                    or price_item.is_addon
+                ):
+                    return None, _("Choose a valid service for this salon.")
+            elif service.price_items.filter(is_addon=False).exists():
+                return None, _("Please choose a main service option.")
+
+            addons = []
+            for addon_id in addon_ids:
+                addon = items_by_id.get(addon_id)
+                if (
+                    addon is None
+                    or addon.service_id != service.id
+                    or not addon.is_addon
+                ):
+                    return None, _("Choose a valid service for this salon.")
+                addons.append(addon)
+            if addons and price_item is None:
+                return None, _("Choose a main service before adding extras.")
+            line_items.append(
+                {"service": service, "price_item": price_item, "addons": addons}
+            )
+        return line_items, None
+
     def clean(self):
         cleaned_data = super().clean()
         services = list(cleaned_data.get("services") or [])
@@ -579,6 +679,15 @@ class OwnerBookingForm(forms.Form):
 
         if any(service.salon_id != self.salon.id for service in services):
             self.add_error("services", _("Choose valid services for this salon."))
+
+        cleaned_data["_line_items"] = None
+        price_map = self._parse_price_items_map()
+        if price_map:
+            line_items, err = self._resolve_line_items(services, price_map)
+            if err:
+                self.add_error("services", err)
+                return cleaned_data
+            cleaned_data["_line_items"] = line_items
 
         if services and date and start_time:
             import datetime as _dt
@@ -597,7 +706,13 @@ class OwnerBookingForm(forms.Form):
 
             duration_override = None
             cleaned_data["_preserve_booking_services"] = False
-            if self.booking and exclude_id:
+            line_items = cleaned_data.get("_line_items")
+            if line_items:
+                duration_override = calculate_line_items_duration_minutes(
+                    line_items, self.salon
+                )
+                cleaned_data["_duration_minutes"] = duration_override
+            elif self.booking and exclude_id:
                 existing_ids = booking_parent_service_ids(self.booking)
                 new_ids = [service.id for service in services]
                 if set(existing_ids) == set(new_ids):
@@ -703,8 +818,19 @@ class OwnerBookingForm(forms.Form):
         services = self.cleaned_data["_services"]
         start_at = self.cleaned_data["start_at"]
         end_at = self.cleaned_data["end_at"]
-        preserve_lines = bool(self.cleaned_data.get("_preserve_booking_services"))
+        line_items = self.cleaned_data.get("_line_items")
+        preserve_lines = bool(self.cleaned_data.get("_preserve_booking_services")) and not line_items
         booking_id = self.cleaned_data.get("booking_id")
+
+        if line_items:
+            total_duration = self.cleaned_data.get(
+                "_duration_minutes"
+            ) or calculate_line_items_duration_minutes(line_items, self.salon)
+            end_at = start_at + timedelta(minutes=total_duration)
+        elif booking_id and preserve_lines:
+            pass  # duration filled after we load the booking
+        else:
+            total_duration = calculate_combined_duration_minutes(services, self.salon)
 
         if booking_id:
             booking = Booking.objects.get(pk=booking_id, salon=self.salon)
@@ -713,8 +839,6 @@ class OwnerBookingForm(forms.Form):
             if preserve_lines:
                 total_duration = booking.total_duration_minutes
                 end_at = start_at + timedelta(minutes=total_duration)
-            else:
-                total_duration = calculate_combined_duration_minutes(services, self.salon)
             booking.customer = customer
             booking.status = self.cleaned_data["status"]
             booking.start_at = start_at
@@ -734,7 +858,12 @@ class OwnerBookingForm(forms.Form):
                     source_booking=booking,
                 )
         else:
-            total_duration = calculate_combined_duration_minutes(services, self.salon)
+            if line_items:
+                total_duration = self.cleaned_data.get(
+                    "_duration_minutes"
+                ) or calculate_line_items_duration_minutes(line_items, self.salon)
+            else:
+                total_duration = calculate_combined_duration_minutes(services, self.salon)
             booking = Booking(
                 salon=self.salon,
                 customer=customer,
@@ -748,7 +877,9 @@ class OwnerBookingForm(forms.Form):
             )
             booking.save()
 
-        if not preserve_lines:
+        if line_items:
+            write_booking_line_items(booking, line_items)
+        elif not preserve_lines:
             for sort_order, service in enumerate(services):
                 booking.booking_services.create(
                     service=service,
