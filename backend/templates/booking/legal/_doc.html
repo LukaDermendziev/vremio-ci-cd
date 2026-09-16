@@ -1,0 +1,7 @@
+{% load i18n %}
+<article class="vm-legal-doc">
+  <p class="vm-legal-disclaimer">
+    {% trans "This page is a draft for the Vremio private pilot. It is not legal advice and has not been reviewed by a lawyer." %}
+  </p>
+  {% block legal_content %}{% endblock %}
+</article>

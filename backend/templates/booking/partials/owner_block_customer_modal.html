@@ -1,0 +1,66 @@
+{% load i18n %}
+<div class="od-modal-overlay" id="od-block-customer-modal">
+  <div class="od-modal-box">
+    <div class="od-modal-header">
+      <span class="od-modal-title" id="od-block-customer-modal-title">{% trans "Block customer" %}</span>
+      <button type="button" class="od-modal-close" data-close-modal="od-block-customer-modal">&times;</button>
+    </div>
+    <form id="od-block-customer-form" class="od-form">
+      <input type="hidden" name="customer_id" id="od-block-customer-id" value="">
+      <input type="hidden" name="booking_id" id="od-block-booking-id" value="">
+      <input type="hidden" name="entry_id" id="od-block-entry-id" value="">
+
+      <div class="od-block-customer-summary" id="od-block-customer-summary">
+        <div class="od-block-customer-row"><span class="od-block-label">{% trans "Customer" %}</span><strong id="od-block-customer-name">—</strong></div>
+        <div class="od-block-customer-row"><span class="od-block-label">{% trans "Phone" %}</span><span id="od-block-customer-phone">—</span></div>
+        <div class="od-block-customer-row" id="od-block-customer-email-row" hidden>
+          <span class="od-block-label">{% trans "Email" %}</span><span id="od-block-customer-email">—</span>
+        </div>
+        <div class="od-block-customer-row" id="od-block-booking-ref-row" hidden>
+          <span class="od-block-label">{% trans "Booking reference" %}</span><span id="od-block-booking-ref">—</span>
+        </div>
+      </div>
+
+      <div class="od-field" id="od-block-reason-field">
+        <label for="od-block-reason-code">{% trans "Reason" %} <span class="od-required">*</span></label>
+        <select name="reason_code" id="od-block-reason-code" class="od-input" required>
+          <option value="">{% trans "Choose a reason…" %}</option>
+          {% for value, label in block_reason_choices %}
+            <option value="{{ value }}">{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="od-field">
+        <label for="od-block-notes">{% trans "Notes" %} <span class="od-optional">({% trans "optional" %})</span></label>
+        <textarea name="notes" id="od-block-notes" rows="3" class="od-input" placeholder="{% trans 'Additional details for your records…' %}"></textarea>
+      </div>
+
+      <p class="od-block-confirm-text" id="od-block-confirm-text">
+        {% trans "This customer will no longer be able to submit booking requests to your business until unblocked." %}
+      </p>
+
+      <div class="od-modal-footer">
+        <button type="button" class="od-btn od-btn-ghost" data-close-modal="od-block-customer-modal">{% trans "Cancel" %}</button>
+        <button type="submit" class="od-btn od-btn-danger" id="od-block-customer-submit">{% trans "Block customer" %}</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="od-modal-overlay" id="od-block-customer-view-modal">
+  <div class="od-modal-box od-modal-wide">
+    <div class="od-modal-header">
+      <span class="od-modal-title">{% trans "Blocked customer" %}</span>
+      <button type="button" class="od-modal-close" data-close-modal="od-block-customer-view-modal">&times;</button>
+    </div>
+    <div id="od-block-customer-view-body" class="od-block-view-body"></div>
+    <div class="od-modal-footer od-modal-footer-split">
+      <button type="button" class="od-btn od-btn-danger" id="od-block-customer-unblock-btn">{% trans "Unblock" %}</button>
+      <div class="od-modal-footer-right">
+        <button type="button" class="od-btn od-btn-ghost" id="od-block-customer-edit-btn">{% trans "Edit reason" %}</button>
+        <button type="button" class="od-btn od-btn-primary" data-close-modal="od-block-customer-view-modal">{% trans "Close" %}</button>
+      </div>
+    </div>
+  </div>
+</div>

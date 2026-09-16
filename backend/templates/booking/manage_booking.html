@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Your appointment" %} — {{ booking.salon.name }}{% endblock %}
+{% block body_class %}bk-page bk-manage-page{% if booking.salon.uses_starter_website %} bk-theme-starter{% endif %}{% endblock %}
+
+{% block lang_switcher %}{% endblock %}
+
+{% block content %}
+<div class="bk-manage-wrap">
+
+  <div class="bk-manage-top">
+    <a href="{% url 'booking:salon_page' booking.salon.slug %}" class="bk-back-site">
+      <i class="bi bi-arrow-left"></i> {{ booking.salon.name }}
+    </a>
+  </div>
+
+  {% if messages %}
+    <div class="bk-manage-alerts">
+      {% for message in messages %}
+        <div class="bk-manage-alert bk-manage-alert-{{ message.tags }}">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% if just_cancelled %}
+  <div class="bk-manage-card bk-manage-success-card">
+    <div class="bk-manage-success-icon" aria-hidden="true">
+      <svg class="bk-check-svg bk-manage-check-svg" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle class="bk-check-circle bk-manage-check-circle" cx="30" cy="30" r="26" stroke-width="2.5" stroke-linecap="round"/>
+        <polyline class="bk-check-mark bk-manage-check-mark" points="16,31 25,40 44,20" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <h1 class="bk-manage-title">{% trans "Appointment cancelled." %}</h1>
+    <p class="bk-manage-lead">{% trans "Thank you for letting us know. The salon has been notified." %}</p>
+  </div>
+  {% elif show_confirm and can_cancel %}
+  <div class="bk-manage-card">
+    <h1 class="bk-manage-title">{% trans "Cancel appointment?" %}</h1>
+    <p class="bk-manage-lead">{% trans "Are you sure you want to cancel this appointment?" %}</p>
+    <div class="bk-manage-summary">
+      <div class="bk-ss-row"><i class="bi bi-scissors"></i><span>{% for item in booking.booking_services.all %}{{ item.service_name_snapshot }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</span></div>
+      {% if service_schedule|length > 1 %}
+      <div class="bk-ss-schedule">
+        {% for row in service_schedule %}
+        <div class="bk-ss-schedule-row">{{ row.name }} · {{ row.start_time }} – {{ row.end_time }}</div>
+        {% endfor %}
+        <div class="bk-ss-schedule-total">{% blocktrans with minutes=total_duration %}Total duration: {{ minutes }} min{% endblocktrans %}</div>
+      </div>
+      {% endif %}
+      <div class="bk-ss-row"><i class="bi bi-calendar3"></i><span>{{ booking.start_at|date:"d/m/Y" }}</span></div>
+      <div class="bk-ss-row"><i class="bi bi-clock"></i><span>{{ booking.start_at|date:"H:i" }} – {{ booking.end_at|date:"H:i" }}</span></div>
+    </div>
+    <form method="post" action="{% url 'booking:manage_booking_cancel' booking.manage_token %}" class="bk-manage-actions" id="bk-manage-cancel-form">
+      {% csrf_token %}
+      <input type="hidden" name="confirm" value="yes">
+      <button type="submit" class="bk-btn-danger" id="bk-manage-cancel-btn">{% trans "Yes, cancel appointment" %}</button>
+      <a href="{% url 'booking:manage_booking' booking.manage_token %}" class="bk-btn-ghost">{% trans "No, go back" %}</a>
+    </form>
+  </div>
+  {% else %}
+  <div class="bk-manage-card">
+    <div class="bk-manage-header">
+      <p class="bk-manage-eyebrow">{{ booking.salon.name }}</p>
+      <span class="bk-manage-status bk-manage-status-{{ booking.status }}">{{ booking.get_status_display }}</span>
+    </div>
+
+    <h1 class="bk-manage-title">{% trans "Your appointment" %}</h1>
+    <p class="bk-manage-lead">{{ status_message }}</p>
+
+    <div class="bk-manage-summary">
+      <div class="bk-ss-label">{% trans "Booking summary" %}</div>
+      <div class="bk-ss-row"><i class="bi bi-person"></i><span>{{ booking.customer.full_name }}</span></div>
+      <div class="bk-ss-row"><i class="bi bi-scissors"></i><span>{% for item in booking.booking_services.all %}{{ item.service_name_snapshot }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</span></div>
+      {% if service_schedule|length > 1 %}
+      <div class="bk-ss-schedule">
+        {% for row in service_schedule %}
+        <div class="bk-ss-schedule-row">{{ row.name }} · {{ row.start_time }} – {{ row.end_time }}</div>
+        {% endfor %}
+        <div class="bk-ss-schedule-total">{% blocktrans with minutes=total_duration %}Total duration: {{ minutes }} min{% endblocktrans %}</div>
+      </div>
+      {% endif %}
+      <div class="bk-ss-row"><i class="bi bi-calendar3"></i><span>{{ booking.start_at|date:"d/m/Y" }}</span></div>
+      <div class="bk-ss-row"><i class="bi bi-clock"></i><span>{{ booking.start_at|date:"H:i" }} – {{ booking.end_at|date:"H:i" }}</span></div>
+      {% if booking.reference_photo %}
+      <div class="bk-ss-row"><i class="bi bi-camera"></i><span>{% trans "Reference photo attached" %}</span></div>
+      {% endif %}
+    </div>
+
+    {% if show_add_to_calendar %}
+    <div class="bk-manage-calendar">
+      <div class="bk-ss-label">{% trans "Add to calendar" %}</div>
+      <p class="bk-manage-calendar-hint">{% trans "Save this confirmed appointment to your phone calendar." %}</p>
+      <div class="bk-manage-calendar-actions">
+        <a class="bk-cal-link bk-cal-link-primary" href="{{ google_calendar_url }}" target="_blank" rel="noopener noreferrer">
+          <i class="bi bi-google" aria-hidden="true"></i>
+          <span>{% trans "Google Calendar" %}</span>
+        </a>
+        <a class="bk-cal-link" href="{% url 'booking:manage_booking_ics' booking.manage_token %}">
+          <i class="bi bi-apple" aria-hidden="true"></i>
+          <span>{% trans "Apple / Samsung / other" %}</span>
+        </a>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if salon_rules %}
+    <div class="bk-manage-rules">
+      <div class="bk-ss-label">{% trans "Salon rules" %}</div>
+      <ul>
+        {% for rule in salon_rules %}
+          <li>{{ rule }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    <div class="bk-manage-cancel-section">
+      <div class="bk-ss-label">{% trans "Cancellation" %}</div>
+      {% if can_cancel %}
+        <p class="bk-manage-cancel-hint">{% trans "You can cancel this appointment online." %}</p>
+        <a class="bk-btn-danger bk-btn-sm" href="{% url 'booking:manage_booking' booking.manage_token %}?confirm=1">{% trans "Cancel appointment" %}</a>
+      {% elif cancel_reason == "too_close" %}
+        <p class="bk-manage-cancel-warn"><i class="bi bi-exclamation-triangle"></i> {% blocktrans with hours=notice_hours %}This appointment is too close for automatic cancellation (less than {{ hours }} hours). Please contact the salon.{% endblocktrans %}</p>
+      {% elif cancel_reason == "past" %}
+        <p class="bk-manage-cancel-info">{% trans "This appointment has already passed." %}</p>
+      {% elif booking.status == "cancelled" %}
+        <p class="bk-manage-cancel-info">{% trans "This appointment is already cancelled." %}</p>
+      {% elif booking.status == "rejected" %}
+        <p class="bk-manage-cancel-info">{% trans "This booking request was declined by the salon." %}</p>
+      {% elif booking.status == "completed" %}
+        <p class="bk-manage-cancel-info">{% trans "This appointment was completed." %}</p>
+      {% elif booking.status == "no_show" %}
+        <p class="bk-manage-cancel-info">{% trans "This appointment was marked as a no-show." %}</p>
+      {% else %}
+        <p class="bk-manage-cancel-info">{% trans "Cancellation is not available for this appointment." %}</p>
+      {% endif %}
+    </div>
+
+    <div class="bk-manage-help">
+      <i class="bi bi-chat-dots"></i>
+      {% blocktrans with salon_name=booking.salon.name %}Need help? Contact {{ salon_name }} directly if you have questions about your appointment.{% endblocktrans %}
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="bk-page-legal-footer">
+    {% include "partials/legal_footer.html" with legal_footer_compact=True %}
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% load static %}
+<script>
+window.MANAGE_I18N = {
+  cancelledTitle: "{% filter escapejs %}{% trans 'Appointment cancelled.' %}{% endfilter %}",
+  cancelledLead: "{% filter escapejs %}{% trans 'Thank you for letting us know. The salon has been notified.' %}{% endfilter %}",
+  cancelError: "{% filter escapejs %}{% trans 'Could not cancel appointment.' %}{% endfilter %}",
+  genericError: "{% filter escapejs %}{% trans 'Something went wrong.' %}{% endfilter %}",
+  cancelling: "{% filter escapejs %}{% trans 'Cancelling your booking…' %}{% endfilter %}",
+};
+</script>
+<script src="{% static 'js/manage_booking.js' %}" defer></script>
+{% endblock %}

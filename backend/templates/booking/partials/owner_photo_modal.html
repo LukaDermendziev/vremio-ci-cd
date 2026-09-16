@@ -1,0 +1,19 @@
+{% load i18n %}
+<div class="od-modal-overlay" id="od-photo-modal">
+  <div class="od-modal-box od-modal-photo">
+    <div class="od-modal-header">
+      <span class="od-modal-title">{% trans "Reference photo" %}</span>
+      <button type="button" class="od-modal-close" data-close-modal="od-photo-modal">&times;</button>
+    </div>
+    <div class="od-photo-modal-body">
+      <img id="od-photo-modal-img" src="" alt="{% trans 'Reference photo' %}">
+    </div>
+    <div class="od-modal-footer od-modal-footer-split">
+      <button type="button" class="od-btn od-btn-danger od-btn-sm" id="od-photo-modal-block" data-open-block-customer hidden>{% trans "Block customer" %}</button>
+      <div class="od-modal-footer-right">
+      <a id="od-photo-modal-open" href="#" target="_blank" rel="noopener" class="od-btn od-btn-ghost">{% trans "Open full size" %}</a>
+      <button type="button" class="od-btn od-btn-primary" data-close-modal="od-photo-modal">{% trans "Close" %}</button>
+      </div>
+    </div>
+  </div>
+</div>

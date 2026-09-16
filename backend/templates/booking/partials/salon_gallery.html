@@ -1,0 +1,122 @@
+{% load static %}
+{# Looping masonry: each track lists photos twice so CSS -50% animation needs no JS measurement. #}
+{# Decorative background gallery (presentation only — images use alt=""). #}
+<div class="sp-gallery" role="presentation">
+  <div class="sp-gallery-inner">
+
+    <div class="sp-gallery-col">
+      <div class="sp-gallery-track sp-track-up" style="--dur:22s">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-1.jpg' %}" alt="" width="300" height="400" style="height:240px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-5.jpg' %}" alt="" width="300" height="400" style="height:185px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-9.jpg' %}" alt="" width="300" height="400" style="height:265px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-13.jpg' %}" alt="" width="300" height="400" style="height:210px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-17.jpg' %}" alt="" width="300" height="400" style="height:230px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-21.jpg' %}" alt="" width="300" height="400" style="height:195px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-3.jpg' %}" alt="" width="300" height="400" style="height:250px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-1.jpg' %}" alt="" width="300" height="400" style="height:240px" aria-hidden="true">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-5.jpg' %}" alt="" width="300" height="400" style="height:185px" aria-hidden="true">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-9.jpg' %}" alt="" width="300" height="400" style="height:265px" aria-hidden="true">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-13.jpg' %}" alt="" width="300" height="400" style="height:210px" aria-hidden="true">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-17.jpg' %}" alt="" width="300" height="400" style="height:230px" aria-hidden="true">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-21.jpg' %}" alt="" width="300" height="400" style="height:195px" aria-hidden="true">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-3.jpg' %}" alt="" width="300" height="400" style="height:250px" aria-hidden="true">
+      </div>
+    </div>
+
+    <div class="sp-gallery-col">
+      <div class="sp-gallery-track sp-track-down" style="--dur:28s">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-4.jpg' %}" alt="" width="300" height="400" style="height:220px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-8.jpg' %}" alt="" width="300" height="400" style="height:260px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-12.jpg' %}" alt="" width="300" height="400" style="height:195px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-16.jpg' %}" alt="" width="300" height="400" style="height:240px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-20.jpg' %}" alt="" width="300" height="400" style="height:175px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-2.jpg' %}" alt="" width="300" height="400" style="height:255px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-6.jpg' %}" alt="" width="300" height="400" style="height:210px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-4.jpg' %}" alt="" width="300" height="400" style="height:220px" aria-hidden="true">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-8.jpg' %}" alt="" width="300" height="400" style="height:260px" aria-hidden="true">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-12.jpg' %}" alt="" width="300" height="400" style="height:195px" aria-hidden="true">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-16.jpg' %}" alt="" width="300" height="400" style="height:240px" aria-hidden="true">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-20.jpg' %}" alt="" width="300" height="400" style="height:175px" aria-hidden="true">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-2.jpg' %}" alt="" width="300" height="400" style="height:255px" aria-hidden="true">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-6.jpg' %}" alt="" width="300" height="400" style="height:210px" aria-hidden="true">
+      </div>
+    </div>
+
+    <div class="sp-gallery-col">
+      <div class="sp-gallery-track sp-track-up" style="--dur:20s">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-7.jpg' %}" alt="" width="300" height="400" style="height:230px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-11.jpg' %}" alt="" width="300" height="400" style="height:180px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-15.jpg' %}" alt="" width="300" height="400" style="height:250px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-19.jpg' %}" alt="" width="300" height="400" style="height:215px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-1.jpg' %}" alt="" width="300" height="400" style="height:195px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-5.jpg' %}" alt="" width="300" height="400" style="height:260px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-9.jpg' %}" alt="" width="300" height="400" style="height:200px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-7.jpg' %}" alt="" width="300" height="400" style="height:230px" aria-hidden="true">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-11.jpg' %}" alt="" width="300" height="400" style="height:180px" aria-hidden="true">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-15.jpg' %}" alt="" width="300" height="400" style="height:250px" aria-hidden="true">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-19.jpg' %}" alt="" width="300" height="400" style="height:215px" aria-hidden="true">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-1.jpg' %}" alt="" width="300" height="400" style="height:195px" aria-hidden="true">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-5.jpg' %}" alt="" width="300" height="400" style="height:260px" aria-hidden="true">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-9.jpg' %}" alt="" width="300" height="400" style="height:200px" aria-hidden="true">
+      </div>
+    </div>
+
+    <div class="sp-gallery-col">
+      <div class="sp-gallery-track sp-track-down" style="--dur:26s">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-10.jpg' %}" alt="" width="300" height="400" style="height:215px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-14.jpg' %}" alt="" width="300" height="400" style="height:255px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-18.jpg' %}" alt="" width="300" height="400" style="height:185px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-22.jpg' %}" alt="" width="300" height="400" style="height:235px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-4.jpg' %}" alt="" width="300" height="400" style="height:200px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-8.jpg' %}" alt="" width="300" height="400" style="height:270px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-12.jpg' %}" alt="" width="300" height="400" style="height:225px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-10.jpg' %}" alt="" width="300" height="400" style="height:215px" aria-hidden="true">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-14.jpg' %}" alt="" width="300" height="400" style="height:255px" aria-hidden="true">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-18.jpg' %}" alt="" width="300" height="400" style="height:185px" aria-hidden="true">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-22.jpg' %}" alt="" width="300" height="400" style="height:235px" aria-hidden="true">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-4.jpg' %}" alt="" width="300" height="400" style="height:200px" aria-hidden="true">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-8.jpg' %}" alt="" width="300" height="400" style="height:270px" aria-hidden="true">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-12.jpg' %}" alt="" width="300" height="400" style="height:225px" aria-hidden="true">
+      </div>
+    </div>
+
+    <div class="sp-gallery-col">
+      <div class="sp-gallery-track sp-track-up" style="--dur:24s">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-13.jpg' %}" alt="" width="300" height="400" style="height:260px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-17.jpg' %}" alt="" width="300" height="400" style="height:200px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-21.jpg' %}" alt="" width="300" height="400" style="height:235px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-3.jpg' %}" alt="" width="300" height="400" style="height:180px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-7.jpg' %}" alt="" width="300" height="400" style="height:255px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-11.jpg' %}" alt="" width="300" height="400" style="height:215px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-15.jpg' %}" alt="" width="300" height="400" style="height:270px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-13.jpg' %}" alt="" width="300" height="400" style="height:260px" aria-hidden="true">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-17.jpg' %}" alt="" width="300" height="400" style="height:200px" aria-hidden="true">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-21.jpg' %}" alt="" width="300" height="400" style="height:235px" aria-hidden="true">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-3.jpg' %}" alt="" width="300" height="400" style="height:180px" aria-hidden="true">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-7.jpg' %}" alt="" width="300" height="400" style="height:255px" aria-hidden="true">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-11.jpg' %}" alt="" width="300" height="400" style="height:215px" aria-hidden="true">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-15.jpg' %}" alt="" width="300" height="400" style="height:270px" aria-hidden="true">
+      </div>
+    </div>
+
+    <div class="sp-gallery-col">
+      <div class="sp-gallery-track sp-track-down" style="--dur:18s">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-16.jpg' %}" alt="" width="300" height="400" style="height:225px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-20.jpg' %}" alt="" width="300" height="400" style="height:250px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-2.jpg' %}" alt="" width="300" height="400" style="height:190px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-6.jpg' %}" alt="" width="300" height="400" style="height:260px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-10.jpg' %}" alt="" width="300" height="400" style="height:215px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-14.jpg' %}" alt="" width="300" height="400" style="height:240px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-18.jpg' %}" alt="" width="300" height="400" style="height:185px">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-16.jpg' %}" alt="" width="300" height="400" style="height:225px" aria-hidden="true">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-20.jpg' %}" alt="" width="300" height="400" style="height:250px" aria-hidden="true">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-2.jpg' %}" alt="" width="300" height="400" style="height:190px" aria-hidden="true">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-6.jpg' %}" alt="" width="300" height="400" style="height:260px" aria-hidden="true">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-10.jpg' %}" alt="" width="300" height="400" style="height:215px" aria-hidden="true">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-14.jpg' %}" alt="" width="300" height="400" style="height:240px" aria-hidden="true">
+        <img class="sp-gal-card" src="{% static 'images/gallery/nail-18.jpg' %}" alt="" width="300" height="400" style="height:185px" aria-hidden="true">
+      </div>
+    </div>
+
+  </div>
+</div>

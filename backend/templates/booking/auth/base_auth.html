@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+{% load static i18n %}
+<html lang="{{ CURRENT_LANGUAGE|default:'mk' }}" translate="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="google" content="notranslate">
+  <title>{% block title %}{% trans "Owner — Vremio" %}{% endblock %}</title>
+  {% if is_customer_domain %}
+    <link rel="icon" href="{% url 'favicon' %}" sizes="any">
+    <link rel="icon" href="{% static 'images/salon-favicon.svg' %}" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="{% static 'images/salon-apple-touch-icon.png' %}">
+  {% else %}
+    <link rel="icon" href="{% url 'favicon' %}" sizes="any">
+    <link rel="icon" href="{% static 'images/vremio-favicon.svg' %}" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="{% static 'images/vremio-apple-touch-icon.png' %}">
+  {% endif %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body class="auth-body">
+  <div class="auth-wrap">
+    <div class="auth-lang-wrap">{% include "partials/language_switcher.html" %}</div>
+    {% block content %}{% endblock %}
+  </div>
+</body>
+</html>

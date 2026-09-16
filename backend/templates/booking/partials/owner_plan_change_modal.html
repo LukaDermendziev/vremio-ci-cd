@@ -1,0 +1,60 @@
+{% load i18n %}
+<div class="od-modal-overlay" id="od-plan-change-modal">
+  <div class="od-modal-box">
+    <div class="od-modal-header">
+      <span class="od-modal-title">{% trans "Request plan change" %}</span>
+      <button type="button" class="od-modal-close" data-close-modal="od-plan-change-modal">&times;</button>
+    </div>
+    <div id="od-plan-change-form-view">
+      <p class="od-plan-change-intro">
+        {% blocktrans with plan=salon.get_plan_display trimmed %}
+        You are currently on <strong>{{ plan }}</strong>. Tell us which plan you want — we’ll follow up.
+        {% endblocktrans %}
+      </p>
+      <form
+        method="post"
+        action="{% url 'booking:owner_request_plan_change' %}"
+        id="od-plan-change-form"
+        class="od-form"
+        novalidate
+      >
+        {% csrf_token %}
+        <div class="od-field">
+          <span class="od-field-label">{% trans "Plan" %}</span>
+          <div class="od-plan-choice-row" role="radiogroup" aria-label="{% trans 'Plan' %}">
+            {% for value, label in plan_change_choices %}
+              <label class="od-plan-choice{% if value == salon.plan %} is-current{% endif %}">
+                <input
+                  type="radio"
+                  name="plan"
+                  value="{{ value }}"
+                  {% if value == suggested_plan %}checked{% endif %}
+                  {% if value == salon.plan %}disabled{% endif %}
+                >
+                <span>{{ label }}</span>
+                {% if value == salon.plan %}
+                  <em>{% trans "Current" %}</em>
+                {% endif %}
+              </label>
+            {% endfor %}
+          </div>
+        </div>
+        <p class="od-plan-change-note">
+          {% trans "We’ll use your salon phone and Instagram from your account — no need to enter them again." %}
+        </p>
+        <p class="od-field-error" id="od-plan-change-error" hidden></p>
+        <div class="od-modal-footer">
+          <button type="button" class="od-btn od-btn-ghost" data-close-modal="od-plan-change-modal">{% trans "Cancel" %}</button>
+          <button type="submit" class="od-btn od-btn-primary" id="od-plan-change-submit">{% trans "Send request" %}</button>
+        </div>
+      </form>
+    </div>
+    <div id="od-plan-change-success-view" hidden>
+      <div class="od-plan-change-success">
+        <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+        <p id="od-plan-change-success-text">{% trans "Thanks — we received your request and will contact you soon." %}</p>
+        <button type="button" class="od-btn od-btn-primary" data-close-modal="od-plan-change-modal">{% trans "Close" %}</button>
+      </div>
+    </div>
+  </div>
+</div>

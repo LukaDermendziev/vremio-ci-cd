@@ -1,0 +1,12 @@
+{% load i18n %}{% blocktrans with name=customer_name phone=phone date=date time=time %}You have a new booking request.
+
+Customer: {{ name }}
+Phone: {{ phone }}{% endblocktrans %}
+{% if services_list|length > 1 %}{% trans "Services" %}:
+{% for row in services_list %}• {{ row.name }} ({{ row.start_time }} – {{ row.end_time }})
+{% endfor %}{% blocktrans with minutes=total_duration %}Total duration: {{ minutes }} min{% endblocktrans %}
+{% else %}{% blocktrans with service=services_label %}Service: {{ service }}{% endblocktrans %}
+{% endif %}
+{% blocktrans with date=date time=time %}Date and time: {{ date }} at {{ time }}{% endblocktrans %}
+
+{% trans "Review in dashboard:" %} {{ dashboard_url }}

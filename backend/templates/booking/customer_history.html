@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% load i18n static %}
+{% block title %}{{ customer.full_name }} — {% trans "History" %}{% endblock %}
+{% block body_class %}od-page{% endblock %}
+
+{% block content %}
+<div class="od-standalone">
+  <div class="od-standalone-top">
+    <a href="{% url 'booking:owner_dashboard' %}#customers" class="od-back-link">
+      <i class="bi bi-arrow-left"></i> {% trans "Back to dashboard" %}
+    </a>
+    <h1>{{ customer.full_name }}</h1>
+    <div class="od-customer-meta">
+      <span><i class="bi bi-telephone"></i> {{ customer.phone_number }}</span>
+      {% if customer.email %}
+        <span><i class="bi bi-envelope"></i> {{ customer.email }}</span>
+      {% endif %}
+      {% if customer.instagram_username %}
+        <span><i class="bi bi-instagram"></i> {{ customer.instagram_username }}</span>
+      {% endif %}
+      <span><i class="bi bi-chat-dots"></i> {{ customer.get_preferred_contact_method_display }}</span>
+    </div>
+    <div class="od-customer-header-actions">
+      <a class="od-btn od-btn-ghost od-btn-sm" href="tel:{{ customer.phone_number }}">{% trans "Call customer" %}</a>
+      {% if customer.email %}
+        <a class="od-btn od-btn-ghost od-btn-sm" href="mailto:{{ customer.email }}">{% trans "Email customer" %}</a>
+      {% endif %}
+      <button type="button" class="od-btn od-btn-danger od-btn-sm"
+              data-open-block-customer
+              data-customer-id="{{ customer.id }}"
+              data-customer-name="{{ customer.full_name|escape }}"
+              data-phone="{{ customer.phone_number|escape }}"
+              data-email="{{ customer.email|escape }}"
+              {% if customer_block_entry %}disabled title="{% trans 'Already blocked' %}"{% endif %}>{% trans "Block customer" %}</button>
+    </div>
+  </div>
+
+  <div class="od-card">
+    <div class="od-card-title">{% trans "Appointment history" %}</div>
+    {% if bookings %}
+      <div class="od-bk-list">
+        {% for booking in bookings %}
+          <div class="od-bk-card" data-booking-id="{{ booking.id }}">
+            <div class="od-bk-badges">
+              <span class="od-bk-name">{{ booking.start_at|date:"d/m/Y" }} · {{ booking.start_at|date:"H:i" }}</span>
+              <span class="od-badge od-badge-{{ booking.status }}">{{ booking.get_status_display }}</span>
+            </div>
+            <div class="od-bk-svc">
+              {% for item in booking.booking_services.all %}
+                {{ item.service_name_snapshot }}{% if item.price_snapshot %} ({{ item.price_snapshot|floatformat:0 }} {% trans "ден" %}){% endif %}{% if not forloop.last %}, {% endif %}
+              {% empty %}—{% endfor %}
+            </div>
+            {% if booking.customer_note %}
+              <div class="od-bk-note">{% trans "Customer note:" %} {{ booking.customer_note }}</div>
+            {% endif %}
+            {% if booking.owner_note %}
+              <div class="od-bk-note">{% trans "Owner note:" %} {{ booking.owner_note }}</div>
+            {% endif %}
+            {% include "booking/partials/owner_reference_photo_controls.html" %}
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="od-empty">{% trans "No appointments recorded for this customer." %}</div>
+    {% endif %}
+  </div>
+</div>
+
+<form id="od-history-csrf" style="display:none">{% csrf_token %}</form>
+{% include "booking/partials/owner_photo_modal.html" %}
+{% include "booking/partials/owner_block_customer_modal.html" %}
+{% endblock %}
+
+{% block extra_js %}
+{% load static %}
+<script src="{% static 'js/owner_session_guard.js' %}"></script>
+<script>
+window.OD_I18N = window.OD_I18N || {
+  confirmDeletePhoto: "{% filter escapejs %}{% trans 'Delete this reference photo?' %}{% endfilter %}",
+  noPhotoAttached: "{% filter escapejs %}{% trans 'No photo attached.' %}{% endfilter %}",
+  photoRemoved: "{% filter escapejs %}{% trans 'Photo removed.' %}{% endfilter %}",
+  somethingWentWrong: "{% filter escapejs %}{% trans 'Something went wrong. Please try again.' %}{% endfilter %}",
+  blockCustomer: "{% filter escapejs %}{% trans 'Block customer' %}{% endfilter %}",
+  alreadyBlocked: "{% filter escapejs %}{% trans 'Already blocked' %}{% endfilter %}",
+  customerBlocked: "{% filter escapejs %}{% trans 'Customer blocked.' %}{% endfilter %}",
+  customerUnblocked: "{% filter escapejs %}{% trans 'Customer unblocked.' %}{% endfilter %}",
+  blockReasonUpdated: "{% filter escapejs %}{% trans 'Block reason updated.' %}{% endfilter %}",
+  confirmUnblockCustomer: "{% filter escapejs %}{% trans 'Unblock this customer? They will be able to book again.' %}{% endfilter %}",
+  editBlockReason: "{% filter escapejs %}{% trans 'Edit block reason' %}{% endfilter %}",
+  saveChanges: "{% filter escapejs %}{% trans 'Save changes' %}{% endfilter %}",
+  customer: "{% filter escapejs %}{% trans 'Customer' %}{% endfilter %}",
+  phone: "{% filter escapejs %}{% trans 'Phone' %}{% endfilter %}",
+  email: "{% filter escapejs %}{% trans 'Email' %}{% endfilter %}",
+  dateBlocked: "{% filter escapejs %}{% trans 'Date blocked' %}{% endfilter %}",
+  reason: "{% filter escapejs %}{% trans 'Reason' %}{% endfilter %}",
+  status: "{% filter escapejs %}{% trans 'Status' %}{% endfilter %}",
+  notes: "{% filter escapejs %}{% trans 'Notes' %}{% endfilter %}",
+  auditLog: "{% filter escapejs %}{% trans 'Audit log' %}{% endfilter %}",
+  blocked: "{% filter escapejs %}{% trans 'Blocked' %}{% endfilter %}",
+  unblocked: "{% filter escapejs %}{% trans 'Unblocked' %}{% endfilter %}",
+};
+</script>
+<script src="{% static 'js/owner_block_customer.js' %}"></script>
+<script src="{% static 'js/owner_photo_tools.js' %}"></script>
+<script>
+initOwnerBlockCustomer({
+  blockUrl: "{% url 'booking:owner_block_customer' %}",
+  contextUrl: "{% url 'booking:owner_customer_block_context' %}",
+  detailUrlBase: "/owner/customers/block/",
+  updateUrlBase: "/owner/customers/block/",
+  unblockUrlBase: "/owner/customers/block/",
+});
+</script>
+{% endblock %}

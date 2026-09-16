@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Check your email" %}{% endblock %}
+{% block body_class %}bk-page bk-success-page{% if booking and booking.salon.uses_starter_website %} bk-theme-starter{% endif %}{% endblock %}
+
+{% block lang_switcher %}{% endblock %}
+
+{% block content %}
+<div class="bk-success-wrap">
+  <div class="bk-success-card">
+    <div class="bk-success-icon-wrap">
+      <i class="bi bi-envelope-check bk-verify-email-icon" aria-hidden="true"></i>
+    </div>
+
+    <h1 class="bk-success-title">{% trans "Check your email" %}</h1>
+
+    {% if email_failed %}
+    <div class="bk-success-notice bk-success-notice--warn">
+      <i class="bi bi-exclamation-triangle"></i>
+      {% trans "We could not send the verification email. Use the button below to try again, or contact the salon." %}
+    </div>
+    {% endif %}
+
+    <p class="bk-success-msg">
+      {% trans "We sent you a verification link. Click it to complete your booking request." %}
+    </p>
+
+    <div class="bk-success-notice">
+      <i class="bi bi-info-circle"></i>
+      {% trans "If you do not see the email within a few minutes, check your spam or junk folder." %}
+    </div>
+
+    <p class="bk-verify-note">
+      {% trans "Your appointment is not confirmed yet. The salon will review your request after you verify your email." %}
+    </p>
+
+    {% if can_resend %}
+    <form method="post" action="{% url 'booking:resend_booking_verification_email' %}" class="bk-verify-resend-form">
+      {% csrf_token %}
+      <button type="submit" class="bk-btn bk-btn-outline">
+        {% trans "Resend verification email" %}
+      </button>
+    </form>
+    {% endif %}
+  </div>
+  <div class="bk-page-legal-footer">
+    {% include "partials/legal_footer.html" with legal_footer_compact=True %}
+  </div>
+</div>
+{% endblock %}

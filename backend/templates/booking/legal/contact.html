@@ -1,0 +1,27 @@
+{% extends "booking/legal/_page.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Contact and Data Requests" %} — Vremio{% endblock %}
+{% block legal_title %}{% trans "Contact and data requests" %}{% endblock %}
+
+{% block legal_content %}
+<section class="vm-legal-section">
+  <p>{% trans "For questions, correction, or deletion of personal data, contact us." %}</p>
+  {% if contact_email %}
+    <p class="vm-legal-contact-email"><i class="bi bi-envelope"></i> {{ contact_email }}</p>
+    <p><a class="vm-btn vm-btn-primary vm-btn-sm" href="mailto:{{ contact_email }}">{% trans "Send email" %}</a></p>
+  {% else %}
+    <p class="vm-legal-contact-placeholder">{% trans "Contact email will be added soon." %}</p>
+  {% endif %}
+</section>
+
+<section class="vm-legal-section">
+  <h2>{% trans "What you can request" %}</h2>
+  <ul>
+    <li>{% trans "Correction of your contact details" %}</li>
+    <li>{% trans "Deletion of a booking or uploaded photo where reasonable" %}</li>
+    <li>{% trans "Questions about how your data is used" %}</li>
+  </ul>
+  <p>{% trans "During the pilot, requests are handled manually. You may also contact the business where you booked directly." %}</p>
+</section>
+{% endblock %}

@@ -1,0 +1,68 @@
+{% load i18n %}
+<div class="od-modal-overlay" id="od-block-modal">
+  <div class="od-modal-box">
+    <div class="od-modal-header">
+      <span class="od-modal-title" id="od-block-modal-title">{% trans "Block time" %}</span>
+      <button type="button" class="od-modal-close" data-close-modal="od-block-modal">&times;</button>
+    </div>
+    <form method="post" id="od-block-form" class="od-form">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="save_unavailable_block">
+      <input type="hidden" name="return_section" value="calendar">
+      <input type="hidden" name="block_id" value="">
+      <div class="od-form-grid">
+        <div class="od-field"><label>{% trans "Date" %}</label>{% include "booking/partials/od_date_input.html" with name="date" required=True %}</div>
+        <div class="od-form-grid od-form-grid-2">
+          <div class="od-field"><label>{% trans "Start" %}</label><input type="time" name="start_time" required class="od-input"></div>
+          <div class="od-field"><label>{% trans "End" %}</label><input type="time" name="end_time" required class="od-input"></div>
+        </div>
+        <div class="od-field"><label>{% trans "Reason (optional)" %}</label><input type="text" name="reason" class="od-input" placeholder="{% trans 'Lunch break, personal errand...' %}"></div>
+      </div>
+      <div class="od-modal-footer od-modal-footer-split">
+        <button type="button" class="od-btn od-btn-danger od-delete-btn" id="od-block-delete" style="display:none">{% trans "Delete" %}</button>
+        <div class="od-modal-footer-right">
+          <button type="button" class="od-btn od-btn-ghost" data-close-modal="od-block-modal">{% trans "Cancel" %}</button>
+          <button type="submit" class="od-btn od-btn-primary">{% trans "Save block" %}</button>
+        </div>
+      </div>
+    </form>
+    <form method="post" id="od-block-delete-form" style="display:none">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="delete_unavailable_block">
+      <input type="hidden" name="return_section" value="calendar">
+      <input type="hidden" name="block_id" value="">
+    </form>
+  </div>
+</div>
+
+<div class="od-modal-overlay" id="od-blocked-date-modal">
+  <div class="od-modal-box">
+    <div class="od-modal-header">
+      <span class="od-modal-title">{% trans "Block full day" %}</span>
+      <button type="button" class="od-modal-close" data-close-modal="od-blocked-date-modal">&times;</button>
+    </div>
+    <form method="post" id="od-blocked-date-form" class="od-form">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="save_blocked_date">
+      <input type="hidden" name="return_section" value="availability">
+      <div class="od-form-grid">
+        <div class="od-form-grid od-form-grid-2">
+          <div class="od-field">
+            <label>{% trans "From" %}</label>
+            {% include "booking/partials/od_date_input.html" with name="date" required=True %}
+          </div>
+          <div class="od-field">
+            <label>{% trans "To" %}</label>
+            {% include "booking/partials/od_date_input.html" with name="end_date" required=False min_from="date" %}
+          </div>
+        </div>
+        <p class="od-field-hint">{% trans "Leave the end date empty to block only one day." %}</p>
+        <div class="od-field"><label>{% trans "Reason (optional)" %}</label><input type="text" name="reason" class="od-input"></div>
+      </div>
+      <div class="od-modal-footer">
+        <button type="button" class="od-btn od-btn-ghost" data-close-modal="od-blocked-date-modal">{% trans "Cancel" %}</button>
+        <button type="submit" class="od-btn od-btn-primary">{% trans "Save blocked date" %}</button>
+      </div>
+    </form>
+  </div>
+</div>

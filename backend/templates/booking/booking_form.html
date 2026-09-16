@@ -1,0 +1,1588 @@
+{% extends "base.html" %}
+{% load static i18n %}
+{% block title %}{% trans "Book" %} — {{ salon.name }}{% endblock %}
+{% block body_class %}bk-page{% if salon.uses_starter_website %} bk-theme-starter{% endif %}{% endblock %}
+
+{% block favicons %}
+  {% if salon.uses_pro_website %}
+  <link rel="icon" href="{% static 'salon-favicon.ico' %}" sizes="any">
+  <link rel="icon" href="{% static 'images/salon-favicon.svg' %}" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="{% static 'images/salon-apple-touch-icon.png' %}">
+  {% endif %}
+{% endblock %}
+
+{% block lang_switcher %}{% endblock %}
+
+{% block content %}
+<form
+  class="bk-form"
+  method="post"
+  enctype="multipart/form-data"
+  data-slots-url="{% url 'booking:available_slots' salon.slug %}"
+  data-last-minute-dates-url="{% url 'booking:last_minute_dates' salon.slug %}"
+  data-full-dates-url="{% url 'booking:fully_booked_dates' salon.slug %}"
+  data-min-date="{{ min_date }}"
+  data-max-date="{{ max_date }}"
+  data-closed-weekdays="{{ closed_weekdays_js }}"
+  data-closed-dates="{{ closed_dates_js }}"
+  data-salon-url="{% url 'booking:salon_page' salon.slug %}"
+  data-max-photo-mb="{{ booking_policy.max_reference_photo_size_mb|default:5 }}"
+  data-service-gap="{{ booking_policy.service_gap_minutes|default:30 }}"
+  data-sms-verification="{{ booking_policy.sms_verification_required|yesno:'true,false' }}"
+  novalidate
+>
+  {% csrf_token %}
+  {{ form.service }}
+  {{ form.service_ids }}
+  {{ form.service_price_items }}
+  {{ form.start_time }}
+  {{ form.date }}
+  {{ form.preferred_contact_method }}
+  {{ form.selected_price_item_id }}
+  <div class="bk-honeypot" aria-hidden="true">{{ form.company_website }}</div>
+
+  {% if form.non_field_errors %}
+    <div class="bk-error-banner">
+      <i class="bi bi-exclamation-circle"></i>
+      {% for err in form.non_field_errors %}{{ err }}{% if not forloop.last %} {% endif %}{% endfor %}
+    </div>
+  {% elif form.errors %}
+    <div class="bk-error-banner">
+      <i class="bi bi-exclamation-circle"></i>
+      {% trans "Something went wrong. Please check your details and choose an available time." %}
+    </div>
+  {% endif %}
+
+  {# ── Step progress bar ──────────────────────────────────────────────────── #}
+  <div class="bk-progress" id="bk-progress">
+    <div class="bk-progress-step active" data-dot="1"><span class="bk-ps-num">1</span><span class="bk-ps-label">{% trans "Service" %}</span></div>
+    <div class="bk-progress-line"></div>
+    <div class="bk-progress-step" data-dot="2"><span class="bk-ps-num">2</span><span class="bk-ps-label">{% trans "Date & Time" %}</span></div>
+    <div class="bk-progress-line"></div>
+    <div class="bk-progress-step" data-dot="3"><span class="bk-ps-num">3</span><span class="bk-ps-label">{% trans "Your Details" %}</span></div>
+    <div class="bk-progress-line"></div>
+    <div class="bk-progress-step" data-dot="4"><span class="bk-ps-num">4</span><span class="bk-ps-label">{% trans "Review" %}</span></div>
+  </div>
+
+  {# ── Step 1: Service selection ─────────────────────────────────────────── #}
+  <div class="bk-step active" data-step="1">
+    <div class="bk-step-hero">
+      <div class="bk-step-hero-inner">
+        <p class="bk-step-hero-eyebrow">{{ salon.name }}</p>
+        <h1 class="bk-step-hero-title">{% trans "Book appointment" %}</h1>
+        <p class="bk-step-hero-sub">{% trans "Choose a service, date and available time. The salon will review your request." %}</p>
+        <p class="bk-step-hero-note"><i class="bi bi-shield-check"></i> {% trans "The appointment is not confirmed until the salon approves it." %}</p>
+      </div>
+    </div>
+
+    <div class="bk-section-label">{% trans "Choose service" %}</div>
+
+    {% for service in services %}
+      {% with items=service.price_items.all %}
+      {% if items %}
+      {# ── Expandable card (service has sub-items / price list) ── #}
+      <div class="bk-svc-card"
+           data-service-id="{{ service.id }}"
+           data-service-name="{{ service.name }}"
+           data-service-duration="{{ service.duration_minutes }}"
+           data-service-price="{{ service.base_price }}"
+           data-requires-photo="{{ service.requires_photo|yesno:'true,false' }}"
+           data-photo-recommended="{{ service.photo_recommended|yesno:'true,false' }}">
+        <button type="button" class="bk-svc-card-header">
+          <div class="bk-service-body">
+            <div class="bk-service-name">{{ service.name }}</div>
+            {% if service.description %}<div class="bk-service-desc">{{ service.description }}</div>{% endif %}
+            {% if service.extra_duration_note %}
+            <div class="bk-service-tags">
+              <span class="bk-service-note">{{ service.extra_duration_note }}</span>
+            </div>
+            {% endif %}
+            {# Shows which sub-service is selected when card is collapsed #}
+            <div class="bk-svc-selected-summary" aria-live="polite">
+              <i class="bi bi-check-circle-fill" style="font-size:11px"></i>
+              <span class="bk-svc-selected-name"></span>
+            </div>
+          </div>
+          <div class="bk-service-right">
+            {% if service.base_price %}<div class="bk-service-price">{% blocktrans with price=service.base_price|floatformat:0 %}from {{ price }} den{% endblocktrans %}</div>{% endif %}
+            <span class="bk-svc-toggle">
+              <span class="bk-svc-toggle-text">{% trans "More" %}</span>
+              <i class="bi bi-chevron-down bk-svc-chevron"></i>
+            </span>
+          </div>
+        </button>
+        {# No hidden attribute — open/close via CSS class #}
+        <div class="bk-svc-items">
+          <div class="bk-svc-items-inner">
+            {% regroup items by group as grouped_items %}
+            {% for group_entry in grouped_items %}
+              {% if group_entry.grouper %}
+              <div class="bk-svc-group-label bk-svc-group-label-bases">{{ group_entry.grouper }}</div>
+              {% endif %}
+              {% for item in group_entry.list %}
+                {% if not item.is_addon %}
+              <button type="button" class="bk-price-item-btn"
+                      data-item-id="{{ item.id }}"
+                      data-item-name="{{ item.name }}"
+                      data-price="{{ item.price_display }}"
+                      data-duration="{{ item.effective_duration_minutes }}"
+                      data-photo-required="{{ item.photo_required|yesno:'true,false' }}"
+                      data-is-addon="false">
+                <span class="bk-pi-check" aria-hidden="true"><i class="bi bi-check-lg"></i></span>
+                <div class="bk-pi-info">
+                  <span class="bk-pi-name">{{ item.name }}</span>
+                  <span class="bk-pi-meta">
+                    <span class="bk-pi-dur"><i class="bi bi-clock"></i> {% blocktrans with minutes=item.effective_duration_minutes %}{{ minutes }} min{% endblocktrans %}</span>
+                    {% if item.photo_required %}<span class="bk-photo-badge required">{% trans "Photo required" %}</span>{% endif %}
+                  </span>
+                </div>
+                <span class="bk-pi-price">{{ item.price_display }} {% trans "den" %}</span>
+              </button>
+                {% endif %}
+              {% endfor %}
+            {% endfor %}
+
+            <div class="bk-svc-addons" data-addons-panel hidden>
+              <div class="bk-svc-addons-label">{% trans "Optional extras" %}</div>
+              <p class="bk-svc-addons-hint">{% trans "Choose a main service above, then add extras if you want." %}</p>
+              {% for item in items %}
+                {% if item.is_addon %}
+              <button type="button" class="bk-price-item-btn bk-price-item-addon"
+                      data-item-id="{{ item.id }}"
+                      data-item-name="{{ item.name }}"
+                      data-price="{{ item.price_display }}"
+                      data-duration="{{ item.effective_duration_minutes }}"
+                      data-photo-required="{{ item.photo_required|yesno:'true,false' }}"
+                      data-is-addon="true"
+                      disabled>
+                <span class="bk-pi-check" aria-hidden="true"><i class="bi bi-check-lg"></i></span>
+                <div class="bk-pi-info">
+                  <span class="bk-pi-name">{{ item.name }}</span>
+                  <span class="bk-pi-meta">
+                    {% if item.duration_minutes %}
+                    <span class="bk-pi-dur"><i class="bi bi-clock"></i> +{% blocktrans with minutes=item.duration_minutes %}{{ minutes }} min{% endblocktrans %}</span>
+                    {% endif %}
+                    {% if item.photo_required %}<span class="bk-photo-badge required">{% trans "Photo required" %}</span>{% endif %}
+                  </span>
+                </div>
+                <span class="bk-pi-price">{{ item.price_display }} {% trans "den" %}</span>
+              </button>
+                {% endif %}
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+      {% else %}
+      {# ── Flat service row (no sub-items) ── #}
+      <button
+        type="button"
+        class="bk-service-row"
+        data-service-id="{{ service.id }}"
+        data-service-name="{{ service.name }}"
+        data-service-duration="{{ service.duration_minutes }}"
+        data-service-price="{{ service.base_price }}"
+        data-requires-photo="{{ service.requires_photo|yesno:'true,false' }}"
+        data-photo-recommended="{{ service.photo_recommended|yesno:'true,false' }}"
+      >
+        <div class="bk-service-body">
+          <div class="bk-service-name">{{ service.name }}</div>
+          {% if service.description %}<div class="bk-service-desc">{{ service.description }}</div>{% endif %}
+          <div class="bk-service-tags">
+            <span class="bk-service-dur"><i class="bi bi-clock"></i> {% blocktrans with minutes=service.duration_minutes %}{{ minutes }} min{% endblocktrans %}</span>
+            {% if service.extra_duration_note %}<span class="bk-service-note">{{ service.extra_duration_note }}</span>{% endif %}
+            {% if service.requires_photo %}<span class="bk-photo-badge required">{% trans "Photo required" %}</span>
+            {% elif service.photo_recommended %}<span class="bk-photo-badge">{% trans "Photo recommended" %}</span>{% endif %}
+          </div>
+        </div>
+        <div class="bk-service-right">
+          {% if service.base_price %}<div class="bk-service-price">{{ service.base_price|floatformat:0 }} {% trans "den" %}</div>{% endif %}
+          <i class="bi bi-chevron-right bk-chevron"></i>
+        </div>
+      </button>
+      {% endif %}
+      {% endwith %}
+    {% empty %}
+      <p class="bk-empty-msg">{% trans "No active services available yet." %}</p>
+    {% endfor %}
+
+    {# ── Confirm bar: appears after tapping a sub-service item ── #}
+    <div class="bk-multi-summary" id="bk-multi-summary" style="display:none"></div>
+    <button type="button" class="bk-btn-primary bk-step1-continue" id="bk-step1-next" style="display:none">
+      {% trans "Continue" %} <i class="bi bi-arrow-right"></i>
+    </button>
+  </div>
+
+  {# ── Step 2: Date & time ───────────────────────────────────────────────── #}
+  <div class="bk-step" data-step="2">
+    <div class="bk-step-header">
+      <button type="button" class="bk-back-btn" data-prev aria-label="{% trans 'Back' %}"><i class="bi bi-arrow-left"></i></button>
+      <span class="bk-step-title">{% trans "Date & Time" %}</span>
+    </div>
+
+    <div class="bk-selected-service" id="bk-svc-pill" style="display:none"></div>
+
+    <div class="bk-cal">
+      <div class="bk-cal-nav">
+        <button type="button" class="bk-cal-nav-btn" id="bk-prev-month" aria-label="{% trans 'Previous month' %}"><i class="bi bi-chevron-left"></i></button>
+        <span class="bk-cal-month-label" id="bk-month-label"></span>
+        <button type="button" class="bk-cal-nav-btn" id="bk-next-month" aria-label="{% trans 'Next month' %}"><i class="bi bi-chevron-right"></i></button>
+      </div>
+      <div class="bk-cal-dow">
+        <span>{% trans "Mo" %}</span><span>{% trans "Tu" %}</span><span>{% trans "We" %}</span><span>{% trans "Th" %}</span><span>{% trans "Fr" %}</span><span>{% trans "Sa" %}</span><span class="sun">{% trans "Su" %}</span>
+      </div>
+      <div class="bk-cal-grid" id="bk-cal-grid"></div>
+    </div>
+
+    <div class="bk-slots-section">
+      <div class="bk-section-label">{% trans "Available times" %}</div>
+      <p class="bk-early-open-hint" id="bk-early-open-hint" hidden>{% trans "This is a last-minute opening from a cancelled appointment." %}</p>
+      <div class="bk-slots-grid" id="bk-slots-grid">
+        <span class="bk-slots-hint">{% trans "Select a date above to see available times." %}</span>
+      </div>
+    </div>
+
+    <div class="bk-selection-summary" id="bk-summary-card" style="display:none">
+      <div class="bk-sum-svc" id="bk-sum-svc"></div>
+      <div class="bk-sum-when" id="bk-sum-meta"></div>
+      <div class="bk-sum-price" id="bk-sum-price"></div>
+    </div>
+
+    <button type="button" class="bk-btn-primary" id="bk-step2-next" disabled>{% trans "Continue" %}</button>
+  </div>
+
+  {# ── Step 3: Customer details ──────────────────────────────────────────── #}
+  <div class="bk-step" data-step="3">
+    <div class="bk-step-header">
+      <button type="button" class="bk-back-btn" data-prev aria-label="{% trans 'Back' %}"><i class="bi bi-arrow-left"></i></button>
+      <span class="bk-step-title">{% trans "Your Details" %}</span>
+    </div>
+
+    <div class="bk-fields-group">
+      <div class="bk-field">
+        <label class="bk-field-label" for="{{ form.full_name.id_for_label }}">{% trans "Full name" %} <span class="bk-req">*</span></label>
+        {{ form.full_name }}
+        <span class="bk-field-error bk-field-live-error" id="bk-err-full_name" hidden></span>
+        {% for err in form.full_name.errors %}<span class="bk-field-error">{{ err }}</span>{% endfor %}
+      </div>
+
+      <div class="bk-field">
+        <label class="bk-field-label" for="{{ form.phone_number.id_for_label }}">{% trans "Phone number" %} <span class="bk-req">*</span></label>
+        {{ form.phone_number }}
+        <span class="bk-field-error bk-field-live-error" id="bk-err-phone_number" hidden></span>
+        {% for err in form.phone_number.errors %}<span class="bk-field-error">{{ err }}</span>{% endfor %}
+      </div>
+
+      {% if not booking_policy.sms_verification_required %}
+      <div class="bk-field" id="bk-email-field">
+        <label class="bk-field-label" for="{{ form.email.id_for_label }}">{% trans "Email" %} <span class="bk-req">*</span></label>
+        {{ form.email }}
+        <span class="bk-field-error bk-field-live-error" id="bk-err-email" hidden></span>
+        {% for err in form.email.errors %}<span class="bk-field-error">{{ err }}</span>{% endfor %}
+      </div>
+      {% endif %}
+      {# Email typo popup modal #}
+      <div id="bk-email-typo-modal" class="bk-typo-modal" hidden aria-modal="true" role="dialog">
+        <div class="bk-typo-modal-inner">
+          <p class="bk-typo-modal-msg" id="bk-typo-modal-msg"></p>
+          <div class="bk-typo-modal-actions">
+            <button type="button" class="bk-btn-primary bk-typo-use" id="bk-typo-use-btn"></button>
+            <button type="button" class="bk-btn-ghost bk-typo-keep" id="bk-typo-keep-btn"></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bk-field">
+      <div class="bk-field-label">{% trans "Preferred contact method" %} <span class="bk-req">*</span></div>
+      <div class="bk-contact-pills">
+        {% for value, label in form.preferred_contact_method.field.choices %}
+          <button
+            type="button"
+            class="bk-contact-pill{% if value == form.preferred_contact_method.value %} selected{% endif %}"
+            data-contact="{{ value }}"
+          >{{ label }}</button>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="bk-field" id="bk-photo-section">
+      <div class="bk-field-label">{% trans "Reference photo" %} <span id="bk-photo-hint" class="bk-opt">({% trans "optional" %})</span></div>
+      <label class="bk-upload-zone" for="{{ form.reference_photo.id_for_label }}">
+        <i class="bi bi-camera"></i>
+        <span id="bk-upload-label">{% trans "Tap to upload a photo" %}</span>
+        {{ form.reference_photo }}
+      </label>
+      {% for err in form.reference_photo.errors %}<span class="bk-field-error">{{ err }}</span>{% endfor %}
+      <span class="bk-field-error bk-field-live-error" id="bk-err-reference_photo" hidden></span>
+      <p class="bk-photo-abuse-note">{% trans "Upload only a photo related to the service. Inappropriate images will be removed and the customer may be blocked." %}</p>
+    </div>
+
+    <div class="bk-field">
+      <label class="bk-field-label" for="{{ form.customer_note.id_for_label }}">{{ form.customer_note.label }}</label>
+      {{ form.customer_note }}
+    </div>
+
+    <button type="button" class="bk-btn-primary" id="bk-step3-next">{% trans "Continue" %}</button>
+  </div>
+
+  {# ── Step 4: Review & submit ───────────────────────────────────────────── #}
+  <div class="bk-step" data-step="4">
+    <div class="bk-step-header">
+      <button type="button" class="bk-back-btn" data-prev aria-label="{% trans 'Back' %}"><i class="bi bi-arrow-left"></i></button>
+      <span class="bk-step-title">{% trans "Review & Submit" %}</span>
+    </div>
+
+    <p class="bk-section-label" style="margin-top:20px">{% trans "Review request" %}</p>
+
+    <div class="bk-review-card">
+      <div class="bk-review-label">{% trans "Appointment" %}</div>
+      <div class="bk-review-svc" id="bk-rev-svc"></div>
+      <div class="bk-review-row"><i class="bi bi-calendar3"></i><span id="bk-rev-date"></span></div>
+      <div class="bk-review-row"><i class="bi bi-clock"></i><span id="bk-rev-dur"></span></div>
+      <div class="bk-review-price" id="bk-rev-price"></div>
+    </div>
+
+    <div class="bk-review-card">
+      <div class="bk-review-label">{% trans "Contact details" %}</div>
+      <div class="bk-review-row"><i class="bi bi-person"></i><span id="bk-rev-name"></span></div>
+      <div class="bk-review-row"><i class="bi bi-telephone"></i><span id="bk-rev-phone"></span></div>
+      <div class="bk-review-row"><i class="bi bi-chat-dots"></i><span id="bk-rev-contact"></span></div>
+    </div>
+
+    {% if not booking_policy.sms_verification_required %}
+    <div class="bk-review-card bk-email-confirm" id="bk-rev-email-card">
+      <div class="bk-review-label">{% trans "Confirmation email" %}</div>
+      <div class="bk-email-confirm-row">
+        <i class="bi bi-envelope"></i>
+        <span id="bk-rev-email" class="bk-email-confirm-value"></span>
+        <input type="email" id="bk-rev-email-input" class="bk-email-confirm-input" autocomplete="email" inputmode="email" aria-label="{% trans "Email" %}">
+        <button type="button" class="bk-email-confirm-edit" id="bk-rev-email-edit"
+                data-edit-label="{% trans "Edit" %}"
+                data-done-label="{% trans "Done" %}">{% trans "Edit" %}</button>
+      </div>
+      <p class="bk-email-confirm-error" id="bk-rev-email-error" hidden></p>
+      <p class="bk-email-confirm-note">{% trans "Please check the spelling — a wrong address will not receive a confirmation." %}</p>
+    </div>
+    {% endif %}
+
+    <div class="bk-rules-section">
+      <div class="bk-section-label" style="margin-top:0">{% trans "Salon rules" %}</div>
+      <p class="bk-rules-intro">{% trans "I understand:" %}</p>
+
+      <ul class="bk-rules-list">
+        <li>{% trans "This is a request only — not confirmed until the salon approves it." %}</li>
+        {% if booking_policy %}
+          {% for rule in booking_policy.get_salon_rules_lines %}
+            <li>{{ rule }}</li>
+          {% endfor %}
+        {% else %}
+          <li>{% trans "Cancellations require at least 24–48 hours notice." %}</li>
+          <li>{% trans "Being more than 15 minutes late without notice may result in cancellation." %}</li>
+          <li>{% trans "I agree to the selected time and understand it cannot be changed without notice." %}</li>
+        {% endif %}
+        <li class="bk-rules-legal-line">
+          {% trans "I have read and agree to the" %}
+          <a href="{% url 'booking:booking_rules' %}" target="_blank" rel="noopener">{% trans "booking rules" %}</a>,
+          <a href="{% url 'booking:privacy_policy' %}" target="_blank" rel="noopener">{% trans "privacy policy" %}</a>
+          {% trans "and" %}
+          <a href="{% url 'booking:photo_policy' %}" target="_blank" rel="noopener">{% trans "photo policy" %}</a>.
+        </li>
+      </ul>
+
+      <label class="bk-legal-consent">
+        <input type="checkbox" class="bk-consent-check" id="bk-rules-consent-check">
+        <span class="bk-consent-text">
+          {% trans "I have read, understood, and agree to all rules and policies." %}
+        </span>
+      </label>
+
+      <div style="display:none">{{ form.rules_accepted }}</div>
+      {% for err in form.rules_accepted.errors %}<span class="bk-field-error">{{ err }}</span>{% endfor %}
+    </div>
+
+    <div class="bk-notice">
+      <i class="bi bi-info-circle"></i>
+      <span>{% trans "This is a request only — not confirmed until the salon approves it." %}</span>
+    </div>
+
+    <button type="submit" class="bk-btn-primary" id="bk-submit" disabled>
+      {% trans "Submit Request" %}
+    </button>
+  </div>
+
+  {# Floating back — step 1: salon page; steps 2–4: previous step (header arrow also available) #}
+  <button type="button" class="bk-step1-back-fab" id="bk-back-fab" aria-label="{% trans 'Back' %}">
+    <span class="bk-step1-back-fab-icon" aria-hidden="true"><i class="bi bi-arrow-left"></i></span>
+    <span class="bk-step1-back-fab-label">{% trans "Back" %}</span>
+  </button>
+
+</form>
+
+<script>
+window.BK_I18N = {
+  loading: "{% filter escapejs %}{% trans 'Loading times…' %}{% endfilter %}",
+  noSlots: "{% filter escapejs %}{% trans 'No available times on this date.' %}{% endfilter %}",
+  lastMinuteNoFit: "{% filter escapejs %}{% trans 'This cancelled opening is not available for your selected service.' %}{% endfilter %}",
+  loadError: "{% filter escapejs %}{% trans 'Could not load times. Please try again.' %}{% endfilter %}",
+  selectDateHint: "{% filter escapejs %}{% trans 'Select a date above to see available times.' %}{% endfilter %}",
+  noMultiFit: "{% filter escapejs %}{{ multi_service_no_fit_message }}{% endfilter %}",
+  selectServiceHint: "{% filter escapejs %}{% trans 'Select one or more services to continue.' %}{% endfilter %}",
+  oneServiceWarning: "{% filter escapejs %}{% trans 'Only one service is allowed per booking. Your previous selection was replaced.' %}{% endfilter %}",
+  tapToUpload: "{% filter escapejs %}{% trans 'Tap to upload a photo' %}{% endfilter %}",
+  fileTypeError: "{% filter escapejs %}{% trans 'Only images are allowed (JPG, PNG, WebP). Choose another format.' %}{% endfilter %}",
+  fileSizeError: "{% filter escapejs %}{% blocktrans with max=booking_policy.max_reference_photo_size_mb|default:5 %}The image is too large. Please upload an image up to {{ max }} MB.{% endblocktrans %}{% endfilter %}",
+  photoRequired: "{% filter escapejs %}{% trans '(required)' %}{% endfilter %}",
+  photoRecommended: "{% filter escapejs %}{% trans '(recommended)' %}{% endfilter %}",
+  photoOptional: "{% filter escapejs %}{% trans '(optional)' %}{% endfilter %}",
+  viaContact: "{% filter escapejs %}{% trans 'Via' %}{% endfilter %}",
+  minutes: "{% filter escapejs %}{% trans 'min' %}{% endfilter %}",
+  expandMore: "{% filter escapejs %}{% trans 'More' %}{% endfilter %}",
+  expandLess: "{% filter escapejs %}{% trans 'Less' %}{% endfilter %}",
+  fullyBooked: "{% filter escapejs %}{% trans 'Fully booked' %}{% endfilter %}",
+  totalLabel: "{% filter escapejs %}{% trans 'Total' %}{% endfilter %}",
+  currencyDen: "{% filter escapejs %}{% trans 'den' %}{% endfilter %}",
+  nameRequired: "{% filter escapejs %}{% trans 'Please enter your full name.' %}{% endfilter %}",
+  phoneRequired: "{% filter escapejs %}{% trans 'Please enter your phone number.' %}{% endfilter %}",
+  phoneInvalid: "{% filter escapejs %}{% trans 'Enter a valid Macedonian mobile number, for example 070 123 456 or +389 70 123 456.' %}{% endfilter %}",
+  emailRequired: "{% filter escapejs %}{% trans 'Please enter your email address.' %}{% endfilter %}",
+  emailInvalid: "{% filter escapejs %}{% trans 'Please enter a valid email address.' %}{% endfilter %}",
+  emailTypoWarning: "{% filter escapejs %}{% trans 'Did you mean' %}{% endfilter %}",
+  emailTypoQuestion: "{% filter escapejs %}{% trans 'Please check your email address.' %}{% endfilter %}",
+  emailTypoUse: "{% filter escapejs %}{% trans 'Use' %}{% endfilter %}",
+  emailTypoKeep: "{% filter escapejs %}{% trans 'Keep my email' %}{% endfilter %}",
+  photoRequiredError: "{% filter escapejs %}{% trans 'Please upload a reference photo for this service.' %}{% endfilter %}",
+  detailsIncomplete: "{% filter escapejs %}{% trans 'Please complete all required fields before continuing.' %}{% endfilter %}",
+  months: [
+    "{% filter escapejs %}{% trans 'January' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'February' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'March' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'April' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'May' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'June' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'July' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'August' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'September' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'October' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'November' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'December' %}{% endfilter %}"
+  ],
+  weekdaysLong: [
+    "{% filter escapejs %}{% trans 'Sunday' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'Monday' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'Tuesday' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'Wednesday' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'Thursday' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'Friday' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'Saturday' %}{% endfilter %}"
+  ],
+  monthsShort: [
+    "{% filter escapejs %}{% trans 'Jan' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'Feb' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'Mar' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'Apr' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'May' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'Jun' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'Jul' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'Aug' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'Sep' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'Oct' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'Nov' %}{% endfilter %}",
+    "{% filter escapejs %}{% trans 'Dec' %}{% endfilter %}"
+  ]
+};
+
+(() => {
+  const I18N = window.BK_I18N;
+  const state = {
+    step: 1,
+    selections: [],
+    date: null,
+    slot: null,
+    calYear: 0,
+    calMonth: 0,
+  };
+
+  const form           = document.querySelector('.bk-form');
+  const smsVerificationRequired = form?.dataset.smsVerification === 'true';
+  const steps          = [...document.querySelectorAll('[data-step]')];
+  const progressSteps  = [...document.querySelectorAll('[data-dot]')];
+  const progressLines  = [...document.querySelectorAll('.bk-progress-line')];
+  const svcInput       = document.getElementById('id_service');
+  const svcIdsInput      = document.getElementById('id_service_ids');
+  const priceItemsInput  = document.getElementById('id_service_price_items');
+  const priceItemInput   = document.getElementById('id_selected_price_item_id');
+  const step1NextBtn     = document.getElementById('bk-step1-next');
+  const multiSummary     = document.getElementById('bk-multi-summary');
+  const dateInput      = document.getElementById('id_date');
+  const timeInput      = document.getElementById('id_start_time');
+  const contactInput   = document.getElementById('id_preferred_contact_method');
+  const calGrid        = document.getElementById('bk-cal-grid');
+  const monthLabel     = document.getElementById('bk-month-label');
+  const slotsGrid      = document.getElementById('bk-slots-grid');
+  const slotsUrl       = form.dataset.slotsUrl;
+  const lastMinuteDatesUrl = form.dataset.lastMinuteDatesUrl;
+  const fullDatesUrl   = form.dataset.fullDatesUrl;
+
+  // Closed weekdays from the backend (JS day numbers: 0=Sun, 1=Mon … 6=Sat)
+  let closedWeekdays = [];
+  try { closedWeekdays = JSON.parse(form.dataset.closedWeekdays || '[]'); } catch {}
+  let closedDates = new Set();
+  try {
+    (JSON.parse(form.dataset.closedDates || '[]')).forEach(d => closedDates.add(d));
+  } catch {}
+  const earlyOpenDates = new Set();
+  const fullDates = new Set();
+
+  function parseLocalDate(str) {
+    const [y, m, d] = str.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  }
+
+  function formatDateStr(dt) {
+    const y = dt.getFullYear();
+    const m = String(dt.getMonth() + 1).padStart(2, '0');
+    const d = String(dt.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  const minDate = parseLocalDate(form.dataset.minDate);
+  const maxDate = parseLocalDate(form.dataset.maxDate);
+
+  state.calYear  = minDate.getFullYear();
+  state.calMonth = minDate.getMonth();
+
+  // ── Multi-service helpers ─────────────────────────────────────────────────
+  const serviceGapMin = Number(form.dataset.serviceGap || 30);
+
+  function serviceFromRow(el) {
+    return {
+      id: el.dataset.serviceId,
+      name: el.dataset.serviceName,
+      duration: Number(el.dataset.serviceDuration),
+      price: el.dataset.servicePrice,
+      requiresPhoto: el.dataset.requiresPhoto === 'true',
+      photoRecommended: el.dataset.photoRecommended === 'true',
+    };
+  }
+
+  function selDuration(s) {
+    const baseDur = s && s.priceItem ? Number(s.priceItem.duration) : 0;
+    const serviceDur = Number(s.service.duration) || 0;
+    let total = baseDur || serviceDur;
+    (s.addons || []).forEach(a => {
+      total += Number(a.duration) || 0;
+    });
+    return total;
+  }
+
+  function selectionLabel(s) {
+    const parts = [];
+    if (s.priceItem) parts.push(s.priceItem.name);
+    else parts.push(s.service.name);
+    (s.addons || []).forEach(a => parts.push(a.name));
+    return parts.join(' + ');
+  }
+
+  function totalDurationMinutes() {
+    if (!state.selections.length) return 0;
+    const sum = state.selections.reduce((acc, s) => acc + selDuration(s), 0);
+    return sum + serviceGapMin * Math.max(0, state.selections.length - 1);
+  }
+
+  function selectionPrices() {
+    const prices = [];
+    state.selections.forEach(s => {
+      const base = String(s.priceItem ? s.priceItem.price : s.service.price || '').trim();
+      if (base) prices.push(base);
+      (s.addons || []).forEach(a => {
+        const p = String(a.price || '').trim();
+        if (p) prices.push(p);
+      });
+    });
+    return prices;
+  }
+
+  function isSummablePrice(price) {
+    const p = String(price || '').trim().replace(',', '.');
+    if (!p) return false;
+    if (/^\d+(\.\d+)?$/.test(p)) return true;
+    if (/^\+\d+(\.\d+)?(\/\d+(\.\d+)?)?$/.test(p)) return true;
+    return false;
+  }
+
+  function priceLowerBound(price) {
+    const p = String(price || '').trim().replace(',', '.');
+    if (!p) return NaN;
+    if (p.startsWith('+')) {
+      return parseFloat(p.slice(1).split('/')[0].split('-')[0]);
+    }
+    if (/^\d+(\.\d+)?$/.test(p)) return parseFloat(p);
+    return parseFloat(p.split('/')[0].split('-')[0]);
+  }
+
+  function totalPriceDisplay() {
+    const prices = selectionPrices();
+    if (!prices.length) return '';
+    if (prices.length === 1) return prices[0];
+    if (!prices.every(isSummablePrice)) {
+      return prices.join(' + ');
+    }
+    let total = 0;
+    prices.forEach(p => {
+      const n = priceLowerBound(p);
+      if (!isNaN(n)) total += n;
+    });
+    return String(Math.round(total));
+  }
+
+  function displayName() {
+    return state.selections.map(selectionLabel).join(' + ');
+  }
+
+  function displayPrice() { return totalPriceDisplay(); }
+
+  function syncHiddenFields() {
+    const ids = state.selections.map(s => s.service.id);
+    if (svcIdsInput) svcIdsInput.value = ids.join(',');
+    if (svcInput) svcInput.value = ids.length === 1 ? ids[0] : '';
+    const map = {};
+    state.selections.forEach(s => {
+      if (!s.priceItem && !(s.addons || []).length) return;
+      map[s.service.id] = {
+        base: s.priceItem ? Number(s.priceItem.id) : null,
+        addons: (s.addons || []).map(a => Number(a.id)),
+      };
+    });
+    if (priceItemsInput) priceItemsInput.value = JSON.stringify(map);
+    if (priceItemInput) {
+      priceItemInput.value = (state.selections.length === 1 && state.selections[0].priceItem)
+        ? state.selections[0].priceItem.id : '';
+    }
+  }
+
+  function refreshStep1UI() {
+    syncHiddenFields();
+    const n = state.selections.length;
+    if (step1NextBtn) step1NextBtn.style.display = n ? '' : 'none';
+    if (!multiSummary) return;
+    if (!n) { multiSummary.style.display = 'none'; return; }
+    multiSummary.style.display = 'block';
+    multiSummary.innerHTML = state.selections.map(s => {
+      const label = selectionLabel(s);
+      const priceBits = [];
+      if (s.priceItem?.price) priceBits.push(s.priceItem.price);
+      (s.addons || []).forEach(a => { if (a.price) priceBits.push(a.price); });
+      const price = priceBits.join(' + ');
+      return `<div class="bk-multi-line"><strong>${label}</strong> · ${selDuration(s)} ${I18N.minutes}${price ? ' · ' + price + ' ' + I18N.currencyDen : ''}</div>`;
+    }).join('') + `<div class="bk-multi-total">${I18N.totalLabel}: ${totalDurationMinutes()} ${I18N.minutes}${displayPrice() ? ' · ' + displayPrice() + ' ' + I18N.currencyDen : ''}</div>`;
+    updatePhotoHintForSelections();
+  }
+
+  function updatePhotoHintForSelections() {
+    let required = false;
+    let recommended = false;
+    state.selections.forEach(s => {
+      if (s.priceItem?.photoRequired || s.service.requiresPhoto) required = true;
+      if ((s.addons || []).some(a => a.photoRequired)) required = true;
+      if (s.service.photoRecommended) recommended = true;
+    });
+    updatePhotoHint(required, recommended);
+  }
+
+  function toggleFlatService(row) {
+    const id = row.dataset.serviceId;
+    const idx = state.selections.findIndex(s => s.service.id === id);
+    if (idx >= 0) {
+      state.selections.splice(idx, 1);
+      row.classList.remove('selected');
+    } else {
+      state.selections.push({ service: serviceFromRow(row), priceItem: null, addons: [] });
+      row.classList.add('selected');
+    }
+    refreshStep1UI();
+  }
+
+  function goTo(n) {
+    state.step = n;
+    steps.forEach(s => s.classList.toggle('active', +s.dataset.step === n));
+    progressSteps.forEach(ps => {
+      const i = +ps.dataset.dot;
+      ps.classList.toggle('active', i === n);
+      ps.classList.toggle('done', i < n);
+    });
+    progressLines.forEach((line, idx) => line.classList.toggle('done', idx < n - 1));
+    document.body.classList.remove('bk-step1-confirm-open');
+    if (n !== 1) hideConfirmBar();
+    updateBackFab();
+    updateActiveStepPadding();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function goBackOneStep() {
+    const targetStep = state.step - 1;
+    if (targetStep < 1) return;
+    goTo(targetStep);
+    if (targetStep === 2) {
+      Promise.all([fetchEarlyOpenDates(), fetchFullyBookedDates()]).then(() => {
+        syncCalendarMonthToSelections();
+        renderCalendar();
+      });
+    }
+    if (targetStep === 1) refreshStep1UI();
+  }
+
+  function syncCalendarMonthToSelections() {
+    if (earlyOpenDates.size) {
+      const sortedEarly = [...earlyOpenDates].sort();
+      const d = parseLocalDate(sortedEarly[0]);
+      state.calYear = d.getFullYear();
+      state.calMonth = d.getMonth();
+    } else {
+      state.calYear = minDate.getFullYear();
+      state.calMonth = minDate.getMonth();
+    }
+  }
+
+  async function fetchEarlyOpenDates() {
+    earlyOpenDates.clear();
+    if (!state.selections.length || !lastMinuteDatesUrl) return;
+    const ids = state.selections.map(s => s.service.id).join(',');
+    const url = `${lastMinuteDatesUrl}?services=${encodeURIComponent(ids)}`;
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
+      (data.dates || []).forEach(d => earlyOpenDates.add(d));
+    } catch {
+      /* keep calendar on normal min-date rules only */
+    }
+  }
+
+  function updateEarlyOpenHint(show) {
+    const earlyHint = document.getElementById('bk-early-open-hint');
+    if (earlyHint) earlyHint.hidden = !show;
+  }
+
+  async function fetchFullyBookedDates() {
+    fullDates.clear();
+    if (!state.selections.length || !fullDatesUrl) return;
+    const ids = state.selections.map(s => s.service.id).join(',');
+    const priceItemsMap = {};
+    state.selections.forEach(s => {
+      if (!s.priceItem && !(s.addons || []).length) return;
+      priceItemsMap[s.service.id] = {
+        base: s.priceItem ? Number(s.priceItem.id) : null,
+        addons: (s.addons || []).map(a => Number(a.id)),
+      };
+    });
+    let url = `${fullDatesUrl}?services=${encodeURIComponent(ids)}`;
+    if (Object.keys(priceItemsMap).length) {
+      url += `&price_items=${encodeURIComponent(JSON.stringify(priceItemsMap))}`;
+    }
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
+      (data.dates || []).forEach(d => fullDates.add(d));
+    } catch {
+      /* leave calendar without full-day markers on failure */
+    }
+  }
+
+  const todayStr = formatDateStr(new Date());
+
+  function renderCalendar() {
+    const y = state.calYear;
+    const m = state.calMonth;
+    monthLabel.textContent = `${I18N.months[m]} ${y}`;
+
+    const startOffset = (new Date(y, m, 1).getDay() + 6) % 7;
+    const totalDays   = new Date(y, m + 1, 0).getDate();
+
+    calGrid.innerHTML = '';
+
+    for (let i = 0; i < startOffset; i++) {
+      const empty = document.createElement('div');
+      empty.className = 'bk-cal-empty';
+      calGrid.appendChild(empty);
+    }
+
+    for (let d = 1; d <= totalDays; d++) {
+      const dt        = new Date(y, m, d);
+      const dateStr   = formatDateStr(dt);
+      const isClosed  = closedWeekdays.includes(dt.getDay()) || closedDates.has(dateStr);
+      const isEarlyOpen = earlyOpenDates.has(dateStr);
+      const isBeforeToday = dateStr < todayStr;
+      const isFar     = dt > maxDate;
+      const disabled  = isClosed || isBeforeToday || isFar || (dt < minDate && !isEarlyOpen);
+      const isFull    = !disabled && fullDates.has(dateStr);
+      const isToday   = dateStr === todayStr;
+      const isSelected = state.date === dateStr;
+
+      const btn = document.createElement('button');
+      btn.type        = 'button';
+      btn.textContent = d;
+
+      if (disabled) {
+        btn.className = 'bk-cal-day disabled' + (isClosed ? ' closed' : '') + (isToday ? ' today' : '');
+        btn.disabled  = true;
+      } else if (isFull) {
+        btn.className = 'bk-cal-day disabled full' + (isToday ? ' today' : '');
+        btn.disabled  = true;
+        btn.title     = I18N.fullyBooked;
+        btn.setAttribute('aria-label', `${d} — ${I18N.fullyBooked}`);
+      } else {
+        btn.className = 'bk-cal-day'
+          + (isSelected ? ' selected' : '')
+          + (isToday && !isSelected ? ' today' : '')
+          + (isEarlyOpen ? ' early-open' : '');
+        btn.addEventListener('click', () => pickDate(dateStr));
+      }
+      calGrid.appendChild(btn);
+    }
+  }
+
+  function formatDateDisplay(str) {
+    const d = parseLocalDate(str);
+    return `${I18N.weekdaysLong[d.getDay()]}, ${I18N.monthsShort[d.getMonth()]} ${d.getDate()}`;
+  }
+
+  async function fetchSlots() {
+    if (!state.selections.length || !state.date) return;
+    updateEarlyOpenHint(false);
+    slotsGrid.innerHTML = `<span class="bk-slots-hint bk-slots-loading"><i class="bi bi-arrow-repeat"></i> ${I18N.loading}</span>`;
+    const ids = state.selections.map(s => s.service.id).join(',');
+    const priceItemsMap = {};
+    state.selections.forEach(s => {
+      if (!s.priceItem && !(s.addons || []).length) return;
+      priceItemsMap[s.service.id] = {
+        base: s.priceItem ? Number(s.priceItem.id) : null,
+        addons: (s.addons || []).map(a => Number(a.id)),
+      };
+    });
+    let url = `${slotsUrl}?services=${encodeURIComponent(ids)}&date=${encodeURIComponent(state.date)}`;
+    if (Object.keys(priceItemsMap).length) {
+      url += `&price_items=${encodeURIComponent(JSON.stringify(priceItemsMap))}`;
+    }
+    try {
+      const res  = await fetch(url);
+      const data = await res.json();
+      renderSlots(data.slots || [], {
+        lastMinute: !!data.last_minute,
+        releaseUnavailable: !!data.release_unavailable,
+      });
+      const hasSlots = (data.slots || []).length > 0;
+      updateEarlyOpenHint(hasSlots && earlyOpenDates.has(state.date));
+    } catch {
+      slotsGrid.innerHTML = `<span class="bk-slots-hint">${I18N.loadError}</span>`;
+      updateEarlyOpenHint(false);
+    }
+  }
+
+  function renderSlots(slots, meta = {}) {
+    slotsGrid.innerHTML = '';
+    if (!slots.length) {
+      let msg;
+      if (meta.releaseUnavailable) {
+        msg = I18N.lastMinuteNoFit;
+      } else {
+        msg = state.selections.length > 1 ? I18N.noMultiFit : I18N.noSlots;
+      }
+      slotsGrid.innerHTML = `<span class="bk-slots-hint">${msg}</span>`;
+      return;
+    }
+    slots.forEach((slot, idx) => {
+      const btn = document.createElement('button');
+      btn.type          = 'button';
+      btn.className     = 'bk-slot bk-slot-animate';
+      btn.textContent   = slot.value;
+      btn.title         = slot.label;
+      btn.dataset.value = slot.value;
+      btn.dataset.label = slot.label;
+      btn.style.setProperty('--bk-slot-delay', `${idx * 50}ms`);
+      btn.addEventListener('click', () => pickSlot(slot));
+      slotsGrid.appendChild(btn);
+    });
+  }
+
+  function pickDate(dateStr) {
+    state.date = dateStr;
+    state.slot = null;
+    timeInput.value = '';
+    dateInput.value = dateStr;
+    updateEarlyOpenHint(false);
+    renderCalendar();
+    fetchSlots();
+    refreshStep2UI();
+  }
+
+  function pickSlot(slot) {
+    state.slot      = slot;
+    timeInput.value = slot.value;
+    document.querySelectorAll('.bk-slot').forEach(b => b.classList.remove('selected'));
+    document.querySelector(`.bk-slot[data-value="${slot.value}"]`)?.classList.add('selected');
+    refreshStep2UI();
+  }
+
+  function updatePhotoHint(requiresPhoto, photoRecommended) {
+    const hint = document.getElementById('bk-photo-hint');
+    if (!hint) return;
+    if (requiresPhoto) {
+      hint.textContent = I18N.photoRequired;
+      hint.className = 'bk-req';
+    } else if (photoRecommended) {
+      hint.textContent = I18N.photoRecommended;
+      hint.className = 'bk-opt';
+    } else {
+      hint.textContent = I18N.photoOptional;
+      hint.className = 'bk-opt';
+    }
+  }
+
+  function refreshStep2UI() {
+    const pill = document.getElementById('bk-svc-pill');
+    if (state.selections.length) {
+      pill.textContent   = displayName() + ' · ' + totalDurationMinutes() + ' ' + I18N.minutes;
+      pill.style.display = 'block';
+    }
+
+    const card    = document.getElementById('bk-summary-card');
+    const nextBtn = document.getElementById('bk-step2-next');
+
+    if (state.date && state.slot) {
+      document.getElementById('bk-sum-svc').textContent   = displayName();
+      document.getElementById('bk-sum-meta').textContent  = `${formatDateDisplay(state.date)}  ·  ${state.slot.label}`;
+      document.getElementById('bk-sum-svc').innerHTML = state.selections.map(s => {
+        const n = selectionLabel(s);
+        return `<div>${n} · ${selDuration(s)} ${I18N.minutes}</div>`;
+      }).join('');
+      document.getElementById('bk-sum-price').textContent = displayPrice() ? `${I18N.totalLabel}: ${displayPrice()} ${I18N.currencyDen}` : '';
+      card.style.display = 'block';
+      nextBtn.disabled   = false;
+    } else {
+      card.style.display = 'none';
+      nextBtn.disabled   = true;
+    }
+  }
+
+  function updateReview() {
+    if (!state.selections.length || !state.date || !state.slot) return;
+
+    const nameEl       = document.getElementById('id_full_name');
+    const phoneEl      = document.getElementById('id_phone_number');
+    const selectedPill = document.querySelector('.bk-contact-pill.selected');
+
+    document.getElementById('bk-rev-svc').innerHTML   = state.selections.map(s => {
+      const n = s.priceItem ? s.priceItem.name : s.service.name;
+      return `<div>${n} · ${selDuration(s)} ${I18N.minutes}</div>`;
+    }).join('');
+    document.getElementById('bk-rev-date').textContent  = `${formatDateDisplay(state.date)}  ·  ${state.slot.label}`;
+    document.getElementById('bk-rev-dur').textContent   = `${I18N.totalLabel}: ${totalDurationMinutes()} ${I18N.minutes}`;
+    const priceText = displayPrice() ? `${displayPrice()} ${I18N.currencyDen}` : '';
+    document.getElementById('bk-rev-price').textContent = priceText;
+    document.getElementById('bk-rev-name').textContent  = nameEl?.value || '';
+    document.getElementById('bk-rev-phone').textContent = phoneEl?.value || '';
+    document.getElementById('bk-rev-contact').textContent = selectedPill ? `${I18N.viaContact} ${selectedPill.textContent}` : '';
+    const emailVal = document.getElementById('id_email')?.value.trim() || '';
+    const revEmail = document.getElementById('bk-rev-email');
+    const revEmailInput = document.getElementById('bk-rev-email-input');
+    if (revEmail) revEmail.textContent = emailVal;
+    if (revEmailInput) revEmailInput.value = emailVal;
+    exitReviewEmailEdit();
+  }
+
+  function setReviewEmailError(message) {
+    const err = document.getElementById('bk-rev-email-error');
+    if (!err) return;
+    err.textContent = message || '';
+    err.hidden = !message;
+  }
+
+  function exitReviewEmailEdit() {
+    const card = document.getElementById('bk-rev-email-card');
+    const btn = document.getElementById('bk-rev-email-edit');
+    card?.classList.remove('is-editing');
+    if (btn) btn.textContent = btn.dataset.editLabel || btn.textContent;
+    setReviewEmailError('');
+  }
+
+  async function applyReviewEmailEdit() {
+    const input = document.getElementById('bk-rev-email-input');
+    const emailInput = document.getElementById('id_email');
+    const value = (input?.value || '').trim();
+    if (!value || !isValidEmail(value)) {
+      setReviewEmailError(I18N.emailInvalid);
+      input?.focus();
+      return false;
+    }
+    let finalVal = value;
+    const suggestion = suggestEmailCorrection(value);
+    if (suggestion) {
+      const choice = await showEmailTypoPrompt(suggestion);
+      if (choice === 'use') finalVal = suggestion;
+    }
+    if (emailInput) emailInput.value = finalVal;
+    if (input) input.value = finalVal;
+    const revEmail = document.getElementById('bk-rev-email');
+    if (revEmail) revEmail.textContent = finalVal;
+    setReviewEmailError('');
+    return true;
+  }
+
+  async function toggleReviewEmailEdit() {
+    const card = document.getElementById('bk-rev-email-card');
+    const btn = document.getElementById('bk-rev-email-edit');
+    const input = document.getElementById('bk-rev-email-input');
+    if (!card || !btn || !input) return;
+    if (card.classList.contains('is-editing')) {
+      if (!(await applyReviewEmailEdit())) return;
+      exitReviewEmailEdit();
+      return;
+    }
+    input.value = document.getElementById('id_email')?.value.trim() || '';
+    card.classList.add('is-editing');
+    btn.textContent = btn.dataset.doneLabel || btn.textContent;
+    input.focus();
+    input.select();
+  }
+
+  function refreshSubmit() {
+    const consentCheck = document.getElementById('bk-rules-consent-check');
+    const allDone = Boolean(consentCheck?.checked);
+    const rulesField = document.getElementById('id_rules_accepted');
+    const submitBtn  = document.getElementById('bk-submit');
+    if (rulesField) rulesField.checked = allDone;
+    submitBtn.disabled = !allDone;
+  }
+
+  function canAdvanceFromDetails() {
+    return validateDetailsStep({ focusFirst: false });
+  }
+
+  function isValidEmail(value) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  }
+
+  // Accept MK mobiles: 07XXXXXXX (national) or +389/389/00389 7XXXXXXX (international).
+  function isValidMkMobile(value) {
+    let digits = String(value || '').replace(/\D/g, '');
+    if (digits.startsWith('00')) digits = digits.slice(2);
+    if (digits.startsWith('389')) {
+      const local = digits.slice(3);
+      return /^7\d{7}$/.test(local);          // 389 + 7XXXXXXX (8 digits)
+    }
+    return /^07\d{7}$/.test(digits);           // 07XXXXXXX (9 digits)
+  }
+
+  // ── Email domain typo detection ───────────────────────────────────────────
+  const EMAIL_TYPO_MAP = {
+    // Gmail
+    "gmai.com":"gmail.com","gmil.com":"gmail.com","gmial.com":"gmail.com",
+    "gmaill.com":"gmail.com","gmal.com":"gmail.com","gnail.com":"gmail.com",
+    "gamil.com":"gmail.com","gmail.con":"gmail.com","gmail.co":"gmail.com",
+    "gmail.cm":"gmail.com","gmail.om":"gmail.com","gmail.cpm":"gmail.com",
+    "gmail.comm":"gmail.com","gmail.coml":"gmail.com","gmail.coma":"gmail.com",
+    "gmaul.com":"gmail.com","gmeil.com":"gmail.com","gmsil.com":"gmail.com",
+    "gmai.lcom":"gmail.com","gmail.cok":"gmail.com","gmailcom":"gmail.com",
+    "googlemail.co":"googlemail.com","googlemail.con":"googlemail.com",
+    // Yahoo
+    "yaho.com":"yahoo.com","yahooo.com":"yahoo.com","yhaoo.com":"yahoo.com",
+    "yaoo.com":"yahoo.com","yahoo.con":"yahoo.com","yahoo.co":"yahoo.com",
+    "yahoo.cm":"yahoo.com",
+    // Hotmail / Outlook / Live
+    "hotmial.com":"hotmail.com","hotnail.com":"hotmail.com","hotmai.com":"hotmail.com",
+    "hotmail.con":"hotmail.com","hotmail.co":"hotmail.com",
+    "outlok.com":"outlook.com","outloo.com":"outlook.com",
+    "outlook.con":"outlook.com","outlook.co":"outlook.com",
+    "live.con":"live.com",
+    // iCloud
+    "icloud.con":"icloud.com","icoud.com":"icloud.com",
+    // Proton
+    "protonmail.con":"protonmail.com","proton.me.":"proton.me",
+  };
+
+  const KNOWN_DOMAINS = new Set([
+    "gmail.com","googlemail.com","yahoo.com","yahoo.co.uk",
+    "hotmail.com","outlook.com","live.com","msn.com",
+    "icloud.com","me.com","mac.com","mail.com",
+    "protonmail.com","proton.me","aol.com","gmx.com","gmx.de",
+    "yandex.com","yandex.ru","zoho.com","tutanota.com","fastmail.com",
+    "t.mk","telekom.mk","mt.net.mk","unet.com.mk","mail.mk",
+  ]);
+
+  function _levenshtein(a, b) {
+    if (a === b) return 0;
+    const m = a.length, n = b.length;
+    let prev = Array.from({length: n + 1}, (_, i) => i);
+    for (let i = 1; i <= m; i++) {
+      const curr = [i];
+      for (let j = 1; j <= n; j++) {
+        curr.push(Math.min(curr[j-1]+1, prev[j]+1, prev[j-1]+(a[i-1]===b[j-1]?0:1)));
+      }
+      prev = curr;
+    }
+    return prev[n];
+  }
+
+  function suggestEmailCorrection(email) {
+    const val = (email || '').trim().toLowerCase();
+    const at = val.lastIndexOf('@');
+    if (at < 1) return null;
+    const local = val.slice(0, at);
+    const domain = val.slice(at + 1).replace(/\.$/, '');
+    if (!local || !domain || domain.includes(' ')) return null;
+    if (KNOWN_DOMAINS.has(domain)) return null;
+    if (EMAIL_TYPO_MAP[domain]) return `${local}@${EMAIL_TYPO_MAP[domain]}`;
+    // Fuzzy: Levenshtein 1 (or 2 for longer domains)
+    let bestDomain = null, bestDist = 99;
+    for (const known of KNOWN_DOMAINS) {
+      if (Math.abs(known.length - domain.length) > 2) continue;
+      const d = _levenshtein(domain, known);
+      if (d < bestDist) { bestDist = d; bestDomain = known; }
+    }
+    if (bestDomain && (bestDist === 1 || (bestDist === 2 && domain.length >= 6))) {
+      return `${local}@${bestDomain}`;
+    }
+    return null;
+  }
+
+  // ── Email typo modal logic ────────────────────────────────────────────────
+  const emailTypoModal  = document.getElementById('bk-email-typo-modal');
+  const emailTypoMsg    = document.getElementById('bk-typo-modal-msg');
+  const emailTypoUseBtn = document.getElementById('bk-typo-use-btn');
+  const emailTypoKeepBtn= document.getElementById('bk-typo-keep-btn');
+  let _emailTypoResolveFn = null;
+
+  function showEmailTypoPrompt(suggestion) {
+    return new Promise(resolve => {
+      _emailTypoResolveFn = resolve;
+      if (emailTypoMsg) emailTypoMsg.textContent =
+        `${I18N.emailTypoWarning} "${suggestion}"? ${I18N.emailTypoQuestion}`;
+      if (emailTypoUseBtn) emailTypoUseBtn.textContent = `${I18N.emailTypoUse} ${suggestion}`;
+      if (emailTypoKeepBtn) emailTypoKeepBtn.textContent = I18N.emailTypoKeep;
+      if (emailTypoModal) emailTypoModal.hidden = false;
+    });
+  }
+
+  function hideEmailTypoModal() {
+    if (emailTypoModal) emailTypoModal.hidden = true;
+  }
+
+  emailTypoUseBtn?.addEventListener('click', () => {
+    if (_emailTypoResolveFn) { _emailTypoResolveFn('use'); _emailTypoResolveFn = null; }
+    hideEmailTypoModal();
+  });
+  emailTypoKeepBtn?.addEventListener('click', () => {
+    if (_emailTypoResolveFn) { _emailTypoResolveFn('keep'); _emailTypoResolveFn = null; }
+    hideEmailTypoModal();
+  });
+
+  function setDetailsFieldError(fieldKey, message) {
+    const input = document.getElementById(`id_${fieldKey}`);
+    const errEl = document.getElementById(`bk-err-${fieldKey}`);
+    if (errEl) {
+      errEl.textContent = message || '';
+      errEl.hidden = !message;
+    }
+    input?.closest('.bk-field')?.classList.toggle('bk-field-has-error', Boolean(message));
+    input?.classList.toggle('bk-input-invalid', Boolean(message));
+  }
+
+  function clearDetailsFieldErrors() {
+    ['full_name', 'phone_number', 'email', 'reference_photo'].forEach(key => {
+      setDetailsFieldError(key, '');
+    });
+  }
+
+  function photoRequiredForBooking() {
+    return state.selections.some(s =>
+      s.priceItem?.photoRequired
+      || s.service.requiresPhoto
+      || (s.addons || []).some(a => a.photoRequired)
+    );
+  }
+
+  function validateDetailsStep({ focusFirst = true } = {}) {
+    clearDetailsFieldErrors();
+    let firstInvalid = null;
+    let valid = true;
+
+    const name = document.getElementById('id_full_name')?.value.trim() || '';
+    const phone = document.getElementById('id_phone_number')?.value.trim() || '';
+    const email = document.getElementById('id_email')?.value.trim() || '';
+    if (!name) {
+      setDetailsFieldError('full_name', I18N.nameRequired);
+      firstInvalid = firstInvalid || document.getElementById('id_full_name');
+      valid = false;
+    }
+    if (!phone) {
+      setDetailsFieldError('phone_number', I18N.phoneRequired);
+      firstInvalid = firstInvalid || document.getElementById('id_phone_number');
+      valid = false;
+    } else if (!isValidMkMobile(phone)) {
+      setDetailsFieldError('phone_number', I18N.phoneInvalid);
+      firstInvalid = firstInvalid || document.getElementById('id_phone_number');
+      valid = false;
+    }
+    if (!smsVerificationRequired) {
+      if (!email) {
+        setDetailsFieldError('email', I18N.emailRequired);
+        firstInvalid = firstInvalid || document.getElementById('id_email');
+        valid = false;
+      } else if (!isValidEmail(email)) {
+        setDetailsFieldError('email', I18N.emailInvalid);
+        firstInvalid = firstInvalid || document.getElementById('id_email');
+        valid = false;
+      }
+    }
+    if (photoRequiredForBooking()) {
+      const photoFile = document.getElementById('id_reference_photo')?.files?.[0];
+      if (!photoFile) {
+        setDetailsFieldError('reference_photo', I18N.photoRequiredError);
+        firstInvalid = firstInvalid || document.getElementById('id_reference_photo');
+        valid = false;
+      }
+    }
+
+    if (!valid && focusFirst && firstInvalid) {
+      firstInvalid.focus({ preventScroll: true });
+      firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      showBkToast(I18N.detailsIncomplete);
+    }
+    return valid;
+  }
+
+  // ── Confirm bar refs ──────────────────────────────────────────────────────
+  const confirmBar     = document.getElementById('bk-confirm-bar');
+  const confirmBarName = document.getElementById('bk-confirm-bar-name');
+  const confirmBarMeta = document.getElementById('bk-confirm-bar-meta');
+  const confirmBarBtn  = document.getElementById('bk-confirm-bar-btn');
+  const backFab        = document.getElementById('bk-back-fab');
+  const salonPageUrl   = form.dataset.salonUrl || '/';
+
+  function updateBackFab() {
+    const visible = state.step >= 1 && state.step <= 4;
+    document.body.classList.toggle('bk-back-fab-visible', visible);
+    if (!backFab) return;
+    backFab.setAttribute(
+      'aria-label',
+      state.step === 1 ? '{% filter escapejs %}{% trans "Back to salon" %}{% endfilter %}' : '{% filter escapejs %}{% trans "Back" %}{% endfilter %}'
+    );
+  }
+
+  function updateActiveStepPadding() {
+    steps.forEach(s => { s.style.paddingBottom = ''; });
+    const active = steps.find(s => +s.dataset.step === state.step);
+    if (!active) return;
+    if (state.step === 1) {
+      const confirmOpen = confirmBar && confirmBar.style.display === 'flex';
+      active.style.paddingBottom = confirmOpen ? '156px' : '76px';
+    } else {
+      active.style.paddingBottom = '76px';
+    }
+  }
+
+  function showConfirmBar(service, priceItem) {
+    if (!confirmBar) return;
+    // Re-trigger slide-up animation every time
+    confirmBar.style.animation = 'none';
+    void confirmBar.offsetHeight;
+    confirmBar.style.animation = '';
+    confirmBarName.textContent = priceItem.name;
+    const cbDur = Number(priceItem.duration) || Number(service.duration) || 0;
+    confirmBarMeta.textContent = `${service.name}  ·  ${cbDur} ${I18N.minutes}  ·  ${priceItem.price} ${I18N.currencyDen}`;
+    confirmBar.style.display   = 'flex';
+    document.body.classList.add('bk-step1-confirm-open');
+    updateActiveStepPadding();
+  }
+
+  function hideConfirmBar() {
+    if (confirmBar) confirmBar.style.display = 'none';
+    document.body.classList.remove('bk-step1-confirm-open');
+    updateActiveStepPadding();
+  }
+
+  // ── Toast ─────────────────────────────────────────────────────────────────
+  function showBkToast(msg, durationMs = 3400) {
+    const old = document.getElementById('bk-toast-el');
+    if (old) old.remove();
+    const el = document.createElement('div');
+    el.id        = 'bk-toast-el';
+    el.className = 'bk-toast';
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(() => {
+      el.classList.add('bk-toast-hiding');
+      setTimeout(() => el.remove(), 220);
+    }, durationMs);
+  }
+
+  // ── Helpers for expandable card open/close ────────────────────────────────
+  function openCard(card) {
+    card.querySelector('.bk-svc-items')?.classList.add('open');
+    card.querySelector('.bk-svc-chevron')?.classList.add('bk-svc-chevron--open');
+    const t = card.querySelector('.bk-svc-toggle-text');
+    if (t) t.textContent = I18N.expandLess;
+  }
+  function closeCard(card) {
+    card.querySelector('.bk-svc-items')?.classList.remove('open');
+    card.querySelector('.bk-svc-chevron')?.classList.remove('bk-svc-chevron--open');
+    const t = card.querySelector('.bk-svc-toggle-text');
+    if (t) t.textContent = I18N.expandMore;
+  }
+  function closeAllCards() {
+    document.querySelectorAll('.bk-svc-card').forEach(closeCard);
+  }
+
+  // ── Update "Selected: X" summary on this card only ───────────────────────
+  function setCardSummary(card, name) {
+    const nameEl = card.querySelector('.bk-svc-selected-name');
+    if (nameEl) nameEl.textContent = name || '';
+    if (name) card.classList.add('has-selection');
+    else card.classList.remove('has-selection');
+  }
+
+  function syncAddonsPanel(card, selection) {
+    const panel = card.querySelector('[data-addons-panel]');
+    if (!panel) return;
+    const addonBtns = panel.querySelectorAll('.bk-price-item-addon');
+    if (!addonBtns.length) {
+      panel.hidden = true;
+      panel.classList.remove('is-locked');
+      return;
+    }
+    panel.hidden = false;
+    const hasBase = !!(selection && selection.priceItem);
+    panel.classList.toggle('is-locked', !hasBase);
+    panel.setAttribute('aria-disabled', hasBase ? 'false' : 'true');
+    addonBtns.forEach(btn => {
+      btn.disabled = !hasBase;
+      btn.setAttribute('aria-disabled', hasBase ? 'false' : 'true');
+      if (!hasBase) btn.classList.remove('selected');
+      const selected = hasBase && (selection.addons || []).some(a => String(a.id) === String(btn.dataset.itemId));
+      btn.classList.toggle('selected', selected);
+    });
+  }
+
+  function priceItemFromBtn(btn) {
+    return {
+      id: btn.dataset.itemId,
+      name: btn.dataset.itemName,
+      price: btn.dataset.price,
+      duration: btn.dataset.duration,
+      photoRequired: btn.dataset.photoRequired === 'true',
+      isAddon: btn.dataset.isAddon === 'true',
+    };
+  }
+
+  step1NextBtn?.addEventListener('click', async () => {
+    if (!state.selections.length) return;
+    state.date = null;
+    state.slot = null;
+    timeInput.value = '';
+    await Promise.all([fetchEarlyOpenDates(), fetchFullyBookedDates()]);
+    syncCalendarMonthToSelections();
+    goTo(2);
+    renderCalendar();
+    updateEarlyOpenHint(false);
+    slotsGrid.innerHTML = `<span class="bk-slots-hint">${I18N.selectDateHint}</span>`;
+    refreshStep2UI();
+  });
+
+  backFab?.addEventListener('click', () => {
+    if (state.step === 1) {
+      window.location.href = salonPageUrl;
+      return;
+    }
+    goBackOneStep();
+  });
+
+  document.addEventListener('click', async e => {
+
+    // ── Expandable card header: toggle open/close ──
+    const cardHeader = e.target.closest('.bk-svc-card-header');
+    if (cardHeader) {
+      const card   = cardHeader.closest('.bk-svc-card');
+      const items  = card.querySelector('.bk-svc-items');
+      const isOpen = items?.classList.contains('open');
+      closeAllCards();
+      if (!isOpen) openCard(card);
+      return;
+    }
+
+    // ── Price item selected (expandable card) ──
+    const priceItemBtn = e.target.closest('.bk-price-item-btn');
+    if (priceItemBtn) {
+      if (priceItemBtn.disabled || priceItemBtn.getAttribute('aria-disabled') === 'true') return;
+      const addonsPanel = priceItemBtn.closest('[data-addons-panel]');
+      if (addonsPanel && addonsPanel.classList.contains('is-locked')) return;
+      const card = priceItemBtn.closest('.bk-svc-card');
+      const service = serviceFromRow(card);
+      const item = priceItemFromBtn(priceItemBtn);
+      const isAddon = item.isAddon;
+      let idx = state.selections.findIndex(s => s.service.id === service.id);
+
+      if (isAddon) {
+        if (idx < 0 || !state.selections[idx].priceItem) return;
+        const sel = state.selections[idx];
+        sel.addons = sel.addons || [];
+        const aIdx = sel.addons.findIndex(a => String(a.id) === String(item.id));
+        if (aIdx >= 0) sel.addons.splice(aIdx, 1);
+        else sel.addons.push(item);
+        setCardSummary(card, selectionLabel(sel));
+        syncAddonsPanel(card, sel);
+        refreshStep1UI();
+        return;
+      }
+
+      // Base / main option (exclusive within this service)
+      if (idx >= 0 && state.selections[idx].priceItem?.id === item.id) {
+        state.selections.splice(idx, 1);
+        card.querySelectorAll('.bk-price-item-btn:not(.bk-price-item-addon)').forEach(b => b.classList.remove('selected'));
+        setCardSummary(card, '');
+        syncAddonsPanel(card, null);
+      } else {
+        const next = { service, priceItem: item, addons: [] };
+        if (idx >= 0) state.selections[idx] = next;
+        else state.selections.push(next);
+        card.querySelectorAll('.bk-price-item-btn:not(.bk-price-item-addon)').forEach(b => b.classList.remove('selected'));
+        priceItemBtn.classList.add('selected');
+        setCardSummary(card, selectionLabel(next));
+        syncAddonsPanel(card, next);
+      }
+      refreshStep1UI();
+      return;
+    }
+
+    // ── Flat service row (no sub-items) — navigate immediately ──
+    const svcRow = e.target.closest('.bk-service-row');
+    if (svcRow) {
+      toggleFlatService(svcRow);
+      return;
+    }
+
+    if (e.target.closest('#bk-rev-email-edit')) {
+      await toggleReviewEmailEdit();
+      return;
+    }
+
+    if (e.target.closest('[data-prev]')) {
+      goBackOneStep();
+      return;
+    }
+
+    if (e.target === document.getElementById('bk-step2-next')) {
+      if (state.slot) goTo(3);
+      return;
+    }
+
+    if (e.target === document.getElementById('bk-step3-next')) {
+      if (!validateDetailsStep()) return;
+      const emailInput = document.getElementById('id_email');
+      const emailVal = emailInput?.value.trim() || '';
+      const suggestion = suggestEmailCorrection(emailVal);
+      if (suggestion) {
+        const choice = await showEmailTypoPrompt(suggestion);
+        if (choice === 'use' && emailInput) {
+          emailInput.value = suggestion;
+        }
+        // 'keep' → continue with what they typed
+      }
+      updateReview();
+      goTo(4);
+      return;
+    }
+
+    const pill = e.target.closest('.bk-contact-pill');
+    if (pill) {
+      document.querySelectorAll('.bk-contact-pill').forEach(p => p.classList.remove('selected'));
+      pill.classList.add('selected');
+      if (contactInput) contactInput.value = pill.dataset.contact;
+      return;
+    }
+  });
+
+  ['id_full_name', 'id_phone_number', 'id_email'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', () => {
+      const key = id.replace('id_', '');
+      setDetailsFieldError(key, '');
+    });
+  });
+
+  // ── File upload: type + size validation ───────────────────────────────────
+  const fileInput = document.getElementById('id_reference_photo');
+  if (fileInput) {
+    fileInput.addEventListener('change', () => {
+      const label = document.getElementById('bk-upload-label');
+      const file  = fileInput.files?.[0];
+      if (!file) {
+        if (label) label.textContent = I18N.tapToUpload;
+        return;
+      }
+      const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      if (!allowed.includes(file.type)) {
+        showBkToast(I18N.fileTypeError);
+        fileInput.value = '';
+        if (label) label.textContent = I18N.tapToUpload;
+        return;
+      }
+      const maxMB = Number(form?.dataset.maxPhotoMb) || 5;
+      if (file.size > maxMB * 1024 * 1024) {
+        showBkToast(I18N.fileSizeError);
+        fileInput.value = '';
+        if (label) label.textContent = I18N.tapToUpload;
+        return;
+      }
+      if (label) label.textContent = file.name;
+      setDetailsFieldError('reference_photo', '');
+    });
+  }
+
+  document.getElementById('bk-rules-consent-check')?.addEventListener('change', refreshSubmit);
+
+  document.getElementById('bk-rev-email-input')?.addEventListener('keydown', async (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    if (await applyReviewEmailEdit()) exitReviewEmailEdit();
+  });
+
+  form?.addEventListener('submit', async (e) => {
+    const submitBtn = document.getElementById('bk-submit');
+    if (!submitBtn || submitBtn.disabled) return;
+    e.preventDefault();
+    const emailCard = document.getElementById('bk-rev-email-card');
+    if (emailCard?.classList.contains('is-editing')) {
+      if (!(await applyReviewEmailEdit())) return;
+      exitReviewEmailEdit();
+    }
+    // Hold the overlay briefly so customers always see "sending" feedback,
+    // even when the server responds almost instantly locally.
+    submitBtn.disabled = true;
+    submitBtn.classList.add('is-loading');
+    submitBtn.setAttribute('aria-busy', 'true');
+    const send = () => HTMLFormElement.prototype.submit.call(form);
+    if (window.PageLoader && typeof window.PageLoader.holdThen === 'function') {
+      window.PageLoader.holdThen(send);
+    } else {
+      send();
+    }
+  });
+
+  document.getElementById('bk-prev-month')?.addEventListener('click', () => {
+    if (state.calMonth === 0) { state.calMonth = 11; state.calYear--; }
+    else state.calMonth--;
+    renderCalendar();
+  });
+  document.getElementById('bk-next-month')?.addEventListener('click', () => {
+    if (state.calMonth === 11) { state.calMonth = 0; state.calYear++; }
+    else state.calMonth++;
+    renderCalendar();
+  });
+
+  document.querySelectorAll('.bk-svc-card').forEach(card => {
+    syncAddonsPanel(card, null);
+  });
+
+  goTo(1);
+})();
+</script>
+{% endblock %}

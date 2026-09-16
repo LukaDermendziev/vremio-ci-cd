@@ -1,0 +1,322 @@
+{% extends "base.html" %}
+{% load static i18n %}
+{% block title %}{{ salon.name }} — {% trans "Book online" %}{% endblock %}
+{% block body_class %}st-page{% endblock %}
+
+{% block lang_switcher %}{% endblock %}
+
+{% block content %}
+<header class="st-nav" id="st-top">
+  <div class="st-nav-inner">
+    <a class="st-brand" href="{% if is_customer_domain %}/{% else %}{% url 'booking:salon_page' salon.slug %}{% endif %}">
+      <span class="st-brand-mark" aria-hidden="true">{{ salon.name|first|upper }}</span>
+      <span class="st-brand-text">{{ salon.name }}</span>
+    </a>
+    <nav class="st-nav-links">
+      <a href="#services">{% trans "Services" %}</a>
+      <a href="#about">{% trans "About" %}</a>
+      <a href="#hours">{% trans "Hours" %}</a>
+      <a href="#info">{% trans "Contact" %}</a>
+    </nav>
+    <div class="st-nav-right">
+      <div class="st-nav-lang">{% include "partials/language_switcher.html" %}</div>
+      <a class="st-btn st-btn-primary st-btn-sm" href="{% url 'booking:book_salon' salon.slug %}">{% trans "Book now" %}</a>
+    </div>
+  </div>
+</header>
+
+<section class="st-hero">
+  <div class="st-hero-bg" aria-hidden="true"></div>
+  <div class="st-hero-inner">
+    <div class="st-hero-mark" aria-hidden="true">{{ salon.name|first|upper }}</div>
+    <p class="st-eyebrow">{{ salon.get_business_category_display }}</p>
+    <h1 class="st-hero-title">{{ salon.name }}</h1>
+    {% if salon.short_description %}
+      <p class="st-hero-lead">{{ salon.short_description }}</p>
+    {% else %}
+      <p class="st-hero-lead">{% trans "Book an appointment online — clear times, fewer messages, professional booking." %}</p>
+    {% endif %}
+    <p class="st-hero-note"><i class="bi bi-shield-check" aria-hidden="true"></i> {% trans "Requests are reviewed before confirmation." %}</p>
+    <div class="st-hero-actions">
+      <a class="st-btn st-btn-primary" href="{% url 'booking:book_salon' salon.slug %}">{% trans "Book appointment" %}</a>
+      {% if salon.phone_number %}
+        <a class="st-btn st-btn-secondary" href="tel:{{ salon.phone_number }}"><i class="bi bi-telephone" aria-hidden="true"></i> {% trans "Call business" %}</a>
+      {% else %}
+        <a class="st-btn st-btn-secondary" href="#services">{% trans "View services" %}</a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<section class="st-section" id="about">
+  <div class="st-container">
+    <div class="st-section-head">
+      <p class="st-kicker">{% trans "About" %}</p>
+      <h2 class="st-section-title">{% trans "About this business" %}</h2>
+    </div>
+    <div class="st-about-grid">
+      <div class="st-card st-about-copy">
+        {% if salon.short_description %}
+          <p>{{ salon.short_description }}</p>
+        {% else %}
+          <p>{% blocktrans with name=salon.name %}{{ name }} uses Vremio for online booking requests, schedule management, and clearer communication with clients.{% endblocktrans %}</p>
+        {% endif %}
+        <ul class="st-meta-list">
+          {% if salon.city or salon.address %}
+            <li><i class="bi bi-geo-alt" aria-hidden="true"></i> {% if salon.address %}{{ salon.address }}{% if salon.city %}, {% endif %}{% endif %}{{ salon.city }}</li>
+          {% endif %}
+          {% if salon.phone_number %}
+            <li><i class="bi bi-telephone" aria-hidden="true"></i> <a href="tel:{{ salon.phone_number }}">{{ salon.phone_number }}</a></li>
+          {% endif %}
+          {% if salon.instagram_username %}
+            <li><i class="bi bi-instagram" aria-hidden="true"></i> <a href="https://instagram.com/{{ salon.instagram_username|cut:'@' }}" target="_blank" rel="noopener">@{{ salon.instagram_username|cut:'@' }}</a></li>
+          {% endif %}
+        </ul>
+      </div>
+      <div class="st-card st-highlight-card">
+        <h3>{% trans "Why book here" %}</h3>
+        <ul class="st-check-list">
+          <li><i class="bi bi-check2" aria-hidden="true"></i> {% trans "Online booking requests anytime" %}</li>
+          <li><i class="bi bi-check2" aria-hidden="true"></i> {% trans "Clear available time slots" %}</li>
+          <li><i class="bi bi-check2" aria-hidden="true"></i> {% trans "Owner review before confirmation" %}</li>
+          <li><i class="bi bi-check2" aria-hidden="true"></i> {% trans "Fewer chat threads and mix-ups" %}</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="st-section st-section-alt" id="services">
+  <div class="st-container">
+    <div class="st-section-head">
+      <p class="st-kicker">{% trans "Services" %}</p>
+      <h2 class="st-section-title">{% trans "What you can book" %}</h2>
+      <p class="st-section-sub">{% trans "Choose a service, then pick a date and time that works for you." %}</p>
+    </div>
+    {% if services %}
+      <div class="st-services-grid">
+        {% for service in services %}
+          {% with items=service.price_items.all %}
+          <article class="st-card st-service-card">
+            <div class="st-service-top">
+              <h3 class="st-service-name">{{ service.name }}</h3>
+              {% if service.base_price %}
+                <span class="st-service-price">{% blocktrans with price=service.base_price|floatformat:0 %}from {{ price }} den{% endblocktrans %}</span>
+              {% endif %}
+            </div>
+            {% if service.description %}
+              <p class="st-service-desc">{{ service.description }}</p>
+            {% endif %}
+            <div class="st-service-meta">
+              {% if not items %}<span><i class="bi bi-clock" aria-hidden="true"></i> {% blocktrans with minutes=service.duration_minutes %}{{ minutes }} min{% endblocktrans %}</span>{% endif %}
+              {% if service.requires_photo %}
+                <span class="st-chip">{% trans "Photo required" %}</span>
+              {% elif service.photo_recommended %}
+                <span class="st-chip">{% trans "Photo recommended" %}</span>
+              {% endif %}
+            </div>
+            {% if service.extra_duration_note %}
+              <p class="st-service-note">{{ service.extra_duration_note }}</p>
+            {% endif %}
+            {% if items %}
+            <div class="st-price-list">
+              {% regroup items by group as grouped_items %}
+              {% for group_entry in grouped_items %}
+                {% if group_entry.grouper %}<p class="st-price-group">{{ group_entry.grouper }}</p>{% endif %}
+                <ul class="st-price-items">
+                  {% for item in group_entry.list %}
+                    <li class="st-price-item">
+                      <span class="st-price-item-name">{{ item.name }}</span>
+                      <span class="st-price-item-dur"><i class="bi bi-clock"></i> {% blocktrans with minutes=item.effective_duration_minutes %}{{ minutes }} min{% endblocktrans %}</span>
+                      <span class="st-price-item-price">{{ item.price_display }} {% trans "den" %}</span>
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% endfor %}
+            </div>
+            {% endif %}
+            <a class="st-btn st-btn-secondary st-btn-sm" href="{% url 'booking:book_salon' salon.slug %}">{% trans "Book" %}</a>
+          </article>
+          {% endwith %}
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="st-empty">
+        <p>{% trans "Services will appear here soon." %}</p>
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+<section class="st-section" id="gallery">
+  <div class="st-container">
+    <div class="st-section-head">
+      <p class="st-kicker">{% trans "Gallery" %}</p>
+      <h2 class="st-section-title">{% trans "Photos" %}</h2>
+    </div>
+    <div class="st-card st-placeholder">
+      <i class="bi bi-images" aria-hidden="true"></i>
+      <p>{% trans "Gallery coming soon." %}</p>
+    </div>
+  </div>
+</section>
+
+<section class="st-section st-section-alt" id="hours">
+  <div class="st-container st-two-col">
+    <div>
+      <div class="st-section-head">
+        <p class="st-kicker">{% trans "Hours" %}</p>
+        <h2 class="st-section-title">{% trans "Opening hours" %}</h2>
+      </div>
+      <div class="st-card">
+        <ul class="st-hours-list">
+          {% for item in hours_display_rows %}
+            {% with row=item.row %}
+            <li class="{% if not row.is_working_day %}is-closed{% endif %}">
+              <span>{{ row.get_weekday_display }}</span>
+              <strong>
+                {% if row.is_working_day %}
+                  {{ item.display_start_time|time:"H:i" }} – {{ item.display_end_time|time:"H:i" }}
+                {% else %}
+                  {% trans "Closed" %}
+                {% endif %}
+              </strong>
+            </li>
+            {% endwith %}
+          {% empty %}
+            <li>{% trans "Hours will be published soon." %}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+    <div id="info">
+      <div class="st-section-head">
+        <p class="st-kicker">{% trans "Contact" %}</p>
+        <h2 class="st-section-title">{% trans "Business information" %}</h2>
+      </div>
+      <div class="st-card st-info-card">
+        {% if salon.address or salon.city %}
+          <div class="st-info-row">
+            <span class="st-info-label">{% trans "Address" %}</span>
+            <span>{% if salon.address %}{{ salon.address }}{% if salon.city %}, {% endif %}{% endif %}{{ salon.city }}</span>
+          </div>
+        {% endif %}
+        {% if salon.phone_number %}
+          <div class="st-info-row">
+            <span class="st-info-label">{% trans "Phone" %}</span>
+            <a href="tel:{{ salon.phone_number }}">{{ salon.phone_number }}</a>
+          </div>
+        {% endif %}
+        {% if salon.instagram_username %}
+          <div class="st-info-row">
+            <span class="st-info-label">Instagram</span>
+            <a href="https://instagram.com/{{ salon.instagram_username|cut:'@' }}" target="_blank" rel="noopener">@{{ salon.instagram_username|cut:'@' }}</a>
+          </div>
+        {% endif %}
+        <div class="st-info-actions">
+          <a class="st-btn st-btn-primary st-btn-sm" href="{% url 'booking:book_salon' salon.slug %}">{% trans "Book appointment" %}</a>
+          {% if salon.phone_number %}
+            <a class="st-btn st-btn-ghost st-btn-sm" href="tel:{{ salon.phone_number }}">{% trans "Call" %}</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="st-section" id="reviews">
+  <div class="st-container">
+    <div class="st-section-head">
+      <p class="st-kicker">{% trans "Reviews" %}</p>
+      <h2 class="st-section-title">{% trans "What clients say" %}</h2>
+    </div>
+    <div class="st-card st-placeholder">
+      <i class="bi bi-chat-quote" aria-hidden="true"></i>
+      <p>{% trans "Reviews coming soon." %}</p>
+    </div>
+  </div>
+</section>
+
+<section class="st-section st-section-alt" id="faq">
+  <div class="st-container st-narrow">
+    <div class="st-section-head st-section-head-center">
+      <p class="st-kicker">{% trans "FAQ" %}</p>
+      <h2 class="st-section-title">{% trans "Common questions" %}</h2>
+    </div>
+    <details class="st-faq-item">
+      <summary>{% trans "Do I need an appointment?" %}</summary>
+      <p>{% trans "Yes. Please send a booking request so the business can review the time and confirm it." %}</p>
+    </details>
+    <details class="st-faq-item">
+      <summary>{% trans "Is my booking confirmed immediately?" %}</summary>
+      <p>{% trans "No. Your request is reviewed first. You will be contacted after it is approved or if another time is needed." %}</p>
+    </details>
+    <details class="st-faq-item">
+      <summary>{% trans "Can I cancel?" %}</summary>
+      <p>{% trans "Yes. Use the manage link from your confirmation message when available, or contact the business directly." %}</p>
+    </details>
+    {% if booking_policy %}
+      <details class="st-faq-item">
+        <summary>{% trans "How far in advance can I book?" %}</summary>
+        <p>{% blocktrans with days=booking_policy.minimum_notice_days max_days=booking_policy.maximum_booking_window_days %}Bookings usually open from {{ days }} days ahead, up to {{ max_days }} days in the future.{% endblocktrans %}</p>
+      </details>
+    {% endif %}
+  </div>
+</section>
+
+<section class="st-section" id="policies">
+  <div class="st-container">
+    <div class="st-section-head">
+      <p class="st-kicker">{% trans "Policies" %}</p>
+      <h2 class="st-section-title">{% trans "Booking rules & policies" %}</h2>
+    </div>
+    <div class="st-policy-grid">
+      {% if booking_policy %}
+        <div class="st-card">
+          <h3>{% trans "Booking rules" %}</h3>
+          <ul class="st-check-list">
+            <li><i class="bi bi-check2" aria-hidden="true"></i> {% blocktrans with days=booking_policy.minimum_notice_days %}Minimum notice: {{ days }} days{% endblocktrans %}</li>
+            <li><i class="bi bi-check2" aria-hidden="true"></i> {% blocktrans with days=booking_policy.maximum_booking_window_days %}Book up to {{ days }} days ahead{% endblocktrans %}</li>
+            <li><i class="bi bi-check2" aria-hidden="true"></i> {% blocktrans with minutes=booking_policy.late_arrival_limit_minutes %}Late arrival limit: {{ minutes }} minutes{% endblocktrans %}</li>
+            <li><i class="bi bi-check2" aria-hidden="true"></i> {% trans "Manual approval by the business" %}</li>
+          </ul>
+        </div>
+      {% endif %}
+      <div class="st-card">
+        <h3>{% trans "Legal" %}</h3>
+        <div class="st-link-list">
+          <a href="{% url 'booking:booking_rules' %}">{% trans "Booking Rules" %}</a>
+          <a href="{% url 'booking:photo_policy' %}">{% trans "Photo Policy" %}</a>
+          <a href="{% url 'booking:privacy_policy' %}">{% trans "Privacy Policy" %}</a>
+          <a href="{% url 'booking:terms_of_use' %}">{% trans "Terms of Use" %}</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="st-cta">
+  <div class="st-container st-cta-inner">
+    <h2>{% trans "Ready to book?" %}</h2>
+    <p>{% trans "Pick a service and send a request in a few steps." %}</p>
+    <a class="st-btn st-btn-primary" href="{% url 'booking:book_salon' salon.slug %}">{% trans "Book appointment" %}</a>
+  </div>
+</section>
+
+<footer class="st-footer">
+  <div class="st-container st-footer-inner">
+    <div>
+      <div class="st-footer-name">{{ salon.name }}</div>
+      <p class="st-footer-powered">
+        {% trans "Powered by" %}
+        <a href="{% if is_customer_domain %}{{ vremio_home_url }}/{% else %}{% url 'booking:home' %}{% endif %}"{% if is_customer_domain %} target="_blank" rel="noopener noreferrer"{% endif %}>Vremio</a>
+      </p>
+    </div>
+    <div class="st-footer-links">
+      <a href="{% url 'booking:book_salon' salon.slug %}">{% trans "Book appointment" %}</a>
+      <a href="{% url 'booking:privacy_policy' %}">{% trans "Privacy Policy" %}</a>
+      <a href="{% url 'booking:terms_of_use' %}">{% trans "Terms of Use" %}</a>
+    </div>
+  </div>
+</footer>
+{% endblock %}

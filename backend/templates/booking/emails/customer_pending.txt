@@ -1,0 +1,5 @@
+{% load i18n %}{% blocktrans with name=first_name date=date time=time salon=salon.name %}Hello {{ name }},
+
+Your appointment request for {{ date }} at {{ time }} has been received.
+
+We will contact you soon. — {{ salon }}{% endblocktrans %}

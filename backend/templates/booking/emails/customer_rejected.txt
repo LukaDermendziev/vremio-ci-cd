@@ -1,0 +1,5 @@
+{% load i18n %}{% blocktrans with name=first_name date=date time=time %}Hello {{ name }},
+
+Unfortunately, the requested appointment for {{ date }} at {{ time }} is not available.
+
+Please choose another time.{% endblocktrans %}

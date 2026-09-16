@@ -1,0 +1,39 @@
+{% extends "booking/auth/base_auth.html" %}
+{% load i18n %}
+{% block title %}{% trans "Owner Login" %}{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+  <div class="auth-logo">
+    <i class="bi bi-scissors"></i>
+  </div>
+  <h1 class="auth-title">{% trans "Owner Login" %}</h1>
+  <p class="auth-sub">{% trans "Sign in to your salon dashboard" %}</p>
+
+  {% if error %}
+    <div class="auth-alert">{{ error }}</div>
+  {% endif %}
+
+  <form method="post" class="auth-form">
+    {% csrf_token %}
+    <div class="auth-field">
+      <label for="id_username">{% trans "Username" %}</label>
+      <input type="text" id="id_username" name="username" class="auth-input" autofocus autocomplete="username" required>
+    </div>
+    <div class="auth-field">
+      <label for="id_password">{% trans "Password" %}</label>
+      <input type="password" id="id_password" name="password" class="auth-input" autocomplete="current-password" required>
+    </div>
+    <button type="submit" class="auth-btn">{% trans "Sign in" %}</button>
+  </form>
+
+  <div class="auth-row-between" style="margin-top:16px;">
+    <a href="{% url 'booking:owner_password_reset' %}" class="auth-link-sm">{% trans "Forgot password?" %}</a>
+  </div>
+</div>
+{% if logged_out %}
+<script>
+  history.replaceState(null, "", "{% url 'booking:owner_login' %}");
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,8 @@
+[build]
+builder = "nixpacks"
+buildCommand = "pip install -r requirements.txt"
+
+[deploy]
+preDeployCommand = "python manage.py migrate --noinput"
+startCommand = "python manage.py send_booking_reminders && python manage.py cleanup_unverified_bookings && python manage.py auto_complete_past_bookings"
+restartPolicyType = "NEVER"

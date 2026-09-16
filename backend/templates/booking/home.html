@@ -1,0 +1,356 @@
+{% extends "base.html" %}
+{% load static i18n %}
+{% block title %}{% trans "Vremio — Bookings & Reservations" %}{% endblock %}
+{% block body_class %}vm-page vm-home{% endblock %}
+
+{% block lang_switcher %}{% endblock %}
+
+{% block content %}
+<header class="vm-nav" id="vm-top">
+  <div class="vm-nav-inner">
+    <a class="vm-brand" href="/" aria-label="Vremio">
+      <img src="{% static 'images/Vremio.png' %}" alt="Vremio" class="vm-brand-logo">
+    </a>
+    <button type="button" class="vm-nav-toggle" id="vm-nav-toggle" aria-expanded="false" aria-controls="vm-nav-menu" aria-label="{% trans 'Menu' %}">
+      <i class="bi bi-list"></i>
+    </button>
+    <nav class="vm-nav-menu" id="vm-nav-menu">
+      <a class="vm-nav-link" href="#businesses">{% trans "Browse businesses" %}</a>
+      <a class="vm-nav-link" href="#plans">{% trans "For business owners" %}</a>
+      <a class="vm-nav-link vm-nav-link--outline" href="{% url 'booking:owner_login' %}">{% trans "Owner sign in" %}</a>
+      <div class="vm-nav-lang">{% include "partials/language_switcher.html" %}</div>
+    </nav>
+  </div>
+</header>
+
+<section class="vm-hero">
+  <div class="vm-hero-bg" aria-hidden="true"></div>
+  <div class="vm-hero-inner">
+    <p class="vm-eyebrow">{% trans "Booking platform" %}</p>
+    <h1 class="vm-hero-title">{% trans "Vremio — appointments and reservations in one place" %}</h1>
+    <p class="vm-hero-lead">{% trans "Find a service, choose an available time slot, and send a booking request. Vremio helps local businesses manage appointments quickly, clearly, and professionally." %}</p>
+    <div class="vm-hero-actions">
+      <a class="vm-btn vm-btn-primary" href="#businesses">{% trans "Browse businesses" %}</a>
+      <a class="vm-btn vm-btn-secondary" href="#businesses">{% trans "Book appointment" %}</a>
+      <a class="vm-btn vm-btn-ghost" href="#plans">{% trans "I have a business" %}</a>
+    </div>
+  </div>
+</section>
+
+<section class="vm-section" id="businesses">
+  <div class="vm-container">
+    <div class="vm-section-head">
+      <p class="vm-kicker">{% trans "Directory" %}</p>
+      <h2 class="vm-section-title">{% trans "Businesses on Vremio" %}</h2>
+      <p class="vm-section-sub">{% trans "Search and book appointments at local businesses." %}</p>
+    </div>
+
+    <form class="vm-search-bar" id="vm-business-search" action="/#businesses">
+      <div class="vm-search-input-wrap">
+        <i class="bi bi-search"></i>
+        <input type="search" name="q" id="vm-search-q" value="{{ q }}" placeholder="{% trans 'Search by business name or city…' %}" class="vm-search-input" autocomplete="off">
+      </div>
+      <button type="submit" class="vm-btn vm-btn-primary vm-btn-sm">{% trans "Search" %}</button>
+    </form>
+
+    <div class="vm-filter-pills" role="group" aria-label="{% trans 'Category' %}" id="vm-category-pills">
+      <button type="button" class="vm-pill{% if category == 'all' %} is-active{% endif %}" data-category="all">{% trans "All" %}</button>
+      <button type="button" class="vm-pill{% if category == 'salon' %} is-active{% endif %}" data-category="salon">{% trans "Salons" %}</button>
+      <button type="button" class="vm-pill{% if category == 'barber' %} is-active{% endif %}" data-category="barber">{% trans "Barbershops" %}</button>
+      <button type="button" class="vm-pill{% if category == 'sports' %} is-active{% endif %}" data-category="sports">{% trans "Sports venues" %}</button>
+      <button type="button" class="vm-pill{% if category == 'fitness' %} is-active{% endif %}" data-category="fitness">{% trans "Fitness / gyms" %}</button>
+      <button type="button" class="vm-pill{% if category == 'services' %} is-active{% endif %}" data-category="services">{% trans "Services" %}</button>
+    </div>
+
+    {% if businesses %}
+      <div class="vm-business-grid" id="vm-business-grid">
+        {% for business in businesses %}
+          <article class="vm-business-card" data-category="{{ business.business_category }}" data-search="{{ business.name|lower }} {{ business.city|lower }} {{ business.address|lower }} {{ business.short_description|lower }}">
+            <div class="vm-business-avatar" aria-hidden="true">{{ business.name|first }}</div>
+            <div class="vm-business-body">
+              <span class="vm-business-cat">{{ business.get_business_category_display }}</span>
+              <h3 class="vm-business-name">{{ business.name }}</h3>
+              {% if business.short_description %}
+                <p class="vm-business-desc">{{ business.short_description }}</p>
+              {% endif %}
+              {% if business.city %}
+                <p class="vm-business-loc"><i class="bi bi-geo-alt"></i> {{ business.city }}</p>
+              {% elif business.address %}
+                <p class="vm-business-loc"><i class="bi bi-geo-alt"></i> {{ business.address }}</p>
+              {% endif %}
+            </div>
+            <a class="vm-btn vm-btn-primary vm-btn-sm vm-business-cta" href="{% url 'booking:salon_page' business.slug %}">{% trans "Book appointment" %}</a>
+          </article>
+        {% endfor %}
+      </div>
+      <div class="vm-empty-state" id="vm-business-empty" hidden>
+        <i class="bi bi-search"></i>
+        <p>{% trans "We couldn't find a business matching your search." %}</p>
+      </div>
+    {% else %}
+      <div class="vm-empty-state">
+        <i class="bi bi-search"></i>
+        <p>{% trans "We couldn't find a business matching your search." %}</p>
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+<section class="vm-section vm-section-alt" id="plans">
+  <div class="vm-container">
+    <div class="vm-section-head vm-section-head-center">
+      <p class="vm-kicker">{% trans "For business owners" %}</p>
+      <h2 class="vm-section-title">{% trans "Plans that free up your day" %}</h2>
+      <p class="vm-section-sub">{% trans "Stop juggling Instagram messages and phone notes. Pick a plan, send a short request, and we’ll help you get set up." %}</p>
+    </div>
+
+    <div class="vm-plans-grid">
+      {% for plan in pricing_plans %}
+        <article class="vm-plan-card{% if plan.featured %} is-featured{% endif %}" data-plan-id="{{ plan.id }}">
+          {% if plan.featured %}
+            <span class="vm-plan-badge">{% trans "Most popular" %}</span>
+          {% endif %}
+          <h3 class="vm-plan-name">{{ plan.name }}</h3>
+          <p class="vm-plan-price">
+            <span class="vm-plan-price-label">{% trans "Starting from" %}</span>
+            <span class="vm-plan-price-value">{{ plan.price_display }} {% trans "den" %} <span class="vm-plan-price-period">/ {% trans "month" %}</span></span>
+          </p>
+          <p class="vm-plan-blurb">{{ plan.blurb }}</p>
+          <ul class="vm-plan-highlights">
+            {% for item in plan.highlights %}
+              <li><i class="bi bi-check2" aria-hidden="true"></i> <span>{{ item }}</span></li>
+            {% endfor %}
+          </ul>
+          <div class="vm-plan-details" id="vm-plan-details-{{ plan.id }}" hidden>
+            <p class="vm-plan-details-label">{% trans "What’s included" %}</p>
+            <ul class="vm-plan-details-list">
+              {% for item in plan.details %}
+                <li><i class="bi bi-dot" aria-hidden="true"></i> {{ item }}</li>
+              {% endfor %}
+            </ul>
+            <p class="vm-plan-perfect"><strong>{% trans "Perfect for" %}:</strong> {{ plan.perfect_for }}</p>
+          </div>
+          <div class="vm-plan-actions">
+            <button
+              type="button"
+              class="vm-btn vm-btn-ghost vm-btn-sm vm-plan-toggle"
+              data-plan-toggle="{{ plan.id }}"
+              data-label-more="{% trans 'More details' %}"
+              data-label-less="{% trans 'Less details' %}"
+              aria-expanded="false"
+              aria-controls="vm-plan-details-{{ plan.id }}"
+            >{% trans "More details" %}</button>
+            <button
+              type="button"
+              class="vm-btn {% if plan.featured %}vm-btn-primary{% else %}vm-btn-secondary{% endif %} vm-btn-sm vm-plan-cta"
+              data-plan-interest
+              data-plan-id="{{ plan.id }}"
+            >{{ plan.cta }}</button>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+
+    <div class="vm-faq" id="vm-plans-faq">
+      <h3 class="vm-faq-title">{% trans "Questions from business owners" %}</h3>
+      {% for item in pricing_faq %}
+        <details class="vm-faq-item">
+          <summary>{{ item.question }}</summary>
+          <p>{{ item.answer }}</p>
+        </details>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="vm-section" id="owners">
+  <div class="vm-container vm-split">
+    <div class="vm-split-copy">
+      <p class="vm-kicker">{% trans "For business owners" %}</p>
+      <h2 class="vm-section-title">{% trans "Does your business run on appointments?" %}</h2>
+      <p class="vm-section-sub">{% trans "Vremio helps you organize appointments, clients, and working hours in one place — with fewer messages and fewer mistakes." %}</p>
+      <ul class="vm-feature-list">
+        <li><i class="bi bi-check-circle"></i> {% trans "Online booking requests" %}</li>
+        <li><i class="bi bi-check-circle"></i> {% trans "Owner dashboard and calendar" %}</li>
+        <li><i class="bi bi-check-circle"></i> {% trans "Approve, reject, and edit bookings" %}</li>
+        <li><i class="bi bi-check-circle"></i> {% trans "Working hours and unavailable times" %}</li>
+        <li><i class="bi bi-check-circle"></i> {% trans "Customer details and reference photos" %}</li>
+        <li><i class="bi bi-check-circle"></i> {% trans "Email notifications and reminders" %}</li>
+      </ul>
+      <a class="vm-btn vm-btn-primary" href="#plans">{% trans "I want Vremio for my business" %}</a>
+    </div>
+    <div class="vm-owner-card">
+      <h3>{% trans "Still scheduling through messages?" %}</h3>
+      <p>{% trans "Instagram, Viber, and Messenger are hard to track. Vremio gives you a clear calendar and structured booking requests." %}</p>
+      <a class="vm-btn vm-btn-secondary" href="#plans">{% trans "See plans" %}</a>
+    </div>
+  </div>
+</section>
+
+<section class="vm-section">
+  <div class="vm-container">
+    <div class="vm-section-head vm-section-head-center">
+      <p class="vm-kicker">{% trans "How it works" %}</p>
+      <h2 class="vm-section-title">{% trans "Simple for everyone" %}</h2>
+    </div>
+    <div class="vm-steps-grid">
+      <div class="vm-steps-col">
+        <h3 class="vm-steps-heading">{% trans "For customers" %}</h3>
+        <ol class="vm-steps">
+          <li><span class="vm-step-num">1</span><span>{% trans "Choose a business" %}</span></li>
+          <li><span class="vm-step-num">2</span><span>{% trans "Choose a service and time slot" %}</span></li>
+          <li><span class="vm-step-num">3</span><span>{% trans "Send a request and wait for confirmation" %}</span></li>
+        </ol>
+      </div>
+      <div class="vm-steps-col">
+        <h3 class="vm-steps-heading">{% trans "For business owners" %}</h3>
+        <ol class="vm-steps">
+          <li><span class="vm-step-num">1</span><span>{% trans "Set up services and working hours" %}</span></li>
+          <li><span class="vm-step-num">2</span><span>{% trans "Receive booking requests" %}</span></li>
+          <li><span class="vm-step-num">3</span><span>{% trans "Manage calendar and clients" %}</span></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="vm-section vm-section-alt">
+  <div class="vm-container">
+    <div class="vm-section-head vm-section-head-center">
+      <p class="vm-kicker">{% trans "Supported businesses" %}</p>
+      <h2 class="vm-section-title">{% trans "Vremio works for many types of local businesses" %}</h2>
+    </div>
+    <div class="vm-categories-grid">
+      <div class="vm-category-chip"><i class="bi bi-stars"></i> {% trans "Beauty salons" %}</div>
+      <div class="vm-category-chip"><i class="bi bi-scissors"></i> {% trans "Barbershops" %}</div>
+      <div class="vm-category-chip"><i class="bi bi-brush"></i> {% trans "Hair salons" %}</div>
+      <div class="vm-category-chip"><i class="bi bi-heart-pulse"></i> {% trans "Massage & physiotherapy" %}</div>
+      <div class="vm-category-chip"><i class="bi bi-trophy"></i> {% trans "Sports halls" %}</div>
+      <div class="vm-category-chip"><i class="bi bi-building"></i> {% trans "School gyms" %}</div>
+      <div class="vm-category-chip"><i class="bi bi-dribbble"></i> {% trans "Courts & pitches" %}</div>
+      <div class="vm-category-chip"><i class="bi bi-car-front"></i> {% trans "Car wash & detailing" %}</div>
+      <div class="vm-category-chip"><i class="bi bi-book"></i> {% trans "Private lessons" %}</div>
+      <div class="vm-category-chip"><i class="bi bi-door-open"></i> {% trans "Rentable rooms & spaces" %}</div>
+    </div>
+  </div>
+</section>
+
+<section class="vm-section vm-contact-section" id="contact">
+  <div class="vm-container vm-contact-inner">
+    <div class="vm-contact-card">
+      <p class="vm-kicker">{% trans "Get started" %}</p>
+      <h2 class="vm-section-title">{% trans "Want Vremio for your business?" %}</h2>
+      <p class="vm-section-sub">{% trans "If your business works with appointments or reservations, contact us for access and profile setup." %}</p>
+      {% if contact_email %}
+        <p class="vm-contact-email"><i class="bi bi-envelope"></i> {{ contact_email }}</p>
+        <a class="vm-btn vm-btn-primary" href="mailto:{{ contact_email }}">{% trans "Send email" %}</a>
+      {% else %}
+        <p class="vm-contact-placeholder">{% trans "Contact email will be added soon." %}</p>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<footer class="vm-footer">
+  <div class="vm-container vm-footer-inner">
+    <div class="vm-footer-brand">
+      <div class="vm-footer-logo">Vremio</div>
+      <p>{% trans "A modern booking platform for local businesses and services." %}</p>
+    </div>
+    <div class="vm-footer-links">
+      <a href="#businesses">{% trans "Browse businesses" %}</a>
+      <a href="#plans">{% trans "For business owners" %}</a>
+      <a href="{% url 'booking:owner_login' %}">{% trans "Owner sign in" %}</a>
+    </div>
+    <div class="vm-footer-lang">{% include "partials/language_switcher.html" %}</div>
+  </div>
+  <div class="vm-footer-legal">
+    {% include "partials/legal_footer.html" with legal_footer_dark=True %}
+  </div>
+  <div class="vm-footer-bottom">
+    <span>&copy; {% now "Y" %} Vremio</span>
+  </div>
+</footer>
+
+<div class="vm-lead-modal" id="vm-lead-modal" hidden>
+  <div class="vm-lead-modal-backdrop" data-lead-close tabindex="-1"></div>
+  <div class="vm-lead-modal-panel" role="dialog" aria-modal="true" aria-labelledby="vm-lead-title">
+    <button type="button" class="vm-lead-modal-close" data-lead-close aria-label="{% trans 'Close' %}">&times;</button>
+    <div id="vm-lead-form-view">
+      <p class="vm-kicker">{% trans "Send a request" %}</p>
+      <h3 class="vm-lead-title" id="vm-lead-title">{% trans "Tell us which plan you want" %}</h3>
+      <p class="vm-lead-hint">{% trans "Leave your name and Instagram or phone. We’ll get back to you." %}</p>
+      <form
+        id="vm-lead-form"
+        class="vm-lead-form"
+        method="post"
+        action="{% url 'booking:plan_interest' %}"
+        novalidate
+        data-placeholder-instagram="{% trans 'Instagram username' %}"
+        data-placeholder-phone="{% trans 'Phone number' %}"
+      >
+        {% csrf_token %}
+        <div class="vm-lead-field">
+          <label class="vm-lead-label" for="id_name">{{ plan_interest_form.name.label }}</label>
+          {{ plan_interest_form.name }}
+        </div>
+        <fieldset class="vm-lead-field">
+          <legend class="vm-lead-label">{{ plan_interest_form.plan.label }}</legend>
+          <div class="vm-lead-choice-row" role="radiogroup" aria-label="{{ plan_interest_form.plan.label }}">
+            {% for value, label in plan_interest_form.fields.plan.choices %}
+              <label class="vm-lead-choice">
+                <input
+                  type="radio"
+                  name="plan"
+                  value="{{ value }}"
+                  class="vm-lead-choice-input"
+                  {% if plan_interest_form.plan.value == value or forloop.first and not plan_interest_form.plan.value %}checked{% endif %}
+                >
+                <span>{{ label }}</span>
+              </label>
+            {% endfor %}
+          </div>
+        </fieldset>
+        <fieldset class="vm-lead-field">
+          <legend class="vm-lead-label">{{ plan_interest_form.contact_method.label }}</legend>
+          <div class="vm-lead-choice-row" role="radiogroup" aria-label="{{ plan_interest_form.contact_method.label }}">
+            {% for value, label in plan_interest_form.fields.contact_method.choices %}
+              <label class="vm-lead-choice">
+                <input
+                  type="radio"
+                  name="contact_method"
+                  value="{{ value }}"
+                  class="vm-lead-choice-input"
+                  {% if plan_interest_form.contact_method.value == value or value == 'instagram' and not plan_interest_form.contact_method.value %}checked{% endif %}
+                >
+                <span>{{ label }}</span>
+              </label>
+            {% endfor %}
+          </div>
+        </fieldset>
+        <div class="vm-lead-field">
+          <label class="vm-lead-label" for="id_contact_value" id="vm-lead-contact-label">{% trans "Instagram username" %}</label>
+          {{ plan_interest_form.contact_value }}
+        </div>
+        {{ plan_interest_form.website }}
+        <p class="vm-lead-error" id="vm-lead-error" hidden></p>
+        <div class="vm-lead-actions">
+          <button type="submit" class="vm-btn vm-btn-primary vm-btn-sm" id="vm-lead-submit">
+            {% trans "Send request" %}
+          </button>
+        </div>
+      </form>
+    </div>
+    <div id="vm-lead-success-view" hidden>
+      <p class="vm-kicker">{% trans "Request sent" %}</p>
+      <h3 class="vm-lead-title">{% trans "Thanks — we’ll be in touch" %}</h3>
+      <p class="vm-lead-hint" id="vm-lead-success-text">{% trans "Thanks — we received your request and will contact you soon." %}</p>
+      <button type="button" class="vm-btn vm-btn-primary vm-btn-sm" data-lead-close>{% trans "Close" %}</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/platform_home.js' %}" defer></script>
+{% endblock %}

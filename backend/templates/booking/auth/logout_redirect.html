@@ -1,0 +1,12 @@
+{% extends "booking/auth/base_auth.html" %}
+{% load i18n %}
+{% block title %}{% trans "Signing out…" %}{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+  <p class="auth-sub" style="margin:0;">{% trans "Signing out…" %}</p>
+</div>
+<script>
+  window.location.replace("{% url 'booking:owner_login' %}?logged_out=1");
+</script>
+{% endblock %}

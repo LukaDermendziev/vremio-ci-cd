@@ -1,0 +1,29 @@
+{% load i18n static %}
+<!doctype html>
+<html lang="{{ CURRENT_LANGUAGE|default:'mk' }}" translate="no">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="google" content="notranslate">
+  <title>{% trans "Page not found" %} — Vremio</title>
+  <link rel="icon" href="{% url 'favicon' %}" sizes="any">
+  <link rel="icon" href="{% static 'images/vremio-favicon.svg' %}" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body class="vm-error-page">
+  <main class="vm-error-card">
+    <p class="vm-error-brand">Vremio</p>
+    <div class="vm-error-code">404</div>
+    <h1 class="vm-error-title">{% trans "Page not found" %}</h1>
+    <p class="vm-error-lead">
+      {% trans "This page does not exist or the link may be outdated. You can go back home and continue from there." %}
+    </p>
+    <div class="vm-error-actions">
+      <a class="vm-error-btn vm-error-btn-primary" href="/">{% trans "Go to homepage" %}</a>
+    </div>
+  </main>
+</body>
+</html>

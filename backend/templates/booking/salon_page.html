@@ -1,0 +1,381 @@
+{% extends "base.html" %}
+{% load static i18n %}
+{% block title %}{{ salon.name }}{% endblock %}
+{% block body_class %}sp-page{% endblock %}
+
+{% block favicons %}
+  {# Always salon brand on the public salon page (customer domain or /book/<slug>/). #}
+  <link rel="icon" href="{% static 'salon-favicon.ico' %}" sizes="any">
+  <link rel="icon" href="{% static 'images/salon-favicon.svg' %}" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="{% static 'images/salon-apple-touch-icon.png' %}">
+{% endblock %}
+
+{% block lang_switcher %}{% endblock %}
+
+{% block content %}
+
+{# ── Sticky nav ───────────────────────────────────────────────────────────── #}
+<nav class="sp-nav">
+  <a class="sp-nav-brand" href="{% if is_customer_domain %}/{% else %}{% url 'booking:salon_page' salon.slug %}{% endif %}">{{ salon.name }}</a>
+  <div class="sp-nav-links">
+    <a href="#services">{% trans "Services" %}</a>
+    <a href="#hours">{% trans "Hours" %}</a>
+    {% if show_location and maps_url %}
+    <a href="{{ maps_url }}" target="_blank" rel="noopener noreferrer"><i class="bi bi-geo-alt" aria-hidden="true"></i> {% trans "Find us" %}</a>
+    {% endif %}
+  </div>
+  <div class="sp-nav-right">
+    {% if salon.instagram_username %}
+    <a class="sp-nav-ig" href="https://instagram.com/{{ salon.instagram_username|cut:'@' }}" target="_blank" rel="noopener" aria-label="Instagram">
+      <i class="bi bi-instagram"></i>
+      <span class="sp-nav-ig-label">Instagram</span>
+    </a>
+    {% endif %}
+    <div class="sp-nav-lang">{% include "partials/language_switcher.html" %}</div>
+    <a class="sp-nav-cta" href="{% url 'booking:book_salon' salon.slug %}">{% trans "Book now" %}</a>
+  </div>
+</nav>
+
+{# ── Hero ─────────────────────────────────────────────────────────────────── #}
+<section class="sp-hero-section">
+  <div class="sp-hero-overlay"></div>
+
+  {# Left: headline + CTA #}
+  <div class="sp-hero-content">
+    <p class="sp-eyebrow">{% trans "Professional nail care" %}</p>
+    <h1 class="sp-hero-title">{% trans "Care, style, and an appointment that suits you." %}</h1>
+    <p class="sp-hero-lead">{% trans "Choose a service, date and available time. Your request will be reviewed by the salon." %}</p>
+    <p class="sp-hero-note"><i class="bi bi-shield-check"></i> {% trans "The appointment is not confirmed until it is approved." %}</p>
+    <div class="sp-hero-actions">
+      <a class="sp-btn-hero" href="{% url 'booking:book_salon' salon.slug %}">{% trans "Book an appointment" %}</a>
+      <a class="sp-btn-hero sp-btn-hero-ghost" href="#services">{% trans "View services" %}</a>
+    </div>
+    {% if salon.instagram_username or show_location and maps_url %}
+    <div class="sp-hero-social">
+      {% if salon.instagram_username %}
+      <a class="sp-hero-ig" href="https://instagram.com/{{ salon.instagram_username|cut:'@' }}" target="_blank" rel="noopener" aria-label="Instagram">
+        <i class="bi bi-instagram"></i>
+        <span>@{{ salon.instagram_username|cut:'@' }}</span>
+      </a>
+      {% endif %}
+      {% if show_location and maps_url %}
+      <a class="sp-hero-ig sp-hero-maps" href="{{ maps_url }}" target="_blank" rel="noopener noreferrer">
+        <i class="bi bi-geo-alt" aria-hidden="true"></i>
+        <span>{% trans "Find us" %}</span>
+      </a>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  {# Right: animated masonry gallery — real nail photos #}
+  {% include "booking/partials/salon_gallery.html" %}
+</section>
+
+<script src="{% static 'js/salon_gallery.js' %}"></script>
+
+{# ── Trust bar ────────────────────────────────────────────────────────────── #}
+<div class="sp-trust-bar">
+  <div class="sp-trust-item"><span class="sp-trust-label">{% trans "Schedule" %}</span><span>{% trans "Online booking" %}</span></div>
+  <div class="sp-trust-sep"></div>
+  <div class="sp-trust-item"><span class="sp-trust-label">{% trans "Approval" %}</span><span>{% trans "Manual review" %}</span></div>
+  <div class="sp-trust-sep"></div>
+  <div class="sp-trust-item"><span class="sp-trust-label">{% trans "Reminder" %}</span><span>{% trans "24 h before" %}</span></div>
+  <div class="sp-trust-sep"></div>
+  <div class="sp-trust-item"><span class="sp-trust-label">{% trans "Working days" %}</span><span>{% trans "Mon – Sat" %}</span></div>
+</div>
+
+{# ── Services ─────────────────────────────────────────────────────────────── #}
+<section class="sp-content-section" id="services">
+  <div class="sp-section-inner">
+    <div class="sp-section-heading">
+      <p class="sp-kicker">{% trans "What we offer" %}</p>
+      <h2 class="sp-section-title">{% trans "Our" %} <em>{% trans "services" %}</em></h2>
+    </div>
+
+    <div class="sp-services-grid{% if services|length >= 5 %} sp-svcs-compact{% elif services|length >= 3 %} sp-svcs-many{% elif services|length <= 2 %} sp-svcs-centered{% endif %}">
+      {% for service in services %}
+        {% with items=service.price_items.all %}
+        <article class="sp-service-card{% if items %} sp-service-card--expandable{% endif %}"
+                 {% if items %}role="button" tabindex="0" aria-expanded="false"{% endif %}>
+
+          {# Card header — always visible #}
+          <div class="sp-service-header">
+            <h3 class="sp-service-name">{{ service.name }}</h3>
+            <div class="sp-service-header-right">
+              {% if service.base_price %}<span class="sp-service-price">{% blocktrans with price=service.base_price|floatformat:0 %}from {{ price }} den{% endblocktrans %}</span>{% endif %}
+              {% if items %}<span class="sp-expand-icon"><i class="bi bi-chevron-down"></i></span>{% endif %}
+            </div>
+          </div>
+
+          {% if service.description %}
+            <p class="sp-service-desc">{{ service.description }}</p>
+          {% endif %}
+
+          <div class="sp-service-footer">
+            {% if not items %}<span class="sp-service-dur"><i class="bi bi-clock"></i> {% blocktrans with minutes=service.duration_minutes %}{{ minutes }} min{% endblocktrans %}</span>{% endif %}
+            {% if service.extra_duration_note %}<span class="sp-service-note">{{ service.extra_duration_note }}</span>{% endif %}
+            {% if service.requires_photo %}
+              <span class="sp-badge sp-badge-required">{% trans "Photo required" %}</span>
+            {% elif service.photo_recommended %}
+              <span class="sp-badge sp-badge-soft">{% trans "Photo recommended" %}</span>
+            {% endif %}
+          </div>
+
+          {# Hint shown only on expandable cards before they open #}
+          {% if items %}
+          <div class="sp-more-hint">
+            <span>{% trans "More" %}</span> <i class="bi bi-chevron-down"></i>
+          </div>
+          {% endif %}
+
+          {# Expandable price list — hidden until card is clicked #}
+          {% if items %}
+          <div class="sp-price-list" aria-hidden="true">
+            <div class="sp-price-list-inner">
+              <p class="sp-price-list-label">{% trans "Price list" %}</p>
+              {% regroup items by group as grouped_items %}
+              {% for group_entry in grouped_items %}
+                {% if group_entry.grouper %}
+                  <p class="sp-price-group-label">{{ group_entry.grouper }}</p>
+                {% endif %}
+                <ul class="sp-price-items">
+                  {% for item in group_entry.list %}
+                    <li class="sp-price-item{% if item.photo_required %} sp-price-item--photo{% endif %}">
+                      <span class="sp-price-item-name">{{ item.name }}</span>
+                      <span class="sp-price-item-dur"><i class="bi bi-clock"></i> {% blocktrans with minutes=item.effective_duration_minutes %}{{ minutes }} min{% endblocktrans %}</span>
+                      <span class="sp-price-item-price">{{ item.price_display }} {% trans "den" %}</span>
+                      {% if item.photo_required %}
+                        <span class="sp-photo-note">📷 {% trans "Reference photo required" %}</span>
+                      {% endif %}
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% endfor %}
+              <a class="sp-btn-hero sp-price-list-cta" href="{% url 'booking:book_salon' salon.slug %}">
+                {% trans "Book an appointment" %}
+              </a>
+            </div>
+          </div>
+          {% else %}
+          <a class="sp-service-cta" href="{% url 'booking:book_salon' salon.slug %}">{% trans "Book this service" %}</a>
+          {% endif %}
+
+        </article>
+        {% endwith %}
+      {% empty %}
+        <p class="sp-muted-msg">{% trans "Services will be listed here soon." %}</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+{# ── Hours + rules ────────────────────────────────────────────────────────── #}
+<section class="sp-info-section" id="hours">
+  <div class="sp-section-inner sp-info-grid">
+
+    <div class="sp-info-card">
+      <div class="sp-info-card-head">
+        <p class="sp-kicker">{% trans "Schedule" %}</p>
+        <span class="sp-open-badge" id="sp-open-badge">
+          <span class="sp-open-dot"></span>
+          <span class="sp-open-label"></span>
+        </span>
+      </div>
+      <h3 class="sp-info-title">{% trans "Working" %} <em>{% trans "hours" %}</em></h3>
+      <ul class="sp-hours-list">
+        {% for item in hours_display_rows %}
+          {% with row=item.row %}
+          <li class="sp-hours-row {% if not row.is_working_day %}sp-hours-closed{% endif %}" data-day="{{ row.weekday }}">
+            <span class="sp-hours-day">{{ row.get_weekday_display }}<span class="sp-today-badge">{% trans "Today" %}</span></span>
+            {% if row.is_working_day %}
+              <span class="sp-hours-time">{{ item.display_start_time|time:"H:i" }} – {{ item.display_end_time|time:"H:i" }}</span>
+            {% else %}
+              <span class="sp-closed-label">{% trans "Closed" %}</span>
+            {% endif %}
+          </li>
+          {% endwith %}
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="sp-info-card">
+      <p class="sp-kicker">{% trans "Before you book" %}</p>
+      <h3 class="sp-info-title">{% trans "Booking" %} <em>{% trans "rules" %}</em></h3>
+      <ul class="sp-rules-list">
+        {% if booking_policy %}
+          <li>
+            <span class="sp-rule-icon">&#x23F0;</span>
+            <span>{% blocktrans with days=booking_policy.minimum_notice_days %}Minimum booking notice: <strong>{{ days }} days</strong>{% endblocktrans %}</span>
+          </li>
+          <li>
+            <span class="sp-rule-icon">&#x1F4C5;</span>
+            <span>{% blocktrans with days=booking_policy.maximum_booking_window_days %}Book up to <strong>{{ days }} days</strong> in advance{% endblocktrans %}</span>
+          </li>
+          <li>
+            <span class="sp-rule-icon">&#x2714;</span>
+            <span>{% blocktrans trimmed %}All requests require <strong>salon approval</strong> before confirmation{% endblocktrans %}</span>
+          </li>
+          <li>
+            <span class="sp-rule-icon">&#x23F3;</span>
+            <span>{% blocktrans with minutes=booking_policy.late_arrival_limit_minutes %}Late arrival limit: <strong>{{ minutes }} minutes</strong>{% endblocktrans %}</span>
+          </li>
+        {% else %}
+          <li><span class="sp-rule-icon">&#x2714;</span><span>{% trans "All requests require salon approval before confirmation." %}</span></li>
+        {% endif %}
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+<script>
+window.SP_I18N = {
+  openNow: "{% filter escapejs %}{% trans 'Open now' %}{% endfilter %}",
+  closedNow: "{% filter escapejs %}{% trans 'Closed now' %}{% endfilter %}",
+  closedToday: "{% filter escapejs %}{% trans 'Closed today' %}{% endfilter %}",
+};
+
+(function () {
+  // Highlight today in the hours list
+  // Django weekday: 0=Mon … 6=Sun  |  JS getDay(): 0=Sun … 6=Sat
+  var jsDay = new Date().getDay();
+  var djangoDay = jsDay === 0 ? 6 : jsDay - 1;
+  var rows = document.querySelectorAll('.sp-hours-row[data-day]');
+  rows.forEach(function (row) {
+    if (parseInt(row.dataset.day, 10) === djangoDay) {
+      row.classList.add('is-today');
+      var badge = row.querySelector('.sp-today-badge');
+      if (badge) badge.style.display = 'inline-block';
+
+      // Show open/closed card in header
+      var headerBadge = document.getElementById('sp-open-badge');
+      if (headerBadge) {
+        var now = new Date();
+        var hhmm = now.getHours() * 60 + now.getMinutes();
+        var timeEl = row.querySelector('.sp-hours-time');
+        var labelEl = headerBadge.querySelector('.sp-open-label');
+        var setCard = function (text, cls) {
+          if (labelEl) labelEl.textContent = text;
+          headerBadge.classList.add(cls);
+        };
+        if (timeEl && !row.classList.contains('sp-hours-closed')) {
+          var parts = timeEl.textContent.trim().split('–');
+          if (parts.length === 2) {
+            var parse = function (s) {
+              var p = s.trim().split(':');
+              return parseInt(p[0], 10) * 60 + parseInt(p[1], 10);
+            };
+            var openMin = parse(parts[0]);
+            var closeMin = parse(parts[1]);
+            if (hhmm >= openMin && hhmm < closeMin) {
+              setCard(window.SP_I18N.openNow, 'sp-open-now');
+            } else {
+              setCard(window.SP_I18N.closedNow, 'sp-closed-now');
+            }
+          }
+        } else {
+          setCard(window.SP_I18N.closedToday, 'sp-closed-now');
+        }
+      }
+    }
+  });
+})();
+
+// ── Service card accordion ──────────────────────────────────────────────────
+(function () {
+  document.querySelectorAll('.sp-service-card--expandable').forEach(function (card) {
+    function toggle(e) {
+      // Don't toggle if user clicked the CTA button inside
+      if (e && e.target.closest('a')) return;
+      var expanded = card.getAttribute('aria-expanded') === 'true';
+      var willOpen = !expanded;
+      card.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+      var list = card.querySelector('.sp-price-list');
+      if (list) {
+        list.setAttribute('aria-hidden', willOpen ? 'false' : 'true');
+        // Expand to the exact content height so nothing (e.g. the CTA button)
+        // is ever clipped, no matter how many price items / add-ons exist.
+        list.style.maxHeight = willOpen ? (list.scrollHeight + 'px') : '';
+      }
+    }
+    card.addEventListener('click', toggle);
+    card.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+    });
+  });
+})();
+</script>
+
+{# ── CTA banner ───────────────────────────────────────────────────────────── #}
+<section class="sp-cta-section">
+  {# Background photo collage — 6 nail images darkened behind the text #}
+  <div class="sp-cta-photos" aria-hidden="true">
+    <img src="{% static 'images/gallery/nail-10.jpg' %}" alt="">
+    <img src="{% static 'images/gallery/nail-4.jpg' %}" alt="">
+    <img src="{% static 'images/gallery/nail-19.jpg' %}" alt="">
+    <img src="{% static 'images/gallery/nail-7.jpg' %}" alt="">
+    <img src="{% static 'images/gallery/nail-22.jpg' %}" alt="">
+    <img src="{% static 'images/gallery/nail-11.jpg' %}" alt="">
+  </div>
+  <div class="sp-cta-inner">
+    <h2 class="sp-cta-title">{% trans "Ready for" %} <em>{% trans "your" %}</em> {% trans "next appointment?" %}</h2>
+    <p class="sp-cta-sub">{% trans "Send a request in minutes. We'll review it and contact you to confirm." %}</p>
+    <a class="sp-btn-hero" href="{% url 'booking:book_salon' salon.slug %}">{% trans "Book appointment" %}</a>
+  </div>
+</section>
+
+{# ── Footer ───────────────────────────────────────────────────────────────── #}
+<footer class="sp-footer-section">
+  <div class="sp-footer-inner">
+
+    {# Left — brand + tagline #}
+    <div class="sp-footer-col sp-footer-col-brand">
+      <div class="sp-footer-brand">{{ salon.name }}</div>
+      <p class="sp-footer-tagline">{% trans "Online booking, made simple." %}</p>
+    </div>
+
+    {# Right — contact links #}
+    <div class="sp-footer-col sp-footer-contact">
+      {% if show_location and maps_url %}
+        <a href="{{ maps_url }}" target="_blank" rel="noopener noreferrer"><i class="bi bi-geo-alt"></i> {% trans "Find us" %}</a>
+      {% endif %}
+      {% if salon.phone_number %}
+        <a href="tel:{{ salon.phone_number }}"><i class="bi bi-telephone"></i> {{ salon.phone_number }}</a>
+      {% endif %}
+      {% if salon.instagram_username %}
+        <a href="https://instagram.com/{{ salon.instagram_username|cut:'@' }}" target="_blank" rel="noopener"><i class="bi bi-instagram"></i> {{ salon.instagram_username }}</a>
+      {% endif %}
+    </div>
+
+  </div>
+
+  {# Bottom bar — nav links · copyright · credit #}
+  <div class="sp-footer-bottom">
+    <nav class="sp-footer-nav" aria-label="{% trans 'Footer navigation' %}">
+      <a href="#services">{% trans "Services" %}</a>
+      <span class="sp-footer-dot"></span>
+      <a href="#hours">{% trans "Hours" %}</a>
+      {% if show_location and maps_url %}
+      <span class="sp-footer-dot"></span>
+      <a href="{{ maps_url }}" target="_blank" rel="noopener noreferrer"><i class="bi bi-geo-alt"></i> {% trans "Find us" %}</a>
+      {% endif %}
+      {% if salon.instagram_username %}
+      <span class="sp-footer-dot"></span>
+      <a href="https://instagram.com/{{ salon.instagram_username|cut:'@' }}" target="_blank" rel="noopener"><i class="bi bi-instagram"></i> Instagram</a>
+      {% endif %}
+      <span class="sp-footer-dot"></span>
+      <a href="{% url 'booking:book_salon' salon.slug %}">{% trans "Book now" %}</a>
+    </nav>
+    <div class="sp-footer-bottom-right">
+      <span class="sp-footer-copy">&copy; {% now "Y" %} {{ salon.name }}</span>
+      <span class="sp-footer-sep">·</span>
+      <span class="sp-footer-credit">{% trans "Powered by" %} <a href="{% if is_customer_domain %}{{ vremio_home_url }}/{% else %}{% url 'booking:home' %}{% endif %}"{% if is_customer_domain %} target="_blank" rel="noopener noreferrer"{% endif %}>Vremio</a></span>
+    </div>
+  </div>
+  <div class="sp-footer-legal">
+    {% include "partials/legal_footer.html" with legal_footer_dark=True legal_footer_compact=True %}
+  </div>
+</footer>
+
+{% endblock %}

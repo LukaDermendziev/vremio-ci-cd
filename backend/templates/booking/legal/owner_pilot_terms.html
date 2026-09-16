@@ -1,0 +1,39 @@
+{% extends "booking/legal/_page.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Owner Pilot Terms" %} — Vremio{% endblock %}
+{% block legal_title %}{% trans "Business owner pilot terms" %}{% endblock %}
+
+{% block legal_content %}
+<section class="vm-legal-section">
+  <p>{% trans "These terms describe the private pilot period for the first business owners using Vremio. This is not a full commercial contract." %}</p>
+</section>
+
+<section class="vm-legal-section">
+  <h2>{% trans "Pilot period" %}</h2>
+  <ul>
+    <li>{% trans "The first month may be free as a testing period." %}</li>
+    <li>{% trans "The system is being tested with real booking flows and real customer data." %}</li>
+    <li>{% trans "Features may change or improve during the pilot." %}</li>
+  </ul>
+</section>
+
+<section class="vm-legal-section">
+  <h2>{% trans "Owner responsibilities" %}</h2>
+  <ul>
+    <li>{% trans "You are responsible for the actual service delivery, prices, and customer communication." %}</li>
+    <li>{% trans "Use customer data only for booking and service purposes." %}</li>
+    <li>{% trans "Do not share customer photos or contact details outside what is necessary for the service." %}</li>
+    <li>{% trans "Review important bookings manually during the pilot." %}</li>
+    <li>{% trans "Report bugs, incorrect bookings, or security concerns promptly." %}</li>
+  </ul>
+</section>
+
+<section class="vm-legal-section">
+  <h2>{% trans "After the pilot" %}</h2>
+  <p>{% trans "Continued paid use, pricing, and formal terms should be agreed separately before wider commercial launch." %}</p>
+  {% if contact_email %}
+    <p><a href="mailto:{{ contact_email }}">{{ contact_email }}</a></p>
+  {% endif %}
+</section>
+{% endblock %}

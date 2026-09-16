@@ -1,0 +1,367 @@
+"""Outgoing email helpers for booking notifications."""
+import logging
+
+from django.conf import settings
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.urls import reverse
+from django.utils.html import escape
+from django.utils import timezone
+from django.utils import translation
+from django.utils.translation import gettext as _
+
+logger = logging.getLogger("booking.email")
+
+# (subject template name, body template name)
+CUSTOMER_EMAIL_TEMPLATES = {
+    "approved": ("booking/emails/subject_approved.txt", "booking/emails/customer_approved.txt"),
+    "rejected": ("booking/emails/subject_rejected.txt", "booking/emails/customer_rejected.txt"),
+    "edited": ("booking/emails/subject_edited.txt", "booking/emails/customer_edited.txt"),
+    "cancelled": ("booking/emails/subject_cancelled.txt", "booking/emails/customer_cancelled.txt"),
+    "no_show": ("booking/emails/subject_no_show.txt", "booking/emails/customer_no_show.txt"),
+    "pending": ("booking/emails/subject_pending.txt", "booking/emails/customer_pending.txt"),
+    "reminder": ("booking/emails/subject_reminder.txt", "booking/emails/customer_reminder.txt"),
+}
+
+OWNER_NEW_BOOKING_TEMPLATES = (
+    "booking/emails/subject_owner_new_booking.txt",
+    "booking/emails/owner_new_booking.txt",
+)
+
+REQUEST_RECEIVED_TEMPLATES = (
+    "booking/emails/subject_request_received.txt",
+    "booking/emails/customer_request_received.txt",
+)
+
+VERIFY_BOOKING_TEMPLATES = (
+    "booking/emails/subject_verify_booking.txt",
+    "booking/emails/customer_verify_booking.txt",
+)
+
+CUSTOMER_CANCELLATION_CONFIRMED_TEMPLATES = (
+    "booking/emails/subject_customer_cancellation_confirmed.txt",
+    "booking/emails/customer_cancellation_confirmed.txt",
+)
+
+OWNER_CUSTOMER_CANCELLED_TEMPLATES = (
+    "booking/emails/subject_owner_customer_cancelled.txt",
+    "booking/emails/owner_customer_cancelled.txt",
+)
+
+
+def get_owner_notification_email(salon):
+    """Owner inbox for notifications; falls back to salon owner account email."""
+    configured = getattr(settings, "OWNER_NOTIFICATION_EMAIL", "").strip()
+    if configured:
+        return configured
+    owner = salon.owner
+    return (owner.email or "").strip()
+
+
+def send_plan_interest_email(
+    *,
+    name,
+    plan_label,
+    instagram="",
+    phone="",
+    salon_name="",
+    salon_slug="",
+    current_plan="",
+    owner_username="",
+    owner_email="",
+    source="",
+):
+    """Notify Vremio contact inbox about a pricing-plan interest lead."""
+    from .legal_utils import get_vremio_contact_email
+
+    to_email = get_vremio_contact_email()
+    if not to_email:
+        logger.warning("Plan interest email skipped — VREMIO_CONTACT_EMAIL not set")
+        return False, "no_email"
+
+    lines = [
+        "New Vremio plan interest",
+        "",
+        f"Name: {name}",
+        f"Requested plan: {plan_label}",
+    ]
+    if source:
+        lines.append(f"Source: {source}")
+    if salon_name:
+        lines.append(f"Salon: {salon_name}" + (f" ({salon_slug})" if salon_slug else ""))
+    if current_plan:
+        lines.append(f"Current plan: {current_plan}")
+    if owner_username:
+        lines.append(f"Owner account: {owner_username}")
+    if owner_email:
+        lines.append(f"Owner email: {owner_email}")
+    if instagram:
+        lines.append(f"Instagram: @{instagram.lstrip('@')}")
+    if phone:
+        lines.append(f"Phone: {phone}")
+    body = "\n".join(lines)
+    subject = f"Vremio plan interest — {plan_label} — {name}"
+    return _send_email(subject=subject, body=body, to_email=to_email)
+
+
+def get_owner_reply_to(salon):
+    """Reply-To for customer-facing booking emails."""
+    email = get_owner_notification_email(salon)
+    return [email] if email else []
+
+
+def _booking_email_context(booking):
+    from .services import (
+        build_service_schedule,
+        format_services_for_email,
+        format_services_label,
+        get_manage_booking_url,
+        google_calendar_url,
+    )
+
+    local_start = timezone.localtime(booking.start_at)
+    local_end = timezone.localtime(booking.end_at)
+    customer = booking.customer
+    first_name = (customer.full_name or "").split()[0] if customer.full_name else customer.full_name
+    booking_service_items = list(booking.booking_services.all())
+    service_schedule = build_service_schedule(
+        booking.start_at, booking_service_items, booking.salon
+    )
+    services_text = format_services_for_email(booking)
+    site_url = getattr(settings, "SITE_URL", "").rstrip("/")
+    ics_path = reverse("booking:manage_booking_ics", args=[booking.manage_token])
+    calendar_ics_url = f"{site_url}{ics_path}" if site_url else ics_path
+    return {
+        "booking": booking,
+        "customer": customer,
+        "salon": booking.salon,
+        "first_name": first_name,
+        "customer_name": customer.full_name,
+        "phone": customer.phone_number,
+        "instagram": customer.instagram_username or "—",
+        "services": services_text or "—",
+        "services_label": format_services_label(booking),
+        "services_list": service_schedule,
+        "service_schedule": service_schedule,
+        "total_duration": booking.total_duration_minutes,
+        "date": local_start.strftime("%d/%m/%Y"),
+        "time": local_start.strftime("%H:%M"),
+        "end_time": local_end.strftime("%H:%M"),
+        "dashboard_url": f"{site_url}/owner/dashboard/" if site_url else "/owner/dashboard/",
+        "manage_url": get_manage_booking_url(booking),
+        "google_calendar_url": google_calendar_url(booking),
+        "calendar_ics_url": calendar_ics_url,
+    }
+
+
+def _render_email_parts(subject_template, body_template, context):
+    language = getattr(settings, "LANGUAGE_CODE", "mk")
+    with translation.override(language):
+        subject = render_to_string(subject_template, context).strip().replace("\n", " ")
+        body = render_to_string(body_template, context).strip()
+    return subject, body
+
+
+def _approved_email_html(body, context):
+    """
+    Same approved email as plaintext, but the two calendar labels are clickable
+    links (no raw URL shown under them). Keeps original wording/translations.
+    """
+    language = getattr(settings, "LANGUAGE_CODE", "mk")
+    with translation.override(language):
+        google_label = _("Add to Google Calendar")
+        apple_label = _("Apple / Samsung / other")
+
+    google_url = context.get("google_calendar_url") or ""
+    ics_url = context.get("calendar_ics_url") or ""
+    html = escape(body).replace("\n", "<br>\n")
+
+    if google_url and google_label in body:
+        html = html.replace(
+            escape(google_label),
+            (
+                f'<a href="{escape(google_url)}" '
+                f'style="text-decoration: underline;">{escape(google_label)}</a>'
+            ),
+            1,
+        )
+    if ics_url and apple_label in body:
+        html = html.replace(
+            escape(apple_label),
+            (
+                f'<a href="{escape(ics_url)}" '
+                f'style="text-decoration: underline;">{escape(apple_label)}</a>'
+            ),
+            1,
+        )
+    return f"<html><body>{html}</body></html>"
+
+
+def _send_email(*, subject, body, to_email, reply_to=None, html_body=None):
+    if not to_email:
+        return False, "no_email"
+    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@salonscheduler.app")
+    try:
+        message = EmailMultiAlternatives(
+            subject=subject,
+            body=body,
+            from_email=from_email,
+            to=[to_email],
+            reply_to=reply_to or [],
+        )
+        if not html_body:
+            escaped = escape(body).replace("\n", "<br>\n")
+            html_body = f"<html><body>{escaped}</body></html>"
+        message.attach_alternative(html_body, "text/html")
+        message.send(fail_silently=False)
+        logger.info("Email sent to %s — subject: %s", to_email, subject)
+        return True, "sent"
+    except Exception as exc:
+        logger.warning("Email send failed to %s: %s", to_email, exc, exc_info=True)
+        return False, "error"
+
+
+def send_customer_booking_email(booking, action):
+    """
+    Send a booking notification email to the customer.
+    Returns (sent: bool, reason: str) where reason is 'sent', 'no_email', or 'error'.
+    """
+    email = (booking.customer.email or "").strip()
+    if not email:
+        return False, "no_email"
+
+    templates = CUSTOMER_EMAIL_TEMPLATES.get(action)
+    if not templates:
+        return False, "unknown_action"
+
+    context = _booking_email_context(booking)
+    subject, body = _render_email_parts(templates[0], templates[1], context)
+    html_body = None
+    if action == "approved":
+        html_body = _approved_email_html(body, context)
+    return _send_email(
+        subject=subject,
+        body=body,
+        to_email=email,
+        reply_to=get_owner_reply_to(booking.salon),
+        html_body=html_body,
+    )
+
+
+def send_booking_approved_email(booking):
+    return send_customer_booking_email(booking, "approved")
+
+
+def send_booking_rejected_email(booking):
+    return send_customer_booking_email(booking, "rejected")
+
+
+def send_booking_updated_email(booking):
+    return send_customer_booking_email(booking, "edited")
+
+
+def send_booking_cancelled_email(booking):
+    return send_customer_booking_email(booking, "cancelled")
+
+
+def send_booking_reminder_email(booking):
+    return send_customer_booking_email(booking, "reminder")
+
+
+def send_owner_new_booking_email(booking):
+    """
+    Notify the salon owner of a new online booking request.
+    Never raises — booking creation must always succeed.
+    """
+    owner_email = get_owner_notification_email(booking.salon)
+    if not owner_email:
+        return False, "no_email"
+
+    customer_email = (booking.customer.email or "").strip()
+    if customer_email and owner_email.casefold() == customer_email.casefold():
+        logger.info(
+            "Skipping owner new-booking email for booking %s — owner inbox matches customer email",
+            booking.pk,
+        )
+        return False, "same_as_customer"
+
+    context = _booking_email_context(booking)
+    subject, body = _render_email_parts(*OWNER_NEW_BOOKING_TEMPLATES, context)
+    return _send_email(subject=subject, body=body, to_email=owner_email)
+
+
+def send_booking_request_received_email(booking):
+    """Send customer confirmation with manage link after online request."""
+    return _send_customer_templated_email(booking, REQUEST_RECEIVED_TEMPLATES)
+
+
+def send_booking_verification_email(booking):
+    """Send email verification link before a booking request is submitted."""
+    email = (booking.customer.email or "").strip()
+    if not email or not booking.email_verification_token:
+        return False, "no_email"
+
+    policy = getattr(booking.salon, "booking_policy", None)
+    expiration_minutes = 60
+    if policy:
+        expiration_minutes = policy.email_verification_expiration_minutes
+
+    site_url = getattr(settings, "SITE_URL", "").rstrip("/")
+    verify_url = (
+        f"{site_url}/book/{booking.salon.slug}/verify/{booking.email_verification_token}/"
+    )
+    context = _booking_email_context(booking)
+    context.update({
+        "verify_url": verify_url,
+        "expiration_minutes": expiration_minutes,
+    })
+    subject, body = _render_email_parts(*VERIFY_BOOKING_TEMPLATES, context)
+    return _send_email(
+        subject=subject,
+        body=body,
+        to_email=email,
+        reply_to=get_owner_reply_to(booking.salon),
+    )
+
+
+def send_customer_cancellation_confirmation_email(booking):
+    """Confirm to customer that their self-cancellation was recorded."""
+    return _send_customer_templated_email(booking, CUSTOMER_CANCELLATION_CONFIRMED_TEMPLATES)
+
+
+def send_owner_customer_cancelled_email(booking):
+    """Notify owner that customer cancelled via manage link."""
+    owner_email = get_owner_notification_email(booking.salon)
+    if not owner_email:
+        return False, "no_email"
+
+    context = _booking_email_context(booking)
+    subject, body = _render_email_parts(*OWNER_CUSTOMER_CANCELLED_TEMPLATES, context)
+    return _send_email(subject=subject, body=body, to_email=owner_email)
+
+
+def _send_customer_templated_email(booking, templates):
+    email = (booking.customer.email or "").strip()
+    if not email:
+        return False, "no_email"
+
+    context = _booking_email_context(booking)
+    subject, body = _render_email_parts(templates[0], templates[1], context)
+    return _send_email(
+        subject=subject,
+        body=body,
+        to_email=email,
+        reply_to=get_owner_reply_to(booking.salon),
+    )
+
+
+def send_test_email(recipient):
+    """Send a simple test message to verify SMTP/console configuration."""
+    language = getattr(settings, "LANGUAGE_CODE", "mk")
+    with translation.override(language):
+        subject = _("Vremio test email")
+        body = _(
+            "This is a test email from Vremio.\n\n"
+            "If you received this message, outgoing email is configured correctly."
+        )
+    return _send_email(subject=subject, body=body, to_email=recipient)
