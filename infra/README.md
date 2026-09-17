@@ -30,3 +30,16 @@ docker compose down
 ```
 
 Dummy env is in `infra/compose.env` (not production secrets).
+
+## CI/CD (GitHub Actions → Docker Hub)
+
+On every push to `master`, [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) runs tests, then builds and pushes:
+
+`lukad23/vremio-web:latest` and `lukad23/vremio-web:<short-sha>`
+
+Image: [https://hub.docker.com/r/lukad23/vremio-web](https://hub.docker.com/r/lukad23/vremio-web)
+
+GitHub secrets used (not stored in git):
+
+- `DOCKERHUB_USERNAME`
+- `DOCKERHUB_TOKEN`

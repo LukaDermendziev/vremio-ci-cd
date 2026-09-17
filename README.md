@@ -109,6 +109,8 @@ Public copy for the course: [vremio-ci-cd](https://github.com/LukaDermendziev/vr
 
 Four Compose services (nginx, Django/Gunicorn, PostgreSQL, Redis): see [`infra/README.md`](infra/README.md).
 
+GitHub Actions builds the Django image and pushes it to Docker Hub: [lukad23/vremio-web](https://hub.docker.com/r/lukad23/vremio-web).
+
 ```bash
 docker compose up --build
 ```
