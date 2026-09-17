@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vremio-config
+  namespace: vremio
+  labels:
+    app.kubernetes.io/name: vremio
+data:
+  DJANGO_DEBUG: "True"
+  DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1,web,nginx,vremio.local"
+  SITE_URL: "http://vremio.local"
+  CSRF_TRUSTED_ORIGINS: "http://vremio.local"
+  EMAIL_BACKEND: "django.core.mail.backends.console.EmailBackend"
+  POSTGRES_DB: "vremio"
+  POSTGRES_USER: "vremio"
+  POSTGRES_HOST: "db"
+  POSTGRES_PORT: "5432"
+  CACHE_URL: "redis://redis:6379/1"

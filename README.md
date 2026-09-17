@@ -111,6 +111,8 @@ Four Compose services (nginx, Django/Gunicorn, PostgreSQL, Redis): see [`infra/R
 
 GitHub Actions builds the Django image and pushes it to Docker Hub: [lukad23/vremio-web](https://hub.docker.com/r/lukad23/vremio-web).
 
+Kubernetes manifests (minikube): [`infra/k8s/`](infra/k8s/).
+
 ```bash
 docker compose up --build
 ```

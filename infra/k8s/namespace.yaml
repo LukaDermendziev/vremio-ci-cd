@@ -1,0 +1,8 @@
+# Faculty demo namespace. Not used by the live salon on Railway.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vremio
+  labels:
+    app.kubernetes.io/name: vremio
+    app.kubernetes.io/part-of: vremio-faculty

@@ -1,0 +1,23 @@
+# Cluster entry. Traffic: Ingress → nginx Service → Django (web).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vremio
+  namespace: vremio
+  labels:
+    app.kubernetes.io/name: vremio
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "8m"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: vremio.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: nginx
+                port:
+                  number: 80
