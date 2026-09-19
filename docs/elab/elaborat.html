@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="mk">
+<head>
+  <meta charset="utf-8" />
+  <title>Елаборат — КИИИ — Vremio</title>
+  <style>
+    @page { size: A4; margin: 20mm 18mm 18mm 18mm; }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: "Calibri", "Segoe UI", "Times New Roman", sans-serif;
+      font-size: 11.2pt;
+      line-height: 1.45;
+      color: #1a1a1a;
+    }
+    a { color: #123a6b; }
+    h1, h2, h3 { color: #0f2a4a; page-break-after: avoid; }
+    h2 { font-size: 14.5pt; margin: 1.15em 0 0.45em; border-bottom: 1px solid #c5d0dc; padding-bottom: 0.15em; }
+    h3 { font-size: 12pt; margin: 0.9em 0 0.35em; }
+    p { margin: 0.45em 0; text-align: justify; }
+    ul, ol { margin: 0.35em 0 0.55em 1.3em; padding: 0; }
+    li { margin: 0.18em 0; }
+    table { width: 100%; border-collapse: collapse; margin: 0.6em 0 0.85em; font-size: 10.4pt; }
+    th, td { border: 1px solid #8ea0b3; padding: 5px 7px; vertical-align: top; }
+    th { background: #e8eef5; text-align: left; }
+    code, .path { font-family: Consolas, "Courier New", monospace; font-size: 9.6pt; }
+    pre {
+      background: #f4f6f8;
+      border: 1px solid #d5dde6;
+      padding: 8px 10px;
+      font-size: 8.8pt;
+      line-height: 1.35;
+      overflow: hidden;
+      page-break-inside: avoid;
+    }
+    .cover {
+      min-height: 240mm;
+      display: flex;
+      flex-direction: column;
+      page-break-after: always;
+    }
+    .uni { text-align: center; font-size: 12.5pt; font-weight: 700; letter-spacing: 0.02em; }
+    .faculty { text-align: center; font-size: 12pt; margin-top: 4px; }
+    .doc-type { text-align: center; margin-top: 38px; font-size: 13pt; letter-spacing: 0.12em; text-transform: uppercase; color: #35506b; }
+    .title { text-align: center; margin: 22px 28px 0; font-size: 18pt; line-height: 1.3; }
+    .meta { margin: 48px auto 0; width: 82%; }
+    .meta td { border: none; padding: 5px 4px; }
+    .meta td:first-child { width: 38%; font-weight: 700; color: #35506b; }
+    .footer-cover { margin-top: auto; text-align: center; font-size: 11pt; color: #333; }
+    .fig { page-break-inside: avoid; margin: 0.7em 0 1em; text-align: center; }
+    .caption { font-size: 10pt; color: #334; margin-top: 6px; font-style: italic; }
+    .shot {
+      width: 100%;
+      max-height: 72mm;
+      object-fit: contain;
+      border: 1px solid #c5d0dc;
+      background: #0d1117;
+    }
+    pre.term {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      border: 1px solid #333;
+      font-size: 7.5pt;
+      line-height: 1.28;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+
+<section class="cover">
+  <div class="uni">Универзитет „Св. Кирил и Методиј“ во Скопје</div>
+  <div class="faculty">Факултет за информатички науки и компјутерско инженерство</div>
+  <div class="doc-type">Елаборат за проектна задача</div>
+  <h1 class="title">Континуирана интеграција и испорака за веб системот за резервации Vremio (Docker, GitHub Actions, Kubernetes)</h1>
+  <table class="meta">
+    <tr><td>Предмет</td><td>Континуирана интеграција и испорака</td></tr>
+    <tr><td>Наставник</td><td>вонр. проф. д-р Панче Рибарски</td></tr>
+    <tr><td>Студент</td><td>Лука Дерменџиев</td></tr>
+    <tr><td>Индекс</td><td>233081</td></tr>
+    <tr><td>Датум</td><td>септември 2026</td></tr>
+  </table>
+  <div class="footer-cover">Скопје, 2026</div>
+</section>
+
+<h2>1. Вовед и цел на проектот</h2>
+<p>
+Овој елаборат ја опишува проектната задача по предметот Континуирана интеграција и испорака.
+За основа е земена готова апликација — <strong>Vremio</strong>, веб систем за онлајн резервации кај салони за убавина
+(Django шаблони, PostgreSQL). Апликацијата ја изработувам како посебен реален проект, надвор од овој предмет.
+За КИИИ не се развива нова деловна логика, туку инфраструктурата околу веќе постоечкиот код.
+</p>
+<p>
+Целта е да се покаже целосен DevOps тек: јавен Git репозиториум, Docker имиџ, оркестрација со Docker Compose,
+CI pipeline што објавува имиџ на Docker Hub и Kubernetes манифести со демонстрација на локален кластер (minikube).
+Демонстрацијата користи тест база и dummy конфигурација. Продукциската инстанца на салонот не е дел од овој проект
+и не се користат нејзините тајни.
+</p>
+<p>
+Конфигурациите (Dockerfile, Compose, GitHub Actions, Kubernetes YAML) се пишувани за оваа апликација
+и не се копија од предавања, аудиториски вежби или домашни задачи.
+</p>
+
+<h2>2. Архитектура — четири сервиси</h2>
+<p>
+Формата бара најмалку три сервиси, меѓу кои и база. По консултација, демонстрацијата има <strong>четири</strong> контејнери:
+</p>
+<table>
+  <tr><th>Сервис</th><th>Технологија</th><th>Улога</th></tr>
+  <tr><td>nginx</td><td>nginx 1.27</td><td>Влез од прелистувачот, reverse proxy кон Django</td></tr>
+  <tr><td>web</td><td>Django  + Gunicorn</td><td>Апликацијата (страници, форми, деловна логика)</td></tr>
+  <tr><td>db</td><td>PostgreSQL 16</td><td>Перзистентни податоци</td></tr>
+  <tr><td>redis</td><td>Redis 7</td><td>Кеш / <code>CACHE_URL</code> (rate limiting)</td></tr>
+</table>
+<p>
+Корисничкиот интерфејс е Django templates, не посебен React сервис. Gunicorn ја извршува апликацијата во контејнерот;
+nginx е влезната врата. PostgreSQL ја чува состојбата. Redis е реален трет/четврти сервис, не празен контејнер.
+</p>
+
+<div class="fig">
+  <svg viewBox="0 0 720 210" width="100%" xmlns="http://www.w3.org/2000/svg" role="img">
+    <rect x="1" y="1" width="718" height="208" fill="#f7fafc" stroke="#9aa8b6"/>
+    <rect x="20" y="78" width="120" height="54" rx="6" fill="#1f4e79" />
+    <text x="80" y="110" fill="#fff" font-size="13" text-anchor="middle" font-family="Calibri, sans-serif">Прелистувач</text>
+    <rect x="190" y="78" width="120" height="54" rx="6" fill="#2e75b6" />
+    <text x="250" y="102" fill="#fff" font-size="13" text-anchor="middle" font-family="Calibri, sans-serif">nginx</text>
+    <text x="250" y="120" fill="#dbeafe" font-size="10" text-anchor="middle" font-family="Calibri, sans-serif">порт 80 / 8080</text>
+    <rect x="360" y="78" width="130" height="54" rx="6" fill="#2e75b6" />
+    <text x="425" y="102" fill="#fff" font-size="13" text-anchor="middle" font-family="Calibri, sans-serif">web</text>
+    <text x="425" y="120" fill="#dbeafe" font-size="10" text-anchor="middle" font-family="Calibri, sans-serif">Gunicorn :8000</text>
+    <rect x="540" y="28" width="150" height="50" rx="6" fill="#548235" />
+    <text x="615" y="58" fill="#fff" font-size="13" text-anchor="middle" font-family="Calibri, sans-serif">PostgreSQL</text>
+    <rect x="540" y="132" width="150" height="50" rx="6" fill="#7b2d8e" />
+    <text x="615" y="162" fill="#fff" font-size="13" text-anchor="middle" font-family="Calibri, sans-serif">Redis</text>
+    <line x1="140" y1="105" x2="190" y2="105" stroke="#334" stroke-width="2" marker-end="url(#a)"/>
+    <line x1="310" y1="105" x2="360" y2="105" stroke="#334" stroke-width="2"/>
+    <line x1="490" y1="95" x2="540" y2="53" stroke="#334" stroke-width="2"/>
+    <line x1="490" y1="115" x2="540" y2="157" stroke="#334" stroke-width="2"/>
+    <defs><marker id="a" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#334"/></marker></defs>
+  </svg>
+  <div class="caption">Слика 1. Проток на барање: прелистувач → nginx → Django/Gunicorn → PostgreSQL и Redis.</div>
+</div>
+
+<h2>3. Јавен Git репозиториум</h2>
+<p>
+Кодот е на јавен GitHub репозиториум, одвоен од продукцискиот репозиториум на салонот:
+</p>
+<p>
+<strong>Репозиториум:</strong>
+<a href="https://github.com/LukaDermendziev/vremio-ci-cd">https://github.com/LukaDermendziev/vremio-ci-cd</a>
+</p>
+<p>
+Клучни патеки за предметот:
+</p>
+<ul>
+  <li><code>Dockerfile</code> — имиџ на апликацијата</li>
+  <li><code>docker-compose.yml</code>, <code>infra/nginx/default.conf</code>, <code>infra/compose.env</code></li>
+  <li><code>.github/workflows/ci.yml</code> — CI/CD pipeline</li>
+  <li><code>infra/k8s/</code> — Kubernetes манифести</li>
+  <li><code>infra/README.md</code> — упатство за Compose и minikube</li>
+</ul>
+
+<h2>4. Докеризација на апликацијата</h2>
+<p>
+Апликацијата е спакувана во Docker имиџ базиран на <code>python:3.12-slim-bookworm</code>.
+Во текот на build се инсталираат зависностите, се копира Django проектот, се собираат статичките датотеки
+и се поставува влезна скрипта. Во runtime, <code>infra/docker/entrypoint.sh</code> прво извршува
+<code>migrate</code>, потоа стартува Gunicorn на порта 8000.
+</p>
+<p>
+Имиџот има health check кон <code>/health/</code>. Овој Dockerfile се користи само за факултетската демонстрација.
+</p>
+<pre>FROM python:3.12-slim-bookworm
+WORKDIR /app
+COPY backend/requirements.txt /app/requirements.txt
+RUN pip install -r /app/requirements.txt
+COPY backend/ /app/
+# collectstatic, HEALTHCHECK /health/, ENTRYPOINT gunicorn</pre>
+<p class="small">Целосниот файл е во коренот на репозиториумот: <code>Dockerfile</code>.</p>
+
+<h2>5. Docker Compose</h2>
+<p>
+Со <code>docker compose up --build</code> се стартуваат четирите сервиси заедно.
+nginx е објавен на <strong>http://localhost:8080</strong>. Postgres има volume и healthcheck;
+web чека базата да биде здрава, nginx чека web да биде здрав.
+</p>
+<table>
+  <tr><th>Контејнер</th><th>Имиџ</th><th>Пристап</th></tr>
+  <tr><td>vremio-nginx</td><td>nginx:1.27-alpine</td><td>localhost:8080 → web:8000</td></tr>
+  <tr><td>vremio-web</td><td>се гради од Dockerfile</td><td>внатрешен :8000</td></tr>
+  <tr><td>vremio-postgres</td><td>postgres:16-alpine</td><td>volume <code>vremio-postgres</code></td></tr>
+  <tr><td>vremio-redis</td><td>redis:7-alpine</td><td><code>CACHE_URL=redis://redis:6379/1</code></td></tr>
+</table>
+<p>
+Dummy променливите се во <code>infra/compose.env</code> (не се продукциски тајни).
+Проверка: <strong>http://localhost:8080/health/</strong> враќа <code>ok</code>.
+</p>
+
+<h2>6. CI/CD — GitHub Actions и Docker Hub</h2>
+<p>
+Избрана CI платформа е <strong>GitHub Actions</strong>. При push на гранката <code>master</code> се извршува работниот тек
+<code>.github/workflows/ci.yml</code> со три чекори:
+</p>
+<ol>
+  <li><strong>Tests</strong> — инсталација, pip-audit, <code>manage.py check</code>, Django тестови.</li>
+  <li><strong>Production settings check</strong> — <code>manage.py check --deploy</code> со dummy продукциски поставки.</li>
+  <li><strong>Build and push image</strong> — се извршува само ако првите два чекора се успешни.
+      Имиџот се гради и се објавува на Docker Hub.</li>
+</ol>
+<p>
+Регистар: <a href="https://hub.docker.com/r/lukad23/vremio-web">https://hub.docker.com/r/lukad23/vremio-web</a><br>
+Ознаки: <code>lukad23/vremio-web:latest</code> и <code>lukad23/vremio-web:&lt;краток-SHA&gt;</code>.
+</p>
+<p>
+Најавата кон Docker Hub користи GitHub secrets (<code>DOCKERHUB_USERNAME</code>, <code>DOCKERHUB_TOKEN</code>),
+не се чуваат во git. На pull request се гради имиџот, но не се прави push.
+Ова го покрива задолжителниот дел: <em>push на git → нова верзија на Docker имиџ на регистар</em>.
+Опционален CD кон cloud не е дел од овој елаборат; Kubernetes се демонстрира локално со minikube.
+</p>
+
+<div class="fig">
+  <img class="shot" src="github-actions.png" alt="GitHub Actions CI/CD" />
+  <div class="caption">Слика 2. GitHub Actions: тестовите и проверката на поставките поминуваат, потоа се гради и се објавува имиџот.</div>
+</div>
+<div class="fig">
+  <img class="shot" src="docker-hub.png" alt="Docker Hub lukad23/vremio-web" />
+  <div class="caption">Слика 3. Docker Hub репозиториум lukad23/vremio-web со ознаки latest и commit SHA.</div>
+</div>
+
+<h2>7. Kubernetes манифести</h2>
+<p>
+Истите четири сервиси се опишани како Kubernetes објекти во <code>infra/k8s/</code>
+и се применуваат со <code>kubectl apply -k infra/k8s</code> во namespace <code>vremio</code>.
+Имиџот за web е оној од Docker Hub: <code>lukad23/vremio-web:latest</code>.
+</p>
+<table>
+  <tr><th>Барање од предметот</th><th>Реализација</th></tr>
+  <tr><td>Deployment + ConfigMap / Secret</td><td>Deployment за <code>web</code>, <code>nginx</code>, <code>redis</code>. ConfigMap <code>vremio-config</code> (хостови, <code>CACHE_URL</code>). Secret <code>vremio-secret</code> (dummy клуч и лозинка).</td></tr>
+  <tr><td>Service</td><td>Стабилни имиња во кластерот: <code>web</code>, <code>nginx</code>, <code>db</code>, <code>redis</code>.</td></tr>
+  <tr><td>Ingress</td><td><code>vremio.local</code> → Service <code>nginx</code> → Django. На Windows со Docker driver пристапот е преку <code>minikube tunnel</code> или NodePort / <code>minikube service</code>.</td></tr>
+  <tr><td>StatefulSet за базата</td><td>PostgreSQL како StatefulSet <code>db</code>, headless Service, PVC преку <code>volumeClaimTemplates</code>, <code>PGDATA</code> на волуменот.</td></tr>
+  <tr><td>Namespace + демонстрација</td><td>Сè е во <code>vremio</code>. По <code>apply</code>, четирите пода се Running/Ready; <code>/health/</code> враќа <code>ok</code>.</td></tr>
+</table>
+<p>
+Deployment е за безсостојбени компоненти (ако подот падне, се крева нов).
+StatefulSet е за Postgres затоа што податоците мора да останат на диск и подотот треба стабилно име.
+Init контејнер кај web чека <code>pg_isready</code> на <code>db</code>.
+HTTP пробите кон Django праќаат заглавие <code>Host: localhost</code>, за да не паднат на
+<code>DisallowedHost</code> (kubelet инаку праќа IP на подотот).
+</p>
+<div class="fig">
+<pre class="term">PS C:\Users\User\Desktop\vremio-ci-cd&gt; kubectl get all -n vremio
+NAME                         READY   STATUS    RESTARTS   AGE
+pod/db-0                     1/1     Running   0          37h
+pod/nginx-5455dc89b9-2sx48   1/1     Running   0          36h
+pod/redis-7dbfb76899-9cmb7   1/1     Running   0          37h
+pod/web-5d887b47cc-j4mb5     1/1     Running   0          36h
+
+NAME            TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE
+service/db      ClusterIP   None             &lt;none&gt;        5432/TCP       37h
+service/nginx   NodePort    10.103.224.111   &lt;none&gt;        80:30080/TCP   37h
+service/redis   ClusterIP   10.104.148.58    &lt;none&gt;        6379/TCP       37h
+service/web     ClusterIP   10.105.164.100   &lt;none&gt;        8000/TCP       37h
+
+NAME                    READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/nginx   1/1     1            1           37h
+deployment.apps/redis   1/1     1            1           37h
+deployment.apps/web     1/1     1            1           37h
+
+NAME                  READY   AGE
+statefulset.apps/db   1/1     37h</pre>
+  <div class="caption">Слика 4. Излез од kubectl get all -n vremio: четири Ready пода, Services, Deployments и StatefulSet за PostgreSQL.</div>
+</div>
+
+<h2>8. Како се демонстрира</h2>
+<h3>8.1 Docker Compose</h3>
+<pre>cd vremio-ci-cd
+docker compose up --build
+# http://localhost:8080
+# http://localhost:8080/health/</pre>
+<h3>8.2 Kubernetes (minikube)</h3>
+<pre>minikube start --driver=docker
+minikube addons enable ingress
+kubectl apply -k infra/k8s
+kubectl -n vremio get pods
+minikube service nginx -n vremio</pre>
+<p>
+За Ingress URL <code>http://vremio.local</code> е потребен <code>minikube tunnel</code> и запис во hosts.
+Тоа не е задолжително за да се види дека апликацијата работи: NodePort / <code>minikube service</code> е доволен пристап на Windows.
+</p>
+
+<h2>9. Линкови и алатки</h2>
+<table>
+  <tr><th>Ресурс</th><th>Линк</th></tr>
+  <tr><td>Јавен код</td><td><a href="https://github.com/LukaDermendziev/vremio-ci-cd">github.com/LukaDermendziev/vremio-ci-cd</a></td></tr>
+  <tr><td>CI работни текови</td><td><a href="https://github.com/LukaDermendziev/vremio-ci-cd/actions">github.com/LukaDermendziev/vremio-ci-cd/actions</a></td></tr>
+  <tr><td>Docker имиџ</td><td><a href="https://hub.docker.com/r/lukad23/vremio-web">hub.docker.com/r/lukad23/vremio-web</a></td></tr>
+  <tr><td>Compose / K8s упатство</td><td><code>infra/README.md</code> во репозиториумот</td></tr>
+</table>
+<p>
+Алатки: Git, GitHub, GitHub Actions, Docker, Docker Compose, Docker Hub, nginx, Kubernetes, kubectl, minikube,
+Django, Gunicorn, PostgreSQL, Redis.
+</p>
+
+<h2>10. Заклучок</h2>
+<p>
+Проектот ја исполнува спецификацијата на предметната задача врз готова апликација со база:
+јавен git, Docker имиџ, Compose со четири сервиси, CI што објавува имиџ на Docker Hub,
+и Kubernetes манифести (Deployment, Service, Ingress, StatefulSet, ConfigMap/Secret) во посебен namespace,
+покажани на minikube. Истиот Docker Hub имиџ што го гради pipeline-от се влече во кластерот.
+Продукцискиот салон останува одвоен од оваа демонстрација.
+</p>
+
+</body>
+</html>
